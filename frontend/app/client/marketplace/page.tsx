@@ -53,10 +53,20 @@ export default function MarketplacePage() {
 
   const loadProducts = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await marketplaceApi.getProducts();
+      const data = await marketplaceApi.getProducts();
+      setProducts(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setLoading(false);
+      // Fallback to empty array on error
+      setProducts([]);
+    }
+  };
 
-      // Mock data
+  // Fallback mock data for demonstration (commented out)
+  const loadProductsMock = async () => {
+    try {
       const mockProducts: Product[] = [
         {
           id: '1',
@@ -140,11 +150,10 @@ export default function MarketplacePage() {
         },
       ];
 
-      setProducts(mockProducts);
+      // Legacy mock - not used anymore
+      // setProducts(mockProducts);
     } catch (error) {
-      console.error('Error loading products:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error in mock data');
     }
   };
 

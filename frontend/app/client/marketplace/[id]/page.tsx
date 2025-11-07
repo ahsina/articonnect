@@ -76,11 +76,18 @@ export default function ProductDetailsPage() {
 
   const loadProduct = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await marketplaceApi.getProductById(productId);
+      const data = await marketplaceApi.getProductById(productId);
+      setProduct(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading product:', error);
+      setLoading(false);
+    }
+  };
 
-      // Mock data
-      const mockProduct: Product = {
+  // Fallback mock (commented)
+  const loadProductMock = () => {
+    const mockProduct: Product = {
         id: productId,
         name: 'Table en chêne massif artisanale',
         description:
