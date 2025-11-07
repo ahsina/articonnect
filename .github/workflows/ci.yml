@@ -39,6 +39,20 @@ jobs:
         ports:
           - 6379:6379
 
+      mongodb:
+        image: mongo:7-jammy
+        env:
+          MONGO_INITDB_ROOT_USERNAME: articonnect
+          MONGO_INITDB_ROOT_PASSWORD: test_password
+          MONGO_INITDB_DATABASE: articonnect_test
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,16 +84,21 @@ jobs:
 
       - name: Lint Backend
         working-directory: ./backend/api-gateway
-        run: npm run lint || true
+        run: npm run lint
+        continue-on-error: true
 
       - name: Run Backend Tests
         working-directory: ./backend/api-gateway
         env:
           DATABASE_URL: postgresql://articonnect:test_password@localhost:5432/articonnect_test
-          REDIS_URL: redis://localhost:6379
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          MONGODB_URI: mongodb://articonnect:test_password@localhost:27017/articonnect_test?authSource=admin
           JWT_SECRET: test-jwt-secret-for-ci-cd-pipeline
+          JWT_REFRESH_SECRET: test-refresh-secret-for-ci-cd
           NODE_ENV: test
-        run: npm run test || true
+        run: npm run test
+        continue-on-error: true
 
       - name: Build Backend
         working-directory: ./backend/api-gateway
@@ -107,20 +126,24 @@ jobs:
 
       - name: Lint Frontend
         working-directory: ./frontend
-        run: npm run lint || true
+        run: npm run lint
+        continue-on-error: true
 
       - name: Type Check
         working-directory: ./frontend
-        run: npm run type-check || true
+        run: npm run type-check
+        continue-on-error: true
 
       - name: Run Frontend Tests
         working-directory: ./frontend
-        run: npm run test || true
+        run: npm run test
+        continue-on-error: true
 
       - name: Build Frontend
         working-directory: ./frontend
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:3001
         run: npm run build
 
   # ========================================
@@ -144,11 +167,13 @@ jobs:
 
       - name: Audit Backend Dependencies
         working-directory: ./backend/api-gateway
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Audit Frontend Dependencies
         working-directory: ./frontend
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
   # ========================================
   # Docker Build (optional)
@@ -167,10 +192,10 @@ jobs:
 
       - name: Build Backend Docker Image
         working-directory: ./backend/api-gateway
-        run: |
-          docker build -t articonnect-backend:latest . || true
+        run: docker build -t articonnect-backend:latest .
+        continue-on-error: true
 
       - name: Build Frontend Docker Image
         working-directory: ./frontend
-        run: |
-          docker build -t articonnect-frontend:latest . || true
+        run: docker build -t articonnect-frontend:latest .
+        continue-on-error: true
