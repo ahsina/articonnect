@@ -4,15 +4,12 @@ export interface CreateArtisanProfileDto {
   companyName: string;
   siret: string;
   description?: string;
-  specialties: string[];
-  address?: string;
-  city?: string;
-  postalCode?: string;
-  country?: string;
-  latitude?: number;
-  longitude?: number;
+  baseAddress: string;
+  latitude: number;
+  longitude: number;
   serviceRadius?: number;
   hourlyRate?: number;
+  specialtyIds?: string[];
 }
 
 export interface UpdateProfileDto {
@@ -29,17 +26,12 @@ export const userApi = {
   },
 
   updateProfile: async (data: UpdateProfileDto) => {
-    const response = await apiClient.patch('/users/profile', data);
+    const response = await apiClient.put('/users/profile', data);
     return response.data;
   },
 
   createArtisanProfile: async (data: CreateArtisanProfileDto) => {
     const response = await apiClient.post('/users/artisan-profile', data);
-    return response.data;
-  },
-
-  updateArtisanProfile: async (data: Partial<CreateArtisanProfileDto>) => {
-    const response = await apiClient.patch('/users/artisan-profile', data);
     return response.data;
   },
 

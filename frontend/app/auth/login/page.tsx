@@ -33,19 +33,26 @@ export default function LoginPage() {
 
       // Redirect based on user role (will be handled by auth context)
       router.push('/client/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
 
-      if (error.message === '2FA_REQUIRED') {
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
+
+      if (err.message === '2FA_REQUIRED') {
+        // Store credentials temporarily for 2FA verification
+        sessionStorage.setItem('2fa_email', formData.email);
+        sessionStorage.setItem('2fa_password', formData.password);
+
         toast({
           title: 'Authentification à deux facteurs',
           description: 'Veuillez entrer votre code 2FA',
         });
-        // TODO: Redirect to 2FA page
+
+        router.push('/auth/2fa-verify');
       } else {
         toast({
           title: 'Erreur de connexion',
-          description: error.response?.data?.message || 'Identifiants incorrects',
+          description: err.response?.data?.message || 'Identifiants incorrects',
           variant: 'destructive',
         });
       }
