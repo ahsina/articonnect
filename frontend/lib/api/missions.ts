@@ -16,7 +16,7 @@ export const missionsApi = {
     return response.data;
   },
 
-  create: async (data: any) => {
+  create: async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/missions', data);
     return response.data;
   },
@@ -43,11 +43,8 @@ export const missionsApi = {
     return response.data;
   },
 
-  createNegotiation: async (missionId: string, data: any) => {
-    const response = await apiClient.post(
-      `/missions/${missionId}/negotiations`,
-      data
-    );
+  createNegotiation: async (missionId: string, data: Record<string, unknown>) => {
+    const response = await apiClient.post(`/missions/${missionId}/negotiations`, data);
     return response.data;
   },
 

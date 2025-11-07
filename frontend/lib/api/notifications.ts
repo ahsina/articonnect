@@ -7,7 +7,7 @@ export interface Notification {
   title: string;
   message: string;
   link?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   read: boolean;
   createdAt: string;
 }

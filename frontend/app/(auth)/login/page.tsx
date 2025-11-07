@@ -44,8 +44,9 @@ export default function LoginPage() {
       } else {
         router.push('/client/dashboard');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur de connexion');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Erreur de connexion');
       setLoading(false);
     }
   };

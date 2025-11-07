@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Map } from '@/components/map/Map';
-import { ReviewList } from '@/components/reviews/ReviewList';
-import { ReviewForm } from '@/components/reviews/ReviewForm';
 
 interface ArtisanProfile {
   id: string;
@@ -93,7 +91,6 @@ export default function ArtisanDetailsPage() {
 
   const [artisan, setArtisan] = useState<ArtisanProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showReviewForm, setShowReviewForm] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -213,17 +210,6 @@ export default function ArtisanDetailsPage() {
     router.push(`/client/missions/create?artisanId=${artisanId}`);
   };
 
-  const handleReviewSubmit = async (rating: number, comment: string) => {
-    try {
-      // TODO: API call to submit review
-      console.log('Submit review:', { rating, comment });
-      setShowReviewForm(false);
-      loadArtisan(); // Reload to get new review
-    } catch (error) {
-      console.error('Error submitting review:', error);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -246,9 +232,6 @@ export default function ArtisanDetailsPage() {
   }
 
   const { artisanProfile } = artisan;
-  const availableDays = Object.entries(artisan.availability)
-    .filter(([_, available]) => available)
-    .map(([day]) => DAYS_FR[day]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -308,7 +291,7 @@ export default function ArtisanDetailsPage() {
                     {/* Specialties */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {artisanProfile.specialties.map((specialty) => (
-                        <Badge key={specialty} variant="secondary">
+                        <Badge key={specialty} variant="info">
                           <span className="mr-1">{SPECIALTY_ICONS[specialty]}</span>
                           {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
                         </Badge>
@@ -376,20 +359,9 @@ export default function ArtisanDetailsPage() {
             {/* Reviews */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Avis clients ({artisan.reviews.length})</CardTitle>
-                  <Button onClick={() => setShowReviewForm(!showReviewForm)} size="sm">
-                    {showReviewForm ? 'Annuler' : 'Laisser un avis'}
-                  </Button>
-                </div>
+                <CardTitle>Avis clients ({artisan.reviews.length})</CardTitle>
               </CardHeader>
               <CardContent>
-                {showReviewForm && (
-                  <div className="mb-6 pb-6 border-b">
-                    <ReviewForm onSubmit={handleReviewSubmit} />
-                  </div>
-                )}
-
                 <div className="space-y-6">
                   {artisan.reviews.map((review) => (
                     <div key={review.id} className="border-b last:border-b-0 pb-6 last:pb-0">

@@ -7,7 +7,12 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useState, useEffect } from 'react';
 
 interface NavbarProps {
-  user?: any;
+  user?: {
+    id: string;
+    role: string;
+    firstName?: string;
+    lastName?: string;
+  };
 }
 
 export function Navbar({ user }: NavbarProps) {
@@ -107,7 +112,7 @@ export function Navbar({ user }: NavbarProps) {
                   <Button variant="ghost">Connexion</Button>
                 </Link>
                 <Link href="/register">
-                  <Button>S'inscrire</Button>
+                  <Button>S&apos;inscrire</Button>
                 </Link>
               </>
             )}

@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ReviewList } from '@/components/reviews/ReviewList';
 
 interface Product {
   id: string;
@@ -219,8 +218,9 @@ export default function ProductDetailsPage() {
     return product?.stock || 0;
   };
 
-  const averageRating =
-    product?.reviews.reduce((acc, r) => acc + r.rating, 0) / (product?.reviews.length || 1);
+  const averageRating = product
+    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / (product.reviews.length || 1)
+    : 0;
 
   if (loading) {
     return (
@@ -288,7 +288,7 @@ export default function ProductDetailsPage() {
           {/* Product Info */}
           <div>
             <div className="mb-4">
-              <Badge variant="secondary">{CATEGORY_LABELS[product.category]}</Badge>
+              <Badge variant="info">{CATEGORY_LABELS[product.category]}</Badge>
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>

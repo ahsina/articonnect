@@ -52,12 +52,12 @@ export const adminApi = {
     await apiClient.post(`/admin/users/${userId}/unsuspend`);
   },
 
-  getUserDetails: async (userId: string): Promise<any> => {
+  getUserDetails: async (userId: string): Promise<Record<string, unknown>> => {
     const response = await apiClient.get(`/admin/users/${userId}`);
     return response.data;
   },
 
-  getMissionStats: async (): Promise<any> => {
+  getMissionStats: async (): Promise<Record<string, unknown>> => {
     const response = await apiClient.get('/admin/missions/stats');
     return response.data;
   },
