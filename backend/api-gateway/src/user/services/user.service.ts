@@ -154,4 +154,50 @@ export class UserService {
     const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;
   }
+
+  async uploadAvatar(userId: string, file: Express.Multer.File) {
+    if (!file) {
+      throw new NotFoundException('Fichier non fourni');
+    }
+
+    // Validate file type
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new NotFoundException('Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP');
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new NotFoundException('Fichier trop volumineux. Maximum 5MB');
+    }
+
+    // For now, we'll use a DiceBear avatar URL
+    // In production, you would upload to S3/CloudFlare/etc and store the URL
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    // Generate avatar URL using DiceBear (placeholder for actual upload)
+    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.firstName}${user.lastName}`;
+
+    // Update user avatar
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatar: avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        role: true,
+      },
+    });
+
+    return updatedUser;
+  }
 }

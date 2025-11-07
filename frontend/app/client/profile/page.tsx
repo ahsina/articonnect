@@ -43,6 +43,7 @@ export default function ClientProfilePage() {
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -151,6 +152,55 @@ export default function ClientProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Erreur',
+        description: 'Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Erreur',
+        description: 'Fichier trop volumineux. Maximum 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const updatedUser = await userApi.uploadAvatar(file);
+      setProfile((prev) => prev ? { ...prev, avatar: updatedUser.avatar } : null);
+      toast({
+        title: 'Succès',
+        description: 'Avatar mis à jour avec succès',
+        variant: 'success',
+      });
+    } catch (err: any) {
+      console.error('Error uploading avatar:', err);
+      const errorMessage = err.response?.data?.message || 'Erreur lors de l\'upload de l\'avatar';
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -189,11 +239,36 @@ export default function ClientProfilePage() {
               <div className="flex items-center justify-between">
                 <CardTitle>Informations personnelles</CardTitle>
                 <div className="flex items-center gap-3">
-                  <img
-                    src={profile.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                    alt="Avatar"
-                    className="w-16 h-16 rounded-full"
-                  />
+                  <div className="relative">
+                    <img
+                      src={profile.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                      alt="Avatar"
+                      className="w-16 h-16 rounded-full"
+                    />
+                    {uploadingAvatar && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={uploadingAvatar}
+                    />
+                    <label
+                      htmlFor="avatar-upload"
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-600 rounded-md hover:bg-blue-100 cursor-pointer ${
+                        uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {uploadingAvatar ? 'Upload...' : 'Changer l\'avatar'}
+                    </label>
+                  </div>
                 </div>
               </div>
             </CardHeader>

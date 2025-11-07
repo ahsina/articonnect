@@ -84,10 +84,39 @@ frontend/
 
 **Stack:**
 - Framework: Next.js 14 (App Router)
-- UI: Tailwind CSS + shadcn/ui
-- State: React Query + Zustand
-- WebSocket: Socket.io-client
+- UI: Tailwind CSS + shadcn/ui + Radix UI
+- State: React Query + Context API (Auth)
+- WebSocket: Socket.io-client (chat temps réel)
+- Forms: React Hook Form + Zod validation
+- Notifications: Custom Toast system
 - PWA: next-pwa + Service Worker
+
+## ✨ Nouvelles Fonctionnalités (Janvier 2025)
+
+### Authentification Complète
+- ✅ **Pages de connexion et inscription** avec validation côté client
+- ✅ **Sélection de rôle** (Client/Artisan) lors de l'inscription
+- ✅ **AuthContext** pour gestion globale de l'état utilisateur
+- ✅ **Protection des routes** avec redirection automatique selon le rôle
+- ✅ **Changement de mot de passe** avec vérification de l'ancien mot de passe
+- ✅ **Révocation des tokens** après changement de mot de passe (sécurité)
+
+### Upload d'Avatar
+- ✅ **Upload d'avatar** avec validation (JPEG, PNG, GIF, WebP, max 5MB)
+- ✅ **Preview en temps réel** avec indicateur de chargement
+- ✅ **Optimisation d'images** côté backend
+
+### Messagerie Temps Réel
+- ✅ **Socket.IO intégré** pour chat en temps réel
+- ✅ **Indicateur de connexion** (En ligne/Hors ligne)
+- ✅ **Messages instantanés** avec mise à jour optimiste
+- ✅ **Notifications toast** pour erreurs et succès
+
+### Système de Notifications
+- ✅ **Toast notifications** avec Radix UI
+- ✅ **Auto-dismiss** après 5 secondes
+- ✅ **Variants**: success, error, default
+- ✅ **Maximum 5 toasts** simultanés
 
 ## 🚀 Installation Rapide
 
@@ -106,23 +135,34 @@ cd articonnect
 npm install
 ```
 
-### 2. Configuration
+### 2. Configuration Backend
 
-Copier `.env.example` vers `.env` et remplir:
+Copier `backend/.env.example` vers `backend/.env` et remplir:
 
 ```env
 # Database
 DATABASE_URL="postgresql://articonnect:password@localhost:5432/articonnect"
-REDIS_URL="redis://localhost:6379"
-MONGODB_URL="mongodb://localhost:27017/articonnect"
 
 # JWT
-JWT_SECRET="your-super-secret-jwt-key"
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+JWT_EXPIRATION="15m"
 JWT_REFRESH_SECRET="your-super-secret-refresh-key"
+JWT_REFRESH_EXPIRATION="30d"
+
+# Redis
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+
+# MongoDB (Chat)
+MONGODB_URI="mongodb://localhost:27017/articonnect"
 
 # Stripe
 STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+
+# Email (SendGrid)
+SENDGRID_API_KEY="SG...."
+EMAIL_FROM="noreply@articonnect.com"
 
 # AWS S3
 AWS_REGION="eu-west-1"
@@ -130,12 +170,34 @@ AWS_ACCESS_KEY_ID="your-access-key"
 AWS_SECRET_ACCESS_KEY="your-secret-key"
 AWS_S3_BUCKET="articonnect-uploads"
 
-# Frontend
-NEXT_PUBLIC_API_URL="http://localhost:4000"
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-google-maps-key"
+# Google Maps
+GOOGLE_MAPS_API_KEY="your-google-maps-key"
+
+# Application
+PORT="3001"
+NODE_ENV="development"
 ```
 
-### 3. Base de données
+### 3. Configuration Frontend
+
+Copier `frontend/.env.example` vers `frontend/.env.local`:
+
+```env
+# API URLs
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+NEXT_PUBLIC_SOCKET_URL="http://localhost:3001"
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLIC_KEY="pk_test_..."
+
+# Google Maps
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-google-maps-key"
+
+# Application
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+### 4. Base de données
 
 ```bash
 # Générer Prisma client
@@ -149,7 +211,7 @@ cd backend/shared
 npx prisma db seed
 ```
 
-### 4. Démarrer avec Docker
+### 5. Démarrer avec Docker
 
 ```bash
 # Lancer PostgreSQL, Redis, MongoDB
@@ -159,7 +221,7 @@ docker-compose up -d
 docker-compose ps
 ```
 
-### 5. Lancer l'application
+### 6. Lancer l'application
 
 ```bash
 # Démarrage concurrent backend + frontend
@@ -210,6 +272,90 @@ Password: Artisan123!
 Email: admin@articonnect.com
 Password: Admin123!
 ```
+
+## 🔌 API Endpoints Principaux
+
+### Authentification (`/auth`)
+```typescript
+POST   /auth/register          // Inscription (Client/Artisan)
+POST   /auth/login             // Connexion (retourne JWT)
+POST   /auth/logout            // Déconnexion
+POST   /auth/refresh           // Refresh token
+POST   /auth/change-password   // Changement de mot de passe
+POST   /auth/2fa/enable        // Activer 2FA
+POST   /auth/2fa/verify        // Vérifier code 2FA
+```
+
+### Utilisateurs (`/users`)
+```typescript
+GET    /users/profile          // Obtenir profil utilisateur
+PUT    /users/profile          // Mettre à jour profil
+POST   /users/avatar           // Upload avatar (multipart/form-data)
+POST   /users/artisan-profile  // Créer profil artisan
+GET    /users/artisans         // Liste des artisans
+GET    /users/artisans/:id     // Détails artisan
+```
+
+### Missions (`/missions`)
+```typescript
+GET    /missions               // Liste missions (filtres: status, type)
+POST   /missions               // Créer mission
+GET    /missions/:id           // Détails mission
+PUT    /missions/:id           // Mettre à jour mission
+POST   /missions/:id/accept    // Accepter mission (artisan)
+POST   /missions/:id/complete  // Compléter mission
+POST   /missions/:id/cancel    // Annuler mission
+```
+
+### Chat (`/chat`)
+```typescript
+GET    /chat/conversations     // Liste conversations
+GET    /chat/conversation/:userId    // Messages avec utilisateur
+POST   /chat/conversation/:userId/read  // Marquer comme lu
+DELETE /chat/message/:id       // Supprimer message
+```
+
+**WebSocket Events:**
+```typescript
+// Écouter
+socket.on('message', (data) => {...})
+socket.on('message-read', (data) => {...})
+socket.on('typing', (data) => {...})
+
+// Émettre
+socket.emit('send-message', { receiverId, content })
+socket.emit('typing', { receiverId })
+```
+
+### Marketplace (`/marketplace`)
+```typescript
+GET    /marketplace/products   // Liste produits
+POST   /marketplace/products   // Créer produit (artisan)
+PUT    /marketplace/products/:id  // Modifier produit
+DELETE /marketplace/products/:id  // Supprimer produit
+GET    /marketplace/orders     // Commandes
+PUT    /marketplace/orders/:id // Mettre à jour statut commande
+```
+
+### Paiements (`/payments`)
+```typescript
+POST   /payments/create-intent      // Créer PaymentIntent Stripe
+POST   /payments/confirm            // Confirmer paiement
+POST   /payments/webhook            // Webhook Stripe
+GET    /payments/history            // Historique paiements
+```
+
+### Admin (`/admin`)
+```typescript
+GET    /admin/users            // Tous les utilisateurs
+PUT    /admin/users/:id/suspend    // Suspendre utilisateur
+GET    /admin/stats            // Statistiques plateforme
+GET    /admin/analytics        // Analytics détaillées
+```
+
+**Authentication:** Tous les endpoints (sauf `/auth/login` et `/auth/register`) nécessitent un header `Authorization: Bearer <token>`.
+
+**Swagger Documentation:** Disponible sur `http://localhost:3001/api/docs` en développement.
 
 ## 📚 Documentation Complète
 
