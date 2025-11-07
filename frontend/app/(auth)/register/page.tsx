@@ -12,7 +12,15 @@ export default function RegisterPage() {
   const searchParams = useSearchParams();
   const defaultRole = searchParams.get('role') === 'artisan' ? 'ARTISAN' : 'CLIENT';
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    role: 'CLIENT' | 'ARTISAN';
+  }>({
     email: '',
     password: '',
     confirmPassword: '',
