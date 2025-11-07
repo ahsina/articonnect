@@ -5,12 +5,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { missionsApi } from '@/lib/api/missions';
+import { useAuth } from '@/contexts/AuthContext';
+import { Mission, MissionStatus } from '@/types/mission';
+
+const STATUS_BADGES: Record<MissionStatus, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  NEGOTIATING: 'bg-blue-100 text-blue-800',
+  ACCEPTED: 'bg-green-100 text-green-800',
+  IN_PROGRESS: 'bg-purple-100 text-purple-800',
+  COMPLETED: 'bg-gray-100 text-gray-800',
+  CANCELLED: 'bg-red-100 text-red-800',
+};
 
 export default function ClientDashboard() {
   const router = useRouter();
-  const [missions, setMissions] = useState([]);
+  const { user, logout } = useAuth();
+  const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -18,11 +29,6 @@ export default function ClientDashboard() {
 
   const loadDashboard = async () => {
     try {
-      // Load user info from localStorage or API
-      const userStr = localStorage.getItem('user');
-      if (userStr) setUser(JSON.parse(userStr));
-
-      // Load missions
       const data = await missionsApi.getAll();
       setMissions(data);
     } catch (error) {
@@ -32,16 +38,13 @@ export default function ClientDashboard() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges: any = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      NEGOTIATING: 'bg-blue-100 text-blue-800',
-      ACCEPTED: 'bg-green-100 text-green-800',
-      IN_PROGRESS: 'bg-purple-100 text-purple-800',
-      COMPLETED: 'bg-gray-100 text-gray-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-    };
-    return badges[status] || 'bg-gray-100 text-gray-800';
+  const getStatusBadge = (status: MissionStatus): string => {
+    return STATUS_BADGES[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/auth/login');
   };
 
   if (loading) {
@@ -75,10 +78,7 @@ export default function ClientDashboard() {
               </Link>
               <Button
                 variant="ghost"
-                onClick={() => {
-                  localStorage.clear();
-                  router.push('/');
-                }}
+                onClick={handleLogout}
               >
                 Déconnexion
               </Button>
@@ -148,7 +148,7 @@ export default function ClientDashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {missions.slice(0, 5).map((mission: any) => (
+              {missions.slice(0, 5).map((mission) => (
                 <Link
                   key={mission.id}
                   href={`/client/missions/${mission.id}`}

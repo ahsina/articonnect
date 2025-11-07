@@ -63,3 +63,44 @@ export class ChangePasswordDto {
   @MinLength(8)
   newPassword: string;
 }
+
+export class ForgotPasswordDto {
+  @ApiProperty({ example: 'john@example.com' })
+  @IsEmail()
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @ApiProperty({ example: 'abc123def456...' })
+  @IsString()
+  token: string;
+
+  @ApiProperty({ example: 'NewPass123!' })
+  @IsString()
+  @MinLength(8)
+  newPassword: string;
+}
+
+export class Enable2FADto {
+  @ApiProperty({ example: 'StrongPass123!' })
+  @IsString()
+  password: string;
+}
+
+export class Verify2FADto {
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @MinLength(6)
+  token: string;
+}
+
+export class Disable2FADto {
+  @ApiProperty({ example: 'StrongPass123!' })
+  @IsString()
+  password: string;
+
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @MinLength(6)
+  token: string;
+}

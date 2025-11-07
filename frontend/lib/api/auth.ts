@@ -20,6 +20,16 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
+export interface Enable2FAResponse {
+  secret: string;
+  qrCode: string;
+}
+
+export interface Verify2FAResponse {
+  message: string;
+  backupCodes?: string[];
+}
+
 export const authApi = {
   register: async (data: RegisterData) => {
     const response = await apiClient.post('/auth/register', data);
@@ -45,6 +55,37 @@ export const authApi = {
 
   changePassword: async (data: ChangePasswordData) => {
     const response = await apiClient.post('/auth/change-password', data);
+    return response.data;
+  },
+
+  forgotPassword: async (email: string) => {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    const response = await apiClient.post('/auth/reset-password', {
+      token,
+      newPassword,
+    });
+    return response.data;
+  },
+
+  enable2FA: async (password: string): Promise<Enable2FAResponse> => {
+    const response = await apiClient.post('/auth/2fa/enable', { password });
+    return response.data;
+  },
+
+  verify2FA: async (token: string): Promise<Verify2FAResponse> => {
+    const response = await apiClient.post('/auth/2fa/verify', { token });
+    return response.data;
+  },
+
+  disable2FA: async (password: string, token: string) => {
+    const response = await apiClient.post('/auth/2fa/disable', {
+      password,
+      token,
+    });
     return response.data;
   },
 };

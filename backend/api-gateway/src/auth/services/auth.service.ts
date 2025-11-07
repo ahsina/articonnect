@@ -2,11 +2,13 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import * as bcrypt from 'bcrypt';
+import * as speakeasy from 'speakeasy';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
 import { User, UserRole } from '@prisma/client';
 
@@ -278,6 +280,231 @@ export class AuthService {
     });
 
     return { message: 'Mot de passe modifié avec succès' };
+  }
+
+  async forgotPassword(email: string) {
+    // Find user
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return {
+        message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
+      };
+    }
+
+    // Generate random token (32 bytes = 64 hex characters)
+    const resetToken = Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+
+    // Token expires in 1 hour
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // Store token in database
+    await this.prisma.passwordResetToken.create({
+      data: {
+        token: resetToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // TODO: Send email with reset link
+    // For now, just log it (in production, use SendGrid)
+    console.log(`Reset password link: /auth/reset-password?token=${resetToken}`);
+    console.log(`User: ${user.email}`);
+
+    return {
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    // Find valid token
+    const resetToken = await this.prisma.passwordResetToken.findFirst({
+      where: {
+        token,
+        used: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!resetToken) {
+      throw new UnauthorizedException(
+        'Token invalide ou expiré'
+      );
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password
+    await this.prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    });
+
+    // Mark token as used
+    await this.prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { used: true },
+    });
+
+    // Revoke all refresh tokens for security
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: resetToken.userId },
+      data: { revoked: true },
+    });
+
+    return { message: 'Mot de passe réinitialisé avec succès' };
+  }
+
+  async enable2FA(userId: string, password: string) {
+    // Verify password
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      throw new UnauthorizedException('Mot de passe incorrect');
+    }
+
+    // Check if 2FA already enabled
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException('L\'authentification à deux facteurs est déjà activée');
+    }
+
+    // Generate secret
+    const secret = speakeasy.generateSecret({
+      name: `ArtiConnect (${user.email})`,
+      length: 32,
+    });
+
+    // Save secret (temporarily, will be confirmed on verification)
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorSecret: secret.base32 },
+    });
+
+    // Return QR code data URL and secret for manual entry
+    return {
+      secret: secret.base32,
+      qrCode: secret.otpauth_url,
+    };
+  }
+
+  async verify2FA(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.twoFactorSecret) {
+      throw new BadRequestException('Configuration 2FA introuvable');
+    }
+
+    // Verify token
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token,
+      window: 2, // Allow 2 steps before/after for clock drift
+    });
+
+    if (!verified) {
+      throw new UnauthorizedException('Code invalide');
+    }
+
+    // Enable 2FA if not already enabled
+    if (!user.twoFactorEnabled) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { twoFactorEnabled: true },
+      });
+
+      // Generate backup codes
+      const backupCodes = Array.from({ length: 10 }, () =>
+        Array.from({ length: 8 }, () =>
+          Math.floor(Math.random() * 10)
+        ).join('')
+      );
+
+      // Hash and store backup codes
+      for (const code of backupCodes) {
+        const hashedCode = await bcrypt.hash(code, 12);
+        await this.prisma.backupCode.create({
+          data: {
+            userId: user.id,
+            code: hashedCode,
+          },
+        });
+      }
+
+      return {
+        message: 'Authentification à deux facteurs activée avec succès',
+        backupCodes,
+      };
+    }
+
+    return { message: 'Code vérifié avec succès' };
+  }
+
+  async disable2FA(userId: string, password: string, token: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    if (!user.twoFactorEnabled) {
+      throw new BadRequestException('L\'authentification à deux facteurs n\'est pas activée');
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      throw new UnauthorizedException('Mot de passe incorrect');
+    }
+
+    // Verify 2FA token
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret!,
+      encoding: 'base32',
+      token,
+      window: 2,
+    });
+
+    if (!verified) {
+      throw new UnauthorizedException('Code 2FA invalide');
+    }
+
+    // Disable 2FA
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+      },
+    });
+
+    // Delete backup codes
+    await this.prisma.backupCode.deleteMany({
+      where: { userId },
+    });
+
+    return { message: 'Authentification à deux facteurs désactivée avec succès' };
   }
 
   sanitizeUser(user: User) {
