@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # ===============================
+  # Databases
+  # ===============================
+  postgres:
+    image: postgres:15-alpine
+    container_name: articonnect-postgres
+    environment:
+      POSTGRES_DB: articonnect
+      POSTGRES_USER: articonnect
+      POSTGRES_PASSWORD: articonnect_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U articonnect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: articonnect-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-network
+
+  mongodb:
+    image: mongo:7
+    container_name: articonnect-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: articonnect
+      MONGO_INITDB_ROOT_PASSWORD: articonnect_dev_password
+      MONGO_INITDB_DATABASE: articonnect
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/articonnect --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-network
+
+  # ===============================
+  # Development Tools
+  # ===============================
+  prisma-studio:
+    build:
+      context: ./backend/shared
+      dockerfile: Dockerfile.studio
+    container_name: articonnect-prisma-studio
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://articonnect:articonnect_dev_password@postgres:5432/articonnect?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - articonnect-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local
+
+networks:
+  articonnect-network:
+    driver: bridge
