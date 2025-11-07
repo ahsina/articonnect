@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist
+build
+.next
+out
+.turbo
+
+# Generated files
+*.tsbuildinfo
+.prisma
+prisma/migrations
+
+# Coverage
+coverage
+.nyc_output
+
+# Logs
+*.log
+logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Misc
+*.min.js
+*.min.css
+public/sw.js
+public/workbox-*.js

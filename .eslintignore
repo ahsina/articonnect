@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+.next
+out
+.turbo
+
+# Generated files
+*.tsbuildinfo
+.prisma
+prisma/migrations
+
+# Coverage
+coverage
+.nyc_output
+
+# Config files
+*.config.js
+*.config.ts
+
+# Environment
+.env
+.env.*
+
+# Misc
+*.min.js
+public/sw.js
+public/workbox-*.js
