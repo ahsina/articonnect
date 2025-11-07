@@ -28,7 +28,7 @@ export class UserService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    const { password, twoFactorSecret, ...sanitized } = user;
+    const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;
   }
 
@@ -91,7 +91,7 @@ export class UserService {
     return artisanProfile;
   }
 
-  async getArtisans(filters?: {
+  async getArtisans(_filters?: {
     specialtyId?: string;
     city?: string;
     minRating?: number;
@@ -114,7 +114,7 @@ export class UserService {
     });
 
     return artisans.map((user) => {
-      const { password, twoFactorSecret, ...sanitized } = user;
+      const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
       return sanitized;
     });
   }
@@ -151,7 +151,7 @@ export class UserService {
       throw new NotFoundException('Artisan introuvable');
     }
 
-    const { password, twoFactorSecret, ...sanitized } = user;
+    const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;
   }
 }

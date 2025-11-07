@@ -1,7 +1,6 @@
 import {
   Injectable,
   UnauthorizedException,
-  BadRequestException,
   ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -246,7 +245,7 @@ export class AuthService {
   }
 
   sanitizeUser(user: User) {
-    const { password, twoFactorSecret, ...sanitized } = user;
+    const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;
   }
 }

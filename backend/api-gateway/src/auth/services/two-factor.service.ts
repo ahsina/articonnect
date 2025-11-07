@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class TwoFactorService {
@@ -49,7 +50,6 @@ export class TwoFactorService {
 
     // Store hashed backup codes
     for (const code of backupCodes) {
-      const bcrypt = require('bcrypt');
       const hashedCode = await bcrypt.hash(code, 10);
       await this.prisma.backupCode.create({
         data: {
