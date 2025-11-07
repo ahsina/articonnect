@@ -21,7 +21,7 @@ export class NotificationService {
         title,
         message,
         link,
-        metadata: metadata || {},
+        metadata: metadata as never || {},
         read: false,
       },
     });

@@ -51,12 +51,14 @@ export class PaymentService {
 
   async handleWebhook(event: Record<string, unknown>) {
     // Handle Stripe webhook events
-    switch (event.type) {
+    const eventData = event as { type: string; data: { object: { id: string; metadata: Record<string, string> } } };
+
+    switch (eventData.type) {
       case 'payment_intent.succeeded':
-        await this.handlePaymentSuccess(event.data.object);
+        await this.handlePaymentSuccess(eventData.data.object);
         break;
       case 'payment_intent.payment_failed':
-        await this.handlePaymentFailed(event.data.object);
+        await this.handlePaymentFailed(eventData.data.object);
         break;
     }
   }

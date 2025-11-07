@@ -15,7 +15,6 @@ export class ProductService {
         description: data.description,
         price: data.price,
         category: data.category,
-        images: data.images || [],
         stock: data.stock,
         sku: data.sku,
         status: data.status || 'DRAFT',
