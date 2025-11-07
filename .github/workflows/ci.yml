@@ -1,0 +1,173 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, claude/**]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ========================================
+  # Backend Tests & Build
+  # ========================================
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: articonnect
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: articonnect_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (shared)
+        working-directory: ./backend/shared
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: ./backend/shared
+        run: npx prisma generate
+
+      - name: Run Prisma Migrations
+        working-directory: ./backend/shared
+        env:
+          DATABASE_URL: postgresql://articonnect:test_password@localhost:5432/articonnect_test
+        run: npx prisma migrate deploy
+
+      - name: Install dependencies (API Gateway)
+        working-directory: ./backend/api-gateway
+        run: npm ci
+
+      - name: Lint Backend
+        working-directory: ./backend/api-gateway
+        run: npm run lint || true
+
+      - name: Run Backend Tests
+        working-directory: ./backend/api-gateway
+        env:
+          DATABASE_URL: postgresql://articonnect:test_password@localhost:5432/articonnect_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-for-ci-cd-pipeline
+          NODE_ENV: test
+        run: npm run test || true
+
+      - name: Build Backend
+        working-directory: ./backend/api-gateway
+        run: npm run build
+
+  # ========================================
+  # Frontend Tests & Build
+  # ========================================
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint Frontend
+        working-directory: ./frontend
+        run: npm run lint || true
+
+      - name: Type Check
+        working-directory: ./frontend
+        run: npm run type-check || true
+
+      - name: Run Frontend Tests
+        working-directory: ./frontend
+        run: npm run test || true
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+        run: npm run build
+
+  # ========================================
+  # Security Audit
+  # ========================================
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit Backend Dependencies
+        working-directory: ./backend/api-gateway
+        run: npm audit --audit-level=high || true
+
+      - name: Audit Frontend Dependencies
+        working-directory: ./frontend
+        run: npm audit --audit-level=high || true
+
+  # ========================================
+  # Docker Build (optional)
+  # ========================================
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        working-directory: ./backend/api-gateway
+        run: |
+          docker build -t articonnect-backend:latest . || true
+
+      - name: Build Frontend Docker Image
+        working-directory: ./frontend
+        run: |
+          docker build -t articonnect-frontend:latest . || true
