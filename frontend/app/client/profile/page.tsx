@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi } from '@/lib/api/user';
+import { authApi } from '@/lib/api/auth';
 
 interface UserProfile {
   id: string;
@@ -103,10 +104,17 @@ export default function ClientProfilePage() {
 
     setSaving(true);
     try {
-      // TODO: Implement change password API endpoint in backend
-      // await authApi.changePassword(passwordData);
+      await authApi.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
 
-      setError('Cette fonctionnalité sera bientôt disponible. L\'API de changement de mot de passe doit d\'abord être implémentée dans le backend.');
+      setMessage('Mot de passe modifié avec succès');
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
     } catch (err: any) {
       console.error('Error changing password:', err);
       setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe');

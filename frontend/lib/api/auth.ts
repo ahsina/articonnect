@@ -15,6 +15,11 @@ export interface LoginData {
   twoFactorToken?: string;
 }
 
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const authApi = {
   register: async (data: RegisterData) => {
     const response = await apiClient.post('/auth/register', data);
@@ -35,6 +40,11 @@ export const authApi = {
 
   getProfile: async () => {
     const response = await apiClient.post('/auth/me');
+    return response.data;
+  },
+
+  changePassword: async (data: ChangePasswordData) => {
+    const response = await apiClient.post('/auth/change-password', data);
     return response.data;
   },
 };

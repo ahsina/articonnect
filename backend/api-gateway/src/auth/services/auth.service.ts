@@ -244,6 +244,42 @@ export class AuthService {
     return { message: 'Déconnexion réussie' };
   }
 
+  async changePassword(userId: string, changePasswordDto: { currentPassword: string; newPassword: string }) {
+    const { currentPassword, newPassword } = changePasswordDto;
+
+    // Get user with password
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      throw new UnauthorizedException('Mot de passe actuel incorrect');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    // Revoke all existing refresh tokens for security
+    await this.prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { revoked: true },
+    });
+
+    return { message: 'Mot de passe modifié avec succès' };
+  }
+
   sanitizeUser(user: User) {
     const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { chatApi } from '@/lib/api/chat';
+import { useSocket } from '@/lib/hooks/useSocket';
 
 interface Message {
   id: string;
@@ -37,6 +38,9 @@ export default function MessagesPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUserId = '1'; // TODO: Get from auth context
 
+  // Socket.IO pour temps réel
+  const { socket, connected, messages: socketMessages, sendMessage: socketSendMessage } = useSocket();
+
   useEffect(() => {
     loadConversations();
   }, []);
@@ -50,6 +54,29 @@ export default function MessagesPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Gérer les nouveaux messages du socket
+  useEffect(() => {
+    if (socketMessages.length > 0) {
+      const latestSocketMessage = socketMessages[socketMessages.length - 1];
+
+      // Vérifier si le message est pour la conversation actuelle
+      if (
+        selectedConversation &&
+        (latestSocketMessage.senderId === selectedConversation ||
+          latestSocketMessage.receiverId === selectedConversation)
+      ) {
+        // Ajouter le message s'il n'existe pas déjà
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.id === latestSocketMessage.id);
+          if (!exists) {
+            return [...prev, { ...latestSocketMessage, createdAt: new Date(latestSocketMessage.createdAt).toISOString() }];
+          }
+          return prev;
+        });
+      }
+    }
+  }, [socketMessages, selectedConversation]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -88,26 +115,25 @@ export default function MessagesPage() {
     if (!newMessage.trim() || !selectedConversation) return;
 
     try {
-      // TODO: Implement WebSocket connection for real-time messaging
-      // The backend uses Socket.IO WebSocket gateway for sending messages
-      // For now, using optimistic update only
-      // WebSocket event: 'send_message' with payload { receiverId, content }
+      if (connected && socketSendMessage) {
+        // Optimistic update
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          content: newMessage,
+          senderId: currentUserId,
+          receiverId: selectedConversation,
+          createdAt: new Date().toISOString(),
+          read: false,
+        };
 
-      // Optimistic update
-      const tempMessage: Message = {
-        id: Date.now().toString(),
-        content: newMessage,
-        senderId: currentUserId,
-        receiverId: selectedConversation,
-        createdAt: new Date().toISOString(),
-        read: false,
-      };
+        setMessages([...messages, tempMessage]);
 
-      setMessages([...messages, tempMessage]);
-      setNewMessage('');
-
-      // In production, this would be sent via WebSocket:
-      // socket.emit('send_message', { receiverId: selectedConversation, content: newMessage });
+        // Envoyer via Socket.IO
+        socketSendMessage(selectedConversation, newMessage);
+        setNewMessage('');
+      } else {
+        console.warn('Socket non connecté, impossible d\'envoyer le message');
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -155,7 +181,20 @@ export default function MessagesPage() {
         {/* Conversations List */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    connected ? 'bg-green-500' : 'bg-gray-400'
+                  }`}
+                  title={connected ? 'Connecté' : 'Déconnecté'}
+                />
+                <span className="text-xs text-gray-500">
+                  {connected ? 'En ligne' : 'Hors ligne'}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
