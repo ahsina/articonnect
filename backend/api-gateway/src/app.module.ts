@@ -7,6 +7,7 @@ import { GeoModule } from './geo/geo.module';
 import { PaymentModule } from './payment/payment.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { AdminModule } from './admin/admin.module';
+import { ChatModule } from './chat/chat.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -25,6 +26,7 @@ import { RedisModule } from './common/redis/redis.module';
     PaymentModule,
     MarketplaceModule,
     AdminModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
