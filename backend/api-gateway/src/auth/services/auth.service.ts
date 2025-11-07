@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
+import { EmailService } from '../../email/services/email.service';
 import * as bcrypt from 'bcrypt';
 import * as speakeasy from 'speakeasy';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
@@ -18,6 +19,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private redis: RedisService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -313,10 +315,8 @@ export class AuthService {
       },
     });
 
-    // TODO: Send email with reset link
-    // For now, just log it (in production, use SendGrid)
-    console.log(`Reset password link: /auth/reset-password?token=${resetToken}`);
-    console.log(`User: ${user.email}`);
+    // Send email with reset link
+    await this.emailService.sendResetPasswordEmail(user.email, resetToken, user.firstName);
 
     return {
       message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
