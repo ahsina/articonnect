@@ -40,4 +40,35 @@ export class StripeService {
       metadata: params.metadata,
     });
   }
+
+  async refundPayment(paymentIntentId: string) {
+    return this.stripe.refunds.create({
+      payment_intent: paymentIntentId,
+    });
+  }
+
+  async createConnectAccount(email: string, country = 'LU') {
+    return this.stripe.accounts.create({
+      type: 'express',
+      country,
+      email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+    });
+  }
+
+  async createConnectAccountLink(accountId: string, returnUrl: string, refreshUrl: string) {
+    return this.stripe.accountLinks.create({
+      account: accountId,
+      return_url: returnUrl,
+      refresh_url: refreshUrl,
+      type: 'account_onboarding',
+    });
+  }
+
+  async getConnectAccount(accountId: string) {
+    return this.stripe.accounts.retrieve(accountId);
+  }
 }

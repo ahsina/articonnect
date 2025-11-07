@@ -10,6 +10,7 @@ import { AdminModule } from './admin/admin.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationModule } from './notification/notification.module';
 import { SpecialtyModule } from './specialty/specialty.module';
+import { ReviewModule } from './review/review.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -28,6 +29,7 @@ import { RedisModule } from './common/redis/redis.module';
     PaymentModule,
     MarketplaceModule,
     SpecialtyModule,
+    ReviewModule,
     AdminModule,
     ChatModule,
     NotificationModule,
