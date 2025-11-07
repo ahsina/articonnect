@@ -70,6 +70,10 @@ model User {
   givenReviews    Review[] @relation("GivenReviews")
   receivedReviews Review[] @relation("ReceivedReviews")
 
+  // Disputes
+  disputesCreated  Dispute[] @relation("DisputesCreated")
+  disputesResolved Dispute[] @relation("DisputesResolved")
+
   // Marketplace
   products Product[]
   orders   Order[]
@@ -265,6 +269,7 @@ model Mission {
   negotiations Negotiation[]
   transaction  Transaction?
   review       Review?
+  disputes     Dispute[]
 
   // Timestamps
   createdAt   DateTime  @default(now())
@@ -323,6 +328,48 @@ model Review {
 
   @@index([reviewedId])
   @@index([overallRating])
+}
+
+// ================================
+// DISPUTES
+// ================================
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+  CANCELLED
+}
+
+enum DisputePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Dispute {
+  id            String          @id @default(uuid())
+  missionId     String
+  mission       Mission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdById   String
+  createdBy     User            @relation("DisputesCreated", fields: [createdById], references: [id])
+  reason        String
+  description   String
+  status        DisputeStatus   @default(OPEN)
+  priority      DisputePriority @default(MEDIUM)
+  resolution    String?
+  resolvedById  String?
+  resolvedBy    User?           @relation("DisputesResolved", fields: [resolvedById], references: [id])
+  resolvedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([missionId])
+  @@index([createdById])
+  @@index([status])
+  @@index([priority])
 }
 
 // ================================

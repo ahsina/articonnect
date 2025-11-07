@@ -12,6 +12,7 @@ import { NotificationModule } from './notification/notification.module';
 import { SpecialtyModule } from './specialty/specialty.module';
 import { ReviewModule } from './review/review.module';
 import { UploadModule } from './upload/upload.module';
+import { DisputeModule } from './dispute/dispute.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -32,6 +33,7 @@ import { RedisModule } from './common/redis/redis.module';
     SpecialtyModule,
     ReviewModule,
     UploadModule,
+    DisputeModule,
     AdminModule,
     ChatModule,
     NotificationModule,
