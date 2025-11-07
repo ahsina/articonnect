@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { userApi } from '@/lib/api/user';
 
 interface UserProfile {
   id: string;
@@ -47,34 +48,20 @@ export default function ClientProfilePage() {
 
   const loadProfile = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await userApi.getProfile();
+      const data = await userApi.getProfile();
 
-      // Mock data
-      const mockProfile: UserProfile = {
-        id: '1',
-        email: 'jean.dupont@example.com',
-        firstName: 'Jean',
-        lastName: 'Dupont',
-        phone: '+352 621 234 567',
-        address: '10 Rue de la Gare',
-        city: 'Luxembourg',
-        postalCode: '1234',
-        country: 'LU',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean',
-      };
-
-      setProfile(mockProfile);
+      setProfile(data);
       setFormData({
-        firstName: mockProfile.firstName,
-        lastName: mockProfile.lastName,
-        phone: mockProfile.phone,
-        address: mockProfile.address || '',
-        city: mockProfile.city || '',
-        postalCode: mockProfile.postalCode || '',
-        country: mockProfile.country || 'LU',
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        city: data.city || '',
+        postalCode: data.postalCode || '',
+        country: data.country || 'LU',
       });
     } catch (err) {
+      console.error('Error loading profile:', err);
       setError('Erreur lors du chargement du profil');
     } finally {
       setLoading(false);
@@ -88,13 +75,12 @@ export default function ClientProfilePage() {
     setSaving(true);
 
     try {
-      // TODO: Replace with actual API call
-      // await userApi.updateProfile(formData);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const updatedProfile = await userApi.updateProfile(formData);
+      setProfile(updatedProfile);
       setMessage('Profil mis à jour avec succès');
-    } catch (err) {
-      setError('Erreur lors de la mise à jour du profil');
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError(err.response?.data?.message || 'Erreur lors de la mise à jour du profil');
     } finally {
       setSaving(false);
     }
@@ -117,18 +103,13 @@ export default function ClientProfilePage() {
 
     setSaving(true);
     try {
-      // TODO: Replace with actual API call
+      // TODO: Implement change password API endpoint in backend
       // await authApi.changePassword(passwordData);
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setMessage('Mot de passe modifié avec succès');
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-    } catch (err) {
-      setError('Erreur lors du changement de mot de passe');
+      setError('Cette fonctionnalité sera bientôt disponible. L\'API de changement de mot de passe doit d\'abord être implémentée dans le backend.');
+    } catch (err: any) {
+      console.error('Error changing password:', err);
+      setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
     } finally {
       setSaving(false);
     }

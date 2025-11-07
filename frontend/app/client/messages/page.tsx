@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { chatApi } from '@/lib/api/chat';
 
 interface Message {
   id: string;
@@ -15,13 +16,13 @@ interface Message {
 }
 
 interface Conversation {
-  id: string;
-  otherUser: {
+  userId: string; // ID de l'autre utilisateur
+  user: {
     id: string;
     firstName: string;
     lastName: string;
     avatar?: string;
-    role: string;
+    role?: string;
   };
   lastMessage?: Message;
   unreadCount: number;
@@ -56,54 +57,11 @@ export default function MessagesPage() {
 
   const loadConversations = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await chatApi.getConversations();
+      const data = await chatApi.getConversations();
 
-      // Mock data
-      const mockConversations: Conversation[] = [
-        {
-          id: '1',
-          otherUser: {
-            id: '2',
-            firstName: 'Marc',
-            lastName: 'Plombier',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marc',
-            role: 'ARTISAN',
-          },
-          lastMessage: {
-            id: '1',
-            content: 'Bonjour, je peux venir demain à 14h',
-            senderId: '2',
-            receiverId: '1',
-            createdAt: '2024-01-20T14:30:00Z',
-            read: false,
-          },
-          unreadCount: 2,
-        },
-        {
-          id: '2',
-          otherUser: {
-            id: '3',
-            firstName: 'Sophie',
-            lastName: 'Électricienne',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie',
-            role: 'ARTISAN',
-          },
-          lastMessage: {
-            id: '2',
-            content: 'Merci pour votre confiance !',
-            senderId: '1',
-            receiverId: '3',
-            createdAt: '2024-01-19T10:00:00Z',
-            read: true,
-          },
-          unreadCount: 0,
-        },
-      ];
-
-      setConversations(mockConversations);
-      if (mockConversations.length > 0) {
-        setSelectedConversation(mockConversations[0].id);
+      setConversations(data);
+      if (data.length > 0) {
+        setSelectedConversation(data[0].userId);
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
@@ -112,56 +70,13 @@ export default function MessagesPage() {
     }
   };
 
-  const loadMessages = async (conversationId: string) => {
+  const loadMessages = async (userId: string) => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await chatApi.getMessages(conversationId);
+      const data = await chatApi.getConversation(userId, 100);
+      setMessages(data);
 
-      // Mock data
-      const mockMessages: Message[] = [
-        {
-          id: '1',
-          content: 'Bonjour, j\'ai besoin de réparer une fuite d\'eau',
-          senderId: '1',
-          receiverId: '2',
-          createdAt: '2024-01-20T10:00:00Z',
-          read: true,
-        },
-        {
-          id: '2',
-          content: 'Bonjour ! Je peux me déplacer aujourd\'hui ou demain. Quelle est votre disponibilité ?',
-          senderId: '2',
-          receiverId: '1',
-          createdAt: '2024-01-20T10:15:00Z',
-          read: true,
-        },
-        {
-          id: '3',
-          content: 'Demain serait parfait. Vous pouvez venir vers 14h ?',
-          senderId: '1',
-          receiverId: '2',
-          createdAt: '2024-01-20T11:00:00Z',
-          read: true,
-        },
-        {
-          id: '4',
-          content: 'Bonjour, je peux venir demain à 14h',
-          senderId: '2',
-          receiverId: '1',
-          createdAt: '2024-01-20T14:30:00Z',
-          read: false,
-        },
-        {
-          id: '5',
-          content: 'N\'oubliez pas l\'adresse: 10 Rue de la Gare, Luxembourg',
-          senderId: '2',
-          receiverId: '1',
-          createdAt: '2024-01-20T14:31:00Z',
-          read: false,
-        },
-      ];
-
-      setMessages(mockMessages);
+      // Mark conversation as read
+      await chatApi.markAsRead(userId);
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -173,21 +88,26 @@ export default function MessagesPage() {
     if (!newMessage.trim() || !selectedConversation) return;
 
     try {
-      // TODO: Replace with actual API call
-      // await chatApi.sendMessage(selectedConversation, newMessage);
+      // TODO: Implement WebSocket connection for real-time messaging
+      // The backend uses Socket.IO WebSocket gateway for sending messages
+      // For now, using optimistic update only
+      // WebSocket event: 'send_message' with payload { receiverId, content }
 
       // Optimistic update
       const tempMessage: Message = {
         id: Date.now().toString(),
         content: newMessage,
         senderId: currentUserId,
-        receiverId: conversations.find((c) => c.id === selectedConversation)?.otherUser.id || '',
+        receiverId: selectedConversation,
         createdAt: new Date().toISOString(),
         read: false,
       };
 
       setMessages([...messages, tempMessage]);
       setNewMessage('');
+
+      // In production, this would be sent via WebSocket:
+      // socket.emit('send_message', { receiverId: selectedConversation, content: newMessage });
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -219,7 +139,7 @@ export default function MessagesPage() {
     }
   };
 
-  const selectedConv = conversations.find((c) => c.id === selectedConversation);
+  const selectedConv = conversations.find((c) => c.userId === selectedConversation);
 
   if (loading) {
     return (
@@ -247,21 +167,21 @@ export default function MessagesPage() {
               <div>
                 {conversations.map((conv) => (
                   <button
-                    key={conv.id}
-                    onClick={() => setSelectedConversation(conv.id)}
+                    key={conv.userId}
+                    onClick={() => setSelectedConversation(conv.userId)}
                     className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 border-b border-gray-100 transition-colors ${
-                      selectedConversation === conv.id ? 'bg-blue-50' : ''
+                      selectedConversation === conv.userId ? 'bg-blue-50' : ''
                     }`}
                   >
                     <img
-                      src={conv.otherUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                      alt={conv.otherUser.firstName}
+                      src={conv.user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                      alt={conv.user.firstName}
                       className="w-12 h-12 rounded-full flex-shrink-0"
                     />
                     <div className="flex-1 text-left min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-semibold text-gray-900 truncate">
-                          {conv.otherUser.firstName} {conv.otherUser.lastName}
+                          {conv.user.firstName} {conv.user.lastName}
                         </span>
                         {conv.unreadCount > 0 && (
                           <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
@@ -294,16 +214,16 @@ export default function MessagesPage() {
               {/* Chat Header */}
               <div className="bg-white border-b border-gray-200 p-4 flex items-center gap-3">
                 <img
-                  src={selectedConv.otherUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                  alt={selectedConv.otherUser.firstName}
+                  src={selectedConv.user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                  alt={selectedConv.user.firstName}
                   className="w-10 h-10 rounded-full"
                 />
                 <div>
                   <h2 className="font-semibold text-gray-900">
-                    {selectedConv.otherUser.firstName} {selectedConv.otherUser.lastName}
+                    {selectedConv.user.firstName} {selectedConv.user.lastName}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    {selectedConv.otherUser.role === 'ARTISAN' ? 'Artisan' : 'Client'}
+                    {selectedConv.user.role === 'ARTISAN' ? 'Artisan' : 'Client'}
                   </p>
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { marketplaceApi } from '@/lib/api/marketplace';
 
 interface OrderItem {
   id: string;
@@ -68,151 +69,15 @@ export default function ClientOrdersPage() {
 
   const loadOrders = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await ordersApi.getMyOrders();
-
-      // Mock data
-      const mockOrders: Order[] = [
-        {
-          id: '1',
-          orderNumber: 'CMD-2024-001',
-          status: 'DELIVERED',
-          totalAmount: 850,
-          items: [
-            {
-              id: '1',
-              productId: 'p1',
-              productName: 'Table en chêne massif',
-              productImage: 'https://via.placeholder.com/150?text=Table',
-              quantity: 1,
-              price: 850,
-            },
-          ],
-          artisan: {
-            id: 'a1',
-            firstName: 'Marc',
-            lastName: 'Menuisier',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marc',
-          },
-          shippingAddress: {
-            address: '10 Rue de la Gare',
-            city: 'Luxembourg',
-            postalCode: '1234',
-            country: 'LU',
-          },
-          createdAt: '2024-01-10T10:00:00Z',
-          updatedAt: '2024-01-15T14:30:00Z',
-          deliveredAt: '2024-01-15T14:30:00Z',
-          trackingNumber: 'LU123456789',
-        },
-        {
-          id: '2',
-          orderNumber: 'CMD-2024-002',
-          status: 'SHIPPED',
-          totalAmount: 240,
-          items: [
-            {
-              id: '2',
-              productId: 'p2',
-              productName: 'Étagère murale bois',
-              productImage: 'https://via.placeholder.com/150?text=Etagere',
-              quantity: 2,
-              price: 120,
-            },
-          ],
-          artisan: {
-            id: 'a1',
-            firstName: 'Marc',
-            lastName: 'Menuisier',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marc',
-          },
-          shippingAddress: {
-            address: '10 Rue de la Gare',
-            city: 'Luxembourg',
-            postalCode: '1234',
-            country: 'LU',
-          },
-          createdAt: '2024-01-18T09:00:00Z',
-          updatedAt: '2024-01-20T11:00:00Z',
-          trackingNumber: 'LU987654321',
-        },
-        {
-          id: '3',
-          orderNumber: 'CMD-2024-003',
-          status: 'CONFIRMED',
-          totalAmount: 350,
-          items: [
-            {
-              id: '3',
-              productId: 'p3',
-              productName: 'Set d\'outils professionnel',
-              productImage: 'https://via.placeholder.com/150?text=Outils',
-              quantity: 1,
-              price: 350,
-            },
-          ],
-          artisan: {
-            id: 'a2',
-            firstName: 'Sophie',
-            lastName: 'Artisan',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie',
-          },
-          shippingAddress: {
-            address: '10 Rue de la Gare',
-            city: 'Luxembourg',
-            postalCode: '1234',
-            country: 'LU',
-          },
-          createdAt: '2024-01-20T15:00:00Z',
-          updatedAt: '2024-01-20T16:00:00Z',
-        },
-        {
-          id: '4',
-          orderNumber: 'CMD-2024-004',
-          status: 'PENDING',
-          totalAmount: 185,
-          items: [
-            {
-              id: '4',
-              productId: 'p4',
-              productName: 'Lampe artisanale',
-              productImage: 'https://via.placeholder.com/150?text=Lampe',
-              quantity: 1,
-              price: 95,
-            },
-            {
-              id: '5',
-              productId: 'p5',
-              productName: 'Cadre photo bois',
-              productImage: 'https://via.placeholder.com/150?text=Cadre',
-              quantity: 3,
-              price: 30,
-            },
-          ],
-          artisan: {
-            id: 'a3',
-            firstName: 'Pierre',
-            lastName: 'Créateur',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pierre',
-          },
-          shippingAddress: {
-            address: '10 Rue de la Gare',
-            city: 'Luxembourg',
-            postalCode: '1234',
-            country: 'LU',
-          },
-          createdAt: '2024-01-21T10:00:00Z',
-          updatedAt: '2024-01-21T10:00:00Z',
-        },
-      ];
-
-      setOrders(mockOrders);
+      const data = await marketplaceApi.getOrders();
+      setOrders(data);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {
       setLoading(false);
     }
   };
+
 
   const filteredOrders = orders.filter(
     (order) => filter === 'all' || order.status === filter
@@ -233,8 +98,7 @@ export default function ClientOrdersPage() {
     if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
 
     try {
-      // TODO: Replace with actual API call
-      // await ordersApi.cancelOrder(orderId);
+      await marketplaceApi.updateOrderStatus(orderId, 'CANCELLED');
 
       setOrders(
         orders.map((o) =>

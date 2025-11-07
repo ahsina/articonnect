@@ -43,6 +43,11 @@ export const missionsApi = {
     return response.data;
   },
 
+  updateStatus: async (id: string, status: string) => {
+    const response = await apiClient.put(`/missions/${id}/status`, { status });
+    return response.data;
+  },
+
   createNegotiation: async (missionId: string, data: Record<string, unknown>) => {
     const response = await apiClient.post(`/missions/${missionId}/negotiations`, data);
     return response.data;

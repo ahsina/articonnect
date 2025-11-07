@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { missionsApi } from '@/lib/api/missions';
 
 interface Mission {
   id: string;
@@ -54,90 +55,8 @@ export default function ArtisanMissionsPage() {
 
   const loadMissions = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await missionsApi.getArtisanMissions();
-
-      // Mock data
-      const mockMissions: Mission[] = [
-        {
-          id: '1',
-          title: 'Réparer fuite d\'eau',
-          description: 'Fuite importante sous l\'évier de la cuisine',
-          category: 'Plomberie',
-          status: 'PENDING',
-          price: 150,
-          client: {
-            firstName: 'Jean',
-            lastName: 'Dupont',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean',
-            city: 'Luxembourg',
-          },
-          address: '10 Rue de la Gare',
-          city: 'Luxembourg',
-          scheduledDate: '2024-01-25T14:00:00Z',
-          createdAt: '2024-01-20T10:00:00Z',
-          distance: 2.5,
-        },
-        {
-          id: '2',
-          title: 'Installation chauffe-eau',
-          description: 'Installer un nouveau chauffe-eau électrique 200L',
-          category: 'Plomberie',
-          status: 'ACCEPTED',
-          price: 450,
-          client: {
-            firstName: 'Marie',
-            lastName: 'Martin',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marie',
-            city: 'Luxembourg',
-          },
-          address: '25 Avenue de la Liberté',
-          city: 'Luxembourg',
-          scheduledDate: '2024-01-22T10:00:00Z',
-          createdAt: '2024-01-18T15:00:00Z',
-          distance: 5.2,
-        },
-        {
-          id: '3',
-          title: 'Débouchage canalisation',
-          description: 'Toilettes bouchées au 2ème étage',
-          category: 'Plomberie',
-          status: 'IN_PROGRESS',
-          price: 120,
-          client: {
-            firstName: 'Sophie',
-            lastName: 'Bernard',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie',
-            city: 'Esch-sur-Alzette',
-          },
-          address: '15 Rue du Commerce',
-          city: 'Esch-sur-Alzette',
-          scheduledDate: '2024-01-21T09:00:00Z',
-          createdAt: '2024-01-19T11:00:00Z',
-          distance: 15.8,
-        },
-        {
-          id: '4',
-          title: 'Rénovation salle de bain',
-          description: 'Remplacement lavabo et robinetterie',
-          category: 'Plomberie',
-          status: 'COMPLETED',
-          price: 580,
-          client: {
-            firstName: 'Pierre',
-            lastName: 'Dubois',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pierre',
-            city: 'Luxembourg',
-          },
-          address: '8 Boulevard Royal',
-          city: 'Luxembourg',
-          scheduledDate: '2024-01-15T14:00:00Z',
-          createdAt: '2024-01-10T09:00:00Z',
-          distance: 3.1,
-        },
-      ];
-
-      setMissions(mockMissions);
+      const data = await missionsApi.getAll();
+      setMissions(data);
     } catch (error) {
       console.error('Error loading missions:', error);
     } finally {
@@ -151,8 +70,7 @@ export default function ArtisanMissionsPage() {
 
   const handleAcceptMission = async (missionId: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await missionsApi.accept(missionId);
+      await missionsApi.accept(missionId);
 
       setMissions(
         missions.map((m) =>
@@ -166,8 +84,7 @@ export default function ArtisanMissionsPage() {
 
   const handleStartMission = async (missionId: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await missionsApi.start(missionId);
+      await missionsApi.updateStatus(missionId, 'IN_PROGRESS');
 
       setMissions(
         missions.map((m) =>

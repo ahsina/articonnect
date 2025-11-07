@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { marketplaceApi } from '@/lib/api/marketplace';
 
 interface Product {
   id: string;
@@ -41,47 +42,9 @@ export default function ArtisanProductsPage() {
 
   const loadProducts = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await marketplaceApi.getMyProducts();
-
-      // Mock data
-      const mockProducts: Product[] = [
-        {
-          id: '1',
-          name: 'Table en chêne massif',
-          description: 'Belle table artisanale en chêne massif, 160x90cm',
-          price: 850,
-          stock: 3,
-          category: 'furniture',
-          images: ['https://via.placeholder.com/300x200?text=Table'],
-          active: true,
-          createdAt: '2024-01-15T10:00:00Z',
-        },
-        {
-          id: '2',
-          name: 'Étagère murale bois',
-          description: 'Étagère murale en bois recyclé, 120cm',
-          price: 120,
-          stock: 8,
-          category: 'furniture',
-          images: ['https://via.placeholder.com/300x200?text=Etagere'],
-          active: true,
-          createdAt: '2024-01-10T14:00:00Z',
-        },
-        {
-          id: '3',
-          name: 'Set d\'outils professionnel',
-          description: 'Coffret complet 120 pièces',
-          price: 350,
-          stock: 0,
-          category: 'tools',
-          images: ['https://via.placeholder.com/300x200?text=Outils'],
-          active: false,
-          createdAt: '2024-01-05T09:00:00Z',
-        },
-      ];
-
-      setProducts(mockProducts);
+      // Get products for current artisan (artisanId will be determined by auth token)
+      const data = await marketplaceApi.getProducts();
+      setProducts(data);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
@@ -91,8 +54,10 @@ export default function ArtisanProductsPage() {
 
   const handleToggleActive = async (productId: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await marketplaceApi.toggleProductStatus(productId);
+      const product = products.find((p) => p.id === productId);
+      if (!product) return;
+
+      await marketplaceApi.updateProduct(productId, { active: !product.active } as any);
 
       setProducts(
         products.map((p) =>
@@ -108,9 +73,7 @@ export default function ArtisanProductsPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
 
     try {
-      // TODO: Replace with actual API call
-      // await marketplaceApi.deleteProduct(productId);
-
+      await marketplaceApi.deleteProduct(productId);
       setProducts(products.filter((p) => p.id !== productId));
     } catch (error) {
       console.error('Error deleting product:', error);
