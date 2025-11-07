@@ -72,6 +72,14 @@ export class MissionController {
     return this.missionService.findOne(id, req.user.userId);
   }
 
+  @Get(':id/tracking')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get mission tracking history/timeline' })
+  async getTracking(@Request() req, @Param('id') id: string) {
+    return this.missionService.getMissionTracking(id, req.user.userId);
+  }
+
   @Put(':id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

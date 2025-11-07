@@ -14,6 +14,8 @@ import { ReviewModule } from './review/review.module';
 import { UploadModule } from './upload/upload.module';
 import { DisputeModule } from './dispute/dispute.module';
 import { AddressModule } from './address/address.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { CertificationModule } from './certification/certification.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -36,6 +38,8 @@ import { RedisModule } from './common/redis/redis.module';
     UploadModule,
     DisputeModule,
     AddressModule,
+    FavoriteModule,
+    CertificationModule,
     AdminModule,
     ChatModule,
     NotificationModule,

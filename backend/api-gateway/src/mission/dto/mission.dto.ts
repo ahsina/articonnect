@@ -76,4 +76,9 @@ export class UpdateMissionStatusDto {
   @ApiProperty({ enum: MissionStatus })
   @IsEnum(MissionStatus)
   status: MissionStatus;
+
+  @ApiProperty({ required: false, description: 'Optional note about the status change' })
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

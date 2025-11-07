@@ -15,6 +15,16 @@ export class AdminController {
     return this.adminService.getDashboardStats();
   }
 
+  @Get('stats/revenue')
+  async getRevenueStats(@Query('period') period?: 'day' | 'week' | 'month' | 'year') {
+    return this.adminService.getRevenueStats(period);
+  }
+
+  @Get('stats/growth')
+  async getUserGrowth() {
+    return this.adminService.getUserGrowthStats();
+  }
+
   @Get('users')
   async getUsers(
     @Query('page') page?: number,

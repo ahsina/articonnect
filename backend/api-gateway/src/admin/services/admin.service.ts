@@ -10,25 +10,125 @@ export class AdminService {
       totalUsers,
       totalMissions,
       totalArtisans,
+      totalClients,
       activeMissions,
+      completedMissions,
+      pendingMissions,
       totalRevenue,
+      totalTransactions,
+      activeDisputes,
+      totalProducts,
+      totalReviews,
+      avgRating,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.mission.count(),
       this.prisma.user.count({ where: { role: 'ARTISAN' } }),
+      this.prisma.user.count({ where: { role: 'CLIENT' } }),
       this.prisma.mission.count({ where: { status: 'IN_PROGRESS' } }),
+      this.prisma.mission.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.mission.count({ where: { status: 'PENDING' } }),
       this.prisma.transaction.aggregate({
         _sum: { commission: true },
         where: { status: 'COMPLETED' },
       }),
+      this.prisma.transaction.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.dispute.count({ where: { status: { in: ['OPEN', 'IN_REVIEW'] } } }),
+      this.prisma.product.count(),
+      this.prisma.review.count(),
+      this.prisma.review.aggregate({ _avg: { overallRating: true } }),
     ]);
 
     return {
-      totalUsers,
-      totalMissions,
-      totalArtisans,
-      activeMissions,
-      totalRevenue: totalRevenue._sum.commission || 0,
+      users: {
+        total: totalUsers,
+        artisans: totalArtisans,
+        clients: totalClients,
+      },
+      missions: {
+        total: totalMissions,
+        active: activeMissions,
+        completed: completedMissions,
+        pending: pendingMissions,
+      },
+      revenue: {
+        totalCommission: totalRevenue._sum.commission || 0,
+        totalTransactions,
+      },
+      disputes: {
+        active: activeDisputes,
+      },
+      marketplace: {
+        totalProducts,
+      },
+      reviews: {
+        total: totalReviews,
+        averageRating: avgRating._avg.overallRating || 0,
+      },
+    };
+  }
+
+  async getRevenueStats(period: 'day' | 'week' | 'month' | 'year' = 'month') {
+    const now = new Date();
+    let startDate = new Date();
+
+    switch (period) {
+      case 'day':
+        startDate.setDate(now.getDate() - 1);
+        break;
+      case 'week':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+    }
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        status: 'COMPLETED',
+        createdAt: { gte: startDate },
+      },
+      select: {
+        commission: true,
+        amount: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const totalCommission = transactions.reduce((sum, t) => sum + Number(t.commission), 0);
+    const totalVolume = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+
+    return {
+      period,
+      startDate,
+      endDate: now,
+      totalCommission,
+      totalVolume,
+      transactionCount: transactions.length,
+      transactions,
+    };
+  }
+
+  async getUserGrowthStats() {
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+
+    const usersByDay = await this.prisma.user.groupBy({
+      by: ['createdAt'],
+      where: {
+        createdAt: { gte: last30Days },
+      },
+      _count: true,
+    });
+
+    return {
+      period: 'last30Days',
+      data: usersByDay,
     };
   }
 

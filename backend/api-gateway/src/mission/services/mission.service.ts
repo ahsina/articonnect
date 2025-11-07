@@ -45,6 +45,15 @@ export class MissionService {
       },
     });
 
+    // Create initial history entry
+    await this.createHistoryEntry(
+      mission.id,
+      mission.status,
+      userId,
+      'CLIENT',
+      'Mission créée',
+    );
+
     // Trigger matching algorithm to find nearby artisans
     await this.findAndNotifyNearbyArtisans(mission);
 
@@ -154,6 +163,12 @@ export class MissionService {
     // Validate status transitions
     this.validateStatusTransition(mission.status, updateDto.status);
 
+    // Get user role for history tracking
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
     const updated = await this.prisma.mission.update({
       where: { id: missionId },
       data: {
@@ -172,6 +187,15 @@ export class MissionService {
         }),
       },
     });
+
+    // Create history entry
+    await this.createHistoryEntry(
+      missionId,
+      updateDto.status,
+      userId,
+      user?.role || 'CLIENT',
+      updateDto.note,
+    );
 
     return updated;
   }
@@ -196,6 +220,15 @@ export class MissionService {
         status: MissionStatus.NEGOTIATING,
       },
     });
+
+    // Create history entry
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.NEGOTIATING,
+      artisanId,
+      'ARTISAN',
+      'Artisan a accepté la mission',
+    );
 
     // TODO: Send notification to client
 
@@ -370,5 +403,63 @@ export class MissionService {
 
   private toRad(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Create a history entry for mission status changes
+   */
+  private async createHistoryEntry(
+    missionId: string,
+    status: MissionStatus,
+    changedBy: string,
+    changedByRole: string,
+    note?: string,
+  ) {
+    await this.prisma.missionHistory.create({
+      data: {
+        missionId,
+        status,
+        changedBy,
+        changedByRole,
+        note,
+      },
+    });
+  }
+
+  /**
+   * Get mission tracking history/timeline
+   */
+  async getMissionTracking(missionId: string, userId: string) {
+    // Verify user has access to this mission
+    await this.findOne(missionId, userId);
+
+    const history = await this.prisma.missionHistory.findMany({
+      where: { missionId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      select: {
+        status: true,
+        createdAt: true,
+        acceptedAt: true,
+        startedAt: true,
+        completedAt: true,
+        cancelledAt: true,
+      },
+    });
+
+    return {
+      currentStatus: mission?.status,
+      timeline: history,
+      milestones: {
+        created: mission?.createdAt,
+        accepted: mission?.acceptedAt,
+        started: mission?.startedAt,
+        completed: mission?.completedAt,
+        cancelled: mission?.cancelledAt,
+      },
+    };
   }
 }

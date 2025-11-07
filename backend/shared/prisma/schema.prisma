@@ -270,6 +270,7 @@ model Mission {
   transaction  Transaction?
   review       Review?
   disputes     Dispute[]
+  history      MissionHistory[]
 
   // Timestamps
   createdAt   DateTime  @default(now())
@@ -284,6 +285,20 @@ model Mission {
   @@index([status])
   @@index([type])
   @@index([latitude, longitude])
+  @@index([createdAt])
+}
+
+model MissionHistory {
+  id          String        @id @default(uuid())
+  missionId   String
+  mission     Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  status      MissionStatus
+  changedBy   String        // userId who made the change
+  changedByRole String      // ARTISAN, CLIENT, or ADMIN
+  note        String?       // Optional note about the change
+  createdAt   DateTime      @default(now())
+
+  @@index([missionId])
   @@index([createdAt])
 }
 
