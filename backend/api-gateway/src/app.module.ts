@@ -8,6 +8,7 @@ import { PaymentModule } from './payment/payment.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { AdminModule } from './admin/admin.module';
 import { ChatModule } from './chat/chat.module';
+import { NotificationModule } from './notification/notification.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -27,6 +28,7 @@ import { RedisModule } from './common/redis/redis.module';
     MarketplaceModule,
     AdminModule,
     ChatModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

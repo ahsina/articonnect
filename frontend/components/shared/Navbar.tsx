@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useState, useEffect } from 'react';
 
 interface NavbarProps {
@@ -88,6 +89,8 @@ export function Navbar({ user }: NavbarProps) {
                     </Link>
                   </>
                 )}
+
+                <NotificationBell />
 
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">

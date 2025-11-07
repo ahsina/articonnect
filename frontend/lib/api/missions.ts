@@ -11,8 +11,23 @@ export const missionsApi = {
     return response.data;
   },
 
+  getById: async (id: string) => {
+    const response = await apiClient.get(`/missions/${id}`);
+    return response.data;
+  },
+
   create: async (data: any) => {
     const response = await apiClient.post('/missions', data);
+    return response.data;
+  },
+
+  cancel: async (id: string) => {
+    const response = await apiClient.post(`/missions/${id}/cancel`);
+    return response.data;
+  },
+
+  complete: async (id: string) => {
+    const response = await apiClient.post(`/missions/${id}/complete`);
     return response.data;
   },
 
