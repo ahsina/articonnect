@@ -11,6 +11,7 @@ import { ChatModule } from './chat/chat.module';
 import { NotificationModule } from './notification/notification.module';
 import { SpecialtyModule } from './specialty/specialty.module';
 import { ReviewModule } from './review/review.module';
+import { UploadModule } from './upload/upload.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -30,6 +31,7 @@ import { RedisModule } from './common/redis/redis.module';
     MarketplaceModule,
     SpecialtyModule,
     ReviewModule,
+    UploadModule,
     AdminModule,
     ChatModule,
     NotificationModule,
