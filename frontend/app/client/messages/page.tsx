@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { chatApi } from '@/lib/api/chat';
 import { useSocket } from '@/lib/hooks/useSocket';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/lib/hooks/useToast';
 
 interface Message {
   id: string;
@@ -30,13 +32,13 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentUserId = '1'; // TODO: Get from auth context
 
   // Socket.IO pour temps réel
   const { socket, connected, messages: socketMessages, sendMessage: socketSendMessage } = useSocket();
@@ -112,7 +114,7 @@ export default function MessagesPage() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim() || !selectedConversation || !user) return;
 
     try {
       if (connected && socketSendMessage) {
@@ -120,7 +122,7 @@ export default function MessagesPage() {
         const tempMessage: Message = {
           id: `temp-${Date.now()}`,
           content: newMessage,
-          senderId: currentUserId,
+          senderId: user.id,
           receiverId: selectedConversation,
           createdAt: new Date().toISOString(),
           read: false,
@@ -132,10 +134,19 @@ export default function MessagesPage() {
         socketSendMessage(selectedConversation, newMessage);
         setNewMessage('');
       } else {
-        console.warn('Socket non connecté, impossible d\'envoyer le message');
+        toast({
+          title: 'Erreur',
+          description: 'Socket non connecté. Veuillez rafraîchir la page.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'envoyer le message',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -270,7 +281,7 @@ export default function MessagesPage() {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((message) => {
-                  const isOwn = message.senderId === currentUserId;
+                  const isOwn = message.senderId === user?.id;
                   return (
                     <div
                       key={message.id}

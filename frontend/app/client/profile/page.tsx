@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi } from '@/lib/api/user';
 import { authApi } from '@/lib/api/auth';
+import { toast } from '@/lib/hooks/useToast';
 
 interface UserProfile {
   id: string;
@@ -78,10 +79,20 @@ export default function ClientProfilePage() {
     try {
       const updatedProfile = await userApi.updateProfile(formData);
       setProfile(updatedProfile);
-      setMessage('Profil mis à jour avec succès');
+      toast({
+        title: 'Succès',
+        description: 'Profil mis à jour avec succès',
+        variant: 'success',
+      });
     } catch (err: any) {
       console.error('Error updating profile:', err);
-      setError(err.response?.data?.message || 'Erreur lors de la mise à jour du profil');
+      const errorMessage = err.response?.data?.message || 'Erreur lors de la mise à jour du profil';
+      setError(errorMessage);
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
@@ -93,12 +104,20 @@ export default function ClientProfilePage() {
     setMessage('');
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      toast({
+        title: 'Erreur',
+        description: 'Les mots de passe ne correspondent pas',
+        variant: 'destructive',
+      });
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+      toast({
+        title: 'Erreur',
+        description: 'Le mot de passe doit contenir au moins 8 caractères',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -109,7 +128,11 @@ export default function ClientProfilePage() {
         newPassword: passwordData.newPassword,
       });
 
-      setMessage('Mot de passe modifié avec succès');
+      toast({
+        title: 'Succès',
+        description: 'Mot de passe modifié avec succès',
+        variant: 'success',
+      });
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -117,7 +140,12 @@ export default function ClientProfilePage() {
       });
     } catch (err: any) {
       console.error('Error changing password:', err);
-      setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
+      const errorMessage = err.response?.data?.message || 'Erreur lors du changement de mot de passe';
+      toast({
+        title: 'Erreur',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
