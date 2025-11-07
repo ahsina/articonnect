@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { UpdateProfileDto, CreateArtisanProfileDto } from '../dto/user.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -96,10 +97,7 @@ export class UserService {
     city?: string;
     minRating?: number;
   }) {
-    const where: {
-      role: string;
-      status: string;
-    } = {
+    const where: Prisma.UserWhereInput = {
       role: 'ARTISAN',
       status: 'ACTIVE',
     };

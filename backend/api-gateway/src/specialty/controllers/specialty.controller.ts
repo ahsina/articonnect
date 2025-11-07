@@ -3,6 +3,8 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagg
 import { SpecialtyService } from '../services/specialty.service';
 import { CreateSpecialtyDto, UpdateSpecialtyDto } from '../dto/specialty.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 
 @ApiTags('Specialties')
 @Controller('specialties')
@@ -32,9 +34,10 @@ export class SpecialtyController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new specialty (Admin only - TODO: add RolesGuard)' })
+  @ApiOperation({ summary: 'Create a new specialty (Admin only)' })
   @ApiResponse({ status: 201, description: 'Specialty created' })
   @ApiResponse({ status: 409, description: 'Specialty already exists' })
   async create(@Body() createDto: CreateSpecialtyDto) {
@@ -42,9 +45,10 @@ export class SpecialtyController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update a specialty (Admin only - TODO: add RolesGuard)' })
+  @ApiOperation({ summary: 'Update a specialty (Admin only)' })
   @ApiResponse({ status: 200, description: 'Specialty updated' })
   @ApiResponse({ status: 404, description: 'Specialty not found' })
   async update(@Param('id') id: string, @Body() updateDto: UpdateSpecialtyDto) {
@@ -52,9 +56,10 @@ export class SpecialtyController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete a specialty (Admin only - TODO: add RolesGuard)' })
+  @ApiOperation({ summary: 'Delete a specialty (Admin only)' })
   @ApiResponse({ status: 200, description: 'Specialty deleted' })
   @ApiResponse({ status: 404, description: 'Specialty not found' })
   async delete(@Param('id') id: string) {

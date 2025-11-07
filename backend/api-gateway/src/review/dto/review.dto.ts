@@ -10,7 +10,35 @@ export class CreateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
-  rating: number;
+  overallRating: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  qualityRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  punctualityRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  communicationRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  valueRating?: number;
 
   @ApiProperty({ required: false, example: 'Excellent travail, très professionnel !' })
   @IsOptional()
@@ -24,7 +52,35 @@ export class UpdateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
-  rating?: number;
+  overallRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  qualityRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  punctualityRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  communicationRating?: number;
+
+  @ApiProperty({ required: false, example: 5, minimum: 1, maximum: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  valueRating?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -37,7 +93,11 @@ export interface ReviewResponse {
   missionId: string;
   reviewerId: string;
   reviewedId: string;
-  rating: number;
+  overallRating: number;
+  qualityRating?: number;
+  punctualityRating?: number;
+  communicationRating?: number;
+  valueRating?: number;
   comment?: string;
   createdAt: Date;
   reviewer: {

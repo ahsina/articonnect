@@ -16,6 +16,12 @@ export class CreateProductDto {
   @Min(0)
   price: number;
 
+  @ApiProperty({ required: false, example: 17, description: 'VAT rate in percentage (Luxembourg standard is 17%)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  vatRate?: number;
+
   @ApiProperty({ example: 'lighting' })
   @IsString()
   category: string;
@@ -58,6 +64,12 @@ export class UpdateProductDto {
   @IsNumber()
   @Min(0)
   price?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  vatRate?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

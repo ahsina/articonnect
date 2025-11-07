@@ -10,10 +10,11 @@ export class ProductService {
   async create(artisanId: string, data: CreateProductDto) {
     return this.prisma.product.create({
       data: {
-        artisanId,
+        artisan: { connect: { id: artisanId } },
         name: data.name,
         description: data.description,
         price: data.price,
+        vatRate: data.vatRate || 17, // Luxembourg standard VAT rate
         category: data.category,
         stock: data.stock,
         sku: data.sku,

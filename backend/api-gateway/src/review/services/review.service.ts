@@ -50,7 +50,11 @@ export class ReviewService {
         missionId: createDto.missionId,
         reviewerId: userId,
         reviewedId: mission.artisanId,
-        rating: createDto.rating,
+        overallRating: createDto.overallRating,
+        qualityRating: createDto.qualityRating,
+        punctualityRating: createDto.punctualityRating,
+        communicationRating: createDto.communicationRating,
+        valueRating: createDto.valueRating,
         comment: createDto.comment,
       },
       include: {
@@ -167,12 +171,12 @@ export class ReviewService {
     // Calculate average rating
     const result = await this.prisma.review.aggregate({
       where: { reviewedId: artisanId },
-      _avg: { rating: true },
-      _count: { rating: true },
+      _avg: { overallRating: true },
+      _count: { overallRating: true },
     });
 
-    const avgRating = result._avg.rating || 0;
-    const reviewCount = result._count.rating || 0;
+    const avgRating = result._avg.overallRating || 0;
+    const reviewCount = result._count.overallRating || 0;
 
     // Update artisan profile
     await this.prisma.artisanProfile.updateMany({
