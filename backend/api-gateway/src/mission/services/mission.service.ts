@@ -45,8 +45,8 @@ export class MissionService {
       },
     });
 
-    // TODO: Trigger matching algorithm to find nearby artisans
-    // TODO: Send notifications to matched artisans
+    // Trigger matching algorithm to find nearby artisans
+    await this.findAndNotifyNearbyArtisans(mission);
 
     return mission;
   }
@@ -237,6 +237,66 @@ export class MissionService {
     });
 
     return filtered;
+  }
+
+  async findAndNotifyNearbyArtisans(mission: { id: string; category: string; latitude: number; longitude: number; title: string }) {
+    // Find artisans with matching specialty and within service radius
+    const artisans = await this.prisma.user.findMany({
+      where: {
+        role: 'ARTISAN',
+        status: 'ACTIVE',
+        artisanProfile: {
+          available: true,
+          specialties: {
+            some: {
+              category: mission.category,
+            },
+          },
+        },
+      },
+      include: {
+        artisanProfile: {
+          select: {
+            latitude: true,
+            longitude: true,
+            serviceRadius: true,
+          },
+        },
+      },
+    });
+
+    // Filter artisans by distance
+    const nearbyArtisans = artisans.filter((artisan) => {
+      if (!artisan.artisanProfile) return false;
+
+      const distance = this.calculateDistance(
+        mission.latitude,
+        mission.longitude,
+        artisan.artisanProfile.latitude,
+        artisan.artisanProfile.longitude,
+      );
+
+      return distance <= (artisan.artisanProfile.serviceRadius || 20);
+    });
+
+    // Send notifications to matched artisans (max 10)
+    const artisansToNotify = nearbyArtisans.slice(0, 10);
+
+    for (const artisan of artisansToNotify) {
+      // Create notification in database
+      await this.prisma.notification.create({
+        data: {
+          userId: artisan.id,
+          type: 'NEW_MISSION',
+          title: 'Nouvelle mission disponible',
+          message: `Une nouvelle mission "${mission.title}" correspond à vos compétences`,
+          link: `/artisan/missions/${mission.id}`,
+          metadata: { missionId: mission.id },
+        },
+      });
+    }
+
+    return { notifiedCount: artisansToNotify.length };
   }
 
   private getVatRate(country: string): number {
