@@ -49,8 +49,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies (shared)
-        working-directory: ./backend/shared
+      - name: Install dependencies (root)
         run: npm ci
 
       - name: Generate Prisma Client
@@ -68,10 +67,6 @@ jobs:
             echo "No migrations found, using db push instead"
             npx prisma db push --skip-generate
           fi
-
-      - name: Install dependencies (API Gateway)
-        working-directory: ./backend/api-gateway
-        run: npm ci
 
       - name: Lint Backend
         working-directory: ./backend/api-gateway
@@ -107,8 +102,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
-        working-directory: ./frontend
+      - name: Install dependencies (root)
         run: npm ci
 
       - name: Lint Frontend
@@ -144,6 +138,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Install dependencies (root)
+        run: npm ci
 
       - name: Audit Backend Dependencies
         working-directory: ./backend/api-gateway
