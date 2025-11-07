@@ -104,3 +104,9 @@ export class Disable2FADto {
   @MinLength(6)
   token: string;
 }
+
+export class VerifyEmailDto {
+  @ApiProperty({ example: 'abc123def456...' })
+  @IsString()
+  token: string;
+}

@@ -19,6 +19,7 @@ import {
   Enable2FADto,
   Verify2FADto,
   Disable2FADto,
+  VerifyEmailDto,
 } from '../dto/auth.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
@@ -120,5 +121,21 @@ export class AuthController {
       disable2FADto.password,
       disable2FADto.token,
     );
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email address with token' })
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto.token);
+  }
+
+  @Post('resend-verification')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend email verification' })
+  async resendVerification(@Request() req) {
+    return this.authService.resendVerificationEmail(req.user.userId);
   }
 }

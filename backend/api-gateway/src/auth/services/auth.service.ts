@@ -64,6 +64,30 @@ export class AuthService {
       },
     });
 
+    // Generate email verification token
+    const verificationToken = Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+
+    // Store verification token (expires in 24 hours)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    await this.prisma.emailVerificationToken.create({
+      data: {
+        token: verificationToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // Send verification email
+    await this.emailService.sendEmailVerification(
+      user.email,
+      verificationToken,
+      user.firstName
+    );
+
     // Generate tokens
     const { accessToken, refreshToken } = await this.generateTokens(user);
 
@@ -71,6 +95,7 @@ export class AuthService {
       user: this.sanitizeUser(user),
       accessToken,
       refreshToken,
+      message: 'Compte créé. Veuillez vérifier votre email pour activer votre compte.',
     };
   }
 
@@ -505,6 +530,89 @@ export class AuthService {
     });
 
     return { message: 'Authentification à deux facteurs désactivée avec succès' };
+  }
+
+  async verifyEmail(token: string) {
+    // Find valid token
+    const verificationToken = await this.prisma.emailVerificationToken.findFirst({
+      where: {
+        token,
+        used: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!verificationToken) {
+      throw new BadRequestException('Token invalide ou expiré');
+    }
+
+    // Update user email verification status
+    await this.prisma.user.update({
+      where: { id: verificationToken.userId },
+      data: {
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      },
+    });
+
+    // Mark token as used
+    await this.prisma.emailVerificationToken.update({
+      where: { id: verificationToken.id },
+      data: { used: true },
+    });
+
+    return { message: 'Email vérifié avec succès' };
+  }
+
+  async resendVerificationEmail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Utilisateur introuvable');
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email déjà vérifié');
+    }
+
+    // Invalidate old tokens
+    await this.prisma.emailVerificationToken.updateMany({
+      where: {
+        userId: user.id,
+        used: false,
+      },
+      data: { used: true },
+    });
+
+    // Generate new verification token
+    const verificationToken = Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+
+    // Store verification token (expires in 24 hours)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    await this.prisma.emailVerificationToken.create({
+      data: {
+        token: verificationToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // Send verification email
+    await this.emailService.sendEmailVerification(
+      user.email,
+      verificationToken,
+      user.firstName
+    );
+
+    return { message: 'Email de vérification renvoyé' };
   }
 
   sanitizeUser(user: User) {

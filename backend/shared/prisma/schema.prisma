@@ -552,6 +552,18 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  token     String
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
 // ================================
 // GDPR
 // ================================
