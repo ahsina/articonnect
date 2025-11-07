@@ -6,14 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi } from '@/lib/api/user';
+import { specialtyApi, Specialty } from '@/lib/api/specialty';
 import { toast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface Specialty {
-  id: string;
-  name: string;
-  category: string;
-}
 
 export default function BecomeArtisanPage() {
   const router = useRouter();
@@ -49,18 +44,15 @@ export default function BecomeArtisanPage() {
 
   const loadSpecialties = async () => {
     try {
-      // TODO: Fetch specialties from API
-      // For now, using mock data
-      setSpecialties([
-        { id: '1', name: 'Plomberie', category: 'Construction' },
-        { id: '2', name: 'Électricité', category: 'Construction' },
-        { id: '3', name: 'Menuiserie', category: 'Construction' },
-        { id: '4', name: 'Peinture', category: 'Finition' },
-        { id: '5', name: 'Carrelage', category: 'Finition' },
-        { id: '6', name: 'Maçonnerie', category: 'Construction' },
-      ]);
+      const data = await specialtyApi.getAll();
+      setSpecialties(data);
     } catch (error) {
       console.error('Error loading specialties:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les spécialités',
+        variant: 'destructive',
+      });
     }
   };
 

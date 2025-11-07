@@ -14,7 +14,7 @@ export class StripeService {
   async createPaymentIntent(params: {
     amount: number;
     currency: string;
-    metadata?: any;
+    metadata?: Record<string, string>;
   }) {
     return this.stripe.paymentIntents.create({
       amount: params.amount,
@@ -31,7 +31,7 @@ export class StripeService {
   async createTransfer(params: {
     amount: number;
     destination: string;
-    metadata?: any;
+    metadata?: Record<string, string>;
   }) {
     return this.stripe.transfers.create({
       amount: params.amount,

@@ -11,6 +11,14 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { NotificationService } from '../services/notification.service';
 
+interface RequestWithUser {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationController {
@@ -18,7 +26,7 @@ export class NotificationController {
 
   @Get()
   async getNotifications(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Query('limit') limit?: string,
     @Query('unreadOnly') unreadOnly?: string,
   ) {
@@ -34,28 +42,28 @@ export class NotificationController {
   }
 
   @Get('unread-count')
-  async getUnreadCount(@Req() req: any) {
+  async getUnreadCount(@Req() req: RequestWithUser) {
     const userId = req.user.userId;
     const count = await this.notificationService.getUnreadCount(userId);
     return { count };
   }
 
   @Patch(':id/read')
-  async markAsRead(@Req() req: any, @Param('id') notificationId: string) {
+  async markAsRead(@Req() req: RequestWithUser, @Param('id') notificationId: string) {
     const userId = req.user.userId;
     await this.notificationService.markAsRead(notificationId, userId);
     return { success: true };
   }
 
   @Patch('mark-all-read')
-  async markAllAsRead(@Req() req: any) {
+  async markAllAsRead(@Req() req: RequestWithUser) {
     const userId = req.user.userId;
     await this.notificationService.markAllAsRead(userId);
     return { success: true };
   }
 
   @Delete(':id')
-  async deleteNotification(@Req() req: any, @Param('id') notificationId: string) {
+  async deleteNotification(@Req() req: RequestWithUser, @Param('id') notificationId: string) {
     const userId = req.user.userId;
     await this.notificationService.deleteNotification(notificationId, userId);
     return { success: true };

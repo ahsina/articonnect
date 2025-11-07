@@ -12,7 +12,7 @@ export class NotificationService {
     title: string,
     message: string,
     link?: string,
-    metadata?: any,
+    metadata?: Record<string, unknown>,
   ) {
     return this.prisma.notification.create({
       data: {

@@ -23,7 +23,7 @@ export class GeoService {
       'ASC',
     );
 
-    return results.map((result: any) => ({
+    return results.map((result: [string, string]) => ({
       artisanId: result[0],
       distance: parseFloat(result[1]),
     }));

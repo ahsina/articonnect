@@ -52,7 +52,10 @@ export class MissionService {
   }
 
   async findAll(userId: string, role: string) {
-    const where: any = {};
+    const where: {
+      clientId?: string;
+      artisanId?: string;
+    } = {};
 
     if (role === 'CLIENT') {
       where.clientId = userId;

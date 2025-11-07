@@ -49,7 +49,7 @@ export class PaymentService {
     return { clientSecret: paymentIntent.client_secret };
   }
 
-  async handleWebhook(event: any) {
+  async handleWebhook(event: Record<string, unknown>) {
     // Handle Stripe webhook events
     switch (event.type) {
       case 'payment_intent.succeeded':
@@ -61,7 +61,7 @@ export class PaymentService {
     }
   }
 
-  private async handlePaymentSuccess(paymentIntent: any) {
+  private async handlePaymentSuccess(paymentIntent: { id: string; metadata: Record<string, string> }) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { stripePaymentIntentId: paymentIntent.id },
     });
@@ -79,7 +79,7 @@ export class PaymentService {
     }
   }
 
-  private async handlePaymentFailed(paymentIntent: any) {
+  private async handlePaymentFailed(paymentIntent: { id: string; metadata: Record<string, string> }) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { stripePaymentIntentId: paymentIntent.id },
     });

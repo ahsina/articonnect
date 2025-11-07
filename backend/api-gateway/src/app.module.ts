@@ -9,6 +9,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
 import { AdminModule } from './admin/admin.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationModule } from './notification/notification.module';
+import { SpecialtyModule } from './specialty/specialty.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -26,6 +27,7 @@ import { RedisModule } from './common/redis/redis.module';
     GeoModule,
     PaymentModule,
     MarketplaceModule,
+    SpecialtyModule,
     AdminModule,
     ChatModule,
     NotificationModule,

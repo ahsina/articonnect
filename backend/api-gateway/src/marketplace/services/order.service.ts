@@ -1,53 +1,98 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { OrderItemDto } from '../dto/order.dto';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class OrderService {
   constructor(private prisma: PrismaService) {}
 
-  async create(clientId: string, items: any[], shippingAddress: string) {
-    // Calculate totals
+  async create(clientId: string, items: OrderItemDto[], shippingAddress: string) {
+    // Validate and calculate totals
     let subtotal = 0;
-    let vat = 0;
+    const VAT_RATE = 0.17; // Luxembourg VAT 17%
+
+    // Prepare order items with prices
+    const orderItems: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+    }> = [];
 
     for (const item of items) {
       const product = await this.prisma.product.findUnique({
         where: { id: item.productId },
       });
 
-      const itemTotal = Number(product.price) * item.quantity;
-      const itemVat = itemTotal * (Number(product.vatRate) / 100);
+      if (!product) {
+        throw new NotFoundException(`Produit ${item.productId} introuvable`);
+      }
 
-      subtotal += itemTotal;
-      vat += itemVat;
+      if (product.stock < item.quantity) {
+        throw new BadRequestException(
+          `Stock insuffisant pour ${product.name}. Disponible: ${product.stock}`,
+        );
+      }
+
+      const unitPrice = Number(product.price);
+      const totalPrice = unitPrice * item.quantity;
+      subtotal += totalPrice;
+
+      orderItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice,
+        totalPrice,
+      });
     }
 
-    const total = subtotal + vat;
+    const vat = subtotal * VAT_RATE;
+    const shippingCost = 5.99; // Flat shipping cost
+    const total = subtotal + vat + shippingCost;
 
-    // Create order
-    const order = await this.prisma.order.create({
-      data: {
-        clientId,
-        shippingAddress,
-        subtotal,
-        vat,
-        total,
-        items: {
-          create: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.unitPrice * item.quantity,
-          })),
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
+    // Create order with transaction
+    const order = await this.prisma.$transaction(async (tx) => {
+      // Create order
+      const newOrder = await tx.order.create({
+        data: {
+          clientId,
+          shippingAddress,
+          subtotal: new Decimal(subtotal),
+          vat: new Decimal(vat),
+          shippingCost: new Decimal(shippingCost),
+          total: new Decimal(total),
+          items: {
+            create: orderItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: new Decimal(item.unitPrice),
+              totalPrice: new Decimal(item.totalPrice),
+            })),
           },
         },
-      },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      // Decrease stock for each product
+      for (const item of items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+        });
+      }
+
+      return newOrder;
     });
 
     return order;
@@ -66,6 +111,49 @@ export class OrderService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+  }
+
+  async findOne(orderId: string, clientId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        clientId,
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Commande introuvable');
+    }
+
+    return order;
+  }
+
+  async updateStatus(orderId: string, status: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Commande introuvable');
+    }
+
+    // Validate status is a valid OrderStatus
+    const validStatuses = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException(`Statut invalide: ${status}`);
+    }
+
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: status as 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' },
     });
   }
 }

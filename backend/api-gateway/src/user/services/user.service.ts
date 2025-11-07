@@ -96,7 +96,10 @@ export class UserService {
     city?: string;
     minRating?: number;
   }) {
-    const where: any = {
+    const where: {
+      role: string;
+      status: string;
+    } = {
       role: 'ARTISAN',
       status: 'ACTIVE',
     };
