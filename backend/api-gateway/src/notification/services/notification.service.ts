@@ -1,18 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
-
-export enum NotificationType {
-  MISSION_NEW = 'MISSION_NEW',
-  MISSION_ACCEPTED = 'MISSION_ACCEPTED',
-  MISSION_COMPLETED = 'MISSION_COMPLETED',
-  MISSION_CANCELLED = 'MISSION_CANCELLED',
-  NEGOTIATION_NEW = 'NEGOTIATION_NEW',
-  NEGOTIATION_ACCEPTED = 'NEGOTIATION_ACCEPTED',
-  NEGOTIATION_REJECTED = 'NEGOTIATION_REJECTED',
-  PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
-  REVIEW_NEW = 'REVIEW_NEW',
-  MESSAGE_NEW = 'MESSAGE_NEW',
-}
 
 @Injectable()
 export class NotificationService {
@@ -96,7 +84,7 @@ export class NotificationService {
   async notifyMissionCreated(artisanId: string, missionId: string, missionTitle: string) {
     await this.createNotification(
       artisanId,
-      NotificationType.MISSION_NEW,
+      NotificationType.NEW_MISSION,
       'Nouvelle mission disponible',
       `Une nouvelle mission "${missionTitle}" est disponible près de vous`,
       `/artisan/missions/${missionId}`,

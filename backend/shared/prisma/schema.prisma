@@ -2,7 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
+  output   = "../../../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -73,6 +73,9 @@ model User {
   // Marketplace
   products Product[]
   orders   Order[]
+
+  // Saved by clients
+  savedByClients SavedArtisan[]
 
   @@index([email])
   @@index([role])
@@ -481,10 +484,14 @@ model Message {
 enum NotificationType {
   NEW_MISSION
   MISSION_ACCEPTED
-  NEGOTIATION
-  PAYMENT
-  REVIEW
-  MESSAGE
+  MISSION_COMPLETED
+  MISSION_CANCELLED
+  NEGOTIATION_NEW
+  NEGOTIATION_ACCEPTED
+  NEGOTIATION_REJECTED
+  PAYMENT_RECEIVED
+  REVIEW_NEW
+  MESSAGE_NEW
   SYSTEM
 }
 
@@ -495,7 +502,8 @@ model Notification {
   type      NotificationType
   title     String
   message   String
-  data      Json?
+  link      String?
+  metadata  Json?
   read      Boolean          @default(false)
   readAt    DateTime?
   createdAt DateTime         @default(now())

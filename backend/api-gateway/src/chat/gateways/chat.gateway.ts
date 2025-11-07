@@ -63,7 +63,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send_message')
   async handleMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { receiverId: string; content: string; missionId?: string },
+    @MessageBody() payload: { receiverId: string; content: string; missionId?: string; tempId?: string },
   ) {
     const senderId = client.data.userId;
     const { receiverId, content, missionId } = payload;
