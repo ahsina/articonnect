@@ -27,12 +27,12 @@ enum UserStatus {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  phone     String?    @unique
-  password  String
-  role      UserRole   @default(CLIENT)
-  status    UserStatus @default(ACTIVE)
+  id       String     @id @default(uuid())
+  email    String     @unique
+  phone    String?    @unique
+  password String
+  role     UserRole   @default(CLIENT)
+  status   UserStatus @default(ACTIVE)
 
   // 2FA
   twoFactorEnabled Boolean @default(false)
@@ -52,6 +52,13 @@ model User {
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
 
+  // Reputation & Payment Trust System
+  reputationScore   Int     @default(100) // Score 0-200 (100 = neutral)
+  completedMissions Int     @default(0)
+  noShowCount       Int     @default(0)
+  disputeCount      Int     @default(0)
+  disputeRate       Decimal @default(0) @db.Decimal(5, 2) // Percentage
+
   // Relations
   clientProfile    ClientProfile?
   artisanProfile   ArtisanProfile?
@@ -59,8 +66,8 @@ model User {
   backupCodes      BackupCode[]
   consents         UserConsent?
   notifications    Notification[]
-  sentMessages     Message[]     @relation("SentMessages")
-  receivedMessages Message[]     @relation("ReceivedMessages")
+  sentMessages     Message[]       @relation("SentMessages")
+  receivedMessages Message[]       @relation("ReceivedMessages")
 
   // Missions
   clientMissions  Mission[] @relation("ClientMissions")
@@ -81,9 +88,16 @@ model User {
   // Saved by clients
   savedByClients SavedArtisan[]
 
+  // Payment & Reputation System
+  noShowEvents      NoShowEvent[]
+  reputationHistory ReputationHistory[]
+  compensationLogs  CompensationLog[]
+  payments          Payment[]
+
   @@index([email])
   @@index([role])
   @@index([status])
+  @@index([reputationScore])
 }
 
 model ClientProfile {
@@ -135,8 +149,8 @@ model ArtisanProfile {
   certifications Certification[]
 
   // Stripe Connect
-  stripeAccountId String?  @unique
-  stripeOnboarded Boolean  @default(false)
+  stripeAccountId String? @unique
+  stripeOnboarded Boolean @default(false)
 
   // Stats
   rating       Decimal @default(0) @db.Decimal(3, 2)
@@ -223,10 +237,15 @@ enum MissionStatus {
   PENDING
   NEGOTIATING
   ACCEPTED
+  PENDING_DEPOSIT // NEW: Waiting for deposit payment
+  DEPOSIT_PAID // NEW: Deposit paid, ready for artisan travel
+  IN_TRANSIT // NEW: Artisan traveling to client
   PAID
   IN_PROGRESS
   COMPLETED
+  AUTO_VALIDATED // NEW: Auto-validated after 7 days timeout
   CANCELLED
+  CANCELLED_NO_SHOW // NEW: Cancelled because client was unavailable
   DISPUTED
 }
 
@@ -255,12 +274,19 @@ model Mission {
   estimatedDuration Int? // minutes
 
   // Pricing
-  clientBudget  Decimal? @db.Decimal(10, 2)
-  artisanQuote  Decimal? @db.Decimal(10, 2)
-  agreedPrice   Decimal? @db.Decimal(10, 2)
-  finalPrice    Decimal? @db.Decimal(10, 2)
-  vatRate       Decimal  @db.Decimal(5, 2)
-  totalAmount   Decimal? @db.Decimal(10, 2)
+  clientBudget Decimal? @db.Decimal(10, 2)
+  artisanQuote Decimal? @db.Decimal(10, 2)
+  agreedPrice  Decimal? @db.Decimal(10, 2)
+  finalPrice   Decimal? @db.Decimal(10, 2)
+  vatRate      Decimal  @db.Decimal(5, 2)
+  totalAmount  Decimal? @db.Decimal(10, 2)
+
+  // Hybrid Payment System (Reputation-based)
+  depositRequired     Boolean   @default(false)
+  depositPercentage   Int       @default(30) // 30%, 50%, or 100%
+  depositAmount       Decimal?  @db.Decimal(10, 2)
+  depositPaidAt       DateTime?
+  retractionExpiresAt DateTime? // 48h after completion
 
   // Media
   photos String[]
@@ -268,17 +294,22 @@ model Mission {
   // Relations
   negotiations Negotiation[]
   transaction  Transaction?
+  payments     Payment[]
   review       Review?
   disputes     Dispute[]
   history      MissionHistory[]
+  noShowEvent  NoShowEvent?
 
   // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  acceptedAt  DateTime?
-  startedAt   DateTime?
-  completedAt DateTime?
-  cancelledAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  acceptedAt      DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  arrivedAt       DateTime? // NEW: When artisan arrived at client location
+  validatedAt     DateTime? // NEW: When client validated work (or 48h passed)
+  autoValidatedAt DateTime? // NEW: When system auto-validated (7-day timeout)
 
   @@index([clientId])
   @@index([artisanId])
@@ -286,17 +317,18 @@ model Mission {
   @@index([type])
   @@index([latitude, longitude])
   @@index([createdAt])
+  @@index([completedAt]) // NEW: For auto-validation CRON job
 }
 
 model MissionHistory {
-  id          String        @id @default(uuid())
-  missionId   String
-  mission     Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  status      MissionStatus
-  changedBy   String        // userId who made the change
-  changedByRole String      // ARTISAN, CLIENT, or ADMIN
-  note        String?       // Optional note about the change
-  createdAt   DateTime      @default(now())
+  id            String        @id @default(uuid())
+  missionId     String
+  mission       Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  status        MissionStatus
+  changedBy     String // userId who made the change
+  changedByRole String // ARTISAN, CLIENT, or ADMIN
+  note          String? // Optional note about the change
+  createdAt     DateTime      @default(now())
 
   @@index([missionId])
   @@index([createdAt])
@@ -322,24 +354,24 @@ model Negotiation {
 // ================================
 
 model Review {
-  id                    String   @id @default(uuid())
-  missionId             String   @unique
-  mission               Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  reviewerId            String
-  reviewer              User     @relation("GivenReviews", fields: [reviewerId], references: [id])
-  reviewedId            String
-  reviewed              User     @relation("ReceivedReviews", fields: [reviewedId], references: [id])
-  overallRating         Int
-  qualityRating         Int?
-  punctualityRating     Int?
-  communicationRating   Int?
-  valueRating           Int?
-  comment               String?
-  photos                String[]
-  helpful               Int      @default(0)
-  verified              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  missionId           String   @unique
+  mission             Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  reviewerId          String
+  reviewer            User     @relation("GivenReviews", fields: [reviewerId], references: [id])
+  reviewedId          String
+  reviewed            User     @relation("ReceivedReviews", fields: [reviewedId], references: [id])
+  overallRating       Int
+  qualityRating       Int?
+  punctualityRating   Int?
+  communicationRating Int?
+  valueRating         Int?
+  comment             String?
+  photos              String[]
+  helpful             Int      @default(0)
+  verified            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([reviewedId])
   @@index([overallRating])
@@ -365,21 +397,21 @@ enum DisputePriority {
 }
 
 model Dispute {
-  id            String          @id @default(uuid())
-  missionId     String
-  mission       Mission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  createdById   String
-  createdBy     User            @relation("DisputesCreated", fields: [createdById], references: [id])
-  reason        String
-  description   String
-  status        DisputeStatus   @default(OPEN)
-  priority      DisputePriority @default(MEDIUM)
-  resolution    String?
-  resolvedById  String?
-  resolvedBy    User?           @relation("DisputesResolved", fields: [resolvedById], references: [id])
-  resolvedAt    DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id           String          @id @default(uuid())
+  missionId    String
+  mission      Mission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdById  String
+  createdBy    User            @relation("DisputesCreated", fields: [createdById], references: [id])
+  reason       String
+  description  String
+  status       DisputeStatus   @default(OPEN)
+  priority     DisputePriority @default(MEDIUM)
+  resolution   String?
+  resolvedById String?
+  resolvedBy   User?           @relation("DisputesResolved", fields: [resolvedById], references: [id])
+  resolvedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   @@index([missionId])
   @@index([createdById])
@@ -399,22 +431,22 @@ enum ProductStatus {
 }
 
 model Product {
-  id          String        @id @default(uuid())
+  id          String           @id @default(uuid())
   artisanId   String
-  artisan     User          @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  artisan     User             @relation(fields: [artisanId], references: [id], onDelete: Cascade)
   name        String
   description String
   category    String
   photos      String[]
-  price       Decimal       @db.Decimal(10, 2)
-  vatRate     Decimal       @db.Decimal(5, 2)
+  price       Decimal          @db.Decimal(10, 2)
+  vatRate     Decimal          @db.Decimal(5, 2)
   stock       Int
-  sku         String?       @unique
-  status      ProductStatus @default(DRAFT)
+  sku         String?          @unique
+  status      ProductStatus    @default(DRAFT)
   variants    ProductVariant[]
   orderItems  OrderItem[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@index([artisanId])
   @@index([status])
@@ -444,20 +476,20 @@ enum OrderStatus {
 }
 
 model Order {
-  id              String      @id @default(uuid())
+  id              String       @id @default(uuid())
   clientId        String
-  client          User        @relation(fields: [clientId], references: [id])
+  client          User         @relation(fields: [clientId], references: [id])
   items           OrderItem[]
-  subtotal        Decimal     @db.Decimal(10, 2)
-  vat             Decimal     @db.Decimal(10, 2)
-  total           Decimal     @db.Decimal(10, 2)
+  subtotal        Decimal      @db.Decimal(10, 2)
+  vat             Decimal      @db.Decimal(10, 2)
+  total           Decimal      @db.Decimal(10, 2)
   shippingAddress String
-  shippingCost    Decimal     @default(0) @db.Decimal(10, 2)
+  shippingCost    Decimal      @default(0) @db.Decimal(10, 2)
   trackingNumber  String?
-  status          OrderStatus @default(PENDING)
+  status          OrderStatus  @default(PENDING)
   transaction     Transaction?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   paidAt          DateTime?
   shippedAt       DateTime?
   deliveredAt     DateTime?
@@ -487,6 +519,8 @@ enum TransactionType {
   MISSION
   PRODUCT
   REFUND
+  DEPOSIT // NEW: Deposit payment (partial)
+  COMPENSATION // NEW: Platform compensation to artisan
 }
 
 enum TransactionStatus {
@@ -520,20 +554,182 @@ model Transaction {
 }
 
 // ================================
+// PAYMENT DETAILS (Hybrid System)
+// ================================
+
+enum PaymentType {
+  DEPOSIT // Partial payment before travel
+  FULL_PAYMENT // Complete payment after work
+  REFUND // Money returned to client
+  COMPENSATION // Platform pays artisan for client fault
+}
+
+enum RefundReason {
+  CHANGED_MIND // Client fault → Artisan compensated
+  EMERGENCY_RESOLVED // Client fault → Artisan compensated
+  WORK_NOT_DONE // Artisan fault → Artisan NOT paid
+  WORK_INCOMPLETE // Artisan fault → Partial refund
+  MUTUAL_CANCELLATION // Neutral → Compensation if traveling
+  ARTISAN_NO_SHOW // Artisan fault → Full refund
+  CLIENT_NO_SHOW // Client fault → Artisan compensated
+}
+
+model Payment {
+  id        String      @id @default(uuid())
+  missionId String
+  mission   Mission     @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  userId    String // Who made the payment
+  user      User        @relation(fields: [userId], references: [id])
+  type      PaymentType
+  amount    Decimal     @db.Decimal(10, 2)
+
+  // Refund tracking
+  refundReason   RefundReason?
+  refundedAmount Decimal?      @db.Decimal(10, 2)
+  refundedAt     DateTime?
+
+  // Compensation tracking (when platform absorbs cost)
+  artisanCompensated   Boolean  @default(false)
+  compensationAmount   Decimal? @db.Decimal(10, 2)
+  platformAbsorbedCost Boolean  @default(false) // True when we pay both client + artisan
+
+  // Retraction period tracking
+  withinRetractionPeriod Boolean   @default(false)
+  retractionExpiresAt    DateTime?
+
+  // Stripe
+  stripePaymentIntentId String? @unique
+  stripeRefundId        String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([missionId])
+  @@index([userId])
+  @@index([type])
+}
+
+// ================================
+// NO-SHOW MANAGEMENT
+// ================================
+
+enum NoShowStatus {
+  REPORTED // Artisan reported no-show
+  PENDING_REVIEW // Awaiting admin validation
+  VALIDATED // No-show confirmed
+  REJECTED // No-show rejected (client was there)
+  COMPENSATED // Artisan compensated for travel
+}
+
+model NoShowEvent {
+  id        String  @id @default(uuid())
+  missionId String  @unique
+  mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  artisanId String
+  artisan   User    @relation(fields: [artisanId], references: [id])
+
+  // Proof requirements
+  arrivalTime         DateTime
+  waitDurationMinutes Int // Minimum 15 minutes required
+  contactAttempts     Json // Array of contact attempt timestamps & methods
+  proofPhotos         String[] // Photos of location, door, etc.
+  gpsCoords           Json // Lat/lng proof of arrival
+
+  // Fee & Compensation
+  feeAmount          Decimal   @db.Decimal(10, 2) // 50€ emergency, 30€ scheduled
+  compensationPaid   Boolean   @default(false)
+  compensationPaidAt DateTime?
+
+  // Review
+  status      NoShowStatus @default(REPORTED)
+  reviewedBy  String? // Admin who reviewed
+  reviewNotes String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  validatedAt DateTime?
+
+  @@index([artisanId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ================================
+// REPUTATION SYSTEM
+// ================================
+
+enum ReputationAction {
+  MISSION_COMPLETED // +10 points
+  MISSION_CANCELLED // -5 points
+  NO_SHOW // -10 points
+  DISPUTE_LOST // -20 points
+  DISPUTE_WON // +5 points
+  EXCELLENT_REVIEW // +15 points (5 stars)
+  POOR_REVIEW // -10 points (1-2 stars)
+  ADMIN_ADJUSTMENT // Manual adjustment
+}
+
+model ReputationHistory {
+  id               String           @id @default(uuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action           ReputationAction
+  pointsChange     Int // Can be positive or negative
+  previousScore    Int
+  newScore         Int
+  reason           String?
+  relatedMissionId String?
+  createdAt        DateTime         @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ================================
+// PLATFORM COST TRACKING
+// ================================
+
+enum CompensationReason {
+  CLIENT_CHANGED_MIND // Client refunded + artisan paid
+  CLIENT_EMERGENCY_RESOLVED
+  CLIENT_NO_SHOW
+  PLATFORM_ERROR
+  GOODWILL_GESTURE
+}
+
+model CompensationLog {
+  id             String             @id @default(uuid())
+  userId         String // Artisan who received compensation
+  user           User               @relation(fields: [userId], references: [id])
+  missionId      String?
+  reason         CompensationReason
+  amount         Decimal            @db.Decimal(10, 2)
+  clientRefunded Boolean            @default(false) // True if we also refunded client
+  refundAmount   Decimal?           @db.Decimal(10, 2)
+  totalCost      Decimal            @db.Decimal(10, 2) // amount + refundAmount
+  notes          String?
+  createdAt      DateTime           @default(now())
+
+  @@index([userId])
+  @@index([reason])
+  @@index([createdAt])
+}
+
+// ================================
 // MESSAGING
 // ================================
 
 model Message {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   senderId    String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id])
   receiverId  String
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiver    User      @relation("ReceivedMessages", fields: [receiverId], references: [id])
   content     String
   attachments String[]
-  read        Boolean  @default(false)
+  read        Boolean   @default(false)
   readAt      DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([senderId, receiverId])
   @@index([createdAt])
@@ -575,21 +771,21 @@ model Notification {
 }
 
 model NotificationPreferences {
-  id                     String  @id @default(uuid())
-  userId                 String  @unique
-  emailNotifications     Boolean @default(true)
-  pushNotifications      Boolean @default(true)
-  smsNotifications       Boolean @default(false)
-  newMission             Boolean @default(true)
-  missionUpdate          Boolean @default(true)
-  newMessage             Boolean @default(true)
-  paymentReceived        Boolean @default(true)
-  paymentSent            Boolean @default(true)
-  reviewReceived         Boolean @default(true)
-  marketingEmails        Boolean @default(false)
-  weeklyDigest           Boolean @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  smsNotifications   Boolean  @default(false)
+  newMission         Boolean  @default(true)
+  missionUpdate      Boolean  @default(true)
+  newMessage         Boolean  @default(true)
+  paymentReceived    Boolean  @default(true)
+  paymentSent        Boolean  @default(true)
+  reviewReceived     Boolean  @default(true)
+  marketingEmails    Boolean  @default(false)
+  weeklyDigest       Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@index([userId])
 }
@@ -648,9 +844,9 @@ model EmailVerificationToken {
 
 model PhoneVerificationToken {
   id        String   @id @default(uuid())
-  code      String   // 6-digit verification code
-  phone     String   // Phone number to verify
-  userId    String?  // Optional: if user is already logged in
+  code      String // 6-digit verification code
+  phone     String // Phone number to verify
+  userId    String? // Optional: if user is already logged in
   expiresAt DateTime
   used      Boolean  @default(false)
   attempts  Int      @default(0) // Track failed attempts

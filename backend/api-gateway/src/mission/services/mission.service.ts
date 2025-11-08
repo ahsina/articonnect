@@ -7,10 +7,16 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateMissionDto, UpdateMissionStatusDto } from '../dto/mission.dto';
 import { MissionStatus } from '@prisma/client';
+import { ReputationService } from '../../payment/services/reputation.service';
+import { PaymentService } from '../../payment/services/payment.service';
 
 @Injectable()
 export class MissionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private reputationService: ReputationService,
+    private paymentService: PaymentService,
+  ) {}
 
   async create(userId: string, createDto: CreateMissionDto) {
     // Calculate VAT rate based on country
@@ -460,6 +466,365 @@ export class MissionService {
         completed: mission?.completedAt,
         cancelled: mission?.cancelledAt,
       },
+    };
+  }
+
+  // ================================================================
+  // HYBRID PAYMENT SYSTEM - NEW METHODS
+  // ================================================================
+
+  /**
+   * Configure deposit requirements based on client reputation
+   * Called after price is agreed
+   */
+  async setupDepositRequirements(missionId: string, agreedPrice: number) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      include: {
+        client: true,
+      },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+
+    // Determine payment model based on client reputation
+    const paymentModel = await this.reputationService.determinePaymentModel(
+      mission.client,
+      mission.type,
+    );
+
+    // Calculate deposit amount
+    const depositAmount = this.reputationService.calculateDepositAmount(
+      agreedPrice,
+      paymentModel.depositPercentage,
+    );
+
+    // Calculate retraction period (48h after completion)
+    const now = new Date();
+    const retractionExpiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+    // Update mission with deposit requirements
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: {
+        agreedPrice,
+        totalAmount: agreedPrice,
+        depositRequired: paymentModel.depositRequired,
+        depositPercentage: paymentModel.depositPercentage,
+        depositAmount,
+        retractionExpiresAt,
+        status: MissionStatus.PENDING_DEPOSIT,
+      },
+    });
+
+    // Create history entry
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.PENDING_DEPOSIT,
+      mission.clientId,
+      'SYSTEM',
+      `Acompte requis: ${paymentModel.depositPercentage}% (${depositAmount}€) - ${paymentModel.reason}`,
+    );
+
+    return {
+      mission: updated,
+      paymentModel,
+      depositAmount,
+    };
+  }
+
+  /**
+   * Start travel - Check deposit paid before allowing
+   */
+  async startTravel(missionId: string, artisanId: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      include: {
+        payments: true,
+      },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+
+    if (mission.artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
+    }
+
+    // Vérifier que l'acompte est payé
+    if (mission.depositRequired) {
+      const depositPaid = mission.payments.some(
+        (p) => p.type === 'DEPOSIT' && p.amount >= (mission.depositAmount || 0),
+      );
+
+      if (!depositPaid) {
+        throw new BadRequestException(
+          'L\'acompte doit être payé avant de commencer le déplacement',
+        );
+      }
+    }
+
+    // Mettre à jour le statut
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: {
+        status: MissionStatus.IN_TRANSIT,
+      },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.IN_TRANSIT,
+      artisanId,
+      'ARTISAN',
+      'Artisan en route vers le client',
+    );
+
+    return updated;
+  }
+
+  /**
+   * Mark arrival at client location
+   */
+  async markArrival(missionId: string, artisanId: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+
+    if (mission.artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
+    }
+
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: {
+        arrivedAt: new Date(),
+        status: MissionStatus.IN_PROGRESS,
+        startedAt: new Date(),
+      },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.IN_PROGRESS,
+      artisanId,
+      'ARTISAN',
+      'Artisan arrivé sur place - Travail commencé',
+    );
+
+    return updated;
+  }
+
+  /**
+   * Client validates work completion (or auto-validated after 48h)
+   */
+  async validateCompletion(missionId: string, userId: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+
+    if (mission.clientId !== userId) {
+      throw new ForbiddenException('Seul le client peut valider la mission');
+    }
+
+    if (mission.status !== MissionStatus.COMPLETED) {
+      throw new BadRequestException('La mission doit être terminée pour être validée');
+    }
+
+    // Check if within retraction period
+    const now = new Date();
+    const retractionExpired = mission.retractionExpiresAt &&
+      now > mission.retractionExpiresAt;
+
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: {
+        validatedAt: new Date(),
+      },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.COMPLETED,
+      userId,
+      'CLIENT',
+      'Travail validé par le client',
+    );
+
+    // Trigger payment to artisan
+    await this.paymentService.triggerArtisanPayment(missionId);
+
+    return { mission: updated, retractionExpired };
+  }
+
+  /**
+   * Auto-validate missions stuck in COMPLETED for > 7 days
+   * Called by CRON job
+   */
+  async autoValidateStuckMissions() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Find missions completed > 7 days ago without validation
+    const stuckMissions = await this.prisma.mission.findMany({
+      where: {
+        status: MissionStatus.COMPLETED,
+        completedAt: {
+          lt: sevenDaysAgo,
+        },
+        validatedAt: null,
+        autoValidatedAt: null,
+        disputes: {
+          none: {}, // No open disputes
+        },
+      },
+      include: {
+        client: true,
+        artisan: true,
+      },
+    });
+
+    const results = [];
+
+    for (const mission of stuckMissions) {
+      try {
+        // Auto-validate
+        const updated = await this.prisma.mission.update({
+          where: { id: mission.id },
+          data: {
+            status: MissionStatus.AUTO_VALIDATED,
+            autoValidatedAt: new Date(),
+            validatedAt: new Date(),
+          },
+        });
+
+        await this.createHistoryEntry(
+          mission.id,
+          MissionStatus.AUTO_VALIDATED,
+          'SYSTEM',
+          'SYSTEM',
+          'Mission auto-validée après 7 jours sans action',
+        );
+
+        // Trigger payment to artisan
+        await this.paymentService.triggerArtisanPayment(mission.id);
+
+        // Award reputation points to client
+        await this.reputationService.applyMissionCompletedReward(
+          mission.clientId,
+          mission.id,
+        );
+
+        results.push({
+          missionId: mission.id,
+          status: 'success',
+          message: 'Auto-validated and payment triggered',
+        });
+      } catch (error) {
+        results.push({
+          missionId: mission.id,
+          status: 'error',
+          message: error.message,
+        });
+      }
+    }
+
+    return {
+      processed: stuckMissions.length,
+      results,
+    };
+  }
+
+  /**
+   * Mark mission as completed by artisan
+   * Start 48h retraction period
+   */
+  async markCompleted(missionId: string, artisanId: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+
+    if (mission.artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
+    }
+
+    // Calculate retraction expiry (48h from now)
+    const now = new Date();
+    const retractionExpiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: {
+        status: MissionStatus.COMPLETED,
+        completedAt: now,
+        retractionExpiresAt,
+      },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.COMPLETED,
+      artisanId,
+      'ARTISAN',
+      'Travail terminé - Délai de rétractation 48h',
+    );
+
+    // TODO: Notify client to validate work
+
+    return {
+      mission: updated,
+      retractionExpiresAt,
+      message: 'Mission terminée - Le client a 48h pour valider ou demander un remboursement',
+    };
+  }
+
+  /**
+   * Get deposit status for a mission
+   */
+  async getDepositStatus(missionId: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      include: {
+        payments: true,
+        client: {
+          select: {
+            reputationScore: true,
+            completedMissions: true,
+            noShowCount: true,
+          },
+        },
+      },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+
+    const depositPayment = mission.payments.find((p) => p.type === 'DEPOSIT');
+
+    return {
+      depositRequired: mission.depositRequired,
+      depositPercentage: mission.depositPercentage,
+      depositAmount: mission.depositAmount,
+      depositPaid: !!depositPayment,
+      depositPaidAt: mission.depositPaidAt,
+      clientReputation: mission.client.reputationScore,
+      retractionExpiresAt: mission.retractionExpiresAt,
     };
   }
 }
