@@ -889,6 +889,1431 @@ describe('ArtiConnect - Advanced Features (e2e)', () => {
   });
 
   /**
+   * SCÉNARIO 18: ADMIN MODÉRATION
+   * Test des fonctionnalités de modération administrateur
+   */
+  describe('Scénario 18: Admin Modération', () => {
+
+    it('18.1 - Validation complète profil artisan (workflow)', async () => {
+      // Créer un artisan non vérifié
+      const newArtisan = await prisma.user.create({
+        data: {
+          email: 'pending@artisan.com',
+          password: 'password',
+          firstName: 'Pending',
+          lastName: 'Artisan',
+          role: 'ARTISAN',
+          emailVerified: true,
+          artisanProfile: {
+            create: {
+              companyName: 'New Plomberie',
+              siret: '11111111111111',
+              baseAddress: 'Paris',
+              latitude: 48.8566,
+              longitude: 2.3522,
+            },
+          },
+        },
+      });
+
+      // Admin vérifie le profil
+      const response = await request(app.getHttpServer())
+        .put(`/admin/artisans/${newArtisan.id}/validate`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          validated: true,
+          notes: 'Documents vérifiés, profil complet',
+        })
+        .expect(200);
+
+      expect(response.body.validated).toBe(true);
+
+      // Vérifier dans DB
+      const profile = await prisma.artisanProfile.findFirst({
+        where: { userId: newArtisan.id },
+      });
+      expect(profile).toBeDefined();
+    });
+
+    it('18.2 - Vérification documents SIRET et assurance', async () => {
+      const response = await request(app.getHttpServer())
+        .post(`/admin/artisans/${artisanId}/verify-documents`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          siretValid: true,
+          insuranceValid: true,
+          insuranceExpiryDate: '2025-12-31',
+        })
+        .expect(200);
+
+      expect(response.body.documentsVerified).toBe(true);
+    });
+
+    it('18.3 - Suspension temporaire compte utilisateur', async () => {
+      // Créer un utilisateur à suspendre
+      const userToSuspend = await prisma.user.create({
+        data: {
+          email: 'tosuspend@test.com',
+          password: 'password',
+          firstName: 'To',
+          lastName: 'Suspend',
+          role: 'CLIENT',
+          emailVerified: true,
+          clientProfile: { create: {} },
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post(`/admin/users/${userToSuspend.id}/suspend`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          reason: 'Comportement inapproprié',
+          duration: 7, // jours
+        })
+        .expect(200);
+
+      expect(response.body.status).toBe('SUSPENDED');
+
+      // Vérifier que l'utilisateur ne peut plus se connecter
+      const loginAttempt = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'tosuspend@test.com',
+          password: 'password',
+        })
+        .expect(403);
+
+      expect(loginAttempt.body.message).toContain('suspended');
+    });
+
+    it('18.4 - Bannissement permanent utilisateur', async () => {
+      const userToBan = await prisma.user.create({
+        data: {
+          email: 'toban@test.com',
+          password: 'password',
+          firstName: 'To',
+          lastName: 'Ban',
+          role: 'CLIENT',
+          emailVerified: true,
+          clientProfile: { create: {} },
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post(`/admin/users/${userToBan.id}/ban`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          reason: 'Fraude détectée',
+          permanent: true,
+        })
+        .expect(200);
+
+      const user = await prisma.user.findUnique({
+        where: { id: userToBan.id },
+      });
+
+      expect(user.status).toBe('DELETED');
+      expect(user.deletedAt).toBeDefined();
+    });
+
+    it('18.5 - Modération avis: retrait avis abusif', async () => {
+      // Créer un avis abusif
+      const mission = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'SCHEDULED',
+          status: 'COMPLETED',
+          title: 'Test',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue Test',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          agreedPrice: 100.00,
+          vatRate: 20.00,
+          completedAt: new Date(),
+        },
+      });
+
+      const review = await prisma.review.create({
+        data: {
+          missionId: mission.id,
+          reviewerId: clientId,
+          reviewedId: artisanId,
+          overallRating: 1,
+          comment: 'Contenu inapproprié et insultant',
+        },
+      });
+
+      // Admin retire l'avis
+      const response = await request(app.getHttpServer())
+        .delete(`/admin/reviews/${review.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          reason: 'Contenu inapproprié',
+        })
+        .expect(200);
+
+      // Vérifier que l'avis est supprimé
+      const deletedReview = await prisma.review.findUnique({
+        where: { id: review.id },
+      });
+      expect(deletedReview).toBeNull();
+    });
+
+    it('18.6 - Validation produits marketplace avant publication', async () => {
+      const product = await prisma.product.create({
+        data: {
+          artisanId: artisanId,
+          name: 'Produit en attente',
+          description: 'À valider',
+          category: 'Test',
+          price: 50.00,
+          vatRate: 20.00,
+          stock: 5,
+          status: 'DRAFT',
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .put(`/admin/products/${product.id}/validate`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          approved: true,
+          notes: 'Produit conforme',
+        })
+        .expect(200);
+
+      expect(response.body.status).toBe('ACTIVE');
+
+      const updatedProduct = await prisma.product.findUnique({
+        where: { id: product.id },
+      });
+      expect(updatedProduct.status).toBe('ACTIVE');
+    });
+  });
+
+  /**
+   * SCÉNARIO 19: PLANIFICATION AVANCÉE
+   * Test des fonctionnalités avancées de calendrier
+   */
+  describe('Scénario 19: Planification avancée', () => {
+
+    it('19.1 - Consultation calendrier multi-vues (jour/semaine/mois)', async () => {
+      // Vue journalière
+      const dayView = await request(app.getHttpServer())
+        .get('/missions/calendar/day')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({
+          date: new Date().toISOString().split('T')[0],
+        })
+        .expect(200);
+
+      expect(Array.isArray(dayView.body)).toBe(true);
+
+      // Vue hebdomadaire
+      const weekView = await request(app.getHttpServer())
+        .get('/missions/calendar/week')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({
+          date: new Date().toISOString().split('T')[0],
+        })
+        .expect(200);
+
+      expect(Array.isArray(weekView.body)).toBe(true);
+
+      // Vue mensuelle
+      const monthView = await request(app.getHttpServer())
+        .get('/missions/calendar/month')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({
+          year: new Date().getFullYear(),
+          month: new Date().getMonth() + 1,
+        })
+        .expect(200);
+
+      expect(Array.isArray(monthView.body)).toBe(true);
+    });
+
+    it('19.2 - Export iCal pour synchronisation Google Calendar', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/missions/calendar/export.ics')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('text/calendar');
+      expect(response.text).toContain('BEGIN:VCALENDAR');
+      expect(response.text).toContain('END:VCALENDAR');
+    });
+
+    it('19.3 - Blocage de créneaux (indisponibilités)', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/artisans/availability/block')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          startDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString(),
+          reason: 'Rendez-vous personnel',
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('id');
+      expect(response.body.blocked).toBe(true);
+    });
+
+    it('19.4 - Gestion des congés artisan', async () => {
+      const vacationStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const vacationEnd = new Date(Date.now() + 44 * 24 * 60 * 60 * 1000);
+
+      const response = await request(app.getHttpServer())
+        .post('/artisans/vacations')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          startDate: vacationStart.toISOString(),
+          endDate: vacationEnd.toISOString(),
+          type: 'VACATION',
+        })
+        .expect(201);
+
+      expect(response.body.type).toBe('VACATION');
+
+      // Vérifier que l'artisan est marqué indisponible pendant cette période
+      const profile = await prisma.artisanProfile.findFirst({
+        where: { userId: artisanId },
+      });
+      expect(profile).toBeDefined();
+    });
+
+    it('19.5 - Calcul automatique temps de trajet entre missions', async () => {
+      // Créer 2 missions consécutives
+      const mission1 = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'SCHEDULED',
+          status: 'ACCEPTED',
+          title: 'Mission 1',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue A',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          scheduledFor: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+          agreedPrice: 100.00,
+          vatRate: 20.00,
+        },
+      });
+
+      const mission2 = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'SCHEDULED',
+          status: 'PENDING',
+          title: 'Mission 2',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '50 Rue B',
+          city: 'Paris',
+          postalCode: '75002',
+          country: 'FR',
+          latitude: 48.8700,
+          longitude: 2.3600,
+          scheduledFor: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+          agreedPrice: 100.00,
+          vatRate: 20.00,
+        },
+      });
+
+      // Calculer le trajet
+      const response = await request(app.getHttpServer())
+        .get('/missions/travel-time')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({
+          fromMission: mission1.id,
+          toMission: mission2.id,
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('travelTime'); // en minutes
+      expect(response.body).toHaveProperty('distance'); // en km
+    });
+
+    it('19.6 - Reprogrammation d\'un rendez-vous', async () => {
+      const mission = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'SCHEDULED',
+          status: 'ACCEPTED',
+          title: 'À reprogrammer',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue Test',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          scheduledFor: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          agreedPrice: 100.00,
+          vatRate: 20.00,
+        },
+      });
+
+      const newDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+
+      const response = await request(app.getHttpServer())
+        .put(`/missions/${mission.id}/reschedule`)
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          newDate: newDate.toISOString(),
+          reason: 'Problème d\'agenda',
+        })
+        .expect(200);
+
+      expect(new Date(response.body.scheduledFor).getTime()).toBe(newDate.getTime());
+    });
+
+    it('19.7 - Annulation < 24h avec pénalités calculées', async () => {
+      const mission = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'SCHEDULED',
+          status: 'ACCEPTED',
+          title: 'À annuler',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue Test',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          scheduledFor: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(), // Dans 12h
+          agreedPrice: 200.00,
+          vatRate: 20.00,
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post(`/missions/${mission.id}/cancel`)
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          reason: 'Imprévu',
+        })
+        .expect(200);
+
+      // Pénalité de 20% appliquée
+      expect(response.body).toHaveProperty('penalty');
+      expect(parseFloat(response.body.penalty)).toBe(40.00); // 20% de 200€
+    });
+  });
+
+  /**
+   * SCÉNARIO 20: GÉOLOCALISATION AVANCÉE
+   * Test des fonctionnalités GPS avancées
+   */
+  describe('Scénario 20: Géolocalisation avancée', () => {
+
+    it('20.1 - Calcul ETA (temps d\'arrivée estimé) dynamique', async () => {
+      const mission = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'EMERGENCY',
+          status: 'ACCEPTED',
+          title: 'Urgence',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue Destination',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          agreedPrice: 150.00,
+          vatRate: 20.00,
+        },
+      });
+
+      // Artisan update sa position
+      await request(app.getHttpServer())
+        .put('/geo/location')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          latitude: 48.8500,
+          longitude: 2.3400,
+          missionId: mission.id,
+        })
+        .expect(200);
+
+      // Calculer ETA
+      const response = await request(app.getHttpServer())
+        .get(`/missions/${mission.id}/eta`)
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('estimatedArrival'); // timestamp
+      expect(response.body).toHaveProperty('duration'); // minutes
+      expect(response.body).toHaveProperty('distance'); // km
+    });
+
+    it('20.2 - Notifications de proximité ("artisan à 5 min")', async () => {
+      const mission = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'EMERGENCY',
+          status: 'ACCEPTED',
+          title: 'Urgence proximité',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue Test',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          agreedPrice: 150.00,
+          vatRate: 20.00,
+        },
+      });
+
+      // Artisan se rapproche (à 1km = ~5min)
+      await request(app.getHttpServer())
+        .put('/geo/location')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          latitude: 48.8656, // ~1km de distance
+          longitude: 2.3622,
+          missionId: mission.id,
+        })
+        .expect(200);
+
+      // Vérifier qu'une notification a été créée
+      const notifications = await prisma.notification.findMany({
+        where: {
+          userId: clientId,
+          type: 'SYSTEM',
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      });
+
+      expect(notifications.length).toBeGreaterThan(0);
+      expect(notifications[0].message).toContain('artisan');
+    });
+
+    it('20.3 - Calcul d\'itinéraire avec points intermédiaires', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/geo/route')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          origin: { lat: 48.8566, lng: 2.3522 },
+          destination: { lat: 48.8700, lng: 2.3600 },
+          waypoints: [
+            { lat: 48.8600, lng: 2.3550 },
+          ],
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('route');
+      expect(response.body).toHaveProperty('totalDistance');
+      expect(response.body).toHaveProperty('totalDuration');
+      expect(Array.isArray(response.body.route)).toBe(true);
+    });
+
+    it('20.4 - Géofencing: validation arrivée sur site', async () => {
+      const mission = await prisma.mission.create({
+        data: {
+          clientId: clientId,
+          artisanId: artisanId,
+          type: 'SCHEDULED',
+          status: 'ACCEPTED',
+          title: 'Mission géofencing',
+          description: 'Test',
+          category: 'Plomberie',
+          address: '10 Rue Test',
+          city: 'Paris',
+          postalCode: '75001',
+          country: 'FR',
+          latitude: 48.8566,
+          longitude: 2.3522,
+          agreedPrice: 100.00,
+          vatRate: 20.00,
+        },
+      });
+
+      // Artisan arrive sur site (dans rayon de 50m)
+      const response = await request(app.getHttpServer())
+        .post(`/missions/${mission.id}/check-in`)
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          latitude: 48.8567, // ~10m de distance
+          longitude: 2.3523,
+        })
+        .expect(200);
+
+      expect(response.body.checkedIn).toBe(true);
+
+      const updatedMission = await prisma.mission.findUnique({
+        where: { id: mission.id },
+      });
+      expect(updatedMission.status).toBe('IN_PROGRESS');
+    });
+
+    it('20.5 - Anonymisation positions pour privacy (arrondi 100m)', async () => {
+      // Position exacte
+      const exactPosition = { lat: 48.856613, lng: 2.352222 };
+
+      const response = await request(app.getHttpServer())
+        .post('/geo/anonymize')
+        .send(exactPosition)
+        .expect(200);
+
+      // Vérifier que la position est arrondie
+      expect(response.body.lat).not.toBe(exactPosition.lat);
+      expect(response.body.lng).not.toBe(exactPosition.lng);
+
+      // Vérifier que l'arrondi est d'environ 100m
+      const distance = calculateDistance(
+        exactPosition.lat,
+        exactPosition.lng,
+        response.body.lat,
+        response.body.lng
+      );
+      expect(distance).toBeLessThan(100); // mètres
+    });
+
+    it('20.6 - Détection déplacements impossibles (anti-spoofing)', async () => {
+      // Position à Paris
+      await request(app.getHttpServer())
+        .put('/geo/location')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          latitude: 48.8566,
+          longitude: 2.3522,
+        })
+        .expect(200);
+
+      // Tentative de position à Lyon 1 minute après (impossible)
+      const response = await request(app.getHttpServer())
+        .put('/geo/location')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          latitude: 45.7640,
+          longitude: 4.8357,
+        })
+        .expect(400);
+
+      expect(response.body.message).toContain('impossible');
+    });
+  });
+
+  /**
+   * =====================================================
+   * SCÉNARIO 21: TVA AVANCÉE
+   * =====================================================
+   */
+  describe('Scénario 21: TVA Avancée', () => {
+    it('21.1 - Taux intermédiaires France (10%, 5.5%)', async () => {
+      // Créer service avec taux réduit 10% (travaux rénovation énergétique)
+      const response = await request(app.getHttpServer())
+        .post('/services')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          name: 'Isolation thermique',
+          category: 'RENOVATION_ENERGETIQUE',
+          country: 'FR',
+          price: 1000.00,
+          vatRate: 10.0, // Taux réduit
+        })
+        .expect(201);
+
+      expect(parseFloat(response.body.vatRate)).toBe(10.0);
+      expect(parseFloat(response.body.totalWithVat)).toBe(1100.00);
+
+      // Service avec taux super réduit 5.5% (fourniture équipements)
+      const response2 = await request(app.getHttpServer())
+        .post('/services')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          name: 'Fourniture chaudière',
+          category: 'EQUIPEMENT_ENERGETIQUE',
+          country: 'FR',
+          price: 2000.00,
+          vatRate: 5.5,
+        })
+        .expect(201);
+
+      expect(parseFloat(response2.body.vatRate)).toBe(5.5);
+      expect(parseFloat(response2.body.totalWithVat)).toBe(2110.00);
+    });
+
+    it('21.2 - Taux multiples Luxembourg (17%, 14%, 8%)', async () => {
+      // Taux normal 17%
+      const normal = await request(app.getHttpServer())
+        .post('/invoices/calculate-vat')
+        .send({
+          country: 'LU',
+          amount: 100.00,
+          category: 'STANDARD',
+        })
+        .expect(200);
+
+      expect(parseFloat(normal.body.vatRate)).toBe(17.0);
+      expect(parseFloat(normal.body.vatAmount)).toBe(17.00);
+
+      // Taux intermédiaire 14% (vin)
+      const intermediate = await request(app.getHttpServer())
+        .post('/invoices/calculate-vat')
+        .send({
+          country: 'LU',
+          amount: 100.00,
+          category: 'WINE',
+        })
+        .expect(200);
+
+      expect(parseFloat(intermediate.body.vatRate)).toBe(14.0);
+
+      // Taux réduit 8% (services)
+      const reduced = await request(app.getHttpServer())
+        .post('/invoices/calculate-vat')
+        .send({
+          country: 'LU',
+          amount: 100.00,
+          category: 'SERVICES',
+        })
+        .expect(200);
+
+      expect(parseFloat(reduced.body.vatRate)).toBe(8.0);
+    });
+
+    it('21.3 - Auto-entrepreneur franchise TVA (non applicable)', async () => {
+      // Créer artisan auto-entrepreneur
+      const autoEntrepreneur = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'autoentrepreneur@test.com',
+          password: 'Pass123!',
+          firstName: 'Auto',
+          lastName: 'Entrepreneur',
+          role: 'ARTISAN',
+          companyType: 'AUTO_ENTREPRENEUR',
+          country: 'FR',
+        })
+        .expect(201);
+
+      // Générer facture (TVA non applicable)
+      const response = await request(app.getHttpServer())
+        .post('/invoices')
+        .set('Authorization', `Bearer ${autoEntrepreneur.body.token}`)
+        .send({
+          clientId,
+          amount: 500.00,
+          description: 'Réparation plomberie',
+        })
+        .expect(201);
+
+      expect(response.body.vatApplicable).toBe(false);
+      expect(response.body.vatAmount).toBe(0);
+      expect(response.body.totalWithVat).toBe(500.00);
+      expect(response.body.legalMention).toContain('TVA non applicable');
+    });
+
+    it('21.4 - Intracommunautaire B2B (autoliquidation)', async () => {
+      // Client professionnel belge avec numéro TVA
+      const b2bClient = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'b2b@company.be',
+          password: 'Pass123!',
+          role: 'CLIENT',
+          clientType: 'PROFESSIONAL',
+          country: 'BE',
+          vatNumber: 'BE0123456789',
+        })
+        .expect(201);
+
+      // Artisan français facture client belge B2B
+      const response = await request(app.getHttpServer())
+        .post('/invoices')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          clientId: b2bClient.body.id,
+          amount: 1000.00,
+          description: 'Prestation de service',
+        })
+        .expect(201);
+
+      // Autoliquidation: TVA à 0%, mention obligatoire
+      expect(response.body.vatApplicable).toBe(false);
+      expect(response.body.vatAmount).toBe(0);
+      expect(response.body.legalMention).toContain('Autoliquidation');
+      expect(response.body.legalMention).toContain('Article 196');
+    });
+
+    it('21.5 - Alertes seuils TVA intracommunautaire', async () => {
+      // Simuler ventes à un pays dépassant 10 000€
+      const response = await request(app.getHttpServer())
+        .get('/vat/intracom-threshold-status')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({ country: 'BE', year: 2025 })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('currentAmount');
+      expect(response.body).toHaveProperty('threshold'); // 10 000€
+      expect(response.body).toHaveProperty('percentageUsed');
+
+      // Si dépassement, alerte avec obligation d'immatriculation
+      if (response.body.currentAmount > response.body.threshold) {
+        expect(response.body.alert).toBe(true);
+        expect(response.body.message).toContain('immatriculation TVA');
+      }
+    });
+  });
+
+  /**
+   * =====================================================
+   * SCÉNARIO 22: NOTIFICATIONS AVANCÉES
+   * =====================================================
+   */
+  describe('Scénario 22: Notifications Avancées', () => {
+    it('22.1 - Templates personnalisables par admin', async () => {
+      // Admin crée template personnalisé
+      const template = await request(app.getHttpServer())
+        .post('/notifications/templates')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'MISSION_ACCEPTED_CUSTOM',
+          subject: 'Bonne nouvelle {clientName} !',
+          body: 'Votre mission {missionTitle} a été acceptée par {artisanName}. RDV le {date}.',
+          variables: ['clientName', 'missionTitle', 'artisanName', 'date'],
+        })
+        .expect(201);
+
+      expect(template.body.name).toBe('MISSION_ACCEPTED_CUSTOM');
+      expect(template.body.variables).toHaveLength(4);
+
+      // Utiliser le template
+      const notification = await request(app.getHttpServer())
+        .post('/notifications/send')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clientId,
+          templateName: 'MISSION_ACCEPTED_CUSTOM',
+          data: {
+            clientName: 'Jean',
+            missionTitle: 'Réparation fuite',
+            artisanName: 'Pierre',
+            date: '2025-11-10 14:00',
+          },
+        })
+        .expect(201);
+
+      expect(notification.body.subject).toContain('Bonne nouvelle Jean');
+      expect(notification.body.body).toContain('Pierre');
+    });
+
+    it('22.2 - Plages horaires (ne pas notifier la nuit)', async () => {
+      // Configurer préférences utilisateur
+      await request(app.getHttpServer())
+        .put('/users/notification-preferences')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+        })
+        .expect(200);
+
+      // Tenter d'envoyer notification à 23:00 (heure actuelle mockée)
+      const response = await request(app.getHttpServer())
+        .post('/notifications/send')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          userId: clientId,
+          type: 'MESSAGE',
+          content: 'Nouveau message',
+          currentTime: '23:00',
+        })
+        .expect(201);
+
+      // Notification différée jusqu'à 08:00
+      expect(response.body.status).toBe('SCHEDULED');
+      expect(response.body.scheduledFor).toContain('08:00');
+    });
+
+    it('22.3 - Canaux multiples (Email + Push + SMS)', async () => {
+      // Configurer préférences multi-canal
+      await request(app.getHttpServer())
+        .put('/users/notification-preferences')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          channels: {
+            MISSION_ACCEPTED: ['EMAIL', 'PUSH'],
+            PAYMENT_RECEIVED: ['EMAIL', 'SMS'],
+            MESSAGE_RECEIVED: ['PUSH'],
+          },
+        })
+        .expect(200);
+
+      // Envoyer notification multi-canal
+      const response = await request(app.getHttpServer())
+        .post('/notifications/send')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clientId,
+          type: 'PAYMENT_RECEIVED',
+          content: 'Paiement de 150€ reçu',
+        })
+        .expect(201);
+
+      // Vérifier que 2 canaux sont utilisés
+      expect(response.body.channels).toHaveLength(2);
+      expect(response.body.channels).toContain('EMAIL');
+      expect(response.body.channels).toContain('SMS');
+      expect(response.body.emailSent).toBe(true);
+      expect(response.body.smsSent).toBe(true);
+    });
+
+    it('22.4 - Digest hebdomadaire', async () => {
+      // Activer digest hebdomadaire
+      await request(app.getHttpServer())
+        .put('/users/notification-preferences')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          weeklyDigest: true,
+          digestDay: 'MONDAY',
+          digestTime: '09:00',
+        })
+        .expect(200);
+
+      // Récupérer aperçu du digest
+      const response = await request(app.getHttpServer())
+        .get('/notifications/digest-preview')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('weekSummary');
+      expect(response.body).toHaveProperty('statistics');
+      expect(response.body.statistics).toHaveProperty('missionsCompleted');
+      expect(response.body.statistics).toHaveProperty('messagesReceived');
+      expect(response.body.statistics).toHaveProperty('earnings');
+    });
+
+    it('22.5 - Newsletter promotionnelle (opt-in)', async () => {
+      // S'abonner à la newsletter
+      const subscription = await request(app.getHttpServer())
+        .post('/newsletter/subscribe')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          categories: ['PROMOTIONS', 'NEW_ARTISANS', 'TIPS'],
+        })
+        .expect(201);
+
+      expect(subscription.body.subscribed).toBe(true);
+      expect(subscription.body.categories).toHaveLength(3);
+
+      // Se désabonner
+      const unsubscribe = await request(app.getHttpServer())
+        .post('/newsletter/unsubscribe')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(unsubscribe.body.subscribed).toBe(false);
+    });
+
+    it('22.6 - Badge d\'icône (compteur nouveaux messages)', async () => {
+      // Récupérer compteurs de badges
+      const response = await request(app.getHttpServer())
+        .get('/notifications/badge-counts')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('unreadMessages');
+      expect(response.body).toHaveProperty('pendingMissions');
+      expect(response.body).toHaveProperty('unreadNotifications');
+      expect(response.body).toHaveProperty('totalBadgeCount');
+
+      // Marquer notifications comme lues
+      await request(app.getHttpServer())
+        .post('/notifications/mark-all-read')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      // Vérifier badge remis à 0
+      const updated = await request(app.getHttpServer())
+        .get('/notifications/badge-counts')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(updated.body.unreadNotifications).toBe(0);
+    });
+  });
+
+  /**
+   * =====================================================
+   * SCÉNARIO 23: MARKETPLACE AVANCÉ
+   * =====================================================
+   */
+  describe('Scénario 23: Marketplace Avancé', () => {
+    it('23.1 - Promotions et codes promo', async () => {
+      // Admin crée code promo
+      const promo = await request(app.getHttpServer())
+        .post('/marketplace/promo-codes')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          code: 'WINTER2025',
+          discountType: 'PERCENTAGE',
+          discountValue: 15,
+          validFrom: '2025-01-01',
+          validUntil: '2025-03-31',
+          minAmount: 50.00,
+          maxUses: 100,
+        })
+        .expect(201);
+
+      expect(promo.body.code).toBe('WINTER2025');
+
+      // Client applique le code promo
+      const order = await request(app.getHttpServer())
+        .post('/marketplace/orders')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          items: [{ productId: 'prod-123', quantity: 2, price: 30.00 }],
+          promoCode: 'WINTER2025',
+        })
+        .expect(201);
+
+      expect(parseFloat(order.body.subtotal)).toBe(60.00);
+      expect(parseFloat(order.body.discount)).toBe(9.00); // 15%
+      expect(parseFloat(order.body.total)).toBe(51.00);
+    });
+
+    it('23.2 - Alertes stock bas', async () => {
+      // Créer produit avec stock bas
+      const product = await request(app.getHttpServer())
+        .post('/marketplace/products')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          name: 'Robinet premium',
+          price: 89.99,
+          stock: 3,
+          lowStockThreshold: 5,
+        })
+        .expect(201);
+
+      // Vérifier alerte envoyée
+      const alerts = await request(app.getHttpServer())
+        .get('/marketplace/stock-alerts')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .expect(200);
+
+      const lowStockAlert = alerts.body.find(a => a.productId === product.body.id);
+      expect(lowStockAlert).toBeDefined();
+      expect(lowStockAlert.type).toBe('LOW_STOCK');
+      expect(lowStockAlert.currentStock).toBe(3);
+      expect(lowStockAlert.threshold).toBe(5);
+    });
+
+    it('23.3 - Politique retours/échanges 14 jours', async () => {
+      // Client demande retour dans les 14 jours
+      const returnRequest = await request(app.getHttpServer())
+        .post('/marketplace/returns')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          orderId: 'order-123',
+          reason: 'NOT_AS_DESCRIBED',
+          comment: 'Couleur différente de la photo',
+        })
+        .expect(201);
+
+      expect(returnRequest.body.status).toBe('PENDING');
+      expect(returnRequest.body.eligibleForReturn).toBe(true);
+
+      // Artisan accepte le retour
+      const approval = await request(app.getHttpServer())
+        .put(`/marketplace/returns/${returnRequest.body.id}/approve`)
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          refundMethod: 'ORIGINAL_PAYMENT',
+          shippingLabelProvided: true,
+        })
+        .expect(200);
+
+      expect(approval.body.status).toBe('APPROVED');
+      expect(approval.body.refundAmount).toBeGreaterThan(0);
+    });
+
+    it('23.4 - Options livraison (domicile vs retrait)', async () => {
+      // Commander avec livraison à domicile
+      const homeDelivery = await request(app.getHttpServer())
+        .post('/marketplace/orders')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          items: [{ productId: 'prod-123', quantity: 1 }],
+          deliveryMethod: 'HOME_DELIVERY',
+          deliveryAddress: {
+            street: '10 Rue de la Paix',
+            city: 'Paris',
+            postalCode: '75001',
+            country: 'FR',
+          },
+        })
+        .expect(201);
+
+      expect(homeDelivery.body.deliveryMethod).toBe('HOME_DELIVERY');
+      expect(homeDelivery.body.shippingCost).toBeGreaterThan(0);
+
+      // Commander avec retrait en magasin (gratuit)
+      const pickup = await request(app.getHttpServer())
+        .post('/marketplace/orders')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          items: [{ productId: 'prod-123', quantity: 1 }],
+          deliveryMethod: 'PICKUP',
+          pickupLocation: 'atelier-artisan',
+        })
+        .expect(201);
+
+      expect(pickup.body.deliveryMethod).toBe('PICKUP');
+      expect(parseFloat(pickup.body.shippingCost)).toBe(0);
+    });
+
+    it('23.5 - Calcul frais de port', async () => {
+      // Frais de port standard France
+      const frShipping = await request(app.getHttpServer())
+        .post('/marketplace/calculate-shipping')
+        .send({
+          country: 'FR',
+          postalCode: '75001',
+          weight: 2.5, // kg
+          items: 3,
+        })
+        .expect(200);
+
+      expect(parseFloat(frShipping.body.cost)).toBeGreaterThan(0);
+      expect(frShipping.body.estimatedDays).toBe('2-3');
+
+      // Livraison gratuite si montant > 100€
+      const freeShipping = await request(app.getHttpServer())
+        .post('/marketplace/calculate-shipping')
+        .send({
+          country: 'FR',
+          orderAmount: 150.00,
+        })
+        .expect(200);
+
+      expect(parseFloat(freeShipping.body.cost)).toBe(0);
+      expect(freeShipping.body.reason).toBe('FREE_OVER_100');
+    });
+
+    it('23.6 - Modération IA (détection produits illégaux)', async () => {
+      // Tenter de créer produit suspect
+      const response = await request(app.getHttpServer())
+        .post('/marketplace/products')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          name: 'Réplique arme à feu',
+          description: 'Réplique exacte',
+          price: 299.99,
+        })
+        .expect(400);
+
+      expect(response.body.error).toBe('MODERATION_FAILED');
+      expect(response.body.message).toContain('illégal');
+      expect(response.body.aiConfidence).toBeGreaterThan(0.8);
+
+      // Produit normal passe la modération
+      const validProduct = await request(app.getHttpServer())
+        .post('/marketplace/products')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .send({
+          name: 'Marteau professionnel',
+          description: 'Outil de qualité pour artisans',
+          price: 49.99,
+        })
+        .expect(201);
+
+      expect(validProduct.body.moderationStatus).toBe('APPROVED');
+    });
+  });
+
+  /**
+   * =====================================================
+   * SCÉNARIO 24: AUTHENTIFICATION AVANCÉE
+   * =====================================================
+   */
+  describe('Scénario 24: Authentification Avancée', () => {
+    it('24.1 - OAuth Google', async () => {
+      // Simuler callback OAuth Google
+      const response = await request(app.getHttpServer())
+        .post('/auth/oauth/google')
+        .send({
+          code: 'mock-google-auth-code',
+          redirectUri: 'http://localhost:3000/auth/callback',
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('token');
+      expect(response.body.user.email).toContain('@gmail.com');
+      expect(response.body.user.provider).toBe('GOOGLE');
+      expect(response.body.user.emailVerified).toBe(true);
+    });
+
+    it('24.2 - OAuth Facebook', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/oauth/facebook')
+        .send({
+          accessToken: 'mock-facebook-token',
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('token');
+      expect(response.body.user.provider).toBe('FACEBOOK');
+      expect(response.body.user.emailVerified).toBe(true);
+    });
+
+    it('24.3 - OAuth Apple', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/oauth/apple')
+        .send({
+          identityToken: 'mock-apple-identity-token',
+          user: {
+            email: 'privaterelay@icloud.com',
+            firstName: 'John',
+            lastName: 'Doe',
+          },
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('token');
+      expect(response.body.user.provider).toBe('APPLE');
+      expect(response.body.user.emailVerified).toBe(true);
+    });
+
+    it('24.4 - Reset password (email)', async () => {
+      // Demander reset
+      const resetRequest = await request(app.getHttpServer())
+        .post('/auth/password-reset/request')
+        .send({
+          email: 'client@test.com',
+        })
+        .expect(200);
+
+      expect(resetRequest.body.message).toContain('email envoyé');
+
+      // Utiliser le token de reset
+      const reset = await request(app.getHttpServer())
+        .post('/auth/password-reset/confirm')
+        .send({
+          token: 'mock-reset-token-123',
+          newPassword: 'NewSecurePass123!',
+        })
+        .expect(200);
+
+      expect(reset.body.message).toContain('modifié avec succès');
+    });
+
+    it('24.5 - Vérification email (lien de confirmation)', async () => {
+      // Créer compte non vérifié
+      const user = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email: 'newuser@test.com',
+          password: 'Pass123!',
+          role: 'CLIENT',
+        })
+        .expect(201);
+
+      expect(user.body.emailVerified).toBe(false);
+
+      // Vérifier email avec token
+      const verification = await request(app.getHttpServer())
+        .get('/auth/verify-email')
+        .query({ token: 'mock-verification-token' })
+        .expect(200);
+
+      expect(verification.body.emailVerified).toBe(true);
+      expect(verification.body.message).toContain('confirmé');
+    });
+
+    it('24.6 - Vérification SMS (code 6 chiffres)', async () => {
+      // Demander code SMS
+      const smsRequest = await request(app.getHttpServer())
+        .post('/auth/phone-verification/request')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          phone: '+33612345678',
+        })
+        .expect(200);
+
+      expect(smsRequest.body.message).toContain('code envoyé');
+
+      // Vérifier code
+      const verification = await request(app.getHttpServer())
+        .post('/auth/phone-verification/verify')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          phone: '+33612345678',
+          code: '123456', // Mock code
+        })
+        .expect(200);
+
+      expect(verification.body.phoneVerified).toBe(true);
+    });
+
+    it('24.7 - Gestion moyens de paiement sauvegardés', async () => {
+      // Ajouter carte
+      const addCard = await request(app.getHttpServer())
+        .post('/payment-methods')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send({
+          stripePaymentMethodId: 'pm_mock_card',
+          type: 'CARD',
+          isDefault: true,
+        })
+        .expect(201);
+
+      expect(addCard.body.type).toBe('CARD');
+      expect(addCard.body.isDefault).toBe(true);
+
+      // Lister moyens de paiement
+      const list = await request(app.getHttpServer())
+        .get('/payment-methods')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(list.body.length).toBeGreaterThan(0);
+
+      // Supprimer moyen de paiement
+      await request(app.getHttpServer())
+        .delete(`/payment-methods/${addCard.body.id}`)
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+    });
+  });
+
+  /**
+   * =====================================================
+   * SCÉNARIO 25: ANALYTICS & REPORTING
+   * =====================================================
+   */
+  describe('Scénario 25: Analytics & Reporting', () => {
+    it('25.1 - Dashboard KPIs temps réel', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/analytics/dashboard')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('totalUsers');
+      expect(response.body).toHaveProperty('activeArtisans');
+      expect(response.body).toHaveProperty('missionsToday');
+      expect(response.body).toHaveProperty('revenueToday');
+      expect(response.body).toHaveProperty('averageRating');
+      expect(response.body).toHaveProperty('conversionRate');
+    });
+
+    it('25.2 - Graphiques analytics (revenus, utilisateurs)', async () => {
+      // Données pour graphique revenus 30 derniers jours
+      const revenueChart = await request(app.getHttpServer())
+        .get('/analytics/revenue-chart')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ period: '30d' })
+        .expect(200);
+
+      expect(revenueChart.body.labels).toHaveLength(30);
+      expect(revenueChart.body.data).toHaveLength(30);
+      expect(revenueChart.body.total).toBeGreaterThanOrEqual(0);
+
+      // Croissance utilisateurs
+      const usersChart = await request(app.getHttpServer())
+        .get('/analytics/users-growth')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ period: '12m' })
+        .expect(200);
+
+      expect(usersChart.body.labels).toHaveLength(12);
+      expect(usersChart.body.clients).toHaveLength(12);
+      expect(usersChart.body.artisans).toHaveLength(12);
+    });
+
+    it('25.3 - Export comptable artisan', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/analytics/accounting-export')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+          format: 'CSV',
+        })
+        .expect(200);
+
+      expect(response.headers['content-type']).toContain('text/csv');
+      expect(response.headers['content-disposition']).toContain('attachment');
+      expect(response.text).toContain('Date,Client,Montant HT,TVA,Montant TTC');
+    });
+
+    it('25.4 - Tableau de bord TVA par pays', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/analytics/vat-dashboard')
+        .set('Authorization', `Bearer ${artisanToken}`)
+        .query({ year: 2025 })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('FR');
+      expect(response.body).toHaveProperty('BE');
+      expect(response.body).toHaveProperty('LU');
+
+      expect(response.body.FR).toHaveProperty('totalHT');
+      expect(response.body.FR).toHaveProperty('totalVAT');
+      expect(response.body.FR).toHaveProperty('totalTTC');
+      expect(response.body.FR.vatRate).toBe(20.0);
+    });
+
+    it('25.5 - Analyse comportement utilisateurs', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/analytics/user-behavior')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ userId: clientId })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('totalMissions');
+      expect(response.body).toHaveProperty('averageResponseTime');
+      expect(response.body).toHaveProperty('preferredCategories');
+      expect(response.body).toHaveProperty('totalSpent');
+      expect(response.body).toHaveProperty('loyaltyScore');
+      expect(response.body.preferredCategories).toBeInstanceOf(Array);
+    });
+
+    it('25.6 - Taux de conversion (demande → mission)', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/analytics/conversion-funnel')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .query({ period: '30d' })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('totalRequests');
+      expect(response.body).toHaveProperty('matchedRequests');
+      expect(response.body).toHaveProperty('acceptedMissions');
+      expect(response.body).toHaveProperty('completedMissions');
+      expect(response.body).toHaveProperty('conversionRate');
+
+      expect(parseFloat(response.body.conversionRate)).toBeGreaterThanOrEqual(0);
+      expect(parseFloat(response.body.conversionRate)).toBeLessThanOrEqual(100);
+    });
+  });
+
+  /**
    * Setup des utilisateurs de test
    */
   async function setupTestUsers() {
