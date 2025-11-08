@@ -287,6 +287,7 @@ model Mission {
   depositAmount       Decimal?  @db.Decimal(10, 2)
   depositPaidAt       DateTime?
   retractionExpiresAt DateTime? // 48h after completion
+  autoValidated       Boolean   @default(false) // True if auto-validated after 7 days
 
   // Media
   photos String[]
@@ -539,6 +540,7 @@ model Transaction {
   orderId               String?           @unique
   order                 Order?            @relation(fields: [orderId], references: [id])
   amount                Decimal           @db.Decimal(10, 2)
+  currency              String            @default("EUR")
   commission            Decimal           @db.Decimal(10, 2)
   artisanAmount         Decimal           @db.Decimal(10, 2)
   stripePaymentIntentId String?           @unique
@@ -667,6 +669,22 @@ enum ReputationAction {
   EXCELLENT_REVIEW // +15 points (5 stars)
   POOR_REVIEW // -10 points (1-2 stars)
   ADMIN_ADJUSTMENT // Manual adjustment
+}
+
+model ReputationProfile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  totalPoints         Int      @default(100) // Score 0-200 (100 = neutral)
+  totalMissions       Int      @default(0)
+  successfulMissions  Int      @default(0)
+  cancelledMissions   Int      @default(0)
+  noShowCount         Int      @default(0)
+  averageRating       Decimal  @default(0) @db.Decimal(3, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([totalPoints])
 }
 
 model ReputationHistory {

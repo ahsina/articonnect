@@ -216,7 +216,7 @@ export class PaymentService {
     }
 
     // Calculer le montant de l'acompte
-    const depositAmount = mission.depositAmount ||
+    const depositAmount = Number(mission.depositAmount) ||
       this.reputationService.calculateDepositAmount(
         Number(mission.agreedPrice),
         mission.depositPercentage,
@@ -260,7 +260,11 @@ export class PaymentService {
       },
     });
 
-    return { clientSecret: paymentIntent.client_secret, depositAmount };
+    return {
+      clientSecret: paymentIntent.client_secret,
+      amount: depositAmount,
+      depositPercentage: mission.depositPercentage,
+    };
   }
 
   /**
@@ -476,10 +480,7 @@ export class PaymentService {
     reason: RefundReason,
   ) {
     // Créer le remboursement Stripe
-    await this.stripeService.refundPayment(
-      payment.stripePaymentIntentId,
-      amount * 100, // cents
-    );
+    await this.stripeService.refundPayment(payment.stripePaymentIntentId);
 
     // Créer le Payment de remboursement partiel
     await this.prisma.payment.create({

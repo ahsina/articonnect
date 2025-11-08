@@ -379,6 +379,20 @@ export class MissionService {
         MissionStatus.COMPLETED,
         MissionStatus.CANCELLED,
       ],
+      [MissionStatus.PENDING_DEPOSIT]: [
+        MissionStatus.DEPOSIT_PAID,
+        MissionStatus.CANCELLED,
+      ],
+      [MissionStatus.DEPOSIT_PAID]: [
+        MissionStatus.IN_TRANSIT,
+        MissionStatus.CANCELLED,
+      ],
+      [MissionStatus.IN_TRANSIT]: [
+        MissionStatus.IN_PROGRESS,
+        MissionStatus.CANCELLED_NO_SHOW,
+      ],
+      [MissionStatus.AUTO_VALIDATED]: [],
+      [MissionStatus.CANCELLED_NO_SHOW]: [],
     };
 
     if (!validTransitions[current]?.includes(next)) {
@@ -820,8 +834,8 @@ export class MissionService {
     return {
       depositRequired: mission.depositRequired,
       depositPercentage: mission.depositPercentage,
-      depositAmount: mission.depositAmount,
-      depositPaid: !!depositPayment,
+      depositAmount: mission.depositAmount ? Number(mission.depositAmount) : 0,
+      depositPaid: !!mission.depositPaidAt,
       depositPaidAt: mission.depositPaidAt,
       clientReputation: mission.client.reputationScore,
       retractionExpiresAt: mission.retractionExpiresAt,
