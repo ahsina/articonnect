@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { PaymentController } from './controllers/payment.controller';
+import { ReputationController } from './controllers/reputation.controller';
 import { PaymentService } from './services/payment.service';
 import { StripeService } from './services/stripe.service';
 import { ReputationService } from './services/reputation.service';
 import { NoShowService } from './services/no-show.service';
 
 @Module({
-  controllers: [PaymentController],
+  controllers: [
+    PaymentController,
+    ReputationController,
+  ],
   providers: [
     PaymentService,
     StripeService,

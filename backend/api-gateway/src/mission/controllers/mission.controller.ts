@@ -9,8 +9,10 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { MissionService } from '../services/mission.service';
 import { NegotiationService } from '../services/negotiation.service';
 import {
@@ -21,6 +23,13 @@ import {
   CreateNegotiationDto,
   AcceptNegotiationDto,
 } from '../dto/negotiation.dto';
+import {
+  SetupDepositDto,
+  DepositSetupResponseDto,
+  DepositStatusResponseDto,
+  ValidationResponseDto,
+  CompletedResponseDto,
+} from '../dto/mission-workflow.dto';
 
 @ApiTags('Missions')
 @Controller('missions')
@@ -131,5 +140,163 @@ export class MissionController {
     @Body() dto: AcceptNegotiationDto,
   ) {
     return this.negotiationService.accept(req.user.userId, negotiationId, dto);
+  }
+
+  // ================================================================
+  // HYBRID PAYMENT SYSTEM - MISSION WORKFLOW ENDPOINTS
+  // ================================================================
+
+  /**
+   * Configurer les exigences d'acompte (après négociation de prix)
+   */
+  @Post(':id/setup-deposit')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Configurer l\'acompte requis',
+    description: 'Détermine le modèle de paiement basé sur la réputation du client et configure l\'acompte',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Acompte configuré avec succès',
+    type: DepositSetupResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Mission introuvable' })
+  async setupDepositRequirements(
+    @Param('id') missionId: string,
+    @Body() dto: SetupDepositDto,
+  ): Promise<DepositSetupResponseDto> {
+    return this.missionService.setupDepositRequirements(missionId, dto.agreedPrice);
+  }
+
+  /**
+   * Démarrer le voyage vers le client (artisan)
+   */
+  @Post(':id/start-travel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Démarrer le voyage',
+    description: 'L\'artisan démarre son voyage vers le client (bloqué si acompte non payé)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Voyage démarré avec succès',
+  })
+  @ApiResponse({ status: 400, description: 'Acompte non payé' })
+  @ApiResponse({ status: 403, description: 'Réservé aux artisans' })
+  async startTravel(@Request() req, @Param('id') missionId: string) {
+    return this.missionService.startTravel(missionId, req.user.userId);
+  }
+
+  /**
+   * Marquer l'arrivée sur place (artisan)
+   */
+  @Post(':id/arrive')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Marquer l\'arrivée',
+    description: 'L\'artisan marque son arrivée sur le lieu de la mission',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Arrivée enregistrée avec succès',
+  })
+  @ApiResponse({ status: 403, description: 'Réservé aux artisans' })
+  async markArrival(@Request() req, @Param('id') missionId: string) {
+    return this.missionService.markArrival(missionId, req.user.userId);
+  }
+
+  /**
+   * Marquer la mission comme terminée (artisan)
+   */
+  @Post(':id/complete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Marquer terminée',
+    description: 'L\'artisan marque la mission comme terminée - Démarre la période de rétractation 48h',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Mission marquée comme terminée',
+    type: CompletedResponseDto,
+  })
+  @ApiResponse({ status: 403, description: 'Réservé aux artisans' })
+  async markCompleted(
+    @Request() req,
+    @Param('id') missionId: string,
+  ): Promise<CompletedResponseDto> {
+    return this.missionService.markCompleted(missionId, req.user.userId);
+  }
+
+  /**
+   * Valider la mission (client)
+   */
+  @Post(':id/validate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CLIENT')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Valider la mission',
+    description: 'Le client valide le travail effectué - Déclenche le paiement à l\'artisan',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Mission validée avec succès',
+    type: ValidationResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Mission doit être terminée pour être validée' })
+  @ApiResponse({ status: 403, description: 'Réservé aux clients' })
+  async validateCompletion(
+    @Request() req,
+    @Param('id') missionId: string,
+  ): Promise<ValidationResponseDto> {
+    return this.missionService.validateCompletion(missionId, req.user.userId);
+  }
+
+  /**
+   * Obtenir le statut de l'acompte
+   */
+  @Get(':id/deposit-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Statut de l\'acompte',
+    description: 'Récupère le statut de l\'acompte pour une mission',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Statut de l\'acompte',
+    type: DepositStatusResponseDto,
+  })
+  async getDepositStatus(
+    @Param('id') missionId: string,
+  ): Promise<DepositStatusResponseDto> {
+    return this.missionService.getDepositStatus(missionId);
+  }
+
+  /**
+   * Auto-valider les missions bloquées (CRON job - admin)
+   */
+  @Post('auto-validate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Auto-valider missions bloquées',
+    description: 'CRON: Auto-valide les missions terminées depuis > 7 jours sans validation',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Missions auto-validées',
+  })
+  @ApiResponse({ status: 403, description: 'Réservé aux admins' })
+  async autoValidateStuckMissions() {
+    return this.missionService.autoValidateStuckMissions();
   }
 }
