@@ -104,4 +104,9 @@ export interface ProductFilters {
   search?: string;
   artisanId?: string;
   status?: ProductStatus;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  sortBy?: 'price' | 'rating' | 'newest' | 'popular';
+  sortOrder?: 'asc' | 'desc';
 }

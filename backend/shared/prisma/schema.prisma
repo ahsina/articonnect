@@ -574,6 +574,26 @@ model Notification {
   @@index([createdAt])
 }
 
+model NotificationPreferences {
+  id                     String  @id @default(uuid())
+  userId                 String  @unique
+  emailNotifications     Boolean @default(true)
+  pushNotifications      Boolean @default(true)
+  smsNotifications       Boolean @default(false)
+  newMission             Boolean @default(true)
+  missionUpdate          Boolean @default(true)
+  newMessage             Boolean @default(true)
+  paymentReceived        Boolean @default(true)
+  paymentSent            Boolean @default(true)
+  reviewReceived         Boolean @default(true)
+  marketingEmails        Boolean @default(false)
+  weeklyDigest           Boolean @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([userId])
+}
+
 // ================================
 // AUTH
 // ================================
@@ -624,6 +644,20 @@ model EmailVerificationToken {
 
   @@index([userId])
   @@index([token])
+}
+
+model PhoneVerificationToken {
+  id        String   @id @default(uuid())
+  code      String   // 6-digit verification code
+  phone     String   // Phone number to verify
+  userId    String?  // Optional: if user is already logged in
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  attempts  Int      @default(0) // Track failed attempts
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([code])
 }
 
 // ================================

@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { EmailService } from '../../email/services/email.service';
+import { TwoFactorService } from './two-factor.service';
 import * as bcrypt from 'bcrypt';
 import * as speakeasy from 'speakeasy';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
@@ -20,6 +21,7 @@ export class AuthService {
     private jwtService: JwtService,
     private redis: RedisService,
     private emailService: EmailService,
+    private twoFactorService: TwoFactorService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -438,16 +440,21 @@ export class AuthService {
       throw new BadRequestException('Configuration 2FA introuvable');
     }
 
-    // Verify token
-    const verified = speakeasy.totp.verify({
+    // First try to verify TOTP token
+    let verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret,
       encoding: 'base32',
       token,
       window: 2, // Allow 2 steps before/after for clock drift
     });
 
+    // If TOTP fails, try backup code
     if (!verified) {
-      throw new UnauthorizedException('Code invalide');
+      verified = await this.twoFactorService.verifyBackupCode(userId, token);
+    }
+
+    if (!verified) {
+      throw new UnauthorizedException('Code invalide ou code de secours déjà utilisé');
     }
 
     // Enable 2FA if not already enabled
@@ -613,6 +620,23 @@ export class AuthService {
     );
 
     return { message: 'Email de vérification renvoyé' };
+  }
+
+  async regenerate2FABackupCodes(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.twoFactorEnabled) {
+      throw new BadRequestException('2FA n\'est pas activé');
+    }
+
+    return this.twoFactorService.regenerateBackupCodes(userId);
+  }
+
+  async getRemainingBackupCodesCount(userId: string) {
+    const count = await this.twoFactorService.getRemainingBackupCodesCount(userId);
+    return { count };
   }
 
   sanitizeUser(user: User) {

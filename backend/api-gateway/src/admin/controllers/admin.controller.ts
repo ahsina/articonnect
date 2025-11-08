@@ -1,14 +1,18 @@
 import { Controller, Get, Put, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AdminService } from '../services/admin.service';
+import { AuditLogService } from '../../common/services/audit-log.service';
 
 @ApiTags('Admin')
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   @Get('dashboard')
   async getDashboard() {
@@ -44,5 +48,33 @@ export class AdminController {
   @Put('users/:id/activate')
   async activateUser(@Param('id') id: string) {
     return this.adminService.activateUser(id);
+  }
+
+  @Get('audit-logs')
+  @ApiOperation({ summary: 'Get audit logs (Admin only)' })
+  async getAuditLogs(
+    @Query('userId') userId?: string,
+    @Query('action') action?: string,
+    @Query('resource') resource?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.auditLogService.findAll({
+      userId,
+      action,
+      resource,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 50,
+    });
+  }
+
+  @Get('audit-logs/:id')
+  @ApiOperation({ summary: 'Get audit log by ID (Admin only)' })
+  async getAuditLog(@Param('id') id: string) {
+    return this.auditLogService.findOne(id);
   }
 }

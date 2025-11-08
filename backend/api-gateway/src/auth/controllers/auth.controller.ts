@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   UseGuards,
@@ -9,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
+import { PhoneVerificationService } from '../services/phone-verification.service';
 import {
   RegisterDto,
   LoginDto,
@@ -21,12 +23,16 @@ import {
   Disable2FADto,
   VerifyEmailDto,
 } from '../dto/auth.dto';
+import { SendPhoneCodeDto, VerifyPhoneCodeDto } from '../dto/phone-verification.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly phoneVerificationService: PhoneVerificationService,
+  ) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -137,5 +143,51 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend email verification' })
   async resendVerification(@Request() req) {
     return this.authService.resendVerificationEmail(req.user.userId);
+  }
+
+  @Post('phone/send-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send SMS verification code to phone number' })
+  async sendPhoneCode(@Body() sendPhoneCodeDto: SendPhoneCodeDto) {
+    return this.phoneVerificationService.sendVerificationCode(sendPhoneCodeDto.phone);
+  }
+
+  @Post('phone/verify-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify phone number with SMS code' })
+  async verifyPhoneCode(@Body() verifyPhoneCodeDto: VerifyPhoneCodeDto) {
+    return this.phoneVerificationService.verifyCode(
+      verifyPhoneCodeDto.phone,
+      verifyPhoneCodeDto.code,
+    );
+  }
+
+  @Post('phone/send-code-authenticated')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send SMS verification code (authenticated user)' })
+  async sendPhoneCodeAuthenticated(@Request() req, @Body() sendPhoneCodeDto: SendPhoneCodeDto) {
+    return this.phoneVerificationService.sendVerificationCode(
+      sendPhoneCodeDto.phone,
+      req.user.userId,
+    );
+  }
+
+  @Post('2fa/backup-codes/regenerate')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Regenerate 2FA backup codes' })
+  async regenerateBackupCodes(@Request() req) {
+    return this.authService.regenerate2FABackupCodes(req.user.userId);
+  }
+
+  @Get('2fa/backup-codes/count')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get remaining backup codes count' })
+  async getBackupCodesCount(@Request() req) {
+    return this.authService.getRemainingBackupCodesCount(req.user.userId);
   }
 }

@@ -3,6 +3,7 @@ import {
   Get,
   Put,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -15,12 +16,16 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagg
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UserService } from '../services/user.service';
+import { GdprService } from '../services/gdpr.service';
 import { UpdateProfileDto, CreateArtisanProfileDto } from '../dto/user.dto';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly gdprService: GdprService,
+  ) {}
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
@@ -80,5 +85,50 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.userService.uploadAvatar(req.user.userId, file);
+  }
+
+  // ==================== GDPR ====================
+
+  @Get('gdpr/export')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Export all user data (GDPR compliance)' })
+  async exportData(@Request() req) {
+    return this.gdprService.exportUserData(req.user.userId);
+  }
+
+  @Post('gdpr/request-deletion')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Request account deletion (GDPR right to erasure)' })
+  async requestDeletion(@Request() req) {
+    return this.gdprService.requestDeletion(req.user.userId);
+  }
+
+  @Delete('gdpr/cancel-deletion')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel account deletion request' })
+  async cancelDeletion(@Request() req) {
+    return this.gdprService.cancelDeletionRequest(req.user.userId);
+  }
+
+  @Get('gdpr/consents')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user consents (GDPR)' })
+  async getConsents(@Request() req) {
+    return this.gdprService.getUserConsents(req.user.userId);
+  }
+
+  @Put('gdpr/consents')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user consents' })
+  async updateConsents(
+    @Request() req,
+    @Body() updates: { marketing?: boolean; analytics?: boolean; geolocation?: boolean },
+  ) {
+    return this.gdprService.updateConsents(req.user.userId, updates);
   }
 }

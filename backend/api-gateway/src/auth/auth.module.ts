@@ -7,6 +7,7 @@ import { AuthService } from './services/auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { TwoFactorService } from './services/two-factor.service';
+import { PhoneVerificationService } from './services/phone-verification.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { TwoFactorService } from './services/two-factor.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, TwoFactorService],
-  exports: [AuthService],
+  providers: [AuthService, JwtStrategy, LocalStrategy, TwoFactorService, PhoneVerificationService],
+  exports: [AuthService, PhoneVerificationService],
 })
 export class AuthModule {}

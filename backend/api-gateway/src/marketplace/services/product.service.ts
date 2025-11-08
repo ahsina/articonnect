@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateProductDto, UpdateProductDto, ProductFilters } from '../dto/product.dto';
+import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -57,6 +58,52 @@ export class ProductService {
       ];
     }
 
+    // Price range filter
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      where.price = {};
+      if (filters?.minPrice !== undefined) {
+        where.price.gte = filters.minPrice;
+      }
+      if (filters?.maxPrice !== undefined) {
+        where.price.lte = filters.maxPrice;
+      }
+    }
+
+    // Rating filter (filter artisans with minimum rating)
+    if (filters?.minRating !== undefined) {
+      where.artisan = {
+        artisanProfile: {
+          rating: {
+            gte: filters.minRating,
+          },
+        },
+      };
+    }
+
+    // Sorting
+    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' };
+
+    if (filters?.sortBy) {
+      const sortOrder = filters.sortOrder || 'desc';
+
+      switch (filters.sortBy) {
+        case 'price':
+          orderBy = { price: sortOrder };
+          break;
+        case 'rating':
+          orderBy = { artisan: { artisanProfile: { rating: sortOrder } } };
+          break;
+        case 'newest':
+          orderBy = { createdAt: 'desc' };
+          break;
+        case 'popular':
+          // For "popular", we could sort by order count or review count
+          // For now, using createdAt as placeholder
+          orderBy = { createdAt: 'desc' };
+          break;
+      }
+    }
+
     return this.prisma.product.findMany({
       where,
       include: {
@@ -74,7 +121,7 @@ export class ProductService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       take: 50,
     });
   }
@@ -135,5 +182,89 @@ export class ProductService {
     });
 
     return { message: 'Produit supprimé avec succès' };
+  }
+
+  // ==================== PRODUCT VARIANTS ====================
+
+  async createVariant(productId: string, artisanId: string, data: CreateVariantDto) {
+    // Verify product exists and belongs to artisan
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Produit introuvable');
+    }
+
+    if (product.artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à ce produit');
+    }
+
+    return this.prisma.productVariant.create({
+      data: {
+        productId,
+        name: data.name,
+        priceAdjustment: data.priceAdjustment,
+        stock: data.stock,
+      },
+    });
+  }
+
+  async getVariants(productId: string) {
+    return this.prisma.productVariant.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async getVariant(variantId: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            artisanId: true,
+          },
+        },
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException('Variante introuvable');
+    }
+
+    return variant;
+  }
+
+  async updateVariant(variantId: string, artisanId: string, data: UpdateVariantDto) {
+    // Verify variant exists and belongs to artisan
+    const variant = await this.getVariant(variantId);
+
+    if (variant.product.artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette variante');
+    }
+
+    return this.prisma.productVariant.update({
+      where: { id: variantId },
+      data,
+    });
+  }
+
+  async deleteVariant(variantId: string, artisanId: string) {
+    // Verify variant exists and belongs to artisan
+    const variant = await this.getVariant(variantId);
+
+    if (variant.product.artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette variante');
+    }
+
+    await this.prisma.productVariant.delete({
+      where: { id: variantId },
+    });
+
+    return { message: 'Variante supprimée avec succès' };
   }
 }

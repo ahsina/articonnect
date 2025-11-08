@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ProductService } from '../services/product.service';
 import { OrderService } from '../services/order.service';
 import { CreateProductDto, UpdateProductDto } from '../dto/product.dto';
+import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { CreateOrderDto, UpdateOrderStatusDto } from '../dto/order.dto';
 
 @ApiTags('Marketplace')
@@ -15,14 +16,28 @@ export class MarketplaceController {
   ) {}
 
   @Get('products')
-  @ApiOperation({ summary: 'Get all products' })
+  @ApiOperation({ summary: 'Get all products with advanced filters' })
   @ApiResponse({ status: 200, description: 'List of products' })
   async getProducts(
     @Query('category') category?: string,
     @Query('search') search?: string,
     @Query('artisanId') artisanId?: string,
+    @Query('minPrice') minPrice?: number,
+    @Query('maxPrice') maxPrice?: number,
+    @Query('minRating') minRating?: number,
+    @Query('sortBy') sortBy?: 'price' | 'rating' | 'newest' | 'popular',
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.productService.findAll({ category, search, artisanId });
+    return this.productService.findAll({
+      category,
+      search,
+      artisanId,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      minRating: minRating ? Number(minRating) : undefined,
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Get('products/:id')
@@ -51,6 +66,62 @@ export class MarketplaceController {
   async updateProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
     return this.productService.update(id, data);
   }
+
+  // ==================== PRODUCT VARIANTS ====================
+
+  @Post('products/:productId/variants')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create product variant' })
+  @ApiResponse({ status: 201, description: 'Variant created' })
+  async createVariant(
+    @Request() req,
+    @Param('productId') productId: string,
+    @Body() data: CreateVariantDto,
+  ) {
+    return this.productService.createVariant(productId, req.user.userId, data);
+  }
+
+  @Get('products/:productId/variants')
+  @ApiOperation({ summary: 'Get product variants' })
+  @ApiResponse({ status: 200, description: 'List of variants' })
+  async getVariants(@Param('productId') productId: string) {
+    return this.productService.getVariants(productId);
+  }
+
+  @Get('variants/:variantId')
+  @ApiOperation({ summary: 'Get variant details' })
+  @ApiResponse({ status: 200, description: 'Variant details' })
+  @ApiResponse({ status: 404, description: 'Variant not found' })
+  async getVariant(@Param('variantId') variantId: string) {
+    return this.productService.getVariant(variantId);
+  }
+
+  @Patch('variants/:variantId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update product variant' })
+  @ApiResponse({ status: 200, description: 'Variant updated' })
+  @ApiResponse({ status: 404, description: 'Variant not found' })
+  async updateVariant(
+    @Request() req,
+    @Param('variantId') variantId: string,
+    @Body() data: UpdateVariantDto,
+  ) {
+    return this.productService.updateVariant(variantId, req.user.userId, data);
+  }
+
+  @Delete('variants/:variantId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete product variant' })
+  @ApiResponse({ status: 200, description: 'Variant deleted' })
+  @ApiResponse({ status: 404, description: 'Variant not found' })
+  async deleteVariant(@Request() req, @Param('variantId') variantId: string) {
+    return this.productService.deleteVariant(variantId, req.user.userId);
+  }
+
+  // ==================== ORDERS ====================
 
   @Post('orders')
   @UseGuards(JwtAuthGuard)

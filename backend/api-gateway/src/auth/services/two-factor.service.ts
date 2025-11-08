@@ -70,4 +70,71 @@ export class TwoFactorService {
     }
     return codes;
   }
+
+  /**
+   * Verify backup code during login
+   */
+  async verifyBackupCode(userId: string, code: string): Promise<boolean> {
+    const backupCodes = await this.prisma.backupCode.findMany({
+      where: {
+        userId,
+        used: false,
+      },
+    });
+
+    for (const backupCode of backupCodes) {
+      const isMatch = await bcrypt.compare(code, backupCode.code);
+      if (isMatch) {
+        // Mark the backup code as used
+        await this.prisma.backupCode.update({
+          where: { id: backupCode.id },
+          data: {
+            used: true,
+            usedAt: new Date(),
+          },
+        });
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get remaining backup codes count
+   */
+  async getRemainingBackupCodesCount(userId: string): Promise<number> {
+    return this.prisma.backupCode.count({
+      where: {
+        userId,
+        used: false,
+      },
+    });
+  }
+
+  /**
+   * Regenerate backup codes
+   */
+  async regenerateBackupCodes(userId: string) {
+    // Delete old backup codes
+    await this.prisma.backupCode.deleteMany({
+      where: { userId },
+    });
+
+    // Generate new codes
+    const backupCodes = this.generateBackupCodes();
+
+    // Store hashed backup codes
+    for (const code of backupCodes) {
+      const hashedCode = await bcrypt.hash(code, 10);
+      await this.prisma.backupCode.create({
+        data: {
+          code: hashedCode,
+          userId,
+        },
+      });
+    }
+
+    return { backupCodes };
+  }
 }
