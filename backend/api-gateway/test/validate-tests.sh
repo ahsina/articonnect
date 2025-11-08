@@ -66,16 +66,16 @@ if [ -f "$TEST_FILE" ]; then
     declare -a EXPECTED_SCENARIOS=(
         "Onboarding"
         "Géolocalisation"
-        "Missions"
+        "Création de demandes"
         "Négociation"
         "Paiements"
-        "Factures"
+        "Génération de factures"
         "Planification"
-        "Litiges"
+        "Gestion des litiges"
         "Marketplace"
-        "Évaluations"
+        "évaluations"
         "Favoris"
-        "Administration"
+        "Dashboard admin"
         "GDPR"
     )
 
