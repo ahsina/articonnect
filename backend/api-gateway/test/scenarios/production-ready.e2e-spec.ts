@@ -22,7 +22,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { PrismaService } from '../../src/prisma/prisma.service';
+import { PrismaService } from '../../src/common/prisma/prisma.service';
 import { AppModule } from '../../src/app.module';
 
 describe('Tests Production-Ready (E2E)', () => {

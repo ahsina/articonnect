@@ -672,16 +672,16 @@ enum ReputationAction {
 }
 
 model ReputationProfile {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  totalPoints         Int      @default(100) // Score 0-200 (100 = neutral)
-  totalMissions       Int      @default(0)
-  successfulMissions  Int      @default(0)
-  cancelledMissions   Int      @default(0)
-  noShowCount         Int      @default(0)
-  averageRating       Decimal  @default(0) @db.Decimal(3, 2)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  totalPoints        Int      @default(100) // Score 0-200 (100 = neutral)
+  totalMissions      Int      @default(0)
+  successfulMissions Int      @default(0)
+  cancelledMissions  Int      @default(0)
+  noShowCount        Int      @default(0)
+  averageRating      Decimal  @default(0) @db.Decimal(3, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@index([userId])
   @@index([totalPoints])

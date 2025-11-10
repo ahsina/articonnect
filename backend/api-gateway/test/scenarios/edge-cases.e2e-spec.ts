@@ -17,7 +17,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { PrismaService } from '../../src/shared/database/prisma.service';
+import { PrismaService } from '../../src/common/prisma/prisma.service';
 
 describe('ArtiConnect - Tests Edge Cases E2E', () => {
   let app: INestApplication;
