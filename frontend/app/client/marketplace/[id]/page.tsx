@@ -76,9 +76,11 @@ export default function ProductDetailsPage() {
 
   const loadProduct = async () => {
     try {
-      const data = await marketplaceApi.getProductById(productId);
-      setProduct(data);
-      setLoading(false);
+      // TODO: Implement API call when marketplace API is ready
+      // const data = await marketplaceApi.getProductById(productId);
+      // setProduct(data);
+      // Temporarily use mock data
+      loadProductMock();
     } catch (error) {
       console.error('Error loading product:', error);
       setLoading(false);
@@ -87,7 +89,8 @@ export default function ProductDetailsPage() {
 
   // Fallback mock (commented)
   const loadProductMock = () => {
-    const mockProduct: Product = {
+    try {
+      const mockProduct: Product = {
         id: productId,
         name: 'Table en chêne massif artisanale',
         description:

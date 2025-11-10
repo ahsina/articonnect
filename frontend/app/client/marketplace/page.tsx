@@ -53,9 +53,11 @@ export default function MarketplacePage() {
 
   const loadProducts = async () => {
     try {
-      const data = await marketplaceApi.getProducts();
-      setProducts(data);
-      setLoading(false);
+      // TODO: Implement API call when marketplace API is ready
+      // const data = await marketplaceApi.getProducts();
+      // setProducts(data);
+      // Temporarily use mock data
+      await loadProductsMock();
     } catch (error) {
       console.error('Error loading products:', error);
       setLoading(false);
