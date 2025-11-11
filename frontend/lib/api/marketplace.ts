@@ -45,14 +45,33 @@ export interface OrderItem {
   price: number;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
 export const marketplaceApi = {
   // Products
   getProducts: async (filters?: {
     category?: string;
     search?: string;
     artisanId?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    limit?: number;
   }) => {
-    const response = await apiClient.get('/marketplace/products', { params: filters });
+    const response = await apiClient.get<PaginatedResponse<Product>>('/marketplace/products', { params: filters });
     return response.data;
   },
 

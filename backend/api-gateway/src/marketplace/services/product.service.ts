@@ -104,7 +104,16 @@ export class ProductService {
       }
     }
 
-    return this.prisma.product.findMany({
+    // Pagination
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 12;
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination metadata
+    const total = await this.prisma.product.count({ where });
+
+    // Get paginated products
+    const products = await this.prisma.product.findMany({
       where,
       include: {
         artisan: {
@@ -122,8 +131,22 @@ export class ProductService {
         },
       },
       orderBy,
-      take: 50,
+      skip,
+      take: limit,
     });
+
+    // Return paginated response with metadata
+    return {
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async findOne(id: string) {

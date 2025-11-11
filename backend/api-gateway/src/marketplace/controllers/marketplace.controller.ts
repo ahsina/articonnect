@@ -16,8 +16,8 @@ export class MarketplaceController {
   ) {}
 
   @Get('products')
-  @ApiOperation({ summary: 'Get all products with advanced filters' })
-  @ApiResponse({ status: 200, description: 'List of products' })
+  @ApiOperation({ summary: 'Get all products with advanced filters and pagination' })
+  @ApiResponse({ status: 200, description: 'Paginated list of products' })
   async getProducts(
     @Query('category') category?: string,
     @Query('search') search?: string,
@@ -27,6 +27,8 @@ export class MarketplaceController {
     @Query('minRating') minRating?: number,
     @Query('sortBy') sortBy?: 'price' | 'rating' | 'newest' | 'popular',
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     return this.productService.findAll({
       category,
@@ -37,6 +39,8 @@ export class MarketplaceController {
       minRating: minRating ? Number(minRating) : undefined,
       sortBy,
       sortOrder,
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 12,
     });
   }
 

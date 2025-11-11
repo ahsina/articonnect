@@ -109,4 +109,6 @@ export interface ProductFilters {
   minRating?: number;
   sortBy?: 'price' | 'rating' | 'newest' | 'popular';
   sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
 }

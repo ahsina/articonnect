@@ -6,7 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { marketplaceApi } from '@/lib/api/marketplace';
+import { Slider } from '@/components/ui/slider';
+import { marketplaceApi, PaginatedResponse } from '@/lib/api/marketplace';
 
 interface Product {
   id: string;
@@ -38,24 +39,62 @@ const CATEGORIES = [
 export default function MarketplacePage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'newest'>('newest');
 
+  // Advanced filters
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1500]);
+  const [maxPrice, setMaxPrice] = useState(1500);
+  const [minRating, setMinRating] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+
   useEffect(() => {
     loadProducts();
-  }, []);
-
-  useEffect(() => {
-    filterAndSortProducts();
-  }, [products, selectedCategory, searchQuery, sortBy]);
+  }, [selectedCategory, searchQuery, sortBy, priceRange, minRating, currentPage, itemsPerPage]);
 
   const loadProducts = async () => {
+    setLoading(true);
     try {
-      const data = await marketplaceApi.getProducts();
-      setProducts(data);
+      const [sortField, sortDir] = sortBy === 'price-asc'
+        ? ['price', 'asc']
+        : sortBy === 'price-desc'
+        ? ['price', 'desc']
+        : ['newest', 'desc'];
+
+      const data = await marketplaceApi.getProducts({
+        category: selectedCategory !== 'all' ? selectedCategory : undefined,
+        search: searchQuery || undefined,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        minRating: minRating > 0 ? minRating : undefined,
+        sortBy: sortField,
+        sortOrder: sortDir,
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+
+      setProducts(data.data);
+      setPagination(data.pagination);
+
+      // Calculate max price from the first load
+      if (maxPrice === 1500 && data.data.length > 0) {
+        const max = Math.ceil(Math.max(...data.data.map((p) => p.price)));
+        setMaxPrice(max);
+        setPriceRange([0, max]);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -157,38 +196,13 @@ export default function MarketplacePage() {
     }
   };
 
-  const filterAndSortProducts = () => {
-    let filtered = [...products];
-
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter((product) => product.category === selectedCategory);
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (product) =>
-          product.name.toLowerCase().includes(query) ||
-          product.description.toLowerCase().includes(query) ||
-          product.artisan.companyName.toLowerCase().includes(query)
-      );
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      if (sortBy === 'price-asc') {
-        return a.price - b.price;
-      } else if (sortBy === 'price-desc') {
-        return b.price - a.price;
-      } else {
-        // newest (by id for now)
-        return b.id.localeCompare(a.id);
-      }
-    });
-
-    setFilteredProducts(filtered);
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setPriceRange([0, maxPrice]);
+    setMinRating(0);
+    setSortBy('newest');
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -212,7 +226,7 @@ export default function MarketplacePage() {
 
         {/* Filters */}
         <div className="mb-8 space-y-4">
-          {/* Search Bar */}
+          {/* Search Bar & Sort */}
           <div className="flex gap-4">
             <div className="flex-1">
               <Input
@@ -221,6 +235,13 @@ export default function MarketplacePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="whitespace-nowrap"
+            >
+              {showFilters ? '✕ Masquer' : '🔍 Filtres avancés'}
+            </Button>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
@@ -249,21 +270,116 @@ export default function MarketplacePage() {
               </button>
             ))}
           </div>
+
+          {/* Advanced Filters Panel */}
+          {showFilters && (
+            <Card>
+              <CardContent className="pt-6 space-y-6">
+                {/* Price Range Filter */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-medium text-gray-900">
+                      Prix
+                    </label>
+                    <span className="text-sm text-gray-600">
+                      {priceRange[0].toFixed(0)}€ - {priceRange[1].toFixed(0)}€
+                    </span>
+                  </div>
+                  <Slider
+                    min={0}
+                    max={maxPrice}
+                    step={10}
+                    value={priceRange}
+                    onValueChange={(value) => setPriceRange(value as [number, number])}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <span>0€</span>
+                    <span>{maxPrice}€</span>
+                  </div>
+                </div>
+
+                {/* Rating Filter */}
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-3 block">
+                    Note minimum
+                  </label>
+                  <div className="flex gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((rating) => (
+                      <button
+                        key={rating}
+                        onClick={() => setMinRating(rating)}
+                        className={`flex items-center gap-1 px-3 py-2 rounded-lg border transition-colors ${
+                          minRating === rating
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-sm font-medium">
+                          {rating === 0 ? 'Tous' : `${rating}★+`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filter Actions */}
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={resetFilters}
+                    className="flex-1"
+                  >
+                    Réinitialiser
+                  </Button>
+                  <Button
+                    onClick={() => setShowFilters(false)}
+                    className="flex-1"
+                  >
+                    Appliquer ({pagination.total} produits)
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Results Info */}
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            {pagination.total > 0
+              ? `${pagination.total} produit${pagination.total > 1 ? 's' : ''} trouvé${pagination.total > 1 ? 's' : ''} - Page ${currentPage} sur ${pagination.totalPages}`
+              : 'Aucun produit trouvé'}
+          </p>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value={6}>6 par page</option>
+            <option value={12}>12 par page</option>
+            <option value={24}>24 par page</option>
+            <option value={48}>48 par page</option>
+          </select>
         </div>
 
         {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-gray-500 mb-4">Aucun produit trouvé</p>
-              <Button onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}>
+              <Button onClick={resetFilters}>
                 Réinitialiser les filtres
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => (
               <Card
                 key={product.id}
                 className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -324,6 +440,58 @@ export default function MarketplacePage() {
               </Card>
             ))}
           </div>
+
+          {/* Pagination Controls */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                disabled={!pagination.hasPreviousPage}
+                onClick={() => setCurrentPage(currentPage - 1)}
+              >
+                ← Précédent
+              </Button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    // Show first page, last page, current page, and pages around current
+                    return (
+                      page === 1 ||
+                      page === pagination.totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    );
+                  })
+                  .map((page, index, array) => {
+                    // Add ellipsis if there's a gap
+                    const prevPage = array[index - 1];
+                    const showEllipsis = prevPage && page - prevPage > 1;
+
+                    return (
+                      <div key={page} className="flex items-center gap-1">
+                        {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                        <Button
+                          variant={currentPage === page ? 'default' : 'outline'}
+                          onClick={() => setCurrentPage(page)}
+                          className="w-10 h-10 p-0"
+                        >
+                          {page}
+                        </Button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <Button
+                variant="outline"
+                disabled={!pagination.hasNextPage}
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                Suivant →
+              </Button>
+            </div>
+          )}
+        </>
         )}
       </div>
     </div>
