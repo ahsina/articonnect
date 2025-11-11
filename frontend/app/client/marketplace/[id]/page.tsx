@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { marketplaceApi } from '@/lib/api/marketplace';
 
 interface Product {
   id: string;
@@ -76,14 +77,13 @@ export default function ProductDetailsPage() {
 
   const loadProduct = async () => {
     try {
-      // TODO: Implement API call when marketplace API is ready
-      // const data = await marketplaceApi.getProductById(productId);
-      // setProduct(data);
-      // Temporarily use mock data
-      loadProductMock();
+      const data = await marketplaceApi.getProductById(productId);
+      setProduct(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error loading product:', error);
-      setLoading(false);
+      // Fallback to mock data on error
+      loadProductMock();
     }
   };
 

@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { marketplaceApi } from '@/lib/api/marketplace';
 
 interface Product {
   id: string;
@@ -53,16 +54,13 @@ export default function MarketplacePage() {
 
   const loadProducts = async () => {
     try {
-      // TODO: Implement API call when marketplace API is ready
-      // const data = await marketplaceApi.getProducts();
-      // setProducts(data);
-      // Temporarily use mock data
-      await loadProductsMock();
+      const data = await marketplaceApi.getProducts();
+      setProducts(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error loading products:', error);
-      setLoading(false);
-      // Fallback to empty array on error
-      setProducts([]);
+      // Fallback to mock data on error
+      await loadProductsMock();
     }
   };
 

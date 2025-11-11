@@ -94,6 +94,12 @@ model User {
   compensationLogs  CompensationLog[]
   payments          Payment[]
 
+  // Favorites & Requests
+  favorites        Favorite[]
+  favoriteArtisans Favorite[] @relation("FavoriteArtisans")
+  clientRequests   Request[]  @relation("ClientRequests")
+  artisanRequests  Request[]  @relation("ArtisanRequests")
+
   @@index([email])
   @@index([role])
   @@index([status])
@@ -446,6 +452,7 @@ model Product {
   status      ProductStatus    @default(DRAFT)
   variants    ProductVariant[]
   orderItems  OrderItem[]
+  favorites   Favorite[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -909,5 +916,68 @@ model AuditLog {
 
   @@index([userId])
   @@index([action])
+  @@index([createdAt])
+}
+
+// ================================
+// FAVORITES & REQUESTS
+// ================================
+
+// Favoris (artisans ou produits)
+model Favorite {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Type de favori (artisan ou produit)
+  artisanId String?
+  artisan   User?   @relation("FavoriteArtisans", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, artisanId])
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([artisanId])
+  @@index([productId])
+}
+
+// Demandes de devis/mission
+model Request {
+  id       String @id @default(uuid())
+  clientId String
+  client   User   @relation("ClientRequests", fields: [clientId], references: [id], onDelete: Cascade)
+
+  artisanId String?
+  artisan   User?   @relation("ArtisanRequests", fields: [artisanId], references: [id])
+
+  title       String
+  description String
+  category    String
+
+  // Localisation
+  address    String
+  city       String
+  postalCode String
+  latitude   Float?
+  longitude  Float?
+
+  // Budget estimé
+  estimatedBudget Decimal? @db.Decimal(10, 2)
+
+  // Statut
+  status String @default("PENDING") // PENDING, QUOTED, ACCEPTED, DECLINED, EXPIRED
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+
+  @@index([clientId])
+  @@index([artisanId])
+  @@index([status])
+  @@index([category])
   @@index([createdAt])
 }
