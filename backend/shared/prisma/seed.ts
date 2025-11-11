@@ -373,31 +373,239 @@ async function main() {
   // Create Sample Products
   console.log('🛒 Creating sample products...');
   const products = await Promise.all([
+    // Plomberie (artisan 0)
     prisma.product.create({
       data: {
         artisanId: artisans[0].id,
-        name: 'Robinet de cuisine chromé',
-        description: 'Robinet mitigeur en laiton chromé, garantie 5 ans',
-        category: 'Sanitaire',
-        photos: ['/products/robinet-1.jpg'],
-        price: 89.99,
+        name: 'Kit robinetterie premium salle de bain',
+        description: `Kit complet de robinetterie haut de gamme pour salle de bain.
+
+Contenu du kit:
+• Robinet lavabo avec bec cascade
+• Robinet douche thermostatique
+• Pommeau de douche à effet pluie
+• Flexible de douche 1,5m
+
+Caractéristiques:
+• Finition chromée brillante
+• Garantie 10 ans
+• Économie d'eau 30%
+• Installation facile`,
+        category: 'tools',
+        photos: ['https://images.unsplash.com/photo-1585821569331-f071db2abd8d?w=800'],
+        price: 349.99,
         vatRate: 17,
         stock: 15,
-        sku: 'ROB-001',
+        sku: 'ROB-KIT-001',
+        status: ProductStatus.ACTIVE,
+      },
+    }),
+    prisma.product.create({
+      data: {
+        artisanId: artisans[0].id,
+        name: 'Chauffe-eau électrique 100L',
+        description: `Chauffe-eau électrique vertical mural 100 litres.
+
+Caractéristiques:
+• Capacité: 100L
+• Puissance: 2000W
+• Temps de chauffe: 3h30
+• Thermostat réglable 30-75°C
+• Garantie 5 ans`,
+        category: 'equipment',
+        photos: ['https://images.unsplash.com/photo-1607400201889-565b1ee75f8e?w=800'],
+        price: 459.00,
+        vatRate: 17,
+        stock: 8,
+        sku: 'CE-100L-001',
+        status: ProductStatus.ACTIVE,
+      },
+    }),
+    prisma.product.create({
+      data: {
+        artisanId: artisans[0].id,
+        name: 'Radiateur sèche-serviettes électrique',
+        description: `Radiateur sèche-serviettes électrique design.
+
+Performance:
+• Puissance: 750W
+• Thermostat digital programmable
+• Mode boost séchage rapide
+• Dimensions: 60 x 120 cm
+• Garantie 3 ans`,
+        category: 'equipment',
+        photos: ['https://images.unsplash.com/photo-1585128792301-dba8e345a4ff?w=800'],
+        price: 299.00,
+        vatRate: 17,
+        stock: 10,
+        sku: 'RAD-SS-001',
+        status: ProductStatus.ACTIVE,
+      },
+    }),
+
+    // Électricité (artisan 1)
+    prisma.product.create({
+      data: {
+        artisanId: artisans[1].id,
+        name: 'Lustre LED design moderne',
+        description: `Lustre LED design contemporain pour salon ou salle à manger.
+
+Design:
+• Style minimaliste et élégant
+• Structure en aluminium brossé
+• Diffuseur en verre opale
+
+Éclairage:
+• LED 40W (équivalent 200W)
+• 3200 lumens
+• Blanc chaud 3000K
+• Intensité variable avec télécommande
+• Garantie 3 ans`,
+        category: 'lighting',
+        photos: ['https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800'],
+        price: 289.00,
+        vatRate: 17,
+        stock: 12,
+        sku: 'LUS-LED-001',
+        status: ProductStatus.ACTIVE,
+      },
+    }),
+    prisma.product.create({
+      data: {
+        artisanId: artisans[1].id,
+        name: 'Pack domotique complet',
+        description: `Solution domotique complète pour maison connectée.
+
+Contenu:
+• Hub central Zigbee/WiFi
+• 10 prises connectées
+• 5 ampoules LED connectées E27
+• 3 détecteurs de mouvement
+• Télécommande universelle
+
+Compatible Alexa et Google Home`,
+        category: 'equipment',
+        photos: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=800'],
+        price: 599.00,
+        vatRate: 17,
+        stock: 5,
+        sku: 'DOM-PACK-001',
+        status: ProductStatus.ACTIVE,
+      },
+    }),
+    prisma.product.create({
+      data: {
+        artisanId: artisans[1].id,
+        name: 'Appliques murales LED (paire)',
+        description: `Paire d'appliques murales LED design moderne.
+
+Caractéristiques:
+• Design up/down
+• LED 2x12W
+• Blanc chaud 2700K
+• IP44 (extérieur couvert)
+• Garantie 2 ans`,
+        category: 'lighting',
+        photos: ['https://images.unsplash.com/photo-1550854180-70f368eae657?w=800'],
+        price: 129.00,
+        vatRate: 17,
+        stock: 20,
+        sku: 'APP-LED-001',
+        status: ProductStatus.ACTIVE,
+      },
+    }),
+
+    // Menuiserie (artisan 2)
+    prisma.product.create({
+      data: {
+        artisanId: artisans[2].id,
+        name: 'Table en chêne massif artisanale',
+        description: `Magnifique table en chêne massif fabriquée à la main.
+
+Fabrication artisanale:
+• Chêne massif européen certifié FSC
+• Assemblage traditionnel
+• Finition huile naturelle
+• Chaque table est unique
+
+Caractéristiques:
+• Épaisseur plateau: 4cm
+• Garantie 10 ans
+• Livraison et installation possibles`,
+        category: 'furniture',
+        photos: ['https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=800'],
+        price: 850.00,
+        vatRate: 17,
+        stock: 3,
+        sku: 'TAB-CHE-001',
+        status: ProductStatus.ACTIVE,
+        variants: {
+          create: [
+            {
+              name: 'Petite (120x80cm)',
+              priceAdjustment: -100,
+              stock: 5,
+            },
+            {
+              name: 'Moyenne (160x90cm)',
+              priceAdjustment: 0,
+              stock: 3,
+            },
+            {
+              name: 'Grande (200x100cm)',
+              priceAdjustment: 200,
+              stock: 2,
+            },
+          ],
+        },
+      },
+    }),
+    prisma.product.create({
+      data: {
+        artisanId: artisans[2].id,
+        name: 'Bibliothèque sur mesure',
+        description: `Bibliothèque en bois massif, réalisée sur mesure.
+
+Design personnalisable:
+• Dimensions adaptées à votre espace
+• Choix du bois (chêne, noyer, hêtre)
+• Nombre d'étagères modulable
+• Finition au choix
+
+Délai de fabrication: 4-6 semaines
+Livraison et installation incluses`,
+        category: 'furniture',
+        photos: ['https://images.unsplash.com/photo-1594620302200-9a762244a156?w=800'],
+        price: 1250.00,
+        vatRate: 17,
+        stock: 0,
+        sku: 'BIB-SUR-001',
         status: ProductStatus.ACTIVE,
       },
     }),
     prisma.product.create({
       data: {
         artisanId: artisans[2].id,
-        name: 'Étagère murale en chêne',
-        description: 'Étagère murale sur mesure en chêne massif, 80cm',
-        category: 'Menuiserie',
-        photos: ['/products/etagere-1.jpg'],
-        price: 149.99,
-        vatRate: 21,
-        stock: 5,
-        sku: 'ETG-001',
+        name: 'Set de 4 chaises design scandinave',
+        description: `Lot de 4 chaises au design scandinave épuré.
+
+Design:
+• Lignes épurées et élégantes
+• Style scandinave authentique
+• Hêtre massif naturel
+• Assise ergonomique
+
+Qualité:
+• Assemblage par tourillons
+• Finition vernis mat
+• Empilables
+• Garantie 5 ans`,
+        category: 'furniture',
+        photos: ['https://images.unsplash.com/photo-1503602642458-232111445657?w=800'],
+        price: 380.00,
+        vatRate: 17,
+        stock: 8,
+        sku: 'CHA-SCA-004',
         status: ProductStatus.ACTIVE,
       },
     }),
