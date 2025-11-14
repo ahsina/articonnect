@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException, ForbiddenExceptio
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
+import { FcmService } from '../../fcm/services/fcm.service';
 
 @Injectable()
 export class ChatService {
@@ -9,6 +10,7 @@ export class ChatService {
     private prisma: PrismaService,
     private redis: RedisService,
     private jwtService: JwtService,
+    private fcmService: FcmService,
   ) {}
 
   async validateToken(token: string) {
@@ -142,9 +144,9 @@ export class ChatService {
     return status === 'true';
   }
 
-  async sendPushNotification(_userId: string, _notification: { title: string; body: string }) {
-    // TODO: Implement push notification (FCM)
-    // Placeholder - will be implemented when FCM is configured
+  async sendPushNotification(userId: string, notification: { title: string; body: string; data?: Record<string, string> }) {
+    // Send push notification via FCM
+    await this.fcmService.sendToUser(userId, notification);
   }
 
   async deleteMessage(messageId: string, userId: string) {

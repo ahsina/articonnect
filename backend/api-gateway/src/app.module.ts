@@ -19,6 +19,7 @@ import { DisputeModule } from './dispute/dispute.module';
 import { AddressModule } from './address/address.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { CertificationModule } from './certification/certification.module';
+import { FcmModule } from './fcm/fcm.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 
@@ -64,6 +65,7 @@ import { RedisModule } from './common/redis/redis.module';
     AdminModule,
     ChatModule,
     NotificationModule,
+    FcmModule,
   ],
   providers: [
     {

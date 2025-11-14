@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { FcmService } from '../../fcm/services/fcm.service';
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fcmService: FcmService,
+  ) {}
 
   async createNotification(
     userId: string,
@@ -14,7 +18,8 @@ export class NotificationService {
     link?: string,
     metadata?: Record<string, unknown>,
   ) {
-    return this.prisma.notification.create({
+    // Create in-app notification
+    const notification = await this.prisma.notification.create({
       data: {
         userId,
         type,
@@ -25,6 +30,22 @@ export class NotificationService {
         read: false,
       },
     });
+
+    // Send push notification via FCM
+    await this.fcmService.sendToUser(userId, {
+      title,
+      body: message,
+      data: {
+        type,
+        notificationId: notification.id,
+        ...(link && { link }),
+        ...(metadata && {
+          metadata: JSON.stringify(metadata),
+        }),
+      },
+    });
+
+    return notification;
   }
 
   async getUserNotifications(userId: string, limit = 20, unreadOnly = false) {

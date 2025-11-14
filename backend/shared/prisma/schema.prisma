@@ -42,6 +42,7 @@ model User {
   firstName String
   lastName  String
   avatar    String? // URL S3
+  fcmTokens String[] @default([]) // Firebase Cloud Messaging tokens for push notifications
 
   // Metadata
   emailVerified   Boolean   @default(false)
