@@ -2,7 +2,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
 import { StripeService } from './stripe.service';
-import { MissionType, NoShowStatus } from '@prisma/client';
+import { MissionType, NoShowStatus, Mission, NoShowEvent } from '@prisma/client';
+import type { NoShowEventWithMission } from '../types/payment.types';
 
 /**
  * ================================================================
@@ -63,7 +64,7 @@ export class NoShowService {
     artisanId: string,
     data: ReportNoShowDto,
   ): Promise<{
-    noShowEvent: any;
+    noShowEvent: NoShowEvent;
     autoValidated: boolean;
     message: string;
   }> {
@@ -141,7 +142,7 @@ export class NoShowService {
     noShowEventId: string,
     validatedBy: 'AUTO' | string, // 'AUTO' or admin userId
   ): Promise<{
-    noShowEvent: any;
+    noShowEvent: NoShowEvent;
     autoValidated: boolean;
     message: string;
   }> {
@@ -211,7 +212,7 @@ export class NoShowService {
    * Applique les conséquences d'un no-show validé
    * Uses atomic transaction to ensure data consistency
    */
-  private async applyNoShowConsequences(noShowEvent: any): Promise<void> {
+  private async applyNoShowConsequences(noShowEvent: NoShowEventWithMission): Promise<void> {
     const { mission } = noShowEvent;
 
     // Atomic transaction for all database operations
@@ -308,7 +309,7 @@ export class NoShowService {
    */
   private validateNoShowProofs(
     data: ReportNoShowDto,
-    mission: any,
+    mission: Mission,
   ): void {
     // 1. Vérifier l'attente minimum (15 minutes)
     if (data.waitDurationMinutes < 15) {
@@ -353,7 +354,7 @@ export class NoShowService {
   /**
    * Détermine si le no-show peut être auto-validé
    */
-  private canAutoValidate(data: ReportNoShowDto, mission: any): boolean {
+  private canAutoValidate(data: ReportNoShowDto, mission: Mission): boolean {
     // Critères d'auto-validation:
     // 1. Attente >= 20 minutes (plus que le minimum)
     if (data.waitDurationMinutes < 20) return false;

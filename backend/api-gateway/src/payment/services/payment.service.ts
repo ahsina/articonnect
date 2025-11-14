@@ -2,7 +2,8 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
-import { RefundReason, PaymentType } from '@prisma/client';
+import { RefundReason, PaymentType, Mission, Payment } from '@prisma/client';
+import type { MissionWithRelations, PaymentWithMission } from '../types/payment.types';
 
 @Injectable()
 export class PaymentService {
@@ -379,8 +380,8 @@ export class PaymentService {
    * Uses atomic transaction to ensure data consistency
    */
   private async refundWithCompensation(
-    mission: any,
-    payment: any,
+    mission: MissionWithRelations,
+    payment: Payment,
     amount: number,
     reason: RefundReason,
     platformAbsorbs: boolean,
@@ -477,8 +478,8 @@ export class PaymentService {
    * Remboursement sans compensation (faute artisan)
    */
   private async refundNoCompensation(
-    mission: any,
-    payment: any,
+    mission: MissionWithRelations,
+    payment: Payment,
     amount: number,
     reason: RefundReason,
   ) {
@@ -537,8 +538,8 @@ export class PaymentService {
    * Remboursement partiel (travail incomplet)
    */
   private async refundPartial(
-    mission: any,
-    payment: any,
+    mission: MissionWithRelations,
+    payment: Payment,
     amount: number,
     reason: RefundReason,
   ) {
@@ -568,7 +569,7 @@ export class PaymentService {
   /**
    * Remboursement mutuel (annulation d'accord)
    */
-  private async refundMutual(mission: any, payment: any, amount: number) {
+  private async refundMutual(mission: MissionWithRelations, payment: Payment, amount: number) {
     const artisanTraveling = mission.status === 'IN_TRANSIT';
 
     if (artisanTraveling) {
