@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
+import { StripeService } from './stripe.service';
 import { MissionType, NoShowStatus } from '@prisma/client';
 
 /**
@@ -52,6 +53,7 @@ export class NoShowService {
   constructor(
     private prisma: PrismaService,
     private reputationService: ReputationService,
+    private stripeService: StripeService,
   ) {}
 
   /**
@@ -265,7 +267,12 @@ export class NoShowService {
       },
     });
 
-    // TODO: Transférer les fonds à l'artisan via Stripe
+    // 6. Transférer les frais de no-show à l'artisan via Stripe
+    await this.transferToArtisan(mission.artisanId, noShowEvent.feeAmount, {
+      missionId: mission.id,
+      type: 'NO_SHOW_COMPENSATION',
+      reason: 'Client no-show - artisan compensation',
+    });
   }
 
   /**
@@ -440,5 +447,68 @@ export class NoShowService {
       },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  /**
+   * Transfère de l'argent à un artisan via Stripe Connect
+   * @param artisanId - ID de l'artisan
+   * @param amount - Montant en euros (sera converti en centimes)
+   * @param metadata - Métadonnées pour le transfert
+   */
+  private async transferToArtisan(
+    artisanId: string,
+    amount: number,
+    metadata?: Record<string, string>,
+  ): Promise<void> {
+    // 1. Récupérer le profil artisan avec stripeAccountId
+    const artisan = await this.prisma.user.findUnique({
+      where: { id: artisanId },
+      include: { artisanProfile: true },
+    });
+
+    if (!artisan?.artisanProfile) {
+      throw new BadRequestException('Profil artisan introuvable');
+    }
+
+    const { stripeAccountId, stripeOnboarded } = artisan.artisanProfile;
+
+    // 2. Vérifier que l'artisan a un compte Stripe Connect
+    if (!stripeAccountId) {
+      // Log warning but don't fail - artisan needs to complete onboarding
+      console.warn(
+        `[TRANSFER WARNING] Artisan ${artisanId} has no Stripe account. Transfer skipped.`,
+      );
+      return;
+    }
+
+    if (!stripeOnboarded) {
+      console.warn(
+        `[TRANSFER WARNING] Artisan ${artisanId} Stripe account not onboarded. Transfer skipped.`,
+      );
+      return;
+    }
+
+    // 3. Créer le transfert Stripe (convertir en centimes)
+    const transferAmount = Math.floor(amount * 100);
+
+    try {
+      const transfer = await this.stripeService.createTransfer({
+        amount: transferAmount,
+        destination: stripeAccountId,
+        metadata: metadata || {},
+      });
+
+      console.log(
+        `[TRANSFER SUCCESS] ${amount}€ transferred to artisan ${artisanId} (Stripe Transfer: ${transfer.id})`,
+      );
+    } catch (error) {
+      console.error(
+        `[TRANSFER ERROR] Failed to transfer ${amount}€ to artisan ${artisanId}:`,
+        error.message,
+      );
+      throw new BadRequestException(
+        `Échec du transfert vers l'artisan: ${error.message}`,
+      );
+    }
   }
 }
