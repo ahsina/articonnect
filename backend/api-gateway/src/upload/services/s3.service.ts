@@ -143,7 +143,7 @@ export class S3Service {
   /**
    * Validate file size and type
    */
-  private validateFile(file: Express.Multer.File, fileType: FileType): void {
+  private validateFile(file: Express.Multer.File, _fileType: FileType): void {
     const category = this.getFileCategory(file.mimetype);
 
     // Check mime type

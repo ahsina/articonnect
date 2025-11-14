@@ -49,9 +49,9 @@ export class GdprService {
 
     // Remove sensitive data
     const {
-      password,
-      twoFactorSecret,
-      refreshTokens,
+      password: _password,
+      twoFactorSecret: _twoFactorSecret,
+      refreshTokens: _refreshTokens,
       ...userWithoutSensitiveData
     } = user;
 

@@ -70,7 +70,7 @@ export class AdminService {
 
   async getRevenueStats(period: 'day' | 'week' | 'month' | 'year' = 'month') {
     const now = new Date();
-    let startDate = new Date();
+    const startDate = new Date();
 
     switch (period) {
       case 'day':

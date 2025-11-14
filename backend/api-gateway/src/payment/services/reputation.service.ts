@@ -4,7 +4,6 @@ import {
   MissionType,
   ReputationAction,
   User,
-  Mission,
 } from '@prisma/client';
 
 /**

@@ -142,7 +142,7 @@ export class ChatService {
     return status === 'true';
   }
 
-  async sendPushNotification(userId: string, notification: { title: string; body: string }) {
+  async sendPushNotification(_userId: string, _notification: { title: string; body: string }) {
     // TODO: Implement push notification (FCM)
     // Placeholder - will be implemented when FCM is configured
   }

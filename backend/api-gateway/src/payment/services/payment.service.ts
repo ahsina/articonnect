@@ -2,8 +2,8 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
-import { RefundReason, PaymentType, Mission, Payment } from '@prisma/client';
-import type { MissionWithRelations, PaymentWithMission } from '../types/payment.types';
+import { RefundReason, Payment } from '@prisma/client';
+import type { MissionWithRelations } from '../types/payment.types';
 
 @Injectable()
 export class PaymentService {
@@ -113,7 +113,7 @@ export class PaymentService {
     return { success: true, message: 'Paiement capturé et transféré' };
   }
 
-  async refundMissionPayment(missionId: string, reason: string) {
+  async refundMissionPayment(missionId: string, _reason: string) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { missionId },
     });
@@ -308,7 +308,7 @@ export class PaymentService {
     missionId: string,
     reason: RefundReason,
     amount?: number,
-    requestedBy?: string,
+    _requestedBy?: string,
   ) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },

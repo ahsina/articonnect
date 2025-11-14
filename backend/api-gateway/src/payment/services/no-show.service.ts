@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
 import { StripeService } from './stripe.service';
-import { MissionType, NoShowStatus, Mission, NoShowEvent } from '@prisma/client';
+import { MissionType, Mission, NoShowEvent } from '@prisma/client';
 import type { NoShowEventWithMission } from '../types/payment.types';
 
 /**

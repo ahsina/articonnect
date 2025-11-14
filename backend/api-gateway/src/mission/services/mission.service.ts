@@ -714,7 +714,7 @@ export class MissionService {
     for (const mission of stuckMissions) {
       try {
         // Auto-validate
-        const updated = await this.prisma.mission.update({
+        const _updated = await this.prisma.mission.update({
           where: { id: mission.id },
           data: {
             status: MissionStatus.AUTO_VALIDATED,
@@ -829,7 +829,7 @@ export class MissionService {
       throw new NotFoundException('Mission introuvable');
     }
 
-    const depositPayment = mission.payments.find((p) => p.type === 'DEPOSIT');
+    const _depositPayment = mission.payments.find((p) => p.type === 'DEPOSIT');
 
     return {
       depositRequired: mission.depositRequired,
