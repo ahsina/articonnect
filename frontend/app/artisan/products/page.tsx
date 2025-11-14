@@ -6,19 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { marketplaceApi } from '@/lib/api/marketplace';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  category: string;
-  images: string[];
-  active: boolean;
-  createdAt: string;
-}
+import { marketplaceApi, Product } from '@/lib/api/marketplace';
 
 const CATEGORIES = [
   { id: 'tools', name: 'Outils' },
@@ -43,8 +31,8 @@ export default function ArtisanProductsPage() {
   const loadProducts = async () => {
     try {
       // Get products for current artisan (artisanId will be determined by auth token)
-      const data = await marketplaceApi.getProducts();
-      setProducts(data);
+      const response = await marketplaceApi.getProducts();
+      setProducts(response.data);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
@@ -57,11 +45,12 @@ export default function ArtisanProductsPage() {
       const product = products.find((p) => p.id === productId);
       if (!product) return;
 
-      await marketplaceApi.updateProduct(productId, { active: !product.active } as any);
+      const newStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await marketplaceApi.updateProduct(productId, { status: newStatus } as any);
 
       setProducts(
         products.map((p) =>
-          p.id === productId ? { ...p, active: !p.active } : p
+          p.id === productId ? { ...p, status: newStatus } : p
         )
       );
     } catch (error) {
@@ -120,7 +109,7 @@ export default function ArtisanProductsPage() {
             <CardContent className="p-4">
               <div className="text-sm text-gray-600">Actifs</div>
               <div className="text-2xl font-bold text-green-600">
-                {products.filter((p) => p.active).length}
+                {products.filter((p) => p.status === 'ACTIVE').length}
               </div>
             </CardContent>
           </Card>
@@ -180,7 +169,7 @@ export default function ArtisanProductsPage() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          {product.active ? (
+                          {product.status === 'ACTIVE' ? (
                             <Badge variant="success" className="bg-green-100 text-green-800">
                               Actif
                             </Badge>
@@ -239,7 +228,7 @@ export default function ArtisanProductsPage() {
                           size="sm"
                           onClick={() => handleToggleActive(product.id)}
                         >
-                          {product.active ? '⏸️ Désactiver' : '▶️ Activer'}
+                          {product.status === 'ACTIVE' ? '⏸️ Désactiver' : '▶️ Activer'}
                         </Button>
                         <Button
                           variant="outline"

@@ -7,24 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { marketplaceApi, PaginatedResponse } from '@/lib/api/marketplace';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  images: string[];
-  stock: number;
-  artisan: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    city: string;
-  };
-}
+import { marketplaceApi, PaginatedResponse, Product } from '@/lib/api/marketplace';
 
 const CATEGORIES = [
   { id: 'all', name: 'Tous', icon: '🔍' },
@@ -115,6 +98,9 @@ export default function MarketplacePage() {
           category: 'tools',
           images: ['https://via.placeholder.com/400x300?text=Kit+Plomberie'],
           stock: 5,
+          status: 'ACTIVE',
+          artisanId: '1',
+          createdAt: new Date().toISOString(),
           artisan: {
             id: '1',
             firstName: 'Jean',
@@ -131,6 +117,9 @@ export default function MarketplacePage() {
           category: 'lighting',
           images: ['https://via.placeholder.com/400x300?text=Lustre+LED'],
           stock: 12,
+          status: 'ACTIVE',
+          artisanId: '2',
+          createdAt: new Date().toISOString(),
           artisan: {
             id: '2',
             firstName: 'Marie',
@@ -147,6 +136,9 @@ export default function MarketplacePage() {
           category: 'furniture',
           images: ['https://via.placeholder.com/400x300?text=Table+Chene'],
           stock: 3,
+          status: 'ACTIVE',
+          artisanId: '3',
+          createdAt: new Date().toISOString(),
           artisan: {
             id: '3',
             firstName: 'Pierre',
@@ -163,6 +155,9 @@ export default function MarketplacePage() {
           category: 'materials',
           images: ['https://via.placeholder.com/400x300?text=Parquet'],
           stock: 50,
+          status: 'ACTIVE',
+          artisanId: '3',
+          createdAt: new Date().toISOString(),
           artisan: {
             id: '3',
             firstName: 'Pierre',
@@ -179,6 +174,9 @@ export default function MarketplacePage() {
           category: 'decorations',
           images: ['https://via.placeholder.com/400x300?text=Miroir'],
           stock: 8,
+          status: 'ACTIVE',
+          artisanId: '3',
+          createdAt: new Date().toISOString(),
           artisan: {
             id: '3',
             firstName: 'Pierre',
@@ -414,7 +412,7 @@ export default function MarketplacePage() {
                     {/* Artisan */}
                     <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
                       <span>👤</span>
-                      <span className="truncate">{product.artisan.companyName}</span>
+                      <span className="truncate">{product.artisan?.companyName || 'Artisan'}</span>
                     </div>
 
                     {/* Price & Stock */}

@@ -1,5 +1,7 @@
 import apiClient from './client';
 
+export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT';
+
 export interface Product {
   id: string;
   name: string;
@@ -8,8 +10,16 @@ export interface Product {
   category: string;
   images: string[];
   stock: number;
+  status: ProductStatus;
   variants?: ProductVariant[];
   artisanId: string;
+  artisan?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    city: string;
+  };
   createdAt: string;
 }
 
