@@ -69,12 +69,42 @@ export default function NewMissionPage() {
   };
 
   const geocodeAddress = async (address: string) => {
-    // Simplified - in production, use Google Maps Geocoding API
-    // For now, return default Luxembourg coordinates
-    return {
-      lat: 49.6116,
-      lng: 6.1319,
-    };
+    // Use OpenStreetMap Nominatim API for geocoding
+    // Free and suitable for Luxembourg addresses
+    try {
+      const encodedAddress = encodeURIComponent(address);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&countrycodes=lu,fr,be&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'ArtiConnect/1.0', // Required by Nominatim usage policy
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+        };
+      }
+
+      // Fallback to Luxembourg center if geocoding fails
+      console.warn('Geocoding failed for address:', address);
+      return {
+        lat: 49.6116, // Luxembourg City center
+        lng: 6.1319,
+      };
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      // Fallback to Luxembourg center on error
+      return {
+        lat: 49.6116,
+        lng: 6.1319,
+      };
+    }
   };
 
   return (
