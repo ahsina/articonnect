@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { marketplaceApi } from '@/lib/api/marketplace';
+import { useCartStore } from '@/lib/stores/cartStore';
 
 interface Product {
   id: string;
@@ -196,16 +197,34 @@ export default function ProductDetailsPage() {
     }
   };
 
-  const handleAddToCart = () => {
-    // TODO: Implement cart functionality
-    const variantInfo = selectedVariant
-      ? product?.variants?.find((v) => v.id === selectedVariant)
-      : null;
-    const finalPrice = variantInfo ? variantInfo.price : product?.price || 0;
+  const addItem = useCartStore((state) => state.addItem);
 
-    alert(
-      `Ajouté au panier:\n${product?.name}${variantInfo ? `\nVariante: ${variantInfo.name}` : ''}\nQuantité: ${quantity}\nTotal: ${(finalPrice * quantity).toFixed(2)}€`
-    );
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    const variantInfo = selectedVariant
+      ? product.variants?.find((v) => v.id === selectedVariant)
+      : null;
+    const finalPrice = variantInfo ? variantInfo.price : product.price;
+
+    addItem({
+      productId: product.id,
+      productName: product.name,
+      price: finalPrice,
+      quantity,
+      variantId: variantInfo?.id,
+      variantName: variantInfo?.name,
+      image: product.images[0],
+      artisan: {
+        id: product.artisan.id,
+        name: product.artisan.companyName || `${product.artisan.firstName} ${product.artisan.lastName}`,
+      },
+    });
+
+    // Show success message and option to go to cart
+    if (confirm(`✅ Produit ajouté au panier!\n\nVoulez-vous aller au panier?`)) {
+      router.push('/client/cart');
+    }
   };
 
   const handleContactArtisan = () => {
