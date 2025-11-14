@@ -3,7 +3,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './controllers/auth.controller';
+import { SessionController } from './controllers/session.controller';
 import { AuthService } from './services/auth.service';
+import { SessionService } from './services/session.service';
+import { LoginSecurityService } from './services/login-security.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { TwoFactorService } from './services/two-factor.service';
@@ -23,8 +26,16 @@ import { PhoneVerificationService } from './services/phone-verification.service'
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, TwoFactorService, PhoneVerificationService],
-  exports: [AuthService, PhoneVerificationService],
+  controllers: [AuthController, SessionController],
+  providers: [
+    AuthService,
+    SessionService,
+    LoginSecurityService,
+    JwtStrategy,
+    LocalStrategy,
+    TwoFactorService,
+    PhoneVerificationService,
+  ],
+  exports: [AuthService, SessionService, LoginSecurityService, PhoneVerificationService],
 })
 export class AuthModule {}

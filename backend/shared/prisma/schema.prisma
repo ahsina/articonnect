@@ -75,8 +75,9 @@ model User {
   artisanMissions Mission[] @relation("ArtisanMissions")
 
   // Reviews
-  givenReviews    Review[] @relation("GivenReviews")
-  receivedReviews Review[] @relation("ReceivedReviews")
+  givenReviews    Review[]         @relation("GivenReviews")
+  receivedReviews Review[]         @relation("ReceivedReviews")
+  reviewResponses ReviewResponse[] @relation("ReviewResponses")
 
   // Disputes
   disputesCreated  Dispute[] @relation("DisputesCreated")
@@ -362,13 +363,13 @@ model Negotiation {
 // ================================
 
 model Review {
-  id                  String   @id @default(uuid())
-  missionId           String   @unique
-  mission             Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  id                  String          @id @default(uuid())
+  missionId           String          @unique
+  mission             Mission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
   reviewerId          String
-  reviewer            User     @relation("GivenReviews", fields: [reviewerId], references: [id])
+  reviewer            User            @relation("GivenReviews", fields: [reviewerId], references: [id])
   reviewedId          String
-  reviewed            User     @relation("ReceivedReviews", fields: [reviewedId], references: [id])
+  reviewed            User            @relation("ReceivedReviews", fields: [reviewedId], references: [id])
   overallRating       Int
   qualityRating       Int?
   punctualityRating   Int?
@@ -376,13 +377,28 @@ model Review {
   valueRating         Int?
   comment             String?
   photos              String[]
-  helpful             Int      @default(0)
-  verified            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  helpful             Int             @default(0)
+  verified            Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  ReviewResponse      ReviewResponse?
 
   @@index([reviewedId])
   @@index([overallRating])
+}
+
+// Review Responses - Allow artisans to respond to reviews
+model ReviewResponse {
+  id          String   @id @default(uuid())
+  reviewId    String   @unique
+  review      Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  responderId String
+  responder   User     @relation("ReviewResponses", fields: [responderId], references: [id])
+  response    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([responderId])
 }
 
 // ================================
@@ -981,4 +997,36 @@ model Request {
   @@index([status])
   @@index([category])
   @@index([createdAt])
+}
+
+// Mission Templates - Reusable templates for common mission types
+model MissionTemplate {
+  id       String @id @default(uuid())
+  name     String
+  category String
+
+  description       String?
+  estimatedDuration Int? // minutes
+
+  // Budget range guidance
+  defaultBudgetRange String? // JSON: { min, max }
+
+  // Skills and checklist
+  requiredSkills String? // JSON array
+  checklistItems String? // JSON array
+
+  // Visibility
+  isPublic Boolean @default(false)
+
+  // Creator and usage
+  createdBy  String
+  usageCount Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPublic])
+  @@index([createdBy])
+  @@index([usageCount])
 }
