@@ -24,7 +24,7 @@ export class AuthService {
     private twoFactorService: TwoFactorService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto, ipAddress?: string) {
     const { email, password, firstName, lastName, role, phone } = registerDto;
 
     // Check if user exists
@@ -58,11 +58,11 @@ export class AuthService {
       });
     }
 
-    // Create consent record
+    // Create consent record with actual IP address
     await this.prisma.userConsent.create({
       data: {
         userId: user.id,
-        ipAddress: '0.0.0.0', // Should be passed from request
+        ipAddress: ipAddress || 'unknown', // Fallback if IP not available
       },
     });
 
