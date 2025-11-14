@@ -297,11 +297,15 @@ export class NoShowService {
 
     // 6. Transférer les frais de no-show à l'artisan via Stripe (outside transaction)
     // If this fails, compensation is still recorded in DB
-    await this.transferToArtisan(mission.artisanId, noShowEvent.feeAmount, {
-      missionId: mission.id,
-      type: 'NO_SHOW_COMPENSATION',
-      reason: 'Client no-show - artisan compensation',
-    });
+    await this.transferToArtisan(
+      mission.artisanId,
+      Number(noShowEvent.feeAmount), // Convert Decimal to number
+      {
+        missionId: mission.id,
+        type: 'NO_SHOW_COMPENSATION',
+        reason: 'Client no-show - artisan compensation',
+      }
+    );
   }
 
   /**

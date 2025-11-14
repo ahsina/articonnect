@@ -1,4 +1,6 @@
-import { Mission, Payment, NoShowEvent, User, ArtisanProfile } from '@prisma/client';
+import { Mission, Payment, NoShowEvent, User, ArtisanProfile, Prisma } from '@prisma/client';
+
+type Decimal = Prisma.Decimal;
 
 /**
  * Mission with related entities for payment operations
@@ -12,7 +14,7 @@ export type MissionWithRelations = Mission & {
     id: string;
     stripePaymentIntentId: string | null;
     status: string;
-    artisanAmount: number;
+    artisanAmount: Decimal;
   } | null;
 };
 
