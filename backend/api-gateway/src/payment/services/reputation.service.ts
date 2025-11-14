@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
   MissionType,
@@ -148,7 +148,7 @@ export class ReputationService {
     });
 
     if (!user) {
-      throw new Error('Utilisateur introuvable');
+      throw new NotFoundException('Utilisateur introuvable');
     }
 
     const previousScore = user.reputationScore;
@@ -367,7 +367,7 @@ export class ReputationService {
     });
 
     if (!user) {
-      throw new Error('Utilisateur introuvable');
+      throw new NotFoundException('Utilisateur introuvable');
     }
 
     // Determine risk level

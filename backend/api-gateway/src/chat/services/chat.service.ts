@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
@@ -15,7 +15,7 @@ export class ChatService {
     try {
       return this.jwtService.verify(token);
     } catch (error) {
-      throw new Error('Invalid token');
+      throw new UnauthorizedException('Invalid token');
     }
   }
 
@@ -100,7 +100,7 @@ export class ChatService {
     const message = await this.getMessage(messageId);
 
     if (message.receiverId !== userId) {
-      throw new Error('Not authorized');
+      throw new ForbiddenException('Not authorized');
     }
 
     return this.prisma.message.update({
@@ -151,7 +151,7 @@ export class ChatService {
     const message = await this.getMessage(messageId);
 
     if (message.senderId !== userId) {
-      throw new Error('Not authorized');
+      throw new ForbiddenException('Not authorized');
     }
 
     return this.prisma.message.delete({

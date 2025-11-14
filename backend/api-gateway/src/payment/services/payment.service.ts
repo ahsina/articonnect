@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
@@ -19,11 +19,11 @@ export class PaymentService {
     });
 
     if (!mission || mission.clientId !== userId) {
-      throw new Error('Non autorisé');
+      throw new UnauthorizedException('Non autorisé');
     }
 
     if (!mission.agreedPrice) {
-      throw new Error('Prix non défini');
+      throw new BadRequestException('Prix non défini');
     }
 
     const amount = Number(mission.agreedPrice) * 100; // Convert to cents
