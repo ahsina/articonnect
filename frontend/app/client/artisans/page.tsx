@@ -57,67 +57,33 @@ export default function ArtisansListPage() {
 
   const loadArtisans = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await userApi.getArtisans();
+      // Load artisans from API
+      const data = await userApi.getArtisans();
 
-      // Mock data
-      const mockArtisans: Artisan[] = [
-        {
-          id: '1',
-          firstName: 'Jean',
-          lastName: 'Dupont',
-          artisanProfile: {
-            companyName: 'Plomberie Dupont',
-            description: '15 ans d\'expérience en plomberie et chauffage',
-            specialties: ['plomberie'],
-            city: 'Luxembourg',
-            country: 'Luxembourg',
-            hourlyRate: 55,
-            rating: 4.8,
-            reviewCount: 24,
-            verified: true,
-          },
-          distance: 2.5,
-        },
-        {
-          id: '2',
-          firstName: 'Marie',
-          lastName: 'Martin',
-          artisanProfile: {
-            companyName: 'Électricité Martin',
-            description: 'Spécialiste en installation électrique résidentielle',
-            specialties: ['electricite'],
-            city: 'Esch-sur-Alzette',
-            country: 'Luxembourg',
-            hourlyRate: 60,
-            rating: 4.9,
-            reviewCount: 31,
-            verified: true,
-          },
-          distance: 5.2,
-        },
-        {
-          id: '3',
-          firstName: 'Pierre',
-          lastName: 'Bernard',
-          artisanProfile: {
-            companyName: 'Multi-Services Bernard',
-            description: 'Tous travaux de rénovation et entretien',
-            specialties: ['peinture', 'menuiserie', 'maconnerie'],
-            city: 'Differdange',
-            country: 'Luxembourg',
-            hourlyRate: 50,
-            rating: 4.6,
-            reviewCount: 18,
-            verified: false,
-          },
-          distance: 8.1,
-        },
-      ];
+      // Transform API data to match Artisan interface
+      const artisansData: Artisan[] = data.map((artisan: any) => ({
+        id: artisan.id,
+        firstName: artisan.firstName,
+        lastName: artisan.lastName,
+        artisanProfile: artisan.artisanProfile ? {
+          companyName: artisan.artisanProfile.companyName || 'N/A',
+          description: artisan.artisanProfile.description || '',
+          specialties: artisan.artisanProfile.specialties?.map((s: any) => s.name) || [],
+          city: artisan.artisanProfile.baseAddress?.split(',')[0] || 'Luxembourg',
+          country: 'Luxembourg',
+          hourlyRate: Number(artisan.artisanProfile.hourlyRate) || 50,
+          rating: Number(artisan.artisanProfile.rating) || 0,
+          reviewCount: artisan.artisanProfile.reviewCount || 0,
+          verified: artisan.artisanProfile.stripeOnboarded || false,
+        } : null,
+        distance: 0, // Will be calculated if geolocation is enabled
+      })).filter((a: Artisan) => a.artisanProfile !== null);
 
-      setArtisans(mockArtisans);
+      setArtisans(artisansData);
     } catch (error) {
       console.error('Error loading artisans:', error);
+      // Show empty state instead of mock data on error
+      setArtisans([]);
     } finally {
       setLoading(false);
     }
