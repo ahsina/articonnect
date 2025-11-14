@@ -6,6 +6,9 @@ import {
   Request,
   Param,
   Get,
+  Req,
+  Headers,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -67,9 +70,22 @@ export class PaymentController {
   }
 
   @Post('webhook')
-  async handleWebhook(@Body() body: Record<string, unknown>) {
-    // In production, verify webhook signature
-    return this.paymentService.handleWebhook(body);
+  async handleWebhook(
+    @Req() req: any,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    if (!signature) {
+      throw new BadRequestException('Missing stripe-signature header');
+    }
+
+    // Verify webhook signature for security
+    const event = await this.paymentService.verifyWebhookSignature(
+      req.rawBody || req.body,
+      signature,
+    );
+
+    // Process the verified webhook event
+    return this.paymentService.handleWebhook(event);
   }
 
   // ================================================================

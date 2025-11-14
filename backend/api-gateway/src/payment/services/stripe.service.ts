@@ -71,4 +71,20 @@ export class StripeService {
   async getConnectAccount(accountId: string) {
     return this.stripe.accounts.retrieve(accountId);
   }
+
+  /**
+   * Construct and verify webhook event from Stripe
+   * Ensures webhook authenticity by verifying the signature
+   */
+  constructWebhookEvent(
+    rawBody: string,
+    signature: string,
+    webhookSecret: string,
+  ): Stripe.Event {
+    return this.stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      webhookSecret,
+    );
+  }
 }

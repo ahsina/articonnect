@@ -3,11 +3,22 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
+
+  // Raw body for Stripe webhooks signature verification
+  app.use(
+    '/api/payments/webhook',
+    express.raw({ type: 'application/json' }),
+    (req, res, next) => {
+      req.rawBody = req.body;
+      next();
+    },
+  );
 
   // Security
   app.use(helmet({

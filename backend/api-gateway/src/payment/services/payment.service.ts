@@ -143,6 +143,39 @@ export class PaymentService {
     return { success: true, message: 'Paiement remboursé' };
   }
 
+  /**
+   * Verify Stripe webhook signature for security
+   * Prevents unauthorized webhook requests
+   */
+  async verifyWebhookSignature(
+    rawBody: string | Buffer,
+    signature: string,
+  ): Promise<any> {
+    try {
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (!webhookSecret) {
+        throw new BadRequestException('Webhook secret not configured');
+      }
+
+      // Convert Buffer to string if needed
+      const body = typeof rawBody === 'string' ? rawBody : rawBody.toString('utf8');
+
+      // Verify signature using Stripe SDK
+      const event = this.stripeService.constructWebhookEvent(
+        body,
+        signature,
+        webhookSecret,
+      );
+
+      return event;
+    } catch (error) {
+      throw new UnauthorizedException(
+        `Webhook signature verification failed: ${error.message}`,
+      );
+    }
+  }
+
   async handleWebhook(event: Record<string, unknown>) {
     // Handle Stripe webhook events
     const eventData = event as { type: string; data: { object: { id: string; metadata: Record<string, string> } } };
