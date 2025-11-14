@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { MissionModule } from './mission/mission.module';
@@ -20,8 +20,11 @@ import { AddressModule } from './address/address.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { CertificationModule } from './certification/certification.module';
 import { FcmModule } from './fcm/fcm.module';
+import { HealthModule } from './health/health.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
+import { LoggerService } from './common/logger/logger.service';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 @Module({
   imports: [
@@ -49,6 +52,7 @@ import { RedisModule } from './common/redis/redis.module';
     ]),
     PrismaModule,
     RedisModule,
+    HealthModule,
     AuthModule,
     UserModule,
     MissionModule,
@@ -68,9 +72,14 @@ import { RedisModule } from './common/redis/redis.module';
     FcmModule,
   ],
   providers: [
+    LoggerService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

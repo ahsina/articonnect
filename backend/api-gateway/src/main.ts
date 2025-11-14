@@ -2,12 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { LoggerService } from './common/logger/logger.service';
 import helmet from 'helmet';
 import * as express from 'express';
 
 async function bootstrap() {
+  // Create custom logger instance
+  const logger = new LoggerService();
+
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    logger,
   });
 
   // Raw body for Stripe webhooks signature verification
@@ -75,18 +79,73 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('ArtiConnect API')
-      .setDescription('API de la plateforme ArtiConnect')
-      .setVersion('1.0')
-      .addBearerAuth()
+      .setDescription(
+        'API complète de la plateforme ArtiConnect - Mise en relation artisans et clients\n\n' +
+        '## Fonctionnalités principales\n' +
+        '- **Authentication**: Inscription, connexion, 2FA, gestion de sessions\n' +
+        '- **Missions**: Recherche avancée, templates, négociations\n' +
+        '- **Paiements**: Multi-devises (EUR, USD, GBP), Stripe Connect\n' +
+        '- **Reviews**: Système d\'avis avec réponses\n' +
+        '- **Disputes**: Résolution de litiges avec médiation\n' +
+        '- **Chat**: Messagerie chiffrée de bout en bout\n' +
+        '- **Marketplace**: Vente de produits artisanaux\n' +
+        '- **Notifications**: Push notifications (FCM)\n\n' +
+        '## Sécurité\n' +
+        '- Rate limiting: 100 req/min par utilisateur\n' +
+        '- Chiffrement E2E pour les messages\n' +
+        '- Verrouillage de compte après 5 tentatives échouées\n' +
+        '- Gestion multi-sessions avec révocation',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter JWT token',
+        },
+        'JWT-auth',
+      )
+      .addTag('Health', 'Endpoints de santé et monitoring')
+      .addTag('Auth', 'Authentification et gestion des utilisateurs')
+      .addTag('Sessions', 'Gestion des sessions multi-devices')
+      .addTag('Missions', 'Gestion des missions et interventions')
+      .addTag('Mission Search', 'Recherche avancée de missions')
+      .addTag('Mission Templates', 'Templates de missions réutilisables')
+      .addTag('Reviews', 'Système d\'avis et évaluations')
+      .addTag('Review Responses', 'Réponses aux avis')
+      .addTag('Payments', 'Paiements et transactions')
+      .addTag('Disputes', 'Gestion des litiges')
+      .addTag('Chat', 'Messagerie en temps réel')
+      .addTag('Marketplace', 'Marketplace de produits')
+      .addTag('Notifications', 'Notifications push')
+      .addTag('Availability', 'Gestion de disponibilité artisans')
+      .setContact(
+        'Support ArtiConnect',
+        'https://articonnect.fr',
+        'support@articonnect.fr',
+      )
+      .setLicense('Proprietary', 'https://articonnect.fr/license')
       .build();
+
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+      },
+    });
+
+    logger.log(`📚 API Documentation available at http://localhost:${process.env.PORT || 4000}/api/docs`);
   }
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`🚀 ArtiConnect API running on http://localhost:${port}`);
-  console.log(`📚 API Docs: http://localhost:${port}/api/docs`);
+
+  logger.log(`🚀 ArtiConnect API running on http://localhost:${port}`);
+  logger.log(`🔐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`✅ Health check: http://localhost:${port}/health`);
 }
 
 bootstrap();
