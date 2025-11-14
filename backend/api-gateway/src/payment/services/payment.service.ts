@@ -376,6 +376,7 @@ export class PaymentService {
 
   /**
    * Remboursement avec compensation artisan (plateforme absorbe)
+   * Uses atomic transaction to ensure data consistency
    */
   private async refundWithCompensation(
     mission: any,
@@ -384,57 +385,81 @@ export class PaymentService {
     reason: RefundReason,
     platformAbsorbs: boolean,
   ) {
-    // 1. Créer le remboursement Stripe
+    // 1. Créer le remboursement Stripe (outside transaction - can be retried)
     await this.stripeService.refundPayment(payment.stripePaymentIntentId);
 
-    // 2. Créer le Payment de remboursement
-    await this.prisma.payment.create({
-      data: {
-        missionId: mission.id,
-        userId: mission.clientId,
-        type: 'REFUND',
-        amount,
-        refundReason: reason,
-        refundedAmount: amount,
-        refundedAt: new Date(),
-        artisanCompensated: true,
-        compensationAmount: amount,
-        platformAbsorbedCost: platformAbsorbs,
-      },
-    });
-
-    // 3. Logger la compensation
-    if (platformAbsorbs) {
-      await this.prisma.compensationLog.create({
+    // 2. Atomic transaction for all database operations
+    await this.prisma.$transaction(async (tx) => {
+      // 2a. Créer le Payment de remboursement
+      await tx.payment.create({
         data: {
-          userId: mission.artisanId,
           missionId: mission.id,
-          reason:
-            reason === 'CHANGED_MIND'
-              ? 'CLIENT_CHANGED_MIND'
-              : 'CLIENT_EMERGENCY_RESOLVED',
+          userId: mission.clientId,
+          type: 'REFUND',
           amount,
-          clientRefunded: true,
-          refundAmount: amount,
-          totalCost: amount * 2, // Plateforme paie client + artisan
-          notes: `Remboursement client + compensation artisan - Plateforme absorbe`,
+          refundReason: reason,
+          refundedAmount: amount,
+          refundedAt: new Date(),
+          artisanCompensated: true,
+          compensationAmount: amount,
+          platformAbsorbedCost: platformAbsorbs,
         },
       });
-    }
 
-    // 4. Pénaliser le client
-    await this.reputationService.applyMissionCancelledPenalty(
-      mission.clientId,
-      mission.id,
-    );
+      // 2b. Logger la compensation
+      if (platformAbsorbs) {
+        await tx.compensationLog.create({
+          data: {
+            userId: mission.artisanId,
+            missionId: mission.id,
+            reason:
+              reason === 'CHANGED_MIND'
+                ? 'CLIENT_CHANGED_MIND'
+                : 'CLIENT_EMERGENCY_RESOLVED',
+            amount,
+            clientRefunded: true,
+            refundAmount: amount,
+            totalCost: amount * 2, // Plateforme paie client + artisan
+            notes: `Remboursement client + compensation artisan - Plateforme absorbe`,
+          },
+        });
+      }
 
-    // 5. Mettre à jour la mission
-    await this.prisma.mission.update({
-      where: { id: mission.id },
-      data: { status: 'CANCELLED' },
+      // 2c. Pénaliser le client (inline to include in transaction)
+      const user = await tx.user.findUnique({
+        where: { id: mission.clientId },
+      });
+      if (user) {
+        const previousScore = user.reputationScore;
+        const newScore = Math.max(0, Math.min(200, previousScore - 5));
+
+        await tx.user.update({
+          where: { id: mission.clientId },
+          data: { reputationScore: newScore },
+        });
+
+        await tx.reputationHistory.create({
+          data: {
+            userId: mission.clientId,
+            action: 'MISSION_CANCELLED',
+            pointsChange: -5,
+            previousScore,
+            newScore,
+            reason: 'Mission annulée',
+            relatedMissionId: mission.id,
+          },
+        });
+      }
+
+      // 2d. Mettre à jour la mission
+      await tx.mission.update({
+        where: { id: mission.id },
+        data: { status: 'CANCELLED' },
+      });
     });
 
-    // 6. Transférer les fonds à l'artisan via Stripe
+    // 3. Transférer les fonds à l'artisan via Stripe (outside transaction)
+    // If this fails, compensation is still recorded in DB
     await this.transferToArtisan(mission.artisanId, amount, {
       missionId: mission.id,
       type: 'COMPENSATION',

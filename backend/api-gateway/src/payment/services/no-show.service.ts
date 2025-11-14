@@ -209,65 +209,93 @@ export class NoShowService {
 
   /**
    * Applique les conséquences d'un no-show validé
+   * Uses atomic transaction to ensure data consistency
    */
   private async applyNoShowConsequences(noShowEvent: any): Promise<void> {
     const { mission } = noShowEvent;
 
-    // 1. Pénaliser le client
-    await this.reputationService.applyNoShowPenalty(
-      mission.clientId,
-      mission.id,
-    );
+    // Atomic transaction for all database operations
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Pénaliser le client (inline to include in transaction)
+      const user = await tx.user.findUnique({
+        where: { id: mission.clientId },
+      });
 
-    await this.reputationService.incrementNoShowCount(mission.clientId);
+      if (user) {
+        // Apply no-show penalty
+        const previousScore = user.reputationScore;
+        const newScore = Math.max(0, Math.min(200, previousScore - 10));
 
-    // 2. Créer un paiement de compensation pour l'artisan
-    await this.prisma.payment.create({
-      data: {
-        missionId: mission.id,
-        userId: mission.clientId, // Le client est débité
-        type: 'COMPENSATION',
-        amount: noShowEvent.feeAmount,
-        refundReason: 'CLIENT_NO_SHOW',
-        artisanCompensated: true,
-        compensationAmount: noShowEvent.feeAmount,
-        platformAbsorbedCost: false, // Le client paie directement
-      },
+        await tx.user.update({
+          where: { id: mission.clientId },
+          data: {
+            reputationScore: newScore,
+            noShowCount: { increment: 1 },
+          },
+        });
+
+        await tx.reputationHistory.create({
+          data: {
+            userId: mission.clientId,
+            action: 'NO_SHOW',
+            pointsChange: -10,
+            previousScore,
+            newScore,
+            reason: 'No-show confirmé par admin',
+            relatedMissionId: mission.id,
+          },
+        });
+      }
+
+      // 2. Créer un paiement de compensation pour l'artisan
+      await tx.payment.create({
+        data: {
+          missionId: mission.id,
+          userId: mission.clientId, // Le client est débité
+          type: 'COMPENSATION',
+          amount: noShowEvent.feeAmount,
+          refundReason: 'CLIENT_NO_SHOW',
+          artisanCompensated: true,
+          compensationAmount: noShowEvent.feeAmount,
+          platformAbsorbedCost: false, // Le client paie directement
+        },
+      });
+
+      // 3. Logger la compensation
+      await tx.compensationLog.create({
+        data: {
+          userId: mission.artisanId,
+          missionId: mission.id,
+          reason: 'CLIENT_NO_SHOW',
+          amount: noShowEvent.feeAmount,
+          clientRefunded: false,
+          totalCost: noShowEvent.feeAmount,
+          notes: `No-show frais: ${noShowEvent.feeAmount}€`,
+        },
+      });
+
+      // 4. Marquer le no-show comme compensé
+      await tx.noShowEvent.update({
+        where: { id: noShowEvent.id },
+        data: {
+          status: 'COMPENSATED',
+          compensationPaid: true,
+          compensationPaidAt: new Date(),
+        },
+      });
+
+      // 5. Annuler la mission
+      await tx.mission.update({
+        where: { id: mission.id },
+        data: {
+          status: 'CANCELLED_NO_SHOW',
+          cancelledAt: new Date(),
+        },
+      });
     });
 
-    // 3. Logger la compensation
-    await this.prisma.compensationLog.create({
-      data: {
-        userId: mission.artisanId,
-        missionId: mission.id,
-        reason: 'CLIENT_NO_SHOW',
-        amount: noShowEvent.feeAmount,
-        clientRefunded: false,
-        totalCost: noShowEvent.feeAmount,
-        notes: `No-show frais: ${noShowEvent.feeAmount}€`,
-      },
-    });
-
-    // 4. Marquer le no-show comme compensé
-    await this.prisma.noShowEvent.update({
-      where: { id: noShowEvent.id },
-      data: {
-        status: 'COMPENSATED',
-        compensationPaid: true,
-        compensationPaidAt: new Date(),
-      },
-    });
-
-    // 5. Annuler la mission
-    await this.prisma.mission.update({
-      where: { id: mission.id },
-      data: {
-        status: 'CANCELLED_NO_SHOW',
-        cancelledAt: new Date(),
-      },
-    });
-
-    // 6. Transférer les frais de no-show à l'artisan via Stripe
+    // 6. Transférer les frais de no-show à l'artisan via Stripe (outside transaction)
+    // If this fails, compensation is still recorded in DB
     await this.transferToArtisan(mission.artisanId, noShowEvent.feeAmount, {
       missionId: mission.id,
       type: 'NO_SHOW_COMPENSATION',
