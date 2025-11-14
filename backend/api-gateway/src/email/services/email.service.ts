@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 import { getEmailConfig } from '../email.config';
@@ -8,6 +8,7 @@ import {
   getEmailVerificationTemplate,
   getMissionNotificationTemplate,
 } from '../templates/email.templates';
+import { EmailTemplateService } from '../../notification/services/email-template.service';
 
 @Injectable()
 export class EmailService {
@@ -15,7 +16,10 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly config = getEmailConfig();
 
-  constructor() {
+  constructor(
+    @Inject(forwardRef(() => EmailTemplateService))
+    private emailTemplateService: EmailTemplateService,
+  ) {
     this.initializeTransporter();
   }
 
@@ -123,5 +127,179 @@ export class EmailService {
     const html = getMissionNotificationTemplate(userName, missionTitle, missionUrl);
 
     return this.sendEmail(to, `Nouvelle mission : ${missionTitle}`, html);
+  }
+
+  async sendWelcomeClientEmail(firstName: string, email: string) {
+    const template = this.emailTemplateService.welcomeClient(firstName, email);
+    return this.sendEmail(email, template.subject, template.html);
+  }
+
+  async sendWelcomeArtisanEmail(firstName: string, companyName: string, email: string) {
+    const template = this.emailTemplateService.welcomeArtisan(firstName, companyName, email);
+    return this.sendEmail(email, template.subject, template.html);
+  }
+
+  async sendMissionCreatedEmail(
+    clientEmail: string,
+    clientName: string,
+    missionTitle: string,
+    missionId: string,
+    budget: number,
+    category: string,
+  ) {
+    const template = this.emailTemplateService.missionCreated(clientName, missionTitle, missionId, budget, category);
+    return this.sendEmail(clientEmail, template.subject, template.html);
+  }
+
+  async sendNewMissionAvailableEmail(
+    artisanEmail: string,
+    artisanName: string,
+    missionTitle: string,
+    missionId: string,
+    budget: number,
+    distance: number,
+    category: string,
+  ) {
+    const template = this.emailTemplateService.newMissionAvailable(
+      artisanName,
+      missionTitle,
+      missionId,
+      budget,
+      distance,
+      category,
+    );
+    return this.sendEmail(artisanEmail, template.subject, template.html);
+  }
+
+  async sendMissionAcceptedEmail(
+    clientEmail: string,
+    clientName: string,
+    artisanName: string,
+    missionTitle: string,
+    missionId: string,
+    scheduledDate: string,
+  ) {
+    const template = this.emailTemplateService.missionAccepted(
+      clientName,
+      artisanName,
+      missionTitle,
+      missionId,
+      scheduledDate,
+    );
+    return this.sendEmail(clientEmail, template.subject, template.html);
+  }
+
+  async sendMissionCompletedEmail(
+    clientEmail: string,
+    clientName: string,
+    artisanName: string,
+    missionTitle: string,
+    missionId: string,
+  ) {
+    const template = this.emailTemplateService.missionCompleted(clientName, artisanName, missionTitle, missionId);
+    return this.sendEmail(clientEmail, template.subject, template.html);
+  }
+
+  async sendPaymentReceivedEmail(
+    artisanEmail: string,
+    artisanName: string,
+    amount: number,
+    missionTitle: string,
+    missionId: string,
+  ) {
+    const template = this.emailTemplateService.paymentReceived(artisanName, amount, missionTitle, missionId);
+    return this.sendEmail(artisanEmail, template.subject, template.html);
+  }
+
+  async sendNegotiationReceivedEmail(
+    userEmail: string,
+    userName: string,
+    senderName: string,
+    missionTitle: string,
+    proposedPrice: number,
+    currentPrice: number,
+    missionId: string,
+  ) {
+    const template = this.emailTemplateService.negotiationReceived(
+      userName,
+      senderName,
+      missionTitle,
+      proposedPrice,
+      currentPrice,
+      missionId,
+    );
+    return this.sendEmail(userEmail, template.subject, template.html);
+  }
+
+  async sendNoShowAlertEmail(
+    artisanEmail: string,
+    artisanName: string,
+    clientName: string,
+    missionTitle: string,
+    missionId: string,
+    feeAmount: number,
+  ) {
+    const template = this.emailTemplateService.noShowAlert(
+      artisanName,
+      clientName,
+      missionTitle,
+      missionId,
+      feeAmount,
+    );
+    return this.sendEmail(artisanEmail, template.subject, template.html);
+  }
+
+  async sendWeeklyClientSummaryEmail(
+    clientEmail: string,
+    clientName: string,
+    activeMissions: number,
+    completedThisWeek: number,
+    totalSpent: number,
+    upcomingMissions: Array<{ title: string; date: string; artisanName: string }>,
+  ) {
+    const template = this.emailTemplateService.weeklyClientSummary(
+      clientName,
+      activeMissions,
+      completedThisWeek,
+      totalSpent,
+      upcomingMissions,
+    );
+    return this.sendEmail(clientEmail, template.subject, template.html);
+  }
+
+  async sendWeeklyArtisanSummaryEmail(
+    artisanEmail: string,
+    artisanName: string,
+    activeMissions: number,
+    completedThisWeek: number,
+    totalEarned: number,
+    averageRating: number,
+    newReviews: number,
+  ) {
+    const template = this.emailTemplateService.weeklyArtisanSummary(
+      artisanName,
+      activeMissions,
+      completedThisWeek,
+      totalEarned,
+      averageRating,
+      newReviews,
+    );
+    return this.sendEmail(artisanEmail, template.subject, template.html);
+  }
+
+  async sendDisputeCreatedEmail(
+    userEmail: string,
+    userName: string,
+    missionTitle: string,
+    disputeId: string,
+    reason: string,
+  ) {
+    const template = this.emailTemplateService.disputeCreated(userName, missionTitle, disputeId, reason);
+    return this.sendEmail(userEmail, template.subject, template.html);
+  }
+
+  async sendPasswordResetEmailRich(userName: string, email: string, resetToken: string) {
+    const template = this.emailTemplateService.passwordReset(userName, resetToken);
+    return this.sendEmail(email, template.subject, template.html);
   }
 }

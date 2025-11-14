@@ -9,6 +9,7 @@ import { CreateMissionDto, UpdateMissionStatusDto } from '../dto/mission.dto';
 import { MissionStatus } from '@prisma/client';
 import { ReputationService } from '../../payment/services/reputation.service';
 import { PaymentService } from '../../payment/services/payment.service';
+import { NotificationService } from '../../notification/services/notification.service';
 
 @Injectable()
 export class MissionService {
@@ -16,6 +17,7 @@ export class MissionService {
     private prisma: PrismaService,
     private reputationService: ReputationService,
     private paymentService: PaymentService,
+    private notificationService: NotificationService,
   ) {}
 
   async create(userId: string, createDto: CreateMissionDto) {
@@ -236,7 +238,22 @@ export class MissionService {
       'Artisan a accepté la mission',
     );
 
-    // TODO: Send notification to client
+    // Send notification to client
+    const artisan = await this.prisma.user.findUnique({
+      where: { id: artisanId },
+      include: {
+        artisanProfile: true,
+      },
+    });
+
+    const artisanName = artisan?.artisanProfile?.companyName ||
+      `${artisan?.firstName} ${artisan?.lastName}`;
+
+    await this.notificationService.notifyMissionAccepted(
+      mission.clientId,
+      missionId,
+      artisanName,
+    );
 
     return updated;
   }
@@ -798,7 +815,11 @@ export class MissionService {
       'Travail terminé - Délai de rétractation 48h',
     );
 
-    // TODO: Notify client to validate work
+    // Notify client to validate work
+    await this.notificationService.notifyMissionCompleted(
+      mission.clientId,
+      missionId,
+    );
 
     return {
       mission: updated,

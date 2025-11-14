@@ -2,8 +2,9 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
 import { StripeService } from './stripe.service';
-import { MissionType, Mission, NoShowEvent } from '@prisma/client';
+import { MissionType, Mission, NoShowEvent, NotificationType } from '@prisma/client';
 import type { NoShowEventWithMission } from '../types/payment.types';
+import { NotificationService } from '../../notification/services/notification.service';
 
 /**
  * ================================================================
@@ -55,6 +56,7 @@ export class NoShowService {
     private prisma: PrismaService,
     private reputationService: ReputationService,
     private stripeService: StripeService,
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -125,7 +127,28 @@ export class NoShowService {
         data: { status: 'PENDING_REVIEW' },
       });
 
-      // TODO: Notifier les admins pour review
+      // Notifier les admins pour review
+      const admins = await this.prisma.user.findMany({
+        where: { role: 'ADMIN' },
+        select: { id: true },
+      });
+
+      await Promise.all(
+        admins.map((admin) =>
+          this.notificationService.createNotification(
+            admin.id,
+            NotificationType.SYSTEM,
+            'No-show en attente de validation',
+            `Mission #${mission.id.substring(0, 8)} - Un no-show nécessite votre validation`,
+            `/admin/no-shows/${noShowEvent.id}`,
+            {
+              noShowId: noShowEvent.id,
+              missionId: mission.id,
+              artisanId: mission.artisanId,
+            },
+          ),
+        ),
+      );
 
       return {
         noShowEvent,
@@ -196,6 +219,21 @@ export class NoShowService {
     adminId: string,
     reason: string,
   ): Promise<void> {
+    const noShowEvent = await this.prisma.noShowEvent.findUnique({
+      where: { id: noShowEventId },
+      include: {
+        mission: {
+          include: {
+            artisan: true,
+          },
+        },
+      },
+    });
+
+    if (!noShowEvent) {
+      throw new BadRequestException('No-show non trouvé');
+    }
+
     await this.prisma.noShowEvent.update({
       where: { id: noShowEventId },
       data: {
@@ -205,7 +243,19 @@ export class NoShowService {
       },
     });
 
-    // TODO: Notifier l'artisan du rejet
+    // Notifier l'artisan du rejet
+    await this.notificationService.createNotification(
+      noShowEvent.mission.artisanId,
+      NotificationType.SYSTEM,
+      'No-show rejeté',
+      `Votre signalement de no-show pour la mission #${noShowEvent.missionId.substring(0, 8)} a été rejeté. Raison: ${reason}`,
+      `/artisan/missions/${noShowEvent.missionId}`,
+      {
+        noShowId: noShowEventId,
+        missionId: noShowEvent.missionId,
+        reason,
+      },
+    );
   }
 
   /**

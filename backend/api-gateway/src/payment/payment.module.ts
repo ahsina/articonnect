@@ -5,8 +5,10 @@ import { PaymentService } from './services/payment.service';
 import { StripeService } from './services/stripe.service';
 import { ReputationService } from './services/reputation.service';
 import { NoShowService } from './services/no-show.service';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
+  imports: [NotificationModule],
   controllers: [
     PaymentController,
     ReputationController,

@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateNegotiationDto, AcceptNegotiationDto } from '../dto/negotiation.dto';
+import { NotificationService } from '../../notification/services/notification.service';
 
 @Injectable()
 export class NegotiationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   async create(userId: string, createDto: CreateNegotiationDto) {
     const mission = await this.prisma.mission.findUnique({
@@ -35,7 +39,12 @@ export class NegotiationService {
       },
     });
 
-    // TODO: Send notification to receiver
+    // Send notification to receiver
+    await this.notificationService.notifyNegotiationReceived(
+      receiverId,
+      mission.id,
+      createDto.proposedPrice,
+    );
 
     return negotiation;
   }
