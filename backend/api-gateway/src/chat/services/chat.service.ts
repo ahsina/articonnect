@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
 import { FcmService } from '../../fcm/services/fcm.service';
+import { EncryptionService } from './encryption.service';
 
 @Injectable()
 export class ChatService {
@@ -11,6 +12,7 @@ export class ChatService {
     private redis: RedisService,
     private jwtService: JwtService,
     private fcmService: FcmService,
+    private encryptionService: EncryptionService,
   ) {}
 
   async validateToken(token: string) {
@@ -27,11 +29,23 @@ export class ChatService {
     content: string;
     missionId?: string;
   }) {
+    // Generate conversation key for encryption
+    const conversationKey = this.encryptionService.generateConversationKey(
+      data.senderId,
+      data.receiverId
+    );
+
+    // Encrypt message content
+    const encryptedContent = this.encryptionService.encryptMessage(
+      data.content,
+      conversationKey
+    );
+
     return this.prisma.message.create({
       data: {
         senderId: data.senderId,
         receiverId: data.receiverId,
-        content: data.content,
+        content: encryptedContent,
       },
     });
   }
@@ -49,7 +63,7 @@ export class ChatService {
   }
 
   async getConversation(userId: string, otherUserId: string, limit: number = 50) {
-    return this.prisma.message.findMany({
+    const messages = await this.prisma.message.findMany({
       where: {
         OR: [
           { senderId: userId, receiverId: otherUserId },
@@ -69,6 +83,14 @@ export class ChatService {
         },
       },
     });
+
+    // Decrypt messages
+    const conversationKey = this.encryptionService.generateConversationKey(userId, otherUserId);
+
+    return messages.map(message => ({
+      ...message,
+      content: this.encryptionService.decryptMessage(message.content, conversationKey),
+    }));
   }
 
   async getConversations(userId: string) {

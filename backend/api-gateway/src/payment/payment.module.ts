@@ -5,6 +5,7 @@ import { PaymentService } from './services/payment.service';
 import { StripeService } from './services/stripe.service';
 import { ReputationService } from './services/reputation.service';
 import { NoShowService } from './services/no-show.service';
+import { CurrencyService } from './services/currency.service';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
@@ -18,12 +19,14 @@ import { NotificationModule } from '../notification/notification.module';
     StripeService,
     ReputationService,
     NoShowService,
+    CurrencyService,
   ],
   exports: [
     PaymentService,
     StripeService,
     ReputationService,
     NoShowService,
+    CurrencyService,
   ],
 })
 export class PaymentModule {}
