@@ -25,8 +25,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private chatService: ChatService) {}
 
   async handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
-
     // Extract user from token
     const token = client.handshake.auth.token;
     if (!token) {
@@ -43,8 +41,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Update user online status
       await this.chatService.setUserOnline(user.userId);
-
-      console.log(`User ${user.userId} connected`);
     } catch (error) {
       console.error('Connection error:', error);
       client.disconnect();
@@ -55,7 +51,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = client.data.userId;
     if (userId) {
       await this.chatService.setUserOffline(userId);
-      console.log(`User ${userId} disconnected`);
     }
   }
 

@@ -144,7 +144,7 @@ export class ChatService {
 
   async sendPushNotification(userId: string, notification: { title: string; body: string }) {
     // TODO: Implement push notification (FCM)
-    console.log(`Send push to ${userId}:`, notification);
+    // Placeholder - will be implemented when FCM is configured
   }
 
   async deleteMessage(messageId: string, userId: string) {
