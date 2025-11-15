@@ -49,9 +49,6 @@ yarn-error.log*
 *.seed
 *.pid.lock
 
-# Prisma
-**/prisma/migrations/
-
 # Uploads (dev)
 uploads/
 temp/
