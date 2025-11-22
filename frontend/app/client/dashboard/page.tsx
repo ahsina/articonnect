@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { missionsApi } from '@/lib/api/missions';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mission, MissionStatus } from '@/types/mission';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const STATUS_BADGES: Record<MissionStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -18,6 +19,7 @@ const STATUS_BADGES: Record<MissionStatus, string> = {
 };
 
 export default function ClientDashboard() {
+  const { t } = useLanguage();
   const router = useRouter();
   const { user, logout } = useAuth();
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -50,7 +52,7 @@ export default function ClientDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -68,19 +70,19 @@ export default function ClientDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/client/missions">
-                <Button variant="ghost">Mes Missions</Button>
+                <Button variant="ghost">{t('missions', 'myMissions')}</Button>
               </Link>
               <Link href="/client/artisans">
-                <Button variant="ghost">Trouver un Artisan</Button>
+                <Button variant="ghost">{t('missions', 'findArtisan')}</Button>
               </Link>
               <Link href="/client/marketplace">
-                <Button variant="ghost">Marketplace</Button>
+                <Button variant="ghost">{t('marketplace', 'title')}</Button>
               </Link>
               <Button
                 variant="ghost"
                 onClick={handleLogout}
               >
-                Déconnexion
+                {t('common', 'logout')}
               </Button>
             </div>
           </div>
@@ -92,10 +94,10 @@ export default function ClientDashboard() {
         {/* Welcome Section */}
         <div className="bg-white shadow rounded-lg p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Bienvenue, {user?.firstName || 'Client'} !
+            {t('missions', 'welcomeClient')}, {user?.firstName || 'Client'} !
           </h1>
           <p className="text-gray-600">
-            Gérez vos demandes d'intervention et trouvez les meilleurs artisans près de chez vous.
+            {t('missions', 'manageRequests')}
           </p>
         </div>
 

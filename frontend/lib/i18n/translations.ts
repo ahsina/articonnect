@@ -103,6 +103,9 @@ export const translations = {
       inProgress: 'En cours',
       completed: 'Terminées',
       cancelled: 'Annulées',
+      findArtisan: 'Trouver un Artisan',
+      welcomeClient: 'Bienvenue',
+      manageRequests: "Gérez vos demandes d'intervention et trouvez les meilleurs artisans près de chez vous.",
     },
     marketplace: {
       title: 'Marketplace',
@@ -298,6 +301,9 @@ export const translations = {
       inProgress: 'In Progress',
       completed: 'Completed',
       cancelled: 'Cancelled',
+      findArtisan: 'Find an Artisan',
+      welcomeClient: 'Welcome',
+      manageRequests: 'Manage your service requests and find the best artisans near you.',
     },
     marketplace: {
       title: 'Marketplace',
@@ -493,6 +499,9 @@ export const translations = {
       inProgress: 'In Bearbeitung',
       completed: 'Abgeschlossen',
       cancelled: 'Abgebrochen',
+      findArtisan: 'Handwerker finden',
+      welcomeClient: 'Willkommen',
+      manageRequests: 'Verwalten Sie Ihre Serviceanfragen und finden Sie die besten Handwerker in Ihrer Nähe.',
     },
     marketplace: {
       title: 'Marktplatz',
