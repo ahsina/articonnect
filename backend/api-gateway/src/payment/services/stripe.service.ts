@@ -23,7 +23,7 @@ export class StripeService {
       metadata: params.metadata,
       capture_method: 'manual', // For escrow
 
-      // Enable automatic payment methods (includes 3D Secure)
+      // Enable automatic payment methods (includes Card, Apple Pay, Google Pay, 3D Secure)
       automatic_payment_methods: {
         enabled: true,
         allow_redirects: 'always', // Allow 3D Secure redirects
@@ -34,6 +34,8 @@ export class StripeService {
         card: {
           request_three_d_secure: 'any', // Always request 3DS when available
         },
+        // Apple Pay and Google Pay are automatically enabled via automatic_payment_methods
+        // They appear when available on compatible devices/browsers
       },
 
       // Link to customer if provided
@@ -107,5 +109,73 @@ export class StripeService {
       signature,
       webhookSecret,
     );
+  }
+
+  // ================================================================
+  // APPLE PAY & GOOGLE PAY CONFIGURATION
+  // ================================================================
+
+  /**
+   * Create or verify Apple Pay domain
+   * Required to enable Apple Pay on your domain
+   *
+   * Steps:
+   * 1. Host apple-developer-merchantid-domain-association file at:
+   *    https://yourdomain.com/.well-known/apple-developer-merchantid-domain-association
+   * 2. Call this method to verify the domain with Apple
+   * 3. Apple Pay will be automatically available via automatic_payment_methods
+   */
+  async verifyApplePayDomain(domainName: string) {
+    try {
+      return await this.stripe.applePayDomains.create({
+        domain_name: domainName,
+      });
+    } catch (error: any) {
+      // Domain might already be verified
+      if (error.code === 'apple_pay_domain_already_registered') {
+        return { verified: true, message: 'Domain already verified' };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * List all verified Apple Pay domains
+   */
+  async listApplePayDomains() {
+    return this.stripe.applePayDomains.list({ limit: 100 });
+  }
+
+  /**
+   * Delete Apple Pay domain verification
+   */
+  async deleteApplePayDomain(domainId: string) {
+    return this.stripe.applePayDomains.del(domainId);
+  }
+
+  /**
+   * Google Pay Configuration
+   *
+   * Google Pay is automatically enabled via automatic_payment_methods.
+   * No additional server-side configuration needed.
+   *
+   * Frontend requirements:
+   * 1. Include Google Pay button in payment form
+   * 2. Google Pay will appear automatically when:
+   *    - User is on Chrome/Android
+   *    - User has Google Pay set up
+   *    - Payment amount and currency are supported
+   *
+   * For production, ensure your domain is added to:
+   * - Stripe Dashboard > Settings > Payment methods > Google Pay
+   */
+  getGooglePayConfig() {
+    return {
+      enabled: true,
+      merchantId: process.env.STRIPE_MERCHANT_ID || undefined,
+      merchantName: 'ArtiConnect',
+      // Google Pay is automatically configured via automatic_payment_methods
+      // Frontend can use Stripe.js Payment Request Button API
+    };
   }
 }
