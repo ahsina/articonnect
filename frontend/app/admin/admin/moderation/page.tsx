@@ -7,8 +7,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ModerationPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,35 +41,35 @@ export default function ModerationPage() {
 
   const handleResolve = async () => {
     if (!selectedReport || !action || !resolution) {
-      alert('Veuillez remplir tous les champs');
+      alert(t('admin', 'fillAllFields'));
       return;
     }
 
     try {
       await adminApi.resolveReport(selectedReport.id, action, resolution);
-      alert('Signalement résolu avec succès');
+      alert(t('admin', 'reportResolvedSuccess'));
       setSelectedReport(null);
       setResolution('');
       setAction('');
       loadReports();
     } catch (error) {
       console.error('Error resolving report:', error);
-      alert('Erreur lors de la résolution du signalement');
+      alert(t('admin', 'errorResolvingReport'));
     }
   };
 
   const handleDelete = async (reportId: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer ce signalement ?')) {
+    if (!confirm(t('admin', 'deleteConfirm'))) {
       return;
     }
 
     try {
       await adminApi.deleteReport(reportId);
-      alert('Signalement supprimé');
+      alert(t('admin', 'reportDeleted'));
       loadReports();
     } catch (error) {
       console.error('Error deleting report:', error);
-      alert('Erreur lors de la suppression');
+      alert(t('admin', 'errorDeletingReport'));
     }
   };
 
