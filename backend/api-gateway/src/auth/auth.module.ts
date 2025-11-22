@@ -12,7 +12,9 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { TwoFactorService } from './services/two-factor.service';
 import { PhoneVerificationService } from './services/phone-verification.service';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 import { OAuthController } from './controllers/oauth.controller';
+import { CaptchaModule } from '../captcha/captcha.module';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { OAuthController } from './controllers/oauth.controller';
       }),
       inject: [ConfigService],
     }),
+    CaptchaModule,
   ],
   controllers: [AuthController, SessionController, OAuthController],
   providers: [
@@ -36,6 +39,7 @@ import { OAuthController } from './controllers/oauth.controller';
     JwtStrategy,
     LocalStrategy,
     GoogleStrategy,
+    FacebookStrategy,
     TwoFactorService,
     PhoneVerificationService,
   ],

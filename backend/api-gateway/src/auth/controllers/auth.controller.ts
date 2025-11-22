@@ -5,6 +5,7 @@ import {
   Body,
   UseGuards,
   Request,
+  Response,
   HttpCode,
   HttpStatus,
   Ip,
@@ -12,6 +13,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { PhoneVerificationService } from '../services/phone-verification.service';
+import { CaptchaService } from '../../captcha/captcha.service';
 import {
   RegisterDto,
   LoginDto,
@@ -33,26 +35,89 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly phoneVerificationService: PhoneVerificationService,
+    private readonly captchaService: CaptchaService,
   ) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  async register(@Body() registerDto: RegisterDto, @Ip() ipAddress: string) {
-    return this.authService.register(registerDto, ipAddress);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Ip() ipAddress: string,
+    @Response({ passthrough: true }) res: any,
+  ) {
+    // Verify CAPTCHA if provided
+    if (registerDto.captchaToken) {
+      await this.captchaService.verifyRegisterCaptcha(registerDto.captchaToken, ipAddress);
+    }
+
+    const result = await this.authService.register(registerDto, ipAddress);
+
+    // Set httpOnly cookies for tokens
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+
+    // Return user info without tokens in body (tokens are in cookies)
+    return {
+      user: result.user,
+      message: result.message,
+    };
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Ip() ipAddress: string,
+    @Response({ passthrough: true }) res: any,
+  ) {
+    // Verify CAPTCHA if provided
+    if (loginDto.captchaToken) {
+      await this.captchaService.verifyLoginCaptcha(loginDto.captchaToken, ipAddress);
+    }
+
+    const result = await this.authService.login(loginDto);
+
+    // If 2FA required, don't set cookies yet
+    if (result.requires2FA) {
+      return result;
+    }
+
+    // Set httpOnly cookies for tokens
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+
+    // Return user info without tokens in body (tokens are in cookies)
+    return {
+      user: result.user,
+    };
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshAccessToken(refreshTokenDto.refreshToken);
+  async refresh(
+    @Request() req,
+    @Response({ passthrough: true }) res: any,
+  ) {
+    // Get refresh token from cookie or body (for backward compatibility)
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!refreshToken) {
+      throw new Error('Refresh token manquant');
+    }
+
+    const result = await this.authService.refreshAccessToken(refreshToken);
+
+    // Set new access token in cookie
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    return {
+      message: 'Token rafraîchi avec succès',
+    };
   }
 
   @Post('logout')
@@ -60,8 +125,18 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout user' })
-  async logout(@Request() req, @Body() body?: { refreshToken?: string }) {
-    return this.authService.logout(req.user.userId, body?.refreshToken);
+  async logout(
+    @Request() req,
+    @Response({ passthrough: true }) res: any,
+    @Body() body?: { refreshToken?: string },
+  ) {
+    const refreshToken = req.cookies?.refreshToken || body?.refreshToken;
+    const result = await this.authService.logout(req.user.userId, refreshToken);
+
+    // Clear auth cookies
+    this.clearAuthCookies(res);
+
+    return result;
   }
 
   @Post('me')
@@ -85,7 +160,15 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset' })
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+    @Ip() ipAddress: string,
+  ) {
+    // Verify CAPTCHA if provided
+    if (forgotPasswordDto.captchaToken) {
+      await this.captchaService.verifyForgotPasswordCaptcha(forgotPasswordDto.captchaToken, ipAddress);
+    }
+
     return this.authService.forgotPassword(forgotPasswordDto.email);
   }
 
@@ -190,5 +273,34 @@ export class AuthController {
   @ApiOperation({ summary: 'Get remaining backup codes count' })
   async getBackupCodesCount(@Request() req) {
     return this.authService.getRemainingBackupCodesCount(req.user.userId);
+  }
+
+  // ================================
+  // Helper Methods for Cookies
+  // ================================
+
+  private setAuthCookies(res: any, accessToken: string, refreshToken: string) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Set access token cookie (short-lived: 15 minutes)
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    // Set refresh token cookie (long-lived: 30 days)
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+  }
+
+  private clearAuthCookies(res: any) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
   }
 }

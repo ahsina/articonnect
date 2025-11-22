@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import { LoggerService } from './common/logger/logger.service';
 import helmet from 'helmet';
 import * as express from 'express';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   // Create custom logger instance
@@ -13,6 +14,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger,
   });
+
+  // Cookie parser - must be before routes
+  app.use(cookieParser());
 
   // Raw body for Stripe webhooks signature verification
   app.use(

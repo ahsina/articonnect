@@ -29,6 +29,15 @@ export class RegisterDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+
+  @ApiProperty({
+    example: '03AGdBq27...',
+    description: 'Google reCAPTCHA v3 token',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  captchaToken?: string;
 }
 
 export class LoginDto {
@@ -44,6 +53,15 @@ export class LoginDto {
   @IsOptional()
   @IsString()
   twoFactorToken?: string;
+
+  @ApiProperty({
+    example: '03AGdBq27...',
+    description: 'Google reCAPTCHA v3 token',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  captchaToken?: string;
 }
 
 export class RefreshTokenDto {
@@ -68,6 +86,15 @@ export class ForgotPasswordDto {
   @ApiProperty({ example: 'john@example.com' })
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    example: '03AGdBq27...',
+    description: 'Google reCAPTCHA v3 token',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  captchaToken?: string;
 }
 
 export class ResetPasswordDto {
