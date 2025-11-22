@@ -102,6 +102,13 @@ model User {
   clientRequests   Request[]  @relation("ClientRequests")
   artisanRequests  Request[]  @relation("ArtisanRequests")
 
+  // Invoices
+  issuedInvoices   Invoice[] @relation("IssuedInvoices")
+  receivedInvoices Invoice[] @relation("ReceivedInvoices")
+
+  // VAT declarations
+  vatDeclarations VatDeclaration[]
+
   @@index([email])
   @@index([role])
   @@index([status])
@@ -308,6 +315,7 @@ model Mission {
   disputes     Dispute[]
   history      MissionHistory[]
   noShowEvent  NoShowEvent?
+  invoices     Invoice[]
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -513,6 +521,7 @@ model Order {
   trackingNumber  String?
   status          OrderStatus  @default(PENDING)
   transaction     Transaction?
+  invoices        Invoice[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   paidAt          DateTime?
@@ -636,6 +645,103 @@ model Payment {
 }
 
 // ================================
+// INVOICING
+// ================================
+
+enum InvoiceType {
+  MISSION // Mission invoice
+  MARKETPLACE // Marketplace order invoice
+  NO_SHOW_FEE // No-show fee invoice
+}
+
+enum InvoiceStatus {
+  DRAFT // Being prepared
+  ISSUED // Sent to client
+  PAID // Payment received
+  CANCELLED // Cancelled
+  REFUNDED // Refunded
+}
+
+model Invoice {
+  id String @id @default(uuid())
+
+  // Invoice numbering (e.g. INV-2025-00001)
+  invoiceNumber String @unique
+  year          Int
+  sequenceNumber Int
+
+  // Related entities
+  missionId String?
+  mission   Mission? @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  noShowEventId String?      @unique
+  noShowEvent   NoShowEvent? @relation(fields: [noShowEventId], references: [id])
+
+  // Parties
+  issuerId String // Artisan who issued the invoice
+  issuer   User   @relation("IssuedInvoices", fields: [issuerId], references: [id])
+
+  clientId String // Client receiving the invoice
+  client   User   @relation("ReceivedInvoices", fields: [clientId], references: [id])
+
+  // Invoice details
+  type        InvoiceType
+  status      InvoiceStatus @default(DRAFT)
+
+  // Amounts (all in EUR)
+  subtotal         Decimal @db.Decimal(10, 2) // Amount before tax
+  taxRate          Decimal @db.Decimal(5, 2)  // Tax percentage (e.g., 17.00 for 17%)
+  taxAmount        Decimal @db.Decimal(10, 2) // Calculated tax
+  totalAmount      Decimal @db.Decimal(10, 2) // Total including tax
+
+  platformCommissionRate Decimal @db.Decimal(5, 2) // Commission percentage (e.g., 12.00)
+  platformCommission     Decimal @db.Decimal(10, 2) // Commission amount
+  artisanNetAmount       Decimal @db.Decimal(10, 2) // Amount artisan receives
+
+  // Line items (JSON array of {description, quantity, unitPrice, total})
+  lineItems Json
+
+  // Addresses
+  issuerAddress Json // {name, address, city, postalCode, country, siret, vat}
+  clientAddress Json // {name, address, city, postalCode, country}
+
+  // Payment info
+  paymentDueDate DateTime?
+  paidAt         DateTime?
+
+  // PDF storage
+  pdfUrl String? // S3 URL to generated PDF
+
+  // Notes
+  notes String?
+
+  // Timestamps
+  issueDate DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([year, sequenceNumber])
+  @@index([invoiceNumber])
+  @@index([issuerId])
+  @@index([clientId])
+  @@index([status])
+  @@index([missionId])
+  @@index([orderId])
+  @@index([issueDate])
+}
+
+// Invoice numbering sequence (per year)
+model InvoiceSequence {
+  id             String @id @default(uuid())
+  year           Int    @unique
+  lastSequence   Int    @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+// ================================
 // NO-SHOW MANAGEMENT
 // ================================
 
@@ -670,6 +776,9 @@ model NoShowEvent {
   status      NoShowStatus @default(REPORTED)
   reviewedBy  String? // Admin who reviewed
   reviewNotes String?
+
+  // Invoice relation
+  invoice Invoice?
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -915,6 +1024,98 @@ model UserConsent {
   consentDate DateTime @default(now())
   ipAddress   String
   updatedAt   DateTime @updatedAt
+}
+
+// ================================
+// TVA / VAT MANAGEMENT
+// ================================
+
+enum ServiceCategory {
+  EMERGENCY // Dépannage d'urgence
+  RENOVATION // Travaux de rénovation
+  INSTALLATION // Installation
+  MAINTENANCE // Maintenance
+  PRODUCT // Vente de produits
+  OTHER // Autres
+}
+
+model Country {
+  id   String @id @default(uuid())
+  code String @unique // LU, FR, BE
+  name String
+
+  // Standard tax rates for this country
+  standardRate      Decimal @db.Decimal(5, 2) // e.g., 17.00
+  reducedRate       Decimal @db.Decimal(5, 2) // e.g., 8.00
+  intermediateRate  Decimal? @db.Decimal(5, 2) // e.g., 14.00
+  superReducedRate  Decimal? @db.Decimal(5, 2) // e.g., 3.00
+
+  // VAT configuration
+  taxRates TaxRate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+}
+
+model TaxRate {
+  id        String @id @default(uuid())
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  // Service category this rate applies to
+  category ServiceCategory
+
+  // Tax rate percentage
+  rate Decimal @db.Decimal(5, 2)
+
+  // Description
+  description String?
+
+  // Effective dates
+  effectiveFrom DateTime @default(now())
+  effectiveTo   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([countryId])
+  @@index([category])
+  @@index([effectiveFrom])
+}
+
+// VAT declaration tracking (for future use)
+model VatDeclaration {
+  id        String @id @default(uuid())
+  artisanId String
+  artisan   User   @relation(fields: [artisanId], references: [id])
+
+  period      String // e.g., "2025-Q1" or "2025-01"
+  countryCode String // LU, FR, BE
+
+  // Amounts
+  totalSales      Decimal @db.Decimal(10, 2)
+  totalTax        Decimal @db.Decimal(10, 2)
+  totalPurchases  Decimal? @db.Decimal(10, 2)
+  totalTaxCredit  Decimal? @db.Decimal(10, 2)
+  netTaxDue       Decimal @db.Decimal(10, 2)
+
+  // Status
+  status      String   @default("DRAFT") // DRAFT, SUBMITTED, PAID
+  submittedAt DateTime?
+  paidAt      DateTime?
+
+  // File references
+  reportUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([artisanId, period, countryCode])
+  @@index([artisanId])
+  @@index([period])
+  @@index([status])
 }
 
 // ================================

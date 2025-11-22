@@ -82,6 +82,35 @@ export class S3Service {
   }
 
   /**
+   * Upload a buffer directly to S3 (e.g., for generated PDFs)
+   */
+  async uploadBuffer(
+    buffer: Buffer,
+    filename: string,
+    contentType: string,
+  ): Promise<string> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: filename,
+        Body: buffer,
+        ContentType: contentType,
+        ACL: 'public-read',
+      });
+
+      await this.s3Client.send(command);
+
+      // Return public URL
+      const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${filename}`;
+      this.logger.log(`Buffer uploaded successfully: ${url}`);
+      return url;
+    } catch (error) {
+      this.logger.error('Failed to upload buffer to S3', error);
+      throw new BadRequestException('Échec du téléchargement du fichier');
+    }
+  }
+
+  /**
    * Generate presigned URL for direct client upload
    */
   async getPresignedUrl(
