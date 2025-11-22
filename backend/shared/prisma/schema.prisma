@@ -409,6 +409,11 @@ model Negotiation {
 // REVIEWS
 // ================================
 
+enum ReviewType {
+  CLIENT_TO_ARTISAN // Client evaluates artisan's work
+  ARTISAN_TO_CLIENT // Artisan evaluates client's behavior
+}
+
 model Review {
   id                  String          @id @default(uuid())
   missionId           String          @unique
@@ -417,11 +422,22 @@ model Review {
   reviewer            User            @relation("GivenReviews", fields: [reviewerId], references: [id])
   reviewedId          String
   reviewed            User            @relation("ReceivedReviews", fields: [reviewedId], references: [id])
+
+  // Review type (bidirectional reviews)
+  reviewType          ReviewType      @default(CLIENT_TO_ARTISAN)
+
+  // Common ratings (1-5 stars)
   overallRating       Int
-  qualityRating       Int?
-  punctualityRating   Int?
-  communicationRating Int?
-  valueRating         Int?
+  qualityRating       Int? // Work quality (artisan) / Request clarity (client)
+  punctualityRating   Int? // On-time arrival (artisan) / Availability (client)
+  communicationRating Int? // Communication quality (both)
+  valueRating         Int? // Value for money (artisan) / Fair pricing expectations (client)
+
+  // Artisan→Client specific ratings
+  paymentPromptness   Int? // Client paid on time (1-5)
+  respectRating       Int? // Client was respectful and professional (1-5)
+  safetyRating        Int? // Work environment was safe (1-5)
+
   comment             String?
   photos              String[]
   helpful             Int             @default(0)
@@ -433,6 +449,7 @@ model Review {
 
   @@index([reviewedId])
   @@index([overallRating])
+  @@index([reviewType])
 }
 
 // Review Responses - Allow artisans to respond to reviews
