@@ -654,8 +654,18 @@ model Transaction {
   currency              String            @default("EUR")
   commission            Decimal           @db.Decimal(10, 2)
   artisanAmount         Decimal           @db.Decimal(10, 2)
+
+  // Stripe payment fields
   stripePaymentIntentId String?           @unique
   stripeTransferId      String?           @unique
+
+  // PayPal payment fields
+  paypalOrderId         String?           @unique
+  paypalCaptureId       String?           @unique
+
+  // Payment method tracking
+  paymentMethod         PaymentMethod     @default(STRIPE)
+
   status                TransactionStatus @default(PENDING)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
@@ -664,6 +674,7 @@ model Transaction {
 
   @@index([status])
   @@index([type])
+  @@index([paymentMethod])
 }
 
 // ================================
@@ -685,6 +696,14 @@ enum RefundReason {
   MUTUAL_CANCELLATION // Neutral → Compensation if traveling
   ARTISAN_NO_SHOW // Artisan fault → Full refund
   CLIENT_NO_SHOW // Client fault → Artisan compensated
+}
+
+enum PaymentMethod {
+  STRIPE // Credit/debit card via Stripe
+  PAYPAL // PayPal account
+  BANK_TRANSFER // Manual bank transfer
+  SEPA // SEPA Direct Debit (European bank transfer)
+  DEFERRED // B2B deferred payment (Net-30/60/90)
 }
 
 model Payment {
@@ -710,9 +729,17 @@ model Payment {
   withinRetractionPeriod Boolean   @default(false)
   retractionExpiresAt    DateTime?
 
+  // Payment method tracking
+  paymentMethod PaymentMethod @default(STRIPE)
+
   // Stripe
   stripePaymentIntentId String? @unique
   stripeRefundId        String? @unique
+
+  // PayPal
+  paypalOrderId   String? @unique
+  paypalCaptureId String? @unique
+  paypalRefundId  String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -720,6 +747,7 @@ model Payment {
   @@index([missionId])
   @@index([userId])
   @@index([type])
+  @@index([paymentMethod])
 }
 
 // ================================

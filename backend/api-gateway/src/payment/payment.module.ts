@@ -3,6 +3,7 @@ import { PaymentController } from './controllers/payment.controller';
 import { ReputationController } from './controllers/reputation.controller';
 import { PaymentService } from './services/payment.service';
 import { StripeService } from './services/stripe.service';
+import { PaypalService } from './services/paypal.service';
 import { ReputationService } from './services/reputation.service';
 import { NoShowService } from './services/no-show.service';
 import { CurrencyService } from './services/currency.service';
@@ -19,6 +20,7 @@ import { NotificationModule } from '../notification/notification.module';
   providers: [
     PaymentService,
     StripeService,
+    PaypalService,
     ReputationService,
     NoShowService,
     CurrencyService,
@@ -28,6 +30,7 @@ import { NotificationModule } from '../notification/notification.module';
   exports: [
     PaymentService,
     StripeService,
+    PaypalService,
     ReputationService,
     NoShowService,
     CurrencyService,
