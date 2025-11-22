@@ -368,18 +368,20 @@ model MissionHistory {
 }
 
 model Negotiation {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   missionId      String
-  mission        Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  mission        Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
   senderId       String
   receiverId     String
-  proposedPrice  Decimal  @db.Decimal(10, 2)
+  proposedPrice  Decimal   @db.Decimal(10, 2)
   message        String?
   accepted       Boolean?
   rejectedReason String?
-  createdAt      DateTime @default(now())
+  expiresAt      DateTime? // Timeout for negotiation (24h standard, 15min emergency)
+  createdAt      DateTime  @default(now())
 
   @@index([missionId])
+  @@index([expiresAt])
 }
 
 // ================================
