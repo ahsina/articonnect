@@ -35,6 +35,8 @@
   "author": "ArtiConnect Team",
   "license": "UNLICENSED",
   "dependencies": {
-    "@nestjs/schedule": "^6.0.1"
+    "@nestjs/schedule": "^6.0.1",
+    "@types/passport-apple": "^2.0.3",
+    "passport-apple": "^2.0.2"
   }
 }

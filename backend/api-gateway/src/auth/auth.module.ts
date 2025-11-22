@@ -13,6 +13,7 @@ import { TwoFactorService } from './services/two-factor.service';
 import { PhoneVerificationService } from './services/phone-verification.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
+import { AppleStrategy } from './strategies/apple.strategy';
 import { OAuthController } from './controllers/oauth.controller';
 import { CaptchaModule } from '../captcha/captcha.module';
 
@@ -40,6 +41,7 @@ import { CaptchaModule } from '../captcha/captcha.module';
     LocalStrategy,
     GoogleStrategy,
     FacebookStrategy,
+    AppleStrategy,
     TwoFactorService,
     PhoneVerificationService,
   ],
