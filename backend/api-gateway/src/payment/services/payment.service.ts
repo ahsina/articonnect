@@ -187,7 +187,7 @@ export class PaymentService {
 
   async handleWebhook(event: Record<string, unknown>) {
     // Handle Stripe webhook events
-    const eventData = event as { type: string; data: { object: { id: string; status?: string; metadata: Record<string, string> } } };
+    const eventData = event as { type: string; data: { object: { id: string; status?: string; charge?: string; metadata: Record<string, string> } } };
 
     switch (eventData.type) {
       case 'payment_intent.succeeded':
@@ -203,6 +203,20 @@ export class PaymentService {
       case 'payment_intent.canceled':
         // Handle canceled payments (e.g., when 3DS authentication times out)
         await this.handlePaymentCanceled(eventData.data.object);
+        break;
+
+      // Stripe Radar fraud detection events
+      case 'review.opened':
+        // Payment flagged for review by Radar
+        await this.handleRadarReviewOpened(eventData.data.object);
+        break;
+      case 'review.closed':
+        // Review resolved (approved or refunded)
+        await this.handleRadarReviewClosed(eventData.data.object);
+        break;
+      case 'radar.early_fraud_warning.created':
+        // Early fraud warning from card issuer
+        await this.handleEarlyFraudWarning(eventData.data.object);
         break;
     }
   }
@@ -814,6 +828,117 @@ export class PaymentService {
       throw new BadRequestException(
         `Échec du transfert vers l'artisan: ${error.message}`,
       );
+    }
+  }
+
+  // ================================================================
+  // STRIPE RADAR - FRAUD DETECTION WEBHOOKS
+  // ================================================================
+
+  /**
+   * Handle Radar review opened event
+   * Payment has been flagged for manual review due to fraud risk
+   */
+  private async handleRadarReviewOpened(review: { id: string; charge?: string; metadata: Record<string, string> }) {
+    if (!review.charge) return;
+
+    // Find transaction by charge ID
+    const charge = await this.stripeService['stripe'].charges.retrieve(review.charge);
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: charge.payment_intent as string },
+    });
+
+    if (transaction) {
+      // Update transaction to indicate manual review required
+      await this.prisma.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          status: 'PENDING', // Keep as PENDING during review
+          // Could add a 'underReview' flag if we extend the schema
+        },
+      });
+
+      // Log the review for admin action
+      console.warn(
+        `[RADAR REVIEW] Transaction ${transaction.id} flagged for review. Review ID: ${review.id}`,
+      );
+
+      // Optionally send notification to admin
+      // await this.notificationService.notifyAdminRadarReview(transaction.id, review.id);
+    }
+  }
+
+  /**
+   * Handle Radar review closed event
+   * Review has been resolved (approved or refunded)
+   */
+  private async handleRadarReviewClosed(review: { id: string; charge?: string; reason?: string; metadata: Record<string, string> }) {
+    if (!review.charge) return;
+
+    const charge = await this.stripeService['stripe'].charges.retrieve(review.charge);
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: charge.payment_intent as string },
+    });
+
+    if (transaction) {
+      // Check if review was approved or resulted in refund
+      const wasApproved = review.reason === 'approved';
+
+      console.log(
+        `[RADAR REVIEW CLOSED] Transaction ${transaction.id} review ${wasApproved ? 'approved' : 'refunded/closed'}`,
+      );
+
+      // If approved, proceed with payment
+      if (wasApproved && transaction.status === 'PENDING') {
+        await this.prisma.transaction.update({
+          where: { id: transaction.id },
+          data: { status: 'HELD' },
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle early fraud warning from card issuer
+   * Card issuer has notified Stripe of potential fraud
+   */
+  private async handleEarlyFraudWarning(warning: { id: string; charge?: string; metadata: Record<string, string> }) {
+    if (!warning.charge) return;
+
+    const charge = await this.stripeService['stripe'].charges.retrieve(warning.charge);
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: charge.payment_intent as string },
+    });
+
+    if (transaction) {
+      // Log early fraud warning
+      console.error(
+        `[EARLY FRAUD WARNING] Transaction ${transaction.id} has early fraud warning. Charge: ${warning.charge}`,
+      );
+
+      // Update transaction status to reflect fraud warning
+      await this.prisma.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          status: 'FAILED', // Mark as failed to prevent capture
+        },
+      });
+
+      // Automatically refund if payment was already captured
+      if (transaction.status === 'COMPLETED') {
+        try {
+          await this.stripeService.refundPayment(charge.payment_intent as string);
+          await this.prisma.transaction.update({
+            where: { id: transaction.id },
+            data: { status: 'REFUNDED' },
+          });
+        } catch (error) {
+          console.error('Failed to auto-refund after early fraud warning:', error);
+        }
+      }
+
+      // Send urgent notification to admin
+      // await this.notificationService.notifyAdminFraudWarning(transaction.id, warning.id);
     }
   }
 }

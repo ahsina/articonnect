@@ -16,6 +16,8 @@ export class StripeService {
     currency: string;
     metadata?: Record<string, string>;
     customerId?: string;
+    radarSession?: string; // Radar session from frontend (stripe.js)
+    userIp?: string; // User IP for fraud detection
   }) {
     return this.stripe.paymentIntents.create({
       amount: params.amount,
@@ -40,6 +42,11 @@ export class StripeService {
 
       // Link to customer if provided
       ...(params.customerId && { customer: params.customerId }),
+
+      // Stripe Radar fraud detection configuration
+      // Radar is ENABLED by default and analyzes every payment
+      // We enhance detection by providing additional data:
+      ...(params.radarSession && { radar_options: { session: params.radarSession } }),
 
       // Return URL after 3D Secure authentication (for redirect flow)
       // Note: This is optional - the frontend will handle this via stripe.js
@@ -176,6 +183,113 @@ export class StripeService {
       merchantName: 'ArtiConnect',
       // Google Pay is automatically configured via automatic_payment_methods
       // Frontend can use Stripe.js Payment Request Button API
+    };
+  }
+
+  // ================================================================
+  // STRIPE RADAR - FRAUD DETECTION
+  // ================================================================
+
+  /**
+   * Stripe Radar is ENABLED by default for all Stripe accounts
+   * It automatically analyzes every payment for fraud signals
+   *
+   * Radar uses machine learning to:
+   * - Detect fraudulent cards and transactions
+   * - Block high-risk payments automatically
+   * - Request 3D Secure for elevated risk
+   * - Flag suspicious activity for review
+   *
+   * Risk Levels:
+   * - Normal: Payment proceeds normally
+   * - Elevated: 3D Secure requested (SCA)
+   * - Highest: Payment blocked or requires manual review
+   *
+   * Configuration is done via Stripe Dashboard:
+   * - Settings > Radar > Rules
+   * - Settings > Radar > Block/Review lists
+   */
+
+  /**
+   * Get Radar risk score for a charge or payment intent
+   * Risk score ranges from 0-100 (higher = more risky)
+   */
+  async getRadarRiskScore(chargeId: string) {
+    const charge = await this.stripe.charges.retrieve(chargeId);
+    return {
+      riskLevel: charge.outcome?.risk_level,
+      riskScore: charge.outcome?.risk_score,
+      radarReason: charge.outcome?.reason,
+      sellerMessage: charge.outcome?.seller_message,
+      networkStatus: charge.outcome?.network_status,
+    };
+  }
+
+  /**
+   * Manually review a charge flagged by Radar
+   * Actions: approve or refund
+   */
+  async reviewCharge(chargeId: string, action: 'approve' | 'refund') {
+    const review = await this.stripe.reviews.list({
+      charge: chargeId,
+      limit: 1,
+    });
+
+    if (review.data.length === 0) {
+      throw new Error('No review found for this charge');
+    }
+
+    if (action === 'approve') {
+      return this.stripe.reviews.approve(review.data[0].id);
+    } else {
+      // Refund the charge
+      return this.refundPayment(chargeId);
+    }
+  }
+
+  /**
+   * Block or unblock a customer/card using Radar block lists
+   * Used to permanently block fraudulent actors
+   */
+  async blockCustomer(customerId: string, reason: string) {
+    // Add customer to Radar block list
+    // Note: This requires Radar for Fraud Teams (paid feature)
+    // For standard Radar, block via Dashboard or use metadata flags
+    return this.stripe.customers.update(customerId, {
+      metadata: {
+        blocked: 'true',
+        blocked_reason: reason,
+        blocked_at: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * List early fraud warnings (EFWs)
+   * These are notifications from card issuers about disputed charges
+   */
+  async listEarlyFraudWarnings(chargeId?: string) {
+    return this.stripe.earlyFraudWarnings.list({
+      ...(chargeId && { charge: chargeId }),
+      limit: 100,
+    });
+  }
+
+  /**
+   * Get Radar session for frontend integration
+   * Returns configuration for stripe.js Radar session tracking
+   */
+  getRadarConfig() {
+    return {
+      enabled: true,
+      // Frontend should create Radar session using stripe.js:
+      // const radarSession = await stripe.radar.session()
+      // Then pass radarSession.id when creating payment intent
+      instructions: {
+        frontend: 'Use stripe.js to create Radar session',
+        backend: 'Pass radarSession parameter to createPaymentIntent()',
+      },
+      documentation: 'https://stripe.com/docs/radar',
     };
   }
 }
