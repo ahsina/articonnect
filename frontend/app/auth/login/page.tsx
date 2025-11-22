@@ -7,11 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/lib/hooks/useToast';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -31,8 +33,8 @@ export default function LoginPage() {
       await login(formData.email, formData.password);
 
       toast({
-        title: 'Connexion réussie',
-        description: 'Bienvenue sur ArtiConnect !',
+        title: t('auth', 'loginSuccess'),
+        description: t('common', 'welcome') + ' sur ArtiConnect !',
         variant: 'success',
       });
 
@@ -56,7 +58,7 @@ export default function LoginPage() {
         router.push('/auth/2fa-verify');
       } else {
         toast({
-          title: 'Erreur de connexion',
+          title: t('auth', 'loginError'),
           description: err.response?.data?.message || 'Identifiants incorrects',
           variant: 'destructive',
         });
@@ -75,7 +77,7 @@ export default function LoginPage() {
               <span className="text-2xl font-bold text-white">AC</span>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Connexion</CardTitle>
+          <CardTitle className="text-2xl text-center">{t('common', 'login')}</CardTitle>
           <CardDescription className="text-center">
             Connectez-vous à votre compte ArtiConnect
           </CardDescription>
@@ -84,11 +86,11 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Email
+                {t('auth', 'email')}
               </label>
               <Input
                 type="email"
-                placeholder="votre@email.com"
+                placeholder={t('auth', 'email')}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
@@ -98,7 +100,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Mot de passe
+                {t('auth', 'password')}
               </label>
               <Input
                 type="password"
@@ -115,7 +117,7 @@ export default function LoginPage() {
                 href="/auth/forgot-password"
                 className="text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Mot de passe oublié ?
+                {t('auth', 'forgotPassword')}
               </Link>
             </div>
 
@@ -124,7 +126,7 @@ export default function LoginPage() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Connexion...' : 'Se connecter'}
+              {loading ? t('common', 'loading') : t('common', 'login')}
             </Button>
           </form>
 
@@ -134,7 +136,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Ou continuer avec</span>
+              <span className="px-2 bg-white text-gray-500">{t('auth', 'continueWith')}</span>
             </div>
           </div>
 
@@ -194,7 +196,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-white text-gray-500">
-                Pas encore de compte ?
+                {t('auth', 'noAccount')}
               </span>
             </div>
           </div>
@@ -205,7 +207,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
             >
-              Créer un compte
+              {t('auth', 'createAccount')}
             </Button>
           </Link>
         </CardContent>

@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, DashboardStats } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function AdminDashboardPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -39,7 +41,7 @@ export default function AdminDashboardPage() {
   if (!stats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">Erreur de chargement des statistiques</div>
+        <div className="text-red-600">{t('admin', 'errorLoadingStats')}</div>
       </div>
     );
   }
@@ -93,40 +95,40 @@ export default function AdminDashboardPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Tableau de bord administrateur
+            {t('admin', 'dashboard')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Vue d'ensemble de la plateforme ArtiConnect
+            {t('admin', 'platformOverviewArtiConnect')}
           </p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="Utilisateurs totaux"
+            title={t('admin', 'totalUsers')}
             value={stats.totalUsers}
-            subtitle={`${stats.newUsers7d} nouveaux (7j)`}
+            subtitle={`${stats.newUsers7d} ${t('admin', 'newUsers')} (7j)`}
             icon="👥"
             color="blue"
           />
           <StatCard
-            title="Clients"
+            title={t('admin', 'clients')}
             value={stats.totalClients}
-            subtitle="Utilisateurs clients"
+            subtitle={t('admin', 'clientUsers')}
             icon="👤"
             color="green"
           />
           <StatCard
-            title="Artisans"
+            title={t('admin', 'artisans')}
             value={stats.totalArtisans}
-            subtitle="Professionnels actifs"
+            subtitle={t('admin', 'activeProfessionals')}
             icon="🔧"
             color="purple"
           />
           <StatCard
-            title="Missions totales"
+            title={t('admin', 'totalMissions')}
             value={stats.totalMissions}
-            subtitle={`${stats.pendingMissions} en attente`}
+            subtitle={`${stats.pendingMissions} ${t('admin', 'pending')}`}
             icon="📋"
             color="yellow"
           />
@@ -134,30 +136,30 @@ export default function AdminDashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="Missions complétées"
+            title={t('admin', 'completedMissions')}
             value={stats.completedMissions}
-            subtitle={`${Math.round((stats.completedMissions / stats.totalMissions) * 100)}% du total`}
+            subtitle={`${Math.round((stats.completedMissions / stats.totalMissions) * 100)}% ${t('admin', 'ofTotal')}`}
             icon="✅"
             color="green"
           />
           <StatCard
-            title="Revenu total"
+            title={t('admin', 'totalRevenue')}
             value={`${stats.totalRevenue.toLocaleString('fr-FR')}€`}
-            subtitle="Volume d'affaires"
+            subtitle={t('admin', 'businessVolume')}
             icon="💰"
             color="green"
           />
           <StatCard
-            title="Commission plateforme"
+            title={t('admin', 'platformCommission')}
             value={`${stats.platformRevenue.toLocaleString('fr-FR')}€`}
-            subtitle={`${Math.round((stats.platformRevenue / stats.totalRevenue) * 100)}% commission`}
+            subtitle={`${Math.round((stats.platformRevenue / stats.totalRevenue) * 100)}% ${t('admin', 'commission')}`}
             icon="💳"
             color="blue"
           />
           <StatCard
-            title="Utilisateurs actifs"
+            title={t('admin', 'activeUsers')}
             value={stats.activeUsers30d}
-            subtitle="Derniers 30 jours"
+            subtitle={t('admin', 'last30Days')}
             icon="📈"
             color="purple"
           />
@@ -170,9 +172,9 @@ export default function AdminDashboardPage() {
               <CardTitle className="flex items-center gap-3">
                 <span className="text-3xl">👥</span>
                 <div>
-                  <div className="text-lg">Gestion des utilisateurs</div>
+                  <div className="text-lg">{t('admin', 'userManagement')}</div>
                   <div className="text-sm font-normal text-gray-500">
-                    Voir et gérer tous les utilisateurs
+                    {t('admin', 'viewManageUsers')}
                   </div>
                 </div>
               </CardTitle>
@@ -184,9 +186,9 @@ export default function AdminDashboardPage() {
               <CardTitle className="flex items-center gap-3">
                 <span className="text-3xl">📋</span>
                 <div>
-                  <div className="text-lg">Gestion des missions</div>
+                  <div className="text-lg">{t('admin', 'missionManagement')}</div>
                   <div className="text-sm font-normal text-gray-500">
-                    Suivre et modérer les missions
+                    {t('admin', 'trackModerateMissions')}
                   </div>
                 </div>
               </CardTitle>
@@ -198,9 +200,9 @@ export default function AdminDashboardPage() {
               <CardTitle className="flex items-center gap-3">
                 <span className="text-3xl">📊</span>
                 <div>
-                  <div className="text-lg">Analytiques</div>
+                  <div className="text-lg">{t('admin', 'analytics')}</div>
                   <div className="text-sm font-normal text-gray-500">
-                    Rapports et analyses détaillées
+                    {t('admin', 'detailedReports')}
                   </div>
                 </div>
               </CardTitle>
@@ -211,13 +213,13 @@ export default function AdminDashboardPage() {
         {/* Recent Activity */}
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>Activité récente</CardTitle>
+            <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8 text-gray-500">
-              <p>Fonctionnalité en cours de développement</p>
+              <p>{t('admin', 'featureInDevelopment')}</p>
               <p className="text-sm mt-2">
-                Affichera les dernières actions sur la plateforme
+                {t('admin', 'willShowLatestActions')}
               </p>
             </div>
           </CardContent>

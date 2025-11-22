@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function ResetPasswordForm() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState('');
@@ -23,20 +25,20 @@ function ResetPasswordForm() {
       setToken(tokenFromUrl);
     } else {
       toast({
-        title: 'Token manquant',
-        description: 'Le lien de réinitialisation est invalide',
+        title: t('auth', 'tokenMissing'),
+        description: t('auth', 'resetLinkInvalid'),
         variant: 'destructive',
       });
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: 'Erreur',
-        description: 'Les mots de passe ne correspondent pas',
+        title: t('common', 'error'),
+        description: t('auth', 'passwordMismatch'),
         variant: 'destructive',
       });
       return;
@@ -44,8 +46,8 @@ function ResetPasswordForm() {
 
     if (newPassword.length < 8) {
       toast({
-        title: 'Erreur',
-        description: 'Le mot de passe doit contenir au moins 8 caractères',
+        title: t('common', 'error'),
+        description: t('auth', 'passwordTooShort'),
         variant: 'destructive',
       });
       return;
@@ -53,8 +55,8 @@ function ResetPasswordForm() {
 
     if (!token) {
       toast({
-        title: 'Erreur',
-        description: 'Token manquant',
+        title: t('common', 'error'),
+        description: t('auth', 'tokenMissing'),
         variant: 'destructive',
       });
       return;
@@ -65,8 +67,8 @@ function ResetPasswordForm() {
     try {
       await authApi.resetPassword(token, newPassword);
       toast({
-        title: 'Succès',
-        description: 'Votre mot de passe a été réinitialisé',
+        title: t('common', 'success'),
+        description: t('auth', 'passwordResetSuccess'),
         variant: 'success',
       });
 
@@ -76,8 +78,8 @@ function ResetPasswordForm() {
     } catch (error) {
       console.error('Reset password error:', error);
       toast({
-        title: 'Erreur',
-        description: 'Le lien est invalide ou a expiré',
+        title: t('common', 'error'),
+        description: t('auth', 'resetLinkExpired'),
         variant: 'destructive',
       });
     } finally {
@@ -94,16 +96,16 @@ function ResetPasswordForm() {
               <span className="text-2xl font-bold text-white">AC</span>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Nouveau mot de passe</CardTitle>
+          <CardTitle className="text-2xl text-center">{t('auth', 'newPassword')}</CardTitle>
           <CardDescription className="text-center">
-            Choisissez un nouveau mot de passe sécurisé
+            {t('auth', 'chooseSecurePassword')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Nouveau mot de passe * (min. 8 caractères)
+                {t('auth', 'newPasswordMinLength')}
               </label>
               <Input
                 type="password"
@@ -117,7 +119,7 @@ function ResetPasswordForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Confirmer le mot de passe *
+                {t('auth', 'confirmPassword')} *
               </label>
               <Input
                 type="password"
@@ -134,7 +136,7 @@ function ResetPasswordForm() {
               className="w-full"
               disabled={loading || !token}
             >
-              {loading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
+              {loading ? t('auth', 'resetting') : t('auth', 'resetPassword')}
             </Button>
 
             <div className="text-center text-sm">
@@ -142,7 +144,7 @@ function ResetPasswordForm() {
                 href="/auth/login"
                 className="text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Retour à la connexion
+                {t('auth', 'backToLogin')}
               </Link>
             </div>
           </form>
@@ -152,13 +154,18 @@ function ResetPasswordForm() {
   );
 }
 
+function LoadingFallback() {
+  const { t } = useLanguage();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-gray-500">{t('common', 'loading')}</div>
+    </div>
+  );
+}
+
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Chargement...</div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <ResetPasswordForm />
     </Suspense>
   );

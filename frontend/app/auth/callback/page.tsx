@@ -3,8 +3,10 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function CallbackContent() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
@@ -26,19 +28,24 @@ function CallbackContent() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Connexion en cours...</p>
+        <p className="text-gray-600">{t('auth', 'connecting')}</p>
       </div>
+    </div>
+  );
+}
+
+function LoadingFallback() {
+  const { t } = useLanguage();
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-gray-500">{t('common', 'loading')}</div>
     </div>
   );
 }
 
 export default function CallbackPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <CallbackContent />
     </Suspense>
   );

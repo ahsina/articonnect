@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -29,8 +31,8 @@ export default function RegisterPage() {
     // Validation
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: 'Erreur',
-        description: 'Les mots de passe ne correspondent pas',
+        title: t('common', 'error'),
+        description: t('auth', 'passwordMismatch'),
         variant: 'destructive',
       });
       setLoading(false);
@@ -39,8 +41,8 @@ export default function RegisterPage() {
 
     if (formData.password.length < 8) {
       toast({
-        title: 'Erreur',
-        description: 'Le mot de passe doit contenir au moins 8 caractères',
+        title: t('common', 'error'),
+        description: t('auth', 'passwordTooShort'),
         variant: 'destructive',
       });
       setLoading(false);
@@ -62,8 +64,8 @@ export default function RegisterPage() {
       localStorage.setItem('refreshToken', response.refreshToken);
 
       toast({
-        title: 'Compte créé !',
-        description: 'Bienvenue sur ArtiConnect',
+        title: t('auth', 'accountCreated'),
+        description: t('auth', 'welcomeToArtiConnect'),
         variant: 'success',
       });
 
@@ -76,8 +78,8 @@ export default function RegisterPage() {
     } catch (error: any) {
       console.error('Register error:', error);
       toast({
-        title: 'Erreur lors de l\'inscription',
-        description: error.response?.data?.message || 'Une erreur est survenue',
+        title: t('auth', 'registrationError'),
+        description: error.response?.data?.message || t('auth', 'genericError'),
         variant: 'destructive',
       });
     } finally {
@@ -94,9 +96,9 @@ export default function RegisterPage() {
               <span className="text-2xl font-bold text-white">AC</span>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Créer un compte</CardTitle>
+          <CardTitle className="text-2xl text-center">{t('auth', 'registerTitle')}</CardTitle>
           <CardDescription className="text-center">
-            Rejoignez ArtiConnect et trouvez les meilleurs artisans
+            {t('auth', 'registerSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,7 +106,7 @@ export default function RegisterPage() {
             {/* Role Selection */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Je suis
+                {t('auth', 'iAm')}
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -117,8 +119,8 @@ export default function RegisterPage() {
                   }`}
                 >
                   <div className="text-2xl mb-1">👤</div>
-                  <div className="font-medium">Client</div>
-                  <div className="text-xs text-gray-600">Je cherche des artisans</div>
+                  <div className="font-medium">{t('auth', 'client')}</div>
+                  <div className="text-xs text-gray-600">{t('auth', 'clientDescription')}</div>
                 </button>
                 <button
                   type="button"
@@ -130,8 +132,8 @@ export default function RegisterPage() {
                   }`}
                 >
                   <div className="text-2xl mb-1">🔨</div>
-                  <div className="font-medium">Artisan</div>
-                  <div className="text-xs text-gray-600">Je propose mes services</div>
+                  <div className="font-medium">{t('auth', 'artisan')}</div>
+                  <div className="text-xs text-gray-600">{t('auth', 'artisanDescription')}</div>
                 </button>
               </div>
             </div>
@@ -140,7 +142,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  Prénom *
+                  {t('auth', 'firstName')} *
                 </label>
                 <Input
                   type="text"
@@ -153,7 +155,7 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  Nom *
+                  {t('auth', 'lastName')} *
                 </label>
                 <Input
                   type="text"
@@ -167,7 +169,7 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Email *
+                {t('auth', 'email')} *
               </label>
               <Input
                 type="email"
@@ -181,7 +183,7 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Téléphone
+                {t('auth', 'phone')}
               </label>
               <Input
                 type="tel"
@@ -193,7 +195,7 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Mot de passe * (min. 8 caractères)
+                {t('auth', 'passwordMinLength')}
               </label>
               <Input
                 type="password"
@@ -207,7 +209,7 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Confirmer le mot de passe *
+                {t('auth', 'confirmPassword')} *
               </label>
               <Input
                 type="password"
@@ -227,13 +229,13 @@ export default function RegisterPage() {
                 className="mt-1"
               />
               <label htmlFor="terms" className="text-sm text-gray-600">
-                J'accepte les{' '}
+                {t('auth', 'acceptTerms')}{' '}
                 <Link href="/terms" className="text-blue-600 hover:underline">
-                  conditions d'utilisation
+                  {t('auth', 'termsOfService')}
                 </Link>{' '}
                 et la{' '}
                 <Link href="/privacy" className="text-blue-600 hover:underline">
-                  politique de confidentialité
+                  {t('auth', 'privacyPolicy')}
                 </Link>
               </label>
             </div>
@@ -243,7 +245,7 @@ export default function RegisterPage() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Création du compte...' : 'Créer mon compte'}
+              {loading ? t('auth', 'creatingAccount') : t('auth', 'createMyAccount')}
             </Button>
 
             <div className="relative my-4">
@@ -252,7 +254,7 @@ export default function RegisterPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  Déjà un compte ?
+                  {t('auth', 'alreadyHaveAccount')}
                 </span>
               </div>
             </div>
@@ -263,7 +265,7 @@ export default function RegisterPage() {
                 variant="outline"
                 className="w-full"
               >
-                Se connecter
+                {t('common', 'login')}
               </Button>
             </Link>
           </form>

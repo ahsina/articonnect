@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function TwoFactorVerifyForm() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState('');
@@ -24,8 +26,8 @@ function TwoFactorVerifyForm() {
 
     if (!storedEmail || !storedPassword) {
       toast({
-        title: 'Session expirée',
-        description: 'Veuillez vous reconnecter',
+        title: t('auth', 'sessionExpired'),
+        description: t('auth', 'pleaseReconnect'),
         variant: 'destructive',
       });
       router.push('/auth/login');
@@ -34,15 +36,15 @@ function TwoFactorVerifyForm() {
 
     setEmail(storedEmail);
     setPassword(storedPassword);
-  }, [router]);
+  }, [router, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (token.length !== 6) {
       toast({
-        title: 'Erreur',
-        description: 'Le code doit contenir 6 chiffres',
+        title: t('common', 'error'),
+        description: t('auth', 'code6Digits'),
         variant: 'destructive',
       });
       return;
@@ -67,8 +69,8 @@ function TwoFactorVerifyForm() {
       localStorage.setItem('refreshToken', response.refreshToken);
 
       toast({
-        title: 'Connexion réussie',
-        description: 'Bienvenue sur ArtiConnect !',
+        title: t('auth', 'loginSuccess'),
+        description: t('auth', 'welcomeToArtiConnect'),
         variant: 'success',
       });
 
@@ -83,8 +85,8 @@ function TwoFactorVerifyForm() {
     } catch (error) {
       console.error('2FA verification error:', error);
       toast({
-        title: 'Code invalide',
-        description: 'Le code que vous avez entré est incorrect',
+        title: t('auth', 'invalidCode'),
+        description: t('auth', 'incorrectCode'),
         variant: 'destructive',
       });
       setToken('');
@@ -108,16 +110,16 @@ function TwoFactorVerifyForm() {
               <span className="text-2xl font-bold text-white">🔐</span>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Authentification à deux facteurs</CardTitle>
+          <CardTitle className="text-2xl text-center">{t('auth', 'twoFactorAuth')}</CardTitle>
           <CardDescription className="text-center">
-            Entrez le code à 6 chiffres de votre application d'authentification
+            {t('auth', 'enter6DigitCode')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Code 2FA
+                {t('auth', 'twoFactorCode')}
               </label>
               <Input
                 type="text"
@@ -133,7 +135,7 @@ function TwoFactorVerifyForm() {
                 autoFocus
               />
               <p className="text-xs text-gray-500 text-center">
-                Utilisez Google Authenticator, Authy ou une autre application TOTP
+                {t('auth', 'useTotpApp')}
               </p>
             </div>
 
@@ -142,7 +144,7 @@ function TwoFactorVerifyForm() {
               className="w-full"
               disabled={loading || token.length !== 6}
             >
-              {loading ? 'Vérification...' : 'Vérifier'}
+              {loading ? t('auth', 'verifying') : t('auth', 'verify')}
             </Button>
 
             <Button
@@ -151,16 +153,16 @@ function TwoFactorVerifyForm() {
               className="w-full"
               onClick={handleCancel}
             >
-              Annuler
+              {t('common', 'cancel')}
             </Button>
 
             <div className="text-center text-sm">
-              <p className="text-gray-600 mb-2">Vous n'avez pas accès à votre application ?</p>
+              <p className="text-gray-600 mb-2">{t('auth', 'noAccessToApp')}</p>
               <Link
                 href="/auth/2fa-recovery"
                 className="text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Utiliser un code de récupération
+                {t('auth', 'useRecoveryCode')}
               </Link>
             </div>
           </form>
@@ -170,13 +172,18 @@ function TwoFactorVerifyForm() {
   );
 }
 
+function LoadingFallback() {
+  const { t } = useLanguage();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-gray-500">{t('common', 'loading')}</div>
+    </div>
+  );
+}
+
 export default function TwoFactorVerifyPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Chargement...</div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <TwoFactorVerifyForm />
     </Suspense>
   );

@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ForgotPasswordPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -21,15 +23,15 @@ export default function ForgotPasswordPage() {
       await authApi.forgotPassword(email);
       setEmailSent(true);
       toast({
-        title: 'Email envoyé',
-        description: 'Si cet email existe, vous recevrez un lien de réinitialisation',
+        title: t('auth', 'emailSent'),
+        description: t('auth', 'emailSentDescription'),
         variant: 'success',
       });
     } catch (error) {
       console.error('Forgot password error:', error);
       toast({
-        title: 'Erreur',
-        description: 'Une erreur est survenue. Veuillez réessayer.',
+        title: t('common', 'error'),
+        description: t('auth', 'genericErrorRetry'),
         variant: 'destructive',
       });
     } finally {
@@ -47,18 +49,18 @@ export default function ForgotPasswordPage() {
                 <span className="text-3xl">✓</span>
               </div>
             </div>
-            <CardTitle className="text-2xl">Email envoyé !</CardTitle>
+            <CardTitle className="text-2xl">{t('auth', 'emailSentTitle')}</CardTitle>
             <CardDescription>
-              Si un compte existe avec cet email, vous recevrez un lien de réinitialisation dans quelques minutes.
+              {t('auth', 'emailSentInfo')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-600 text-center">
-              Vérifiez votre boîte de réception et vos spams.
+              {t('auth', 'checkInbox')}
             </p>
             <Link href="/auth/login" className="block">
               <Button className="w-full" variant="outline">
-                Retour à la connexion
+                {t('auth', 'backToLogin')}
               </Button>
             </Link>
           </CardContent>
@@ -76,16 +78,16 @@ export default function ForgotPasswordPage() {
               <span className="text-2xl font-bold text-white">AC</span>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Mot de passe oublié</CardTitle>
+          <CardTitle className="text-2xl text-center">{t('auth', 'forgotPasswordTitle')}</CardTitle>
           <CardDescription className="text-center">
-            Entrez votre email pour recevoir un lien de réinitialisation
+            {t('auth', 'forgotPasswordSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Email
+                {t('auth', 'email')}
               </label>
               <Input
                 type="email"
@@ -102,7 +104,7 @@ export default function ForgotPasswordPage() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Envoi en cours...' : 'Envoyer le lien'}
+              {loading ? t('auth', 'sending') : t('auth', 'sendLink')}
             </Button>
 
             <div className="text-center text-sm">
@@ -110,7 +112,7 @@ export default function ForgotPasswordPage() {
                 href="/auth/login"
                 className="text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Retour à la connexion
+                {t('auth', 'backToLogin')}
               </Link>
             </div>
           </form>
