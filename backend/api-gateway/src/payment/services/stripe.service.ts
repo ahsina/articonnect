@@ -77,6 +77,97 @@ export class StripeService {
     });
   }
 
+  // ================================================================
+  // SEPA DIRECT DEBIT PAYMENT METHOD
+  // ================================================================
+
+  /**
+   * Create SetupIntent for SEPA Direct Debit mandate
+   * Customer must authorize bank account debits via SEPA mandate
+   *
+   * Process:
+   * 1. Create SetupIntent with SEPA payment method type
+   * 2. Customer provides IBAN and authorizes mandate (frontend)
+   * 3. Stripe verifies IBAN and creates mandate
+   * 4. Future payments use the payment method ID
+   */
+  async createSepaSetupIntent(customerId: string, metadata?: Record<string, string>) {
+    return this.stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['sepa_debit'],
+      metadata: metadata || {},
+      // Mandate data for SEPA Direct Debit
+      mandate_data: {
+        customer_acceptance: {
+          type: 'online',
+          online: {
+            ip_address: metadata?.ipAddress,
+            user_agent: metadata?.userAgent,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Create Payment Intent with SEPA Direct Debit
+   * Requires existing payment method from SetupIntent
+   */
+  async createSepaPaymentIntent(params: {
+    amount: number;
+    currency: string;
+    customerId: string;
+    paymentMethodId: string;
+    metadata?: Record<string, string>;
+  }) {
+    return this.stripe.paymentIntents.create({
+      amount: params.amount,
+      currency: params.currency || 'eur',
+      customer: params.customerId,
+      payment_method: params.paymentMethodId,
+      payment_method_types: ['sepa_debit'],
+      metadata: params.metadata,
+      capture_method: 'manual', // For escrow
+      // SEPA payments are confirmed automatically but take 5-7 business days
+      confirm: false, // Confirm explicitly after creation
+    });
+  }
+
+  /**
+   * Confirm SEPA payment intent
+   * Payment is submitted but funds take 5-7 business days to arrive
+   */
+  async confirmSepaPayment(paymentIntentId: string) {
+    return this.stripe.paymentIntents.confirm(paymentIntentId);
+  }
+
+  /**
+   * Get SEPA mandate details
+   * Shows customer authorization status and bank account info
+   */
+  async getSepaMandateDetails(mandateId: string) {
+    return this.stripe.mandates.retrieve(mandateId);
+  }
+
+  /**
+   * List customer's SEPA payment methods
+   * Shows all authorized bank accounts
+   */
+  async listCustomerSepaPaymentMethods(customerId: string) {
+    return this.stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'sepa_debit',
+    });
+  }
+
+  /**
+   * Detach SEPA payment method (revoke mandate)
+   * Customer removes authorization for bank account debits
+   */
+  async detachSepaPaymentMethod(paymentMethodId: string) {
+    return this.stripe.paymentMethods.detach(paymentMethodId);
+  }
+
   async createConnectAccount(email: string, country = 'LU') {
     return this.stripe.accounts.create({
       type: 'express',

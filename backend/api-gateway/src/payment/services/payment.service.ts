@@ -218,6 +218,24 @@ export class PaymentService {
         // Early fraud warning from card issuer
         await this.handleEarlyFraudWarning(eventData.data.object);
         break;
+
+      // SEPA Direct Debit events
+      case 'setup_intent.succeeded':
+        // SEPA mandate created successfully
+        await this.handleSepaSetupSuccess(eventData.data.object);
+        break;
+      case 'setup_intent.setup_failed':
+        // SEPA mandate creation failed
+        await this.handleSepaSetupFailed(eventData.data.object);
+        break;
+      case 'charge.succeeded':
+        // SEPA payment succeeded (after 5-7 days)
+        await this.handleSepaChargeSucceeded(eventData.data.object);
+        break;
+      case 'charge.failed':
+        // SEPA payment failed (insufficient funds, etc.)
+        await this.handleSepaChargeFailed(eventData.data.object);
+        break;
     }
   }
 
@@ -939,6 +957,116 @@ export class PaymentService {
 
       // Send urgent notification to admin
       // await this.notificationService.notifyAdminFraudWarning(transaction.id, warning.id);
+    }
+  }
+
+  // ================================================================
+  // SEPA DIRECT DEBIT WEBHOOKS
+  // ================================================================
+
+  /**
+   * Handle SEPA setup success (mandate created)
+   * Customer has authorized bank account debits
+   */
+  private async handleSepaSetupSuccess(setupIntent: { id: string; payment_method?: string; customer?: string; metadata: Record<string, string> }) {
+    console.log(
+      `[SEPA SETUP SUCCESS] Customer ${setupIntent.customer} authorized SEPA mandate. Payment Method: ${setupIntent.payment_method}`,
+    );
+
+    // Store payment method ID for future payments
+    if (setupIntent.customer && setupIntent.payment_method) {
+      // Could update customer profile with default payment method
+      // await this.prisma.clientProfile.update({
+      //   where: { stripeCustomerId: setupIntent.customer },
+      //   data: { defaultPaymentMethod: setupIntent.payment_method },
+      // });
+    }
+
+    // Notify customer that mandate is ready
+    // await this.notificationService.notifySepaSetupComplete(customerId);
+  }
+
+  /**
+   * Handle SEPA setup failure (mandate creation failed)
+   * Customer authorization failed or IBAN invalid
+   */
+  private async handleSepaSetupFailed(setupIntent: { id: string; last_setup_error?: { message?: string }; customer?: string; metadata: Record<string, string> }) {
+    console.error(
+      `[SEPA SETUP FAILED] Setup failed for customer ${setupIntent.customer}. Error: ${setupIntent.last_setup_error?.message}`,
+    );
+
+    // Notify customer about setup failure
+    // await this.notificationService.notifySepaSetupFailed(customerId, errorMessage);
+  }
+
+  /**
+   * Handle SEPA charge succeeded
+   * Payment completed successfully (after 5-7 business days)
+   */
+  private async handleSepaChargeSucceeded(charge: { id: string; payment_intent?: string; amount: number; metadata: Record<string, string> }) {
+    if (!charge.payment_intent) return;
+
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: charge.payment_intent as string },
+    });
+
+    if (transaction) {
+      // Update transaction to HELD (funds received, ready to capture)
+      await this.prisma.transaction.update({
+        where: { id: transaction.id },
+        data: { status: 'HELD' },
+      });
+
+      console.log(
+        `[SEPA CHARGE SUCCESS] Transaction ${transaction.id} succeeded via SEPA. Amount: ${charge.amount / 100}€`,
+      );
+
+      // Notify parties that SEPA payment is complete
+      // await this.notificationService.notifySepaPaymentComplete(transaction.missionId);
+    }
+  }
+
+  /**
+   * Handle SEPA charge failed
+   * Payment failed (insufficient funds, account closed, mandate revoked)
+   */
+  private async handleSepaChargeFailed(charge: { id: string; payment_intent?: string; failure_code?: string; failure_message?: string; metadata: Record<string, string> }) {
+    if (!charge.payment_intent) return;
+
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: charge.payment_intent as string },
+    });
+
+    if (transaction) {
+      // Mark transaction as failed
+      await this.prisma.transaction.update({
+        where: { id: transaction.id },
+        data: { status: 'FAILED' },
+      });
+
+      console.error(
+        `[SEPA CHARGE FAILED] Transaction ${transaction.id} failed. Reason: ${charge.failure_code} - ${charge.failure_message}`,
+      );
+
+      // Common SEPA failure reasons:
+      // - insufficient_funds: Not enough money in account
+      // - account_closed: Bank account is closed
+      // - debit_not_authorized: Mandate was revoked
+      // - invalid_account_number: IBAN is invalid
+
+      // Notify customer about payment failure
+      // await this.notificationService.notifySepaPaymentFailed(
+      //   transaction.missionId,
+      //   charge.failure_message
+      // );
+
+      // For missions, may need to request alternative payment method
+      if (transaction.missionId) {
+        await this.prisma.mission.update({
+          where: { id: transaction.missionId },
+          data: { status: 'PENDING' }, // Reset to pending for alternative payment
+        });
+      }
     }
   }
 }
