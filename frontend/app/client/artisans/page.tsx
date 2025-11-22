@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/ui/star-rating';
 import { userApi } from '@/lib/api/user';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Artisan {
   id: string;
@@ -40,6 +41,7 @@ const SPECIALTIES = [
 ];
 
 export default function ArtisansListPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [artisans, setArtisans] = useState<Artisan[]>([]);
   const [filteredArtisans, setFilteredArtisans] = useState<Artisan[]>([]);
@@ -134,7 +136,7 @@ export default function ArtisansListPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -144,10 +146,9 @@ export default function ArtisansListPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Trouver un artisan</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('artisans', 'findArtisan')}</h1>
           <p className="text-gray-600 mt-2">
-            {filteredArtisans.length} artisan{filteredArtisans.length > 1 ? 's' : ''} disponible
-            {filteredArtisans.length > 1 ? 's' : ''}
+            {filteredArtisans.length} {filteredArtisans.length > 1 ? t('common', 'artisan') + 's' : t('common', 'artisan')} {filteredArtisans.length > 1 ? t('artisans', 'availablePlural') : t('artisans', 'available')}
           </p>
         </div>
 
@@ -157,7 +158,7 @@ export default function ArtisansListPage() {
           <div className="flex gap-4">
             <div className="flex-1">
               <Input
-                placeholder="Rechercher par nom, entreprise, ville..."
+                placeholder={t('artisans', 'searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -167,9 +168,9 @@ export default function ArtisansListPage() {
               onChange={(e) => setSortBy(e.target.value as any)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="rating">Mieux notés</option>
-              <option value="distance">Plus proches</option>
-              <option value="price">Moins chers</option>
+              <option value="rating">{t('artisans', 'topRated')}</option>
+              <option value="distance">{t('artisans', 'closest')}</option>
+              <option value="price">{t('artisans', 'cheapest')}</option>
             </select>
           </div>
 
@@ -196,9 +197,9 @@ export default function ArtisansListPage() {
         {filteredArtisans.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">Aucun artisan trouvé</p>
+              <p className="text-gray-500 mb-4">{t('artisans', 'noArtisansFound')}</p>
               <Button onClick={() => { setSearchQuery(''); setSelectedSpecialty('all'); }}>
-                Réinitialiser les filtres
+                {t('artisans', 'resetFilters')}
               </Button>
             </CardContent>
           </Card>
@@ -225,7 +226,7 @@ export default function ArtisansListPage() {
                     </div>
                     {artisan.artisanProfile.verified && (
                       <Badge variant="success" className="text-xs">
-                        ✓ Vérifié
+                        ✓ {t('artisans', 'verified')}
                       </Badge>
                     )}
                   </div>
@@ -238,7 +239,7 @@ export default function ArtisansListPage() {
                       size="sm"
                     />
                     <span className="text-sm text-gray-600">
-                      ({artisan.artisanProfile.reviewCount} avis)
+                      ({artisan.artisanProfile.reviewCount} {t('artisans', 'reviews')})
                     </span>
                   </div>
 
@@ -289,13 +290,13 @@ export default function ArtisansListPage() {
                       className="flex-1"
                       onClick={() => handleContactArtisan(artisan.id)}
                     >
-                      Contacter
+                      {t('common', 'contact')}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => router.push(`/artisans/${artisan.id}`)}
                     >
-                      Voir profil
+                      {t('artisans', 'viewProfile')}
                     </Button>
                   </div>
                 </CardContent>
