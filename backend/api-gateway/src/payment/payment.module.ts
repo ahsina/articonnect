@@ -6,6 +6,8 @@ import { StripeService } from './services/stripe.service';
 import { ReputationService } from './services/reputation.service';
 import { NoShowService } from './services/no-show.service';
 import { CurrencyService } from './services/currency.service';
+import { DeferredPaymentService } from './services/deferred-payment.service';
+import { PaymentCronService } from './services/payment-cron.service';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
@@ -20,6 +22,8 @@ import { NotificationModule } from '../notification/notification.module';
     ReputationService,
     NoShowService,
     CurrencyService,
+    DeferredPaymentService,
+    PaymentCronService,
   ],
   exports: [
     PaymentService,
@@ -27,6 +31,8 @@ import { NotificationModule } from '../notification/notification.module';
     ReputationService,
     NoShowService,
     CurrencyService,
+    DeferredPaymentService,
+    PaymentCronService,
   ],
 })
 export class PaymentModule {}
