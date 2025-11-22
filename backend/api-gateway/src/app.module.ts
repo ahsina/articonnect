@@ -28,6 +28,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { ConfigModule as AppConfigModule } from './config/config.module';
 import { BadgesModule } from './badges/badges.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ExportModule } from './export/export.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { LoggerService } from './common/logger/logger.service';
@@ -84,6 +85,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     AppConfigModule,
     BadgesModule,
     AnalyticsModule,
+    ExportModule,
   ],
   providers: [
     LoggerService,
