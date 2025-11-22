@@ -23,6 +23,7 @@ import { FcmModule } from './fcm/fcm.module';
 import { HealthModule } from './health/health.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { VatModule } from './vat/vat.module';
+import { ModerationModule } from './moderation/moderation.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { LoggerService } from './common/logger/logger.service';
@@ -74,6 +75,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     FcmModule,
     InvoiceModule,
     VatModule,
+    ModerationModule,
   ],
   providers: [
     LoggerService,

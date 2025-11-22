@@ -109,6 +109,11 @@ model User {
   // VAT declarations
   vatDeclarations VatDeclaration[]
 
+  // Reports
+  reportsMade     Report[] @relation("ReportsMade")
+  reportsReceived Report[] @relation("ReportsReceived")
+  reportsResolved Report[] @relation("ReportsResolved")
+
   @@index([email])
   @@index([role])
   @@index([status])
@@ -177,6 +182,12 @@ model ArtisanProfile {
   currentLat         Float?
   currentLng         Float?
   lastLocationUpdate DateTime?
+
+  // Calendar & Availability
+  workingHours            WorkingHours[]
+  availabilitySlots       AvailabilitySlot[]
+  timeOffs                TimeOff[]
+  recurringUnavailability RecurringUnavailability[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -308,14 +319,16 @@ model Mission {
   photos String[]
 
   // Relations
-  negotiations Negotiation[]
-  transaction  Transaction?
-  payments     Payment[]
-  review       Review?
-  disputes     Dispute[]
-  history      MissionHistory[]
-  noShowEvent  NoShowEvent?
-  invoices     Invoice[]
+  negotiations        Negotiation[]
+  transaction         Transaction?
+  payments            Payment[]
+  review              Review?
+  disputes            Dispute[]
+  history             MissionHistory[]
+  noShowEvent         NoShowEvent?
+  invoices            Invoice[]
+  reports             Report[]
+  availabilitySlots   AvailabilitySlot[]
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -390,6 +403,7 @@ model Review {
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   ReviewResponse      ReviewResponse?
+  reports             Report[]
 
   @@index([reviewedId])
   @@index([overallRating])
@@ -478,6 +492,7 @@ model Product {
   variants    ProductVariant[]
   orderItems  OrderItem[]
   favorites   Favorite[]
+  reports     Report[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -1116,6 +1131,184 @@ model VatDeclaration {
   @@index([artisanId])
   @@index([period])
   @@index([status])
+}
+
+// ================================
+// MODERATION & REPORTS
+// ================================
+
+enum ReportType {
+  REVIEW
+  PRODUCT
+  USER
+  MISSION
+  MESSAGE
+}
+
+enum ReportReason {
+  SPAM
+  INAPPROPRIATE_CONTENT
+  HARASSMENT
+  FAKE_REVIEW
+  COUNTERFEIT_PRODUCT
+  FRAUD
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  reporterId  String
+  reporter    User     @relation("ReportsMade", fields: [reporterId], references: [id])
+
+  type        ReportType
+  reason      ReportReason
+  description String?
+
+  // Reported entity (polymorphic)
+  reviewId  String?
+  review    Review? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  reportedUserId String?
+  reportedUser   User? @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+
+  missionId String?
+  mission   Mission? @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  // Status & resolution
+  status      ReportStatus @default(PENDING)
+  resolvedBy  String?
+  resolver    User?    @relation("ReportsResolved", fields: [resolvedBy], references: [id])
+  resolution  String?
+  actionTaken String? // "USER_WARNED", "CONTENT_REMOVED", "USER_SUSPENDED", etc.
+
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  @@index([reporterId])
+  @@index([reportedUserId])
+  @@index([status])
+  @@index([type])
+}
+
+// ================================
+// CALENDAR & AVAILABILITY
+// ================================
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum RecurrencePattern {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum TimeOffType {
+  VACATION
+  SICK_LEAVE
+  PERSONAL
+  PUBLIC_HOLIDAY
+  OTHER
+}
+
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Regular working hours (weekly schedule)
+model WorkingHours {
+  id         String    @id @default(uuid())
+  artisanId  String
+  artisan    ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  dayOfWeek  DayOfWeek
+  startTime  String    // HH:mm format (e.g., "09:00")
+  endTime    String    // HH:mm format (e.g., "17:00")
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([artisanId, dayOfWeek])
+  @@index([artisanId])
+}
+
+// Specific availability slots
+model AvailabilitySlot {
+  id        String   @id @default(uuid())
+  artisanId String
+  artisan   ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  startTime DateTime
+  endTime   DateTime
+  isBooked  Boolean  @default(false)
+  missionId String?
+  mission   Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([artisanId])
+  @@index([startTime])
+  @@index([isBooked])
+}
+
+// Time off / Unavailability
+model TimeOff {
+  id          String         @id @default(uuid())
+  artisanId   String
+  artisan     ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  type        TimeOffType
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  status      TimeOffStatus  @default(PENDING)
+  approvedBy  String?
+  approvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([artisanId])
+  @@index([startDate])
+  @@index([status])
+}
+
+// Recurring unavailability (e.g., "every Monday afternoon")
+model RecurringUnavailability {
+  id         String            @id @default(uuid())
+  artisanId  String
+  artisan    ArtisanProfile    @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  title      String
+  pattern    RecurrencePattern
+  dayOfWeek  DayOfWeek?        // For WEEKLY pattern
+  dayOfMonth Int?              // For MONTHLY pattern (1-31)
+  startTime  String            // HH:mm format
+  endTime    String            // HH:mm format
+  startDate  DateTime          // When this recurrence starts
+  endDate    DateTime?         // Optional end date
+  isActive   Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([artisanId])
+  @@index([isActive])
 }
 
 // ================================

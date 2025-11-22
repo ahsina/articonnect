@@ -643,4 +643,57 @@ export class AuthService {
     const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;
   }
+
+  // ================================
+  // OAuth Methods
+  // ================================
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        clientProfile: true,
+        artisanProfile: true,
+      },
+    });
+  }
+
+  async createOAuthUser(data: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+    provider: string;
+    providerId: string;
+  }) {
+    // Create user with random password (OAuth users don't use password)
+    const randomPassword = Math.random().toString(36).slice(-12);
+    const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        password: hashedPassword,
+        avatar: data.avatar,
+        emailVerified: true, // OAuth emails are pre-verified
+        role: UserRole.CLIENT, // Default role
+      },
+      include: {
+        clientProfile: true,
+      },
+    });
+
+    // Create client profile
+    if (!user.clientProfile) {
+      await this.prisma.clientProfile.create({
+        data: {
+          userId: user.id,
+        },
+      });
+    }
+
+    return user;
+  }
 }

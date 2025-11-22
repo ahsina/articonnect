@@ -11,6 +11,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { TwoFactorService } from './services/two-factor.service';
 import { PhoneVerificationService } from './services/phone-verification.service';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { OAuthController } from './controllers/oauth.controller';
 
 @Module({
   imports: [
@@ -26,13 +28,14 @@ import { PhoneVerificationService } from './services/phone-verification.service'
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, SessionController],
+  controllers: [AuthController, SessionController, OAuthController],
   providers: [
     AuthService,
     SessionService,
     LoginSecurityService,
     JwtStrategy,
     LocalStrategy,
+    GoogleStrategy,
     TwoFactorService,
     PhoneVerificationService,
   ],
