@@ -9,8 +9,10 @@ import { userApi } from '@/lib/api/user';
 import { specialtyApi, Specialty } from '@/lib/api/specialty';
 import { toast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function BecomeArtisanPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -31,8 +33,8 @@ export default function BecomeArtisanPage() {
     // Check if user is already an artisan
     if (user?.role === 'ARTISAN') {
       toast({
-        title: 'Déjà artisan',
-        description: 'Vous avez déjà un profil artisan',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
       router.push('/artisan/dashboard');
@@ -49,8 +51,8 @@ export default function BecomeArtisanPage() {
     } catch (error) {
       console.error('Error loading specialties:', error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les spécialités',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
     }
@@ -71,8 +73,8 @@ export default function BecomeArtisanPage() {
     // Validation
     if (formData.specialtyIds.length === 0) {
       toast({
-        title: 'Erreur',
-        description: 'Veuillez sélectionner au moins une spécialité',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
       return;
@@ -80,8 +82,8 @@ export default function BecomeArtisanPage() {
 
     if (formData.siret.length !== 14) {
       toast({
-        title: 'Erreur',
-        description: 'Le numéro SIRET doit contenir 14 chiffres',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
       return;
@@ -89,8 +91,8 @@ export default function BecomeArtisanPage() {
 
     if (!formData.hourlyRate || formData.hourlyRate <= 0) {
       toast({
-        title: 'Erreur',
-        description: 'Veuillez indiquer votre tarif horaire',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
       return;
@@ -102,8 +104,8 @@ export default function BecomeArtisanPage() {
       await userApi.createArtisanProfile(formData);
 
       toast({
-        title: 'Succès',
-        description: 'Votre profil artisan a été créé avec succès !',
+        title: t('common', 'success'),
+        description: t('common', 'success'),
         variant: 'success',
       });
 
@@ -117,8 +119,8 @@ export default function BecomeArtisanPage() {
     } catch (error) {
       console.error('Error creating artisan profile:', error);
       toast({
-        title: 'Erreur',
-        description: 'Erreur lors de la création du profil artisan',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
     } finally {
@@ -130,7 +132,7 @@ export default function BecomeArtisanPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← Retour
+          ← {t('common', 'back')}
         </Button>
 
         <Card>
@@ -140,9 +142,9 @@ export default function BecomeArtisanPage() {
                 <span className="text-2xl">🔨</span>
               </div>
               <div>
-                <CardTitle className="text-2xl">Devenir Artisan</CardTitle>
+                <CardTitle className="text-2xl">{t('common', 'becomeArtisan')}</CardTitle>
                 <CardDescription>
-                  Créez votre profil professionnel et commencez à recevoir des demandes
+                  {t('common', 'becomeArtisanDescription')}
                 </CardDescription>
               </div>
             </div>
@@ -152,13 +154,13 @@ export default function BecomeArtisanPage() {
               {/* Company Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Informations de l'entreprise
+                  {t('common', 'companyInfo')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Nom de l'entreprise *
+                      {t('artisan', 'companyName')} *
                     </label>
                     <Input
                       type="text"
@@ -173,7 +175,7 @@ export default function BecomeArtisanPage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Numéro SIRET * (14 chiffres)
+                      {t('artisan', 'siret')} * (14)
                     </label>
                     <Input
                       type="text"
@@ -195,11 +197,10 @@ export default function BecomeArtisanPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Description de vos services
+                    {t('common', 'description')}
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                    placeholder="Décrivez vos services, votre expérience, vos certifications..."
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -211,7 +212,7 @@ export default function BecomeArtisanPage() {
               {/* Specialties */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Spécialités * (Sélectionnez au moins une)
+                  {t('artisan', 'specialties')} *
                 </h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -235,12 +236,12 @@ export default function BecomeArtisanPage() {
               {/* Location */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Zone d'intervention
+                  {t('common', 'interventionZone')}
                 </h3>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Adresse de base *
+                    {t('common', 'baseAddress')} *
                   </label>
                   <Input
                     type="text"
@@ -251,15 +252,12 @@ export default function BecomeArtisanPage() {
                     }
                     required
                   />
-                  <p className="text-xs text-gray-500">
-                    Cette adresse sera utilisée comme point de départ pour calculer la distance
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Rayon d'intervention (km)
+                      {t('artisan', 'serviceRadius')}
                     </label>
                     <Input
                       type="number"
@@ -277,7 +275,7 @@ export default function BecomeArtisanPage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Tarif horaire (€) *
+                      {t('artisan', 'hourlyRate')} *
                     </label>
                     <Input
                       type="number"
@@ -303,23 +301,13 @@ export default function BecomeArtisanPage() {
 
               {/* Submit */}
               <div className="pt-4 border-t">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>ℹ️ Information</strong>
-                  </p>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Une fois votre profil créé, vous pourrez recevoir des demandes de missions et
-                    gérer vos interventions depuis votre tableau de bord artisan.
-                  </p>
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={loading}
                   size="lg"
                 >
-                  {loading ? 'Création en cours...' : 'Créer mon profil artisan'}
+                  {loading ? t('common', 'creating') : t('common', 'createArtisanProfile')}
                 </Button>
               </div>
             </form>
