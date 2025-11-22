@@ -487,13 +487,33 @@ enum ProductStatus {
   SOLD_OUT
 }
 
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  icon        String?
+  parentId    String?
+  parent      Category? @relation("CategoryChildren", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryChildren")
+  products    Product[]
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+  @@index([active])
+}
+
 model Product {
   id          String           @id @default(uuid())
   artisanId   String
   artisan     User             @relation(fields: [artisanId], references: [id], onDelete: Cascade)
   name        String
   description String
-  category    String
+  categoryId  String
+  category    Category         @relation(fields: [categoryId], references: [id])
   photos      String[]
   price       Decimal          @db.Decimal(10, 2)
   vatRate     Decimal          @db.Decimal(5, 2)
@@ -509,7 +529,7 @@ model Product {
 
   @@index([artisanId])
   @@index([status])
-  @@index([category])
+  @@index([categoryId])
 }
 
 model ProductVariant {
