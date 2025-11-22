@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Map } from '@/components/map/Map';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ArtisanProfile {
   id: string;
@@ -74,20 +75,24 @@ const SPECIALTY_ICONS: Record<string, string> = {
   serrurerie: '🔐',
 };
 
-const DAYS_FR: Record<string, string> = {
-  monday: 'Lundi',
-  tuesday: 'Mardi',
-  wednesday: 'Mercredi',
-  thursday: 'Jeudi',
-  friday: 'Vendredi',
-  saturday: 'Samedi',
-  sunday: 'Dimanche',
-};
-
 export default function ArtisanDetailsPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const artisanId = params.id as string;
+
+  const getDayName = (day: string) => {
+    const dayMap: Record<string, string> = {
+      monday: t('artisans', 'monday'),
+      tuesday: t('artisans', 'tuesday'),
+      wednesday: t('artisans', 'wednesday'),
+      thursday: t('artisans', 'thursday'),
+      friday: t('artisans', 'friday'),
+      saturday: t('artisans', 'saturday'),
+      sunday: t('artisans', 'sunday'),
+    };
+    return dayMap[day] || day;
+  };
 
   const [artisan, setArtisan] = useState<ArtisanProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,7 +218,7 @@ export default function ArtisanDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -222,9 +227,9 @@ export default function ArtisanDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Artisan introuvable</p>
+          <p className="text-gray-500 mb-4">{t('artisans', 'artisanNotFound')}</p>
           <Button onClick={() => router.push('/client/artisans')}>
-            Retour à la liste
+            {t('artisans', 'backToList')}
           </Button>
         </div>
       </div>
@@ -239,7 +244,7 @@ export default function ArtisanDetailsPage() {
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" onClick={() => router.back()}>
-            ← Retour
+            ← {t('common', 'back')}
           </Button>
         </div>
 
@@ -267,7 +272,7 @@ export default function ArtisanDetailsPage() {
                       </div>
                       {artisanProfile.verified && (
                         <Badge variant="default" className="bg-blue-600">
-                          ✓ Vérifié
+                          ✓ {t('artisans', 'verified')}
                         </Badge>
                       )}
                     </div>
@@ -279,12 +284,12 @@ export default function ArtisanDetailsPage() {
                           ★ {artisanProfile.rating.toFixed(1)}
                         </span>
                         <span className="text-gray-600 ml-2">
-                          ({artisanProfile.reviewCount} avis)
+                          ({artisanProfile.reviewCount} {t('artisans', 'reviews')})
                         </span>
                       </div>
                       <span className="text-gray-400">•</span>
                       <span className="text-gray-600">
-                        {artisanProfile.completedMissions} missions réalisées
+                        {artisanProfile.completedMissions} {t('artisans', 'completedMissions')}
                       </span>
                     </div>
 
@@ -301,15 +306,15 @@ export default function ArtisanDetailsPage() {
                     {/* Quick Info */}
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-600">Tarif horaire:</span>
+                        <span className="text-gray-600">{t('artisans', 'hourlyRate')}:</span>
                         <span className="font-semibold ml-2">{artisanProfile.hourlyRate}€/h</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Temps de réponse:</span>
+                        <span className="text-gray-600">{t('artisans', 'responseTime')}:</span>
                         <span className="font-semibold ml-2">{artisanProfile.responseTime}</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Rayon:</span>
+                        <span className="text-gray-600">{t('common', 'serviceRadius')}:</span>
                         <span className="font-semibold ml-2">{artisanProfile.serviceRadius} km</span>
                       </div>
                       <div>
@@ -325,7 +330,7 @@ export default function ArtisanDetailsPage() {
             {/* Description */}
             <Card>
               <CardHeader>
-                <CardTitle>À propos</CardTitle>
+                <CardTitle>{t('artisans', 'about')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">
@@ -338,7 +343,7 @@ export default function ArtisanDetailsPage() {
             {artisanProfile.portfolio.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Portfolio</CardTitle>
+                  <CardTitle>{t('artisans', 'portfolio')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
@@ -346,7 +351,7 @@ export default function ArtisanDetailsPage() {
                       <img
                         key={index}
                         src={image}
-                        alt={`Projet ${index + 1}`}
+                        alt={`${t('artisans', 'project')} ${index + 1}`}
                         className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => setSelectedImage(image)}
                       />
@@ -359,7 +364,7 @@ export default function ArtisanDetailsPage() {
             {/* Reviews */}
             <Card>
               <CardHeader>
-                <CardTitle>Avis clients ({artisan.reviews.length})</CardTitle>
+                <CardTitle>{t('marketplace', 'clientReviews')} ({artisan.reviews.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -394,7 +399,7 @@ export default function ArtisanDetailsPage() {
                           </div>
                           {review.mission && (
                             <p className="text-sm text-gray-600 mb-2">
-                              Mission: {review.mission.title}
+                              {t('artisans', 'mission')}: {review.mission.title}
                             </p>
                           )}
                           <p className="text-gray-700">{review.comment}</p>
@@ -413,10 +418,10 @@ export default function ArtisanDetailsPage() {
             <Card>
               <CardContent className="p-6">
                 <Button className="w-full mb-4" size="lg" onClick={handleContactArtisan}>
-                  Créer une mission
+                  {t('artisans', 'createMission')}
                 </Button>
                 <Button variant="outline" className="w-full mb-4">
-                  💬 Envoyer un message
+                  💬 {t('artisans', 'sendMessage')}
                 </Button>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
@@ -440,17 +445,17 @@ export default function ArtisanDetailsPage() {
             {/* Availability */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Disponibilités</CardTitle>
+                <CardTitle className="text-lg">{t('artisans', 'availabilities')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {Object.entries(artisan.availability).map(([day, available]) => (
                     <div key={day} className="flex items-center justify-between text-sm">
                       <span className={available ? 'text-gray-900' : 'text-gray-400'}>
-                        {DAYS_FR[day]}
+                        {getDayName(day)}
                       </span>
                       <span className={available ? 'text-green-600 font-semibold' : 'text-gray-400'}>
-                        {available ? '✓ Disponible' : 'Fermé'}
+                        {available ? `✓ ${t('artisans', 'availableDay')}` : t('artisans', 'closed')}
                       </span>
                     </div>
                   ))}
@@ -461,7 +466,7 @@ export default function ArtisanDetailsPage() {
             {/* Service Area Map */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Zone d'intervention</CardTitle>
+                <CardTitle className="text-lg">{t('artisans', 'serviceZone')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Map
@@ -483,7 +488,7 @@ export default function ArtisanDetailsPage() {
                   className="h-64"
                 />
                 <p className="text-sm text-gray-600 mt-3">
-                  Rayon de {artisanProfile.serviceRadius} km autour de {artisanProfile.city}
+                  {t('artisans', 'radiusAround')} {artisanProfile.serviceRadius} km {t('artisans', 'aroundCity')} {artisanProfile.city}
                 </p>
               </CardContent>
             </Card>
