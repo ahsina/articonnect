@@ -321,6 +321,13 @@ model Mission {
   // Media
   photos String[]
 
+  // Radius Expansion (automatic search expansion when no artisan responds)
+  initialSearchRadius   Int      @default(20) // Initial search radius in km
+  currentSearchRadius   Int      @default(20) // Current search radius in km
+  lastRadiusExpansion   DateTime? // When radius was last expanded
+  maxRadiusReached      Boolean  @default(false) // True if max radius (100km) reached
+  notificationsSent     Int      @default(0) // Track number of artisans notified
+
   // Relations
   negotiations        Negotiation[]
   transaction         Transaction?

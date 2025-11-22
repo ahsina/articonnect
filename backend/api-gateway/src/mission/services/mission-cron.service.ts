@@ -9,6 +9,7 @@ import { MissionService } from './mission.service';
  * - Auto-validation des missions bloquées après 7 jours
  * - Nettoyage des missions expirées
  * - Alertes pour missions en attente
+ * - Élargissement automatique du rayon de recherche
  */
 @Injectable()
 export class MissionCronService {
@@ -228,6 +229,235 @@ export class MissionCronService {
   }
 
   /**
+   * CRON: Élargissement automatique du rayon de recherche
+   * S'exécute toutes les 10 minutes
+   *
+   * Pour les missions PENDING sans réponse d'artisan:
+   * - Missions EMERGENCY: élargissement après 15 minutes
+   * - Missions SCHEDULED/QUOTE: élargissement après 30 minutes
+   *
+   * Élargissement progressif: +5km à chaque étape jusqu'à max 100km
+   */
+  @Cron('*/10 * * * *', {
+    name: 'expand-mission-radius',
+    timeZone: 'Europe/Paris',
+  })
+  async expandMissionSearchRadius() {
+    this.logger.log('📍 Démarrage CRON: Élargissement rayon de recherche');
+
+    try {
+      const startTime = Date.now();
+      const now = new Date();
+
+      // Find missions that need radius expansion
+      const missions = await this.missionService['prisma'].mission.findMany({
+        where: {
+          status: 'PENDING',
+          artisanId: null,
+          maxRadiusReached: false,
+        },
+        include: {
+          client: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+
+      if (missions.length === 0) {
+        this.logger.log('✅ CRON terminé: Aucune mission à élargir');
+        return;
+      }
+
+      let expandedCount = 0;
+      let maxReachedCount = 0;
+
+      for (const mission of missions) {
+        try {
+          // Determine timeout based on mission type
+          const timeoutMinutes = mission.type === 'EMERGENCY' ? 15 : 30;
+          const timeoutMs = timeoutMinutes * 60 * 1000;
+
+          // Check if last expansion was long enough ago
+          const lastExpansion = mission.lastRadiusExpansion || mission.createdAt;
+          const timeSinceLastExpansion = now.getTime() - lastExpansion.getTime();
+
+          if (timeSinceLastExpansion < timeoutMs) {
+            // Not enough time passed yet
+            continue;
+          }
+
+          // Check if we've reached max radius (100km)
+          const MAX_RADIUS = 100;
+          const RADIUS_INCREMENT = 5;
+
+          if (mission.currentSearchRadius >= MAX_RADIUS) {
+            // Mark as max radius reached
+            await this.missionService['prisma'].mission.update({
+              where: { id: mission.id },
+              data: { maxRadiusReached: true },
+            });
+
+            await this.missionService['prisma'].missionHistory.create({
+              data: {
+                missionId: mission.id,
+                status: mission.status,
+                changedBy: 'SYSTEM',
+                changedByRole: 'SYSTEM',
+                note: `Rayon maximum atteint (${MAX_RADIUS}km) - Aucun artisan disponible`,
+              },
+            });
+
+            this.logger.warn(
+              `⚠️  Mission ${mission.id}: rayon maximum atteint (${MAX_RADIUS}km)`,
+            );
+            maxReachedCount++;
+            continue;
+          }
+
+          // Expand radius
+          const newRadius = Math.min(
+            mission.currentSearchRadius + RADIUS_INCREMENT,
+            MAX_RADIUS,
+          );
+
+          // Find new artisans within expanded radius
+          const artisans = await this.missionService['prisma'].user.findMany({
+            where: {
+              role: 'ARTISAN',
+              status: 'ACTIVE',
+              artisanProfile: {
+                available: true,
+                specialties: {
+                  some: {
+                    category: mission.category,
+                  },
+                },
+              },
+            },
+            include: {
+              artisanProfile: {
+                select: {
+                  latitude: true,
+                  longitude: true,
+                  serviceRadius: true,
+                },
+              },
+            },
+          });
+
+          // Filter artisans by new radius (but exclude those already in old radius)
+          const newArtisans = artisans.filter((artisan) => {
+            if (!artisan.artisanProfile) return false;
+
+            const distance = this.calculateDistance(
+              mission.latitude,
+              mission.longitude,
+              artisan.artisanProfile.latitude,
+              artisan.artisanProfile.longitude,
+            );
+
+            // Only notify artisans in the new expanded area
+            return (
+              distance > mission.currentSearchRadius &&
+              distance <= newRadius &&
+              distance <= (artisan.artisanProfile.serviceRadius || 20)
+            );
+          });
+
+          // Update mission radius
+          await this.missionService['prisma'].mission.update({
+            where: { id: mission.id },
+            data: {
+              currentSearchRadius: newRadius,
+              lastRadiusExpansion: now,
+              notificationsSent: mission.notificationsSent + newArtisans.length,
+            },
+          });
+
+          // Send notifications to newly eligible artisans
+          for (const artisan of newArtisans) {
+            await this.missionService['prisma'].notification.create({
+              data: {
+                userId: artisan.id,
+                type: 'NEW_MISSION',
+                title: 'Nouvelle mission disponible',
+                message: `Une nouvelle mission "${mission.title}" correspond à vos compétences (rayon élargi à ${newRadius}km)`,
+                link: `/artisan/missions/${mission.id}`,
+                metadata: { missionId: mission.id, expandedRadius: newRadius },
+              },
+            });
+          }
+
+          // Log history
+          await this.missionService['prisma'].missionHistory.create({
+            data: {
+              missionId: mission.id,
+              status: mission.status,
+              changedBy: 'SYSTEM',
+              changedByRole: 'SYSTEM',
+              note: `Rayon élargi de ${mission.currentSearchRadius}km à ${newRadius}km - ${newArtisans.length} nouveaux artisans notifiés`,
+            },
+          });
+
+          this.logger.log(
+            `  📍 Mission ${mission.id} (${mission.type}): ${mission.currentSearchRadius}km → ${newRadius}km (${newArtisans.length} nouveaux artisans)`,
+          );
+
+          expandedCount++;
+        } catch (error) {
+          this.logger.error(
+            `Erreur élargissement mission ${mission.id}: ${error.message}`,
+          );
+        }
+      }
+
+      const duration = Date.now() - startTime;
+
+      if (expandedCount === 0 && maxReachedCount === 0) {
+        this.logger.log('✅ CRON terminé: Aucune mission prête pour élargissement');
+      } else {
+        this.logger.log(
+          `✅ CRON terminé: ${expandedCount} mission(s) élargie(s), ${maxReachedCount} rayon max atteint en ${duration}ms`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `❌ Erreur CRON élargissement rayon: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
+   * Calculate distance between two coordinates using Haversine formula
+   */
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371; // Earth radius in km
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) *
+        Math.cos(this.toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRad(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  /**
    * CRON: Statistiques hebdomadaires
    * S'exécute tous les lundis à 08:00
    *
@@ -304,6 +534,12 @@ export class MissionCronService {
           enabled: true,
         },
         {
+          name: 'expand-mission-radius',
+          schedule: 'Toutes les 10 minutes',
+          description: 'Élargissement automatique du rayon de recherche (+5km jusqu\'à 100km)',
+          enabled: true,
+        },
+        {
           name: 'cleanup-expired-missions',
           schedule: 'Tous les jours à 02:00',
           description: 'Nettoyage missions PENDING > 30 jours',
@@ -325,6 +561,7 @@ export class MissionCronService {
       timezone: 'Europe/Paris',
       nextExecutions: {
         autoValidate: this.getNextCronExecution('EVERY_6_HOURS'),
+        radiusExpansion: this.getNextCronExecution('EVERY_10_MINUTES'),
         cleanup: this.getNextCronExecution('DAILY_2AM'),
         alerts: this.getNextCronExecution('DAILY_10AM'),
         statistics: this.getNextCronExecution('WEEKLY'),
@@ -340,6 +577,17 @@ export class MissionCronService {
     const next = new Date(now);
 
     switch (type) {
+      case 'EVERY_10_MINUTES': {
+        const currentMinute = now.getMinutes();
+        const nextTenMinute = Math.ceil((currentMinute + 1) / 10) * 10;
+        if (nextTenMinute >= 60) {
+          next.setHours(next.getHours() + 1);
+          next.setMinutes(0, 0, 0);
+        } else {
+          next.setMinutes(nextTenMinute, 0, 0);
+        }
+        break;
+      }
       case 'EVERY_6_HOURS': {
         const hours = [0, 6, 12, 18];
         const currentHour = now.getHours();
