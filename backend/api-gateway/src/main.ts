@@ -28,16 +28,62 @@ async function bootstrap() {
     },
   );
 
-  // Security
+  // Security with strict CSP
+  const isProduction = process.env.NODE_ENV === 'production';
+
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
+        scriptSrc: [
+          "'self'",
+          // Allow Google reCAPTCHA
+          'https://www.google.com/recaptcha/',
+          'https://www.gstatic.com/recaptcha/',
+          // In dev, allow unsafe-eval for hot reload
+          ...(!isProduction ? ["'unsafe-eval'"] : []),
+        ],
+        styleSrc: [
+          "'self'",
+          // Allow Google Fonts
+          'https://fonts.googleapis.com',
+          // TODO: Remove unsafe-inline in production by using CSS-in-JS with nonces
+          // For now, keeping it for development convenience
+          "'unsafe-inline'",
+        ],
+        fontSrc: [
+          "'self'",
+          'https://fonts.gstatic.com',
+          'data:',
+        ],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'https:',
+          // S3 buckets for uploads
+          process.env.AWS_S3_BUCKET ? `https://${process.env.AWS_S3_BUCKET}.s3.amazonaws.com` : '',
+        ].filter(Boolean),
+        connectSrc: [
+          "'self'",
+          // API endpoints
+          process.env.ALLOWED_ORIGINS?.split(',') || [],
+        ].flat(),
+        frameSrc: [
+          "'self'",
+          // Google reCAPTCHA
+          'https://www.google.com/recaptcha/',
+          'https://recaptcha.google.com/recaptcha/',
+          // OAuth providers
+          'https://accounts.google.com',
+          'https://www.facebook.com',
+          'https://appleid.apple.com',
+        ],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: isProduction ? [] : null,
       },
     },
+    crossOriginEmbedderPolicy: false, // Needed for OAuth
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
   // CORS - Production-ready configuration
