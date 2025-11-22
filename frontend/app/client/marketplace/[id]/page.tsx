@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { marketplaceApi } from '@/lib/api/marketplace';
 import { useCartStore } from '@/lib/stores/cartStore';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Product {
   id: string;
@@ -51,19 +52,23 @@ interface ProductReview {
   };
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  tools: 'Outils',
-  materials: 'Matériaux',
-  decorations: 'Décoration',
-  furniture: 'Meubles',
-  equipment: 'Équipements',
-  lighting: 'Éclairage',
-};
-
 export default function ProductDetailsPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const productId = params.id as string;
+
+  const getCategoryLabel = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      tools: t('marketplace', 'tools'),
+      materials: t('marketplace', 'materials'),
+      decorations: t('marketplace', 'decorations'),
+      furniture: t('marketplace', 'furniture'),
+      equipment: t('marketplace', 'equipment'),
+      lighting: t('marketplace', 'lighting'),
+    };
+    return categoryMap[category] || category;
+  };
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -222,7 +227,7 @@ export default function ProductDetailsPage() {
     });
 
     // Show success message and option to go to cart
-    if (confirm(`✅ Produit ajouté au panier!\n\nVoulez-vous aller au panier?`)) {
+    if (confirm(`✅ ${t('marketplace', 'productAddedToCart')}\n\n${t('marketplace', 'goToCart')}`)) {
       router.push('/client/cart');
     }
   };
@@ -254,7 +259,7 @@ export default function ProductDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -263,9 +268,9 @@ export default function ProductDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Produit introuvable</p>
+          <p className="text-gray-500 mb-4">{t('marketplace', 'productNotFound')}</p>
           <Button onClick={() => router.push('/client/marketplace')}>
-            Retour au marketplace
+            {t('marketplace', 'backToMarketplace')}
           </Button>
         </div>
       </div>
@@ -278,10 +283,10 @@ export default function ProductDetailsPage() {
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-sm text-gray-600">
           <button onClick={() => router.push('/client/marketplace')} className="hover:text-gray-900">
-            Marketplace
+            {t('marketplace', 'title')}
           </button>
           <span>›</span>
-          <span>{CATEGORY_LABELS[product.category]}</span>
+          <span>{getCategoryLabel(product.category)}</span>
           <span>›</span>
           <span className="text-gray-900">{product.name}</span>
         </div>
@@ -317,7 +322,7 @@ export default function ProductDetailsPage() {
           {/* Product Info */}
           <div>
             <div className="mb-4">
-              <Badge variant="info">{CATEGORY_LABELS[product.category]}</Badge>
+              <Badge variant="info">{getCategoryLabel(product.category)}</Badge>
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
@@ -330,7 +335,7 @@ export default function ProductDetailsPage() {
                   {'☆'.repeat(5 - Math.round(averageRating))}
                 </span>
                 <span className="text-gray-600 ml-2">
-                  {averageRating.toFixed(1)} ({product.reviews.length} avis)
+                  {averageRating.toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
                 </span>
               </div>
             </div>
@@ -338,14 +343,14 @@ export default function ProductDetailsPage() {
             {/* Price */}
             <div className="mb-6">
               <span className="text-4xl font-bold text-blue-600">{getCurrentPrice().toFixed(2)}€</span>
-              <p className="text-sm text-gray-600 mt-1">TVA incluse • Livraison disponible</p>
+              <p className="text-sm text-gray-600 mt-1">{t('marketplace', 'taxIncludedDeliveryAvailable')}</p>
             </div>
 
             {/* Variants */}
             {product.variants && product.variants.length > 0 && (
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Taille / Dimensions
+                  {t('marketplace', 'sizeDimensions')}
                 </label>
                 <div className="space-y-2">
                   {product.variants.map((variant) => (
@@ -362,7 +367,7 @@ export default function ProductDetailsPage() {
                         <div>
                           <span className="font-medium">{variant.name}</span>
                           <span className="text-sm text-gray-600 ml-2">
-                            ({variant.stock} disponible{variant.stock > 1 ? 's' : ''})
+                            ({variant.stock} {variant.stock > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')})
                           </span>
                         </div>
                         <span className="font-semibold">{variant.price.toFixed(2)}€</span>
@@ -375,7 +380,7 @@ export default function ProductDetailsPage() {
 
             {/* Quantity */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantité</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('cart', 'quantity')}</label>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -395,7 +400,7 @@ export default function ProductDetailsPage() {
                   +
                 </Button>
                 <span className="text-sm text-gray-600 ml-2">
-                  {getCurrentStock()} disponible{getCurrentStock() > 1 ? 's' : ''}
+                  {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}
                 </span>
               </div>
             </div>
@@ -404,8 +409,8 @@ export default function ProductDetailsPage() {
             {getCurrentStock() < 5 && (
               <div className="mb-6 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-sm text-orange-800">
-                  ⚠️ Stock limité ! Plus que {getCurrentStock()} exemplaire{getCurrentStock() > 1 ? 's' : ''}{' '}
-                  disponible{getCurrentStock() > 1 ? 's' : ''}.
+                  ⚠️ {t('marketplace', 'stockLimited')} {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'exemplarPlural') : t('marketplace', 'exemplar')}{' '}
+                  {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}.
                 </p>
               </div>
             )}
@@ -413,10 +418,10 @@ export default function ProductDetailsPage() {
             {/* Actions */}
             <div className="space-y-3 mb-6">
               <Button className="w-full" size="lg" onClick={handleAddToCart}>
-                Ajouter au panier - {(getCurrentPrice() * quantity).toFixed(2)}€
+                {t('marketplace', 'addToCart')} - {(getCurrentPrice() * quantity).toFixed(2)}€
               </Button>
               <Button variant="outline" className="w-full" size="lg">
-                💬 Contacter pour personnalisation
+                💬 {t('marketplace', 'contactForCustomization')}
               </Button>
             </div>
 
@@ -436,7 +441,7 @@ export default function ProductDetailsPage() {
                     </p>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleContactArtisan}>
-                    Voir le profil
+                    {t('artisans', 'viewProfile')}
                   </Button>
                 </div>
               </CardContent>
@@ -450,7 +455,7 @@ export default function ProductDetailsPage() {
             {/* Description */}
             <Card>
               <CardHeader>
-                <CardTitle>Description</CardTitle>
+                <CardTitle>{t('marketplace', 'description')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 whitespace-pre-line leading-relaxed">
@@ -462,7 +467,7 @@ export default function ProductDetailsPage() {
             {/* Reviews */}
             <Card>
               <CardHeader>
-                <CardTitle>Avis clients ({product.reviews.length})</CardTitle>
+                <CardTitle>{t('marketplace', 'clientReviews')} ({product.reviews.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -509,7 +514,7 @@ export default function ProductDetailsPage() {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>Spécifications</CardTitle>
+                <CardTitle>{t('marketplace', 'specifications')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
