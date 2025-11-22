@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as crypto from 'crypto';
+import { ClamavService } from './clamav.service';
 
 export enum FileType {
   AVATAR = 'avatar',
@@ -28,7 +29,7 @@ export class S3Service {
     document: 10 * 1024 * 1024, // 10MB
   };
 
-  constructor() {
+  constructor(private readonly clamavService: ClamavService) {
     this.bucket = process.env.AWS_S3_BUCKET || 'articonnect-dev';
     this.region = process.env.AWS_REGION || 'eu-west-1';
 
@@ -53,6 +54,9 @@ export class S3Service {
   ): Promise<string> {
     // Validate file
     this.validateFile(file, fileType);
+
+    // 🛡️ ANTIVIRUS SCAN - Scan for viruses BEFORE uploading to S3
+    await this.clamavService.scanAndValidate(file.buffer, file.originalname, userId);
 
     // Generate unique filename
     const extension = this.getFileExtension(file.originalname);
@@ -88,8 +92,14 @@ export class S3Service {
     buffer: Buffer,
     filename: string,
     contentType: string,
+    skipVirusScan = false, // Allow skipping scan for generated PDFs
   ): Promise<string> {
     try {
+      // 🛡️ ANTIVIRUS SCAN - Scan for viruses BEFORE uploading (unless skipped for trusted sources)
+      if (!skipVirusScan) {
+        await this.clamavService.scanAndValidate(buffer, filename);
+      }
+
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: filename,
