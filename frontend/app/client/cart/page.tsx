@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCartStore } from '@/lib/stores/cartStore';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CartPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice } =
     useCartStore();
 
   const handleCheckout = () => {
     // TODO: Implement checkout flow with Stripe
-    alert('Checkout en cours de développement');
+    alert(t('cart', 'checkoutInDev'));
   };
 
   if (items.length === 0) {
@@ -21,16 +23,16 @@ export default function CartPage() {
       <div className="min-h-screen bg-gray-50 py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            Panier
+            {t('cart', 'title')}
           </h1>
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">🛒</div>
               <p className="text-xl text-gray-600 mb-6">
-                Votre panier est vide
+                {t('cart', 'emptyCart')}
               </p>
               <Button onClick={() => router.push('/client/marketplace')}>
-                Continuer vos achats
+                {t('cart', 'continueShopping')}
               </Button>
             </CardContent>
           </Card>
@@ -44,10 +46,10 @@ export default function CartPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Panier ({items.length} {items.length > 1 ? 'articles' : 'article'})
+            {t('cart', 'title')} ({items.length} {items.length > 1 ? t('cart', 'items') : t('cart', 'item')})
           </h1>
           <Button variant="outline" onClick={clearCart}>
-            Vider le panier
+            {t('cart', 'emptyCartButton')}
           </Button>
         </div>
 
@@ -75,12 +77,12 @@ export default function CartPage() {
                       </h3>
                       {item.variantName && (
                         <p className="text-sm text-gray-600 mb-2">
-                          Variante: {item.variantName}
+                          {t('cart', 'variant')}: {item.variantName}
                         </p>
                       )}
                       {item.artisan && (
                         <p className="text-sm text-gray-500">
-                          Vendeur: {item.artisan.name}
+                          {t('cart', 'seller')}: {item.artisan.name}
                         </p>
                       )}
 
@@ -140,7 +142,7 @@ export default function CartPage() {
                           onClick={() => removeItem(item.productId, item.variantId)}
                           className="ml-auto text-red-600 hover:text-red-700"
                         >
-                          Supprimer
+                          {t('cart', 'remove')}
                         </Button>
                       </div>
                     </div>
@@ -155,28 +157,28 @@ export default function CartPage() {
             <Card className="sticky top-24">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Récapitulatif
+                  {t('cart', 'summary')}
                 </h2>
 
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-gray-700">
-                    <span>Sous-total</span>
+                    <span>{t('cart', 'subtotal')}</span>
                     <span>{getTotalPrice().toFixed(2)}€</span>
                   </div>
                   <div className="flex justify-between text-gray-700">
-                    <span>Livraison</span>
-                    <span>Gratuite</span>
+                    <span>{t('cart', 'shipping')}</span>
+                    <span>{t('cart', 'free')}</span>
                   </div>
                   <div className="border-t pt-3">
                     <div className="flex justify-between text-xl font-bold text-gray-900">
-                      <span>Total</span>
+                      <span>{t('cart', 'total')}</span>
                       <span>{getTotalPrice().toFixed(2)}€</span>
                     </div>
                   </div>
                 </div>
 
                 <Button className="w-full mb-3" size="lg" onClick={handleCheckout}>
-                  Passer la commande
+                  {t('cart', 'placeOrder')}
                 </Button>
 
                 <Button
@@ -184,12 +186,12 @@ export default function CartPage() {
                   className="w-full"
                   onClick={() => router.push('/client/marketplace')}
                 >
-                  Continuer mes achats
+                  {t('cart', 'continueShopping')}
                 </Button>
 
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <strong>Paiement sécurisé</strong> via Stripe
+                    <strong>{t('cart', 'securePayment')}</strong> via Stripe
                   </p>
                 </div>
               </CardContent>

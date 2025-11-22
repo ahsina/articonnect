@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { marketplaceApi } from '@/lib/api/marketplace';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderItem {
   id: string;
@@ -40,13 +41,6 @@ interface Order {
   trackingNumber?: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'En attente',
-  CONFIRMED: 'Confirmée',
-  SHIPPED: 'Expédiée',
-  DELIVERED: 'Livrée',
-  CANCELLED: 'Annulée',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -57,11 +51,23 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ClientOrdersPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      PENDING: t('common', 'pending'),
+      CONFIRMED: t('orders', 'confirmed'),
+      SHIPPED: t('orders', 'shipped'),
+      DELIVERED: t('orders', 'delivered'),
+      CANCELLED: t('common', 'cancelled'),
+    };
+    return statusMap[status] || status;
+  };
 
   useEffect(() => {
     loadOrders();
@@ -95,7 +101,7 @@ export default function ClientOrdersPage() {
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
+    if (!confirm(t('orders', 'cancelConfirm'))) return;
 
     try {
       await marketplaceApi.updateOrderStatus(orderId, 'CANCELLED');
@@ -113,7 +119,7 @@ export default function ClientOrdersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -123,9 +129,9 @@ export default function ClientOrdersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes commandes</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('orders', 'title')}</h1>
           <p className="text-gray-600">
-            Suivez l'état de vos commandes et consultez votre historique
+            {t('orders', 'trackOrders')}
           </p>
         </div>
 
@@ -133,13 +139,13 @@ export default function ClientOrdersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">Total commandes</div>
+              <div className="text-sm text-gray-600">{t('orders', 'totalOrders')}</div>
               <div className="text-2xl font-bold">{orders.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">En attente</div>
+              <div className="text-sm text-gray-600">{t('common', 'pending')}</div>
               <div className="text-2xl font-bold text-yellow-600">
                 {orders.filter((o) => o.status === 'PENDING').length}
               </div>
@@ -147,7 +153,7 @@ export default function ClientOrdersPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">En cours</div>
+              <div className="text-sm text-gray-600">{t('orders', 'inProgress')}</div>
               <div className="text-2xl font-bold text-blue-600">
                 {orders.filter((o) => ['CONFIRMED', 'SHIPPED'].includes(o.status)).length}
               </div>
@@ -155,7 +161,7 @@ export default function ClientOrdersPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">Livrées</div>
+              <div className="text-sm text-gray-600">{t('orders', 'delivered')}</div>
               <div className="text-2xl font-bold text-green-600">
                 {orders.filter((o) => o.status === 'DELIVERED').length}
               </div>
@@ -169,31 +175,31 @@ export default function ClientOrdersPage() {
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
           >
-            Toutes ({orders.length})
+            {t('orders', 'all')} ({orders.length})
           </Button>
           <Button
             variant={filter === 'PENDING' ? 'default' : 'outline'}
             onClick={() => setFilter('PENDING')}
           >
-            En attente ({orders.filter((o) => o.status === 'PENDING').length})
+            {t('common', 'pending')} ({orders.filter((o) => o.status === 'PENDING').length})
           </Button>
           <Button
             variant={filter === 'CONFIRMED' ? 'default' : 'outline'}
             onClick={() => setFilter('CONFIRMED')}
           >
-            Confirmées ({orders.filter((o) => o.status === 'CONFIRMED').length})
+            {t('orders', 'confirmed')} ({orders.filter((o) => o.status === 'CONFIRMED').length})
           </Button>
           <Button
             variant={filter === 'SHIPPED' ? 'default' : 'outline'}
             onClick={() => setFilter('SHIPPED')}
           >
-            Expédiées ({orders.filter((o) => o.status === 'SHIPPED').length})
+            {t('orders', 'shipped')} ({orders.filter((o) => o.status === 'SHIPPED').length})
           </Button>
           <Button
             variant={filter === 'DELIVERED' ? 'default' : 'outline'}
             onClick={() => setFilter('DELIVERED')}
           >
-            Livrées ({orders.filter((o) => o.status === 'DELIVERED').length})
+            {t('orders', 'delivered')} ({orders.filter((o) => o.status === 'DELIVERED').length})
           </Button>
         </div>
 
@@ -203,9 +209,9 @@ export default function ClientOrdersPage() {
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">📦</div>
-                <p className="text-gray-500 mb-4">Aucune commande trouvée</p>
+                <p className="text-gray-500 mb-4">{t('orders', 'noOrders')}</p>
                 <Button onClick={() => router.push('/client/marketplace')}>
-                  Découvrir le marketplace
+                  {t('orders', 'discoverMarketplace')}
                 </Button>
               </CardContent>
             </Card>
@@ -218,14 +224,14 @@ export default function ClientOrdersPage() {
                     <div>
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-semibold text-gray-900">
-                          Commande {order.orderNumber}
+                          {t('orders', 'order')} {order.orderNumber}
                         </h3>
                         <Badge className={STATUS_COLORS[order.status]}>
-                          {STATUS_LABELS[order.status]}
+                          {getStatusLabel(order.status)}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600">
-                        Commandé le {formatDate(order.createdAt)}
+                        {t('orders', 'orderedOn')} {formatDate(order.createdAt)}
                       </p>
                     </div>
                     <div className="text-right">
@@ -233,7 +239,7 @@ export default function ClientOrdersPage() {
                         {order.totalAmount}€
                       </div>
                       <p className="text-sm text-gray-600">
-                        {order.items.reduce((sum, item) => sum + item.quantity, 0)} article(s)
+                        {order.items.reduce((sum, item) => sum + item.quantity, 0)} {order.items.reduce((sum, item) => sum + item.quantity, 0) > 1 ? t('cart', 'items') : t('cart', 'item')}
                       </p>
                     </div>
                   </div>
@@ -246,7 +252,7 @@ export default function ClientOrdersPage() {
                       className="w-10 h-10 rounded-full"
                     />
                     <div>
-                      <p className="text-sm text-gray-600">Vendu par</p>
+                      <p className="text-sm text-gray-600">{t('orders', 'soldBy')}</p>
                       <p className="font-semibold text-gray-900">
                         {order.artisan.firstName} {order.artisan.lastName}
                       </p>
@@ -265,7 +271,7 @@ export default function ClientOrdersPage() {
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{item.productName}</p>
                           <p className="text-sm text-gray-600">
-                            Quantité: {item.quantity} × {item.price}€
+                            {t('cart', 'quantity')}: {item.quantity} × {item.price}€
                           </p>
                         </div>
                         <div className="text-right">
@@ -281,11 +287,11 @@ export default function ClientOrdersPage() {
                   {order.trackingNumber && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                       <p className="text-sm font-medium text-blue-900">
-                        Numéro de suivi: {order.trackingNumber}
+                        {t('orders', 'trackingNumber')}: {order.trackingNumber}
                       </p>
                       {order.deliveredAt && (
                         <p className="text-xs text-blue-700 mt-1">
-                          Livré le {formatDate(order.deliveredAt)}
+                          {t('orders', 'deliveredOn')} {formatDate(order.deliveredAt)}
                         </p>
                       )}
                     </div>
@@ -298,7 +304,7 @@ export default function ClientOrdersPage() {
                       size="sm"
                       onClick={() => setSelectedOrder(order)}
                     >
-                      Voir les détails
+                      {t('orders', 'viewDetails')}
                     </Button>
 
                     {order.status === 'DELIVERED' && (
@@ -307,7 +313,7 @@ export default function ClientOrdersPage() {
                         size="sm"
                         onClick={() => router.push(`/client/marketplace/${order.items[0].productId}`)}
                       >
-                        Laisser un avis
+                        {t('orders', 'leaveReview')}
                       </Button>
                     )}
 
@@ -318,7 +324,7 @@ export default function ClientOrdersPage() {
                         onClick={() => handleCancelOrder(order.id)}
                         className="text-red-600 hover:text-red-700"
                       >
-                        Annuler la commande
+                        {t('orders', 'cancelOrder')}
                       </Button>
                     )}
 
@@ -327,7 +333,7 @@ export default function ClientOrdersPage() {
                       size="sm"
                       onClick={() => router.push(`/client/messages?userId=${order.artisan.id}`)}
                     >
-                      💬 Contacter le vendeur
+                      💬 {t('orders', 'contactSeller')}
                     </Button>
                   </div>
                 </CardContent>
@@ -342,7 +348,7 @@ export default function ClientOrdersPage() {
             <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Détails de la commande</CardTitle>
+                  <CardTitle>{t('orders', 'orderDetails')}</CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -356,22 +362,22 @@ export default function ClientOrdersPage() {
                 <div className="space-y-4">
                   {/* Order Number and Status */}
                   <div>
-                    <p className="text-sm text-gray-600">Numéro de commande</p>
+                    <p className="text-sm text-gray-600">{t('orders', 'orderNumber')}</p>
                     <p className="font-semibold text-lg">{selectedOrder.orderNumber}</p>
                     <Badge className={`${STATUS_COLORS[selectedOrder.status]} mt-2`}>
-                      {STATUS_LABELS[selectedOrder.status]}
+                      {getStatusLabel(selectedOrder.status)}
                     </Badge>
                   </div>
 
                   {/* Dates */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Date de commande</p>
+                      <p className="text-sm text-gray-600">{t('orders', 'orderDate')}</p>
                       <p className="font-medium">{formatDate(selectedOrder.createdAt)}</p>
                     </div>
                     {selectedOrder.deliveredAt && (
                       <div>
-                        <p className="text-sm text-gray-600">Date de livraison</p>
+                        <p className="text-sm text-gray-600">{t('orders', 'deliveryDate')}</p>
                         <p className="font-medium">{formatDate(selectedOrder.deliveredAt)}</p>
                       </div>
                     )}
@@ -379,7 +385,7 @@ export default function ClientOrdersPage() {
 
                   {/* Items */}
                   <div>
-                    <p className="text-sm text-gray-600 mb-3">Articles commandés</p>
+                    <p className="text-sm text-gray-600 mb-3">{t('orders', 'orderedItems')}</p>
                     <div className="space-y-3">
                       {selectedOrder.items.map((item) => (
                         <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
@@ -404,7 +410,7 @@ export default function ClientOrdersPage() {
 
                   {/* Shipping Address */}
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Adresse de livraison</p>
+                    <p className="text-sm text-gray-600 mb-2">{t('orders', 'shippingAddress')}</p>
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <p className="font-medium">{selectedOrder.shippingAddress.address}</p>
                       <p className="text-gray-700">
@@ -417,7 +423,7 @@ export default function ClientOrdersPage() {
                   {/* Tracking */}
                   {selectedOrder.trackingNumber && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-2">Suivi de livraison</p>
+                      <p className="text-sm text-gray-600 mb-2">{t('orders', 'deliveryTracking')}</p>
                       <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="font-medium text-blue-900">
                           {selectedOrder.trackingNumber}
@@ -429,7 +435,7 @@ export default function ClientOrdersPage() {
                   {/* Total */}
                   <div className="pt-4 border-t border-gray-200">
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-medium">Total</span>
+                      <span className="text-lg font-medium">{t('cart', 'total')}</span>
                       <span className="text-2xl font-bold text-gray-900">
                         {selectedOrder.totalAmount}€
                       </span>
