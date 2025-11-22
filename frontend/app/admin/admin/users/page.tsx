@@ -6,8 +6,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function AdminUsersPage() {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -33,24 +35,24 @@ export default function AdminUsersPage() {
   };
 
   const handleSuspend = async (userId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir suspendre cet utilisateur ?')) {
+    if (!confirm(t('admin', 'confirmSuspend'))) {
       return;
     }
 
     try {
-      const reason = prompt('Raison de la suspension :');
+      const reason = prompt(t('admin', 'suspensionReason'));
       if (!reason) return;
 
       await adminApi.suspendUser(userId, reason);
       loadUsers();
     } catch (error) {
       console.error('Error suspending user:', error);
-      alert('Erreur lors de la suspension');
+      alert(t('admin', 'suspensionError'));
     }
   };
 
   const handleUnsuspend = async (userId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir réactiver cet utilisateur ?')) {
+    if (!confirm(t('admin', 'confirmReactivate'))) {
       return;
     }
 
@@ -59,7 +61,7 @@ export default function AdminUsersPage() {
       loadUsers();
     } catch (error) {
       console.error('Error unsuspending user:', error);
-      alert('Erreur lors de la réactivation');
+      alert(t('admin', 'reactivationError'));
     }
   };
 
@@ -73,7 +75,7 @@ export default function AdminUsersPage() {
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Jamais';
+    if (!dateString) return t('admin', 'never');
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR');
   };
@@ -84,10 +86,10 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Gestion des utilisateurs
+            {t('admin', 'userManagement')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Gérer et modérer les comptes utilisateurs
+            {t('admin', 'manageModerateAccounts')}
           </p>
         </div>
 
@@ -96,7 +98,7 @@ export default function AdminUsersPage() {
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Input
-                placeholder="Rechercher par email ou nom..."
+                placeholder={t('admin', 'searchByEmailOrName')}
                 value={filters.search}
                 onChange={(e) =>
                   setFilters({ ...filters, search: e.target.value })
@@ -110,10 +112,10 @@ export default function AdminUsersPage() {
                   setFilters({ ...filters, role: e.target.value })
                 }
               >
-                <option value="">Tous les rôles</option>
-                <option value="CLIENT">Clients</option>
-                <option value="ARTISAN">Artisans</option>
-                <option value="ADMIN">Administrateurs</option>
+                <option value="">{t('admin', 'allRoles')}</option>
+                <option value="CLIENT">{t('admin', 'clients')}</option>
+                <option value="ARTISAN">{t('admin', 'artisans')}</option>
+                <option value="ADMIN">{t('admin', 'administrators')}</option>
               </select>
 
               <select
@@ -133,12 +135,12 @@ export default function AdminUsersPage() {
                   })
                 }
               >
-                <option value="">Tous les statuts</option>
-                <option value="false">Actifs</option>
-                <option value="true">Suspendus</option>
+                <option value="">{t('admin', 'allStatuses')}</option>
+                <option value="false">{t('admin', 'actives')}</option>
+                <option value="true">{t('admin', 'suspended')}</option>
               </select>
 
-              <Button onClick={loadUsers}>Rafraîchir</Button>
+              <Button onClick={loadUsers}>{t('admin', 'refresh')}</Button>
             </div>
           </CardContent>
         </Card>
@@ -150,7 +152,7 @@ export default function AdminUsersPage() {
               <div className="text-2xl font-bold text-gray-900">
                 {users.length}
               </div>
-              <div className="text-sm text-gray-600">Utilisateurs</div>
+              <div className="text-sm text-gray-600">{t('admin', 'users')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -158,7 +160,7 @@ export default function AdminUsersPage() {
               <div className="text-2xl font-bold text-blue-600">
                 {users.filter((u) => u.role === 'CLIENT').length}
               </div>
-              <div className="text-sm text-gray-600">Clients</div>
+              <div className="text-sm text-gray-600">{t('admin', 'clients')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -166,7 +168,7 @@ export default function AdminUsersPage() {
               <div className="text-2xl font-bold text-yellow-600">
                 {users.filter((u) => u.role === 'ARTISAN').length}
               </div>
-              <div className="text-sm text-gray-600">Artisans</div>
+              <div className="text-sm text-gray-600">{t('admin', 'artisans')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -174,7 +176,7 @@ export default function AdminUsersPage() {
               <div className="text-2xl font-bold text-red-600">
                 {users.filter((u) => u.suspended).length}
               </div>
-              <div className="text-sm text-gray-600">Suspendus</div>
+              <div className="text-sm text-gray-600">{t('admin', 'suspended')}</div>
             </CardContent>
           </Card>
         </div>
@@ -182,16 +184,16 @@ export default function AdminUsersPage() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Liste des utilisateurs</CardTitle>
+            <CardTitle>{t('admin', 'userList')}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-8 text-gray-500">
-                Chargement...
+                {t('common', 'loading')}
               </div>
             ) : users.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                Aucun utilisateur trouvé
+                {t('admin', 'noUsersFound')}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -199,22 +201,22 @@ export default function AdminUsersPage() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Utilisateur
+                        {t('admin', 'user')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Email
+                        {t('admin', 'email')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Rôle
+                        {t('admin', 'role')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Statut
+                        {t('admin', 'status')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Inscription
+                        {t('admin', 'registration')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Actions
+                        {t('admin', 'actions')}
                       </th>
                     </tr>
                   </thead>
@@ -244,11 +246,11 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           {user.suspended ? (
-                            <Badge variant="error">Suspendu</Badge>
+                            <Badge variant="error">{t('admin', 'suspendedStatus')}</Badge>
                           ) : user.emailVerified ? (
-                            <Badge variant="success">Vérifié</Badge>
+                            <Badge variant="success">{t('admin', 'verifiedStatus')}</Badge>
                           ) : (
-                            <Badge variant="warning">Non vérifié</Badge>
+                            <Badge variant="warning">{t('admin', 'notVerifiedStatus')}</Badge>
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -261,7 +263,7 @@ export default function AdminUsersPage() {
                               variant="outline"
                               onClick={() => handleUnsuspend(user.id)}
                             >
-                              Réactiver
+                              {t('admin', 'reactivate')}
                             </Button>
                           ) : (
                             <Button
@@ -269,7 +271,7 @@ export default function AdminUsersPage() {
                               variant="destructive"
                               onClick={() => handleSuspend(user.id)}
                             >
-                              Suspendre
+                              {t('admin', 'suspend')}
                             </Button>
                           )}
                         </td>
