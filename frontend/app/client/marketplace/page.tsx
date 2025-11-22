@@ -8,19 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { marketplaceApi, PaginatedResponse, Product } from '@/lib/api/marketplace';
-
-const CATEGORIES = [
-  { id: 'all', name: 'Tous', icon: '🔍' },
-  { id: 'tools', name: 'Outils', icon: '🔧' },
-  { id: 'materials', name: 'Matériaux', icon: '🧱' },
-  { id: 'decorations', name: 'Décoration', icon: '🎨' },
-  { id: 'furniture', name: 'Meubles', icon: '🪑' },
-  { id: 'equipment', name: 'Équipements', icon: '⚙️' },
-  { id: 'lighting', name: 'Éclairage', icon: '💡' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function MarketplacePage() {
+  const { t } = useLanguage();
   const router = useRouter();
+
+  const CATEGORIES = [
+    { id: 'all', name: t('marketplace', 'all'), icon: '🔍' },
+    { id: 'tools', name: t('marketplace', 'tools'), icon: '🔧' },
+    { id: 'materials', name: t('marketplace', 'materials'), icon: '🧱' },
+    { id: 'decorations', name: t('marketplace', 'decorations'), icon: '🎨' },
+    { id: 'furniture', name: t('marketplace', 'furniture'), icon: '🪑' },
+    { id: 'equipment', name: t('marketplace', 'equipment'), icon: '⚙️' },
+    { id: 'lighting', name: t('marketplace', 'lighting'), icon: '💡' },
+  ];
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
