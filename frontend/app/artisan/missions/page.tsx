@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { missionsApi } from '@/lib/api/missions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Mission {
   id: string;
@@ -27,14 +28,6 @@ interface Mission {
   distance?: number;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'En attente',
-  ACCEPTED: 'Acceptée',
-  IN_PROGRESS: 'En cours',
-  COMPLETED: 'Terminée',
-  CANCELLED: 'Annulée',
-};
-
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
   ACCEPTED: 'bg-blue-100 text-blue-800',
@@ -44,10 +37,19 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ArtisanMissionsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS'>('all');
+
+  const STATUS_LABELS: Record<string, string> = {
+    PENDING: t('missions', 'pending'),
+    ACCEPTED: t('artisan', 'accepted'),
+    IN_PROGRESS: t('missions', 'inProgress'),
+    COMPLETED: t('missions', 'completed'),
+    CANCELLED: t('missions', 'cancelled'),
+  };
 
   useEffect(() => {
     loadMissions();
@@ -110,7 +112,7 @@ export default function ArtisanMissionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -120,9 +122,9 @@ export default function ArtisanMissionsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes missions</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('artisan', 'myMissions')}</h1>
           <p className="text-gray-600">
-            Gérez vos missions et suivez leur avancement
+            {t('artisan', 'manageMissions')}
           </p>
         </div>
 
@@ -132,25 +134,25 @@ export default function ArtisanMissionsPage() {
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
           >
-            Toutes ({missions.length})
+            {t('artisan', 'all')} ({missions.length})
           </Button>
           <Button
             variant={filter === 'PENDING' ? 'default' : 'outline'}
             onClick={() => setFilter('PENDING')}
           >
-            En attente ({missions.filter((m) => m.status === 'PENDING').length})
+            {t('missions', 'pending')} ({missions.filter((m) => m.status === 'PENDING').length})
           </Button>
           <Button
             variant={filter === 'ACCEPTED' ? 'default' : 'outline'}
             onClick={() => setFilter('ACCEPTED')}
           >
-            Acceptées ({missions.filter((m) => m.status === 'ACCEPTED').length})
+            {t('artisan', 'accepted')} ({missions.filter((m) => m.status === 'ACCEPTED').length})
           </Button>
           <Button
             variant={filter === 'IN_PROGRESS' ? 'default' : 'outline'}
             onClick={() => setFilter('IN_PROGRESS')}
           >
-            En cours ({missions.filter((m) => m.status === 'IN_PROGRESS').length})
+            {t('missions', 'inProgress')} ({missions.filter((m) => m.status === 'IN_PROGRESS').length})
           </Button>
         </div>
 
@@ -159,9 +161,9 @@ export default function ArtisanMissionsPage() {
           {filteredMissions.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <p className="text-gray-500 mb-4">Aucune mission trouvée</p>
+                <p className="text-gray-500 mb-4">{t('artisan', 'noMissionsFound')}</p>
                 <Button onClick={() => router.push('/artisan/dashboard')}>
-                  Retour au tableau de bord
+                  {t('artisan', 'backToDashboard')}
                 </Button>
               </CardContent>
             </Card>
@@ -184,7 +186,7 @@ export default function ArtisanMissionsPage() {
                                 {mission.title}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                Par {mission.client.firstName} {mission.client.lastName} • {mission.client.city}
+                                {t('artisan', 'by')} {mission.client.firstName} {mission.client.lastName} • {mission.client.city}
                               </p>
                             </div>
                             <Badge className={STATUS_COLORS[mission.status]}>
@@ -196,21 +198,21 @@ export default function ArtisanMissionsPage() {
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div>
-                              <span className="text-gray-600">Catégorie:</span>
+                              <span className="text-gray-600">{t('artisan', 'category')}:</span>
                               <p className="font-semibold">{mission.category}</p>
                             </div>
                             <div>
-                              <span className="text-gray-600">Prix:</span>
+                              <span className="text-gray-600">{t('artisan', 'price')}:</span>
                               <p className="font-semibold text-green-600">
                                 {mission.price}€
                               </p>
                             </div>
                             <div>
-                              <span className="text-gray-600">Distance:</span>
+                              <span className="text-gray-600">{t('artisan', 'distance')}:</span>
                               <p className="font-semibold">{mission.distance} km</p>
                             </div>
                             <div>
-                              <span className="text-gray-600">Adresse:</span>
+                              <span className="text-gray-600">{t('artisan', 'address')}:</span>
                               <p className="font-semibold">
                                 {mission.address}, {mission.city}
                               </p>
@@ -219,7 +221,7 @@ export default function ArtisanMissionsPage() {
 
                           {mission.scheduledDate && (
                             <div className="mt-3 text-sm">
-                              <span className="text-gray-600">Date prévue:</span>
+                              <span className="text-gray-600">{t('artisan', 'scheduledDate')}:</span>
                               <p className="font-semibold">
                                 📅 {formatDate(mission.scheduledDate)}
                               </p>
@@ -233,7 +235,7 @@ export default function ArtisanMissionsPage() {
                               size="sm"
                               onClick={() => router.push(`/artisan/missions/${mission.id}`)}
                             >
-                              Voir détails
+                              {t('artisan', 'viewDetails')}
                             </Button>
 
                             {mission.status === 'PENDING' && (
@@ -241,7 +243,7 @@ export default function ArtisanMissionsPage() {
                                 size="sm"
                                 onClick={() => handleAcceptMission(mission.id)}
                               >
-                                Accepter la mission
+                                {t('artisan', 'acceptMission')}
                               </Button>
                             )}
 
@@ -250,7 +252,7 @@ export default function ArtisanMissionsPage() {
                                 size="sm"
                                 onClick={() => handleStartMission(mission.id)}
                               >
-                                Démarrer la mission
+                                {t('artisan', 'startMission')}
                               </Button>
                             )}
 
@@ -259,7 +261,7 @@ export default function ArtisanMissionsPage() {
                                 size="sm"
                                 onClick={() => router.push(`/artisan/missions/${mission.id}`)}
                               >
-                                Terminer la mission
+                                {t('artisan', 'completeMission')}
                               </Button>
                             )}
 
@@ -268,7 +270,7 @@ export default function ArtisanMissionsPage() {
                               size="sm"
                               onClick={() => router.push(`/client/messages?userId=${mission.client}`)}
                             >
-                              💬 Contacter
+                              💬 {t('artisan', 'contact')}
                             </Button>
                           </div>
                         </div>

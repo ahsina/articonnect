@@ -7,22 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { marketplaceApi, Product } from '@/lib/api/marketplace';
-
-const CATEGORIES = [
-  { id: 'tools', name: 'Outils' },
-  { id: 'materials', name: 'Matériaux' },
-  { id: 'decorations', name: 'Décoration' },
-  { id: 'furniture', name: 'Meubles' },
-  { id: 'equipment', name: 'Équipements' },
-  { id: 'lighting', name: 'Éclairage' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ArtisanProductsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const CATEGORIES = [
+    { id: 'tools', name: t('marketplace', 'tools') },
+    { id: 'materials', name: t('marketplace', 'materials') },
+    { id: 'decorations', name: t('marketplace', 'decorations') },
+    { id: 'furniture', name: t('marketplace', 'furniture') },
+    { id: 'equipment', name: t('marketplace', 'equipment') },
+    { id: 'lighting', name: t('marketplace', 'lighting') },
+  ];
 
   useEffect(() => {
     loadProducts();
@@ -59,7 +61,7 @@ export default function ArtisanProductsPage() {
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
+    if (!confirm(t('artisan', 'deleteProductConfirm'))) return;
 
     try {
       await marketplaceApi.deleteProduct(productId);
@@ -76,7 +78,7 @@ export default function ArtisanProductsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -87,13 +89,13 @@ export default function ArtisanProductsPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes produits</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('artisan', 'myProducts')}</h1>
             <p className="text-gray-600">
-              Gérez vos produits sur le marketplace
+              {t('artisan', 'manageProducts')}
             </p>
           </div>
           <Button onClick={() => setShowAddModal(true)}>
-            + Ajouter un produit
+            + {t('artisan', 'addProduct')}
           </Button>
         </div>
 
@@ -101,13 +103,13 @@ export default function ArtisanProductsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">Total produits</div>
+              <div className="text-sm text-gray-600">{t('artisan', 'totalProducts')}</div>
               <div className="text-2xl font-bold">{products.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">Actifs</div>
+              <div className="text-sm text-gray-600">{t('artisan', 'active')}</div>
               <div className="text-2xl font-bold text-green-600">
                 {products.filter((p) => p.status === 'ACTIVE').length}
               </div>
@@ -115,7 +117,7 @@ export default function ArtisanProductsPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">En rupture</div>
+              <div className="text-sm text-gray-600">{t('artisan', 'outOfStock')}</div>
               <div className="text-2xl font-bold text-red-600">
                 {products.filter((p) => p.stock === 0).length}
               </div>
@@ -123,7 +125,7 @@ export default function ArtisanProductsPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">Valeur stock</div>
+              <div className="text-sm text-gray-600">{t('artisan', 'stockValue')}</div>
               <div className="text-2xl font-bold text-blue-600">
                 {products.reduce((sum, p) => sum + p.price * p.stock, 0).toFixed(0)}€
               </div>
@@ -138,10 +140,10 @@ export default function ArtisanProductsPage() {
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">📦</div>
                 <p className="text-gray-500 mb-4">
-                  Vous n'avez pas encore de produits
+                  {t('artisan', 'noProducts')}
                 </p>
                 <Button onClick={() => setShowAddModal(true)}>
-                  Ajouter votre premier produit
+                  {t('artisan', 'addFirstProduct')}
                 </Button>
               </CardContent>
             </Card>
@@ -171,16 +173,16 @@ export default function ArtisanProductsPage() {
                         <div className="flex items-center gap-2">
                           {product.status === 'ACTIVE' ? (
                             <Badge variant="success" className="bg-green-100 text-green-800">
-                              Actif
+                              {t('artisan', 'activeStatus')}
                             </Badge>
                           ) : (
                             <Badge variant="default" className="bg-gray-100 text-gray-800">
-                              Inactif
+                              {t('artisan', 'inactiveStatus')}
                             </Badge>
                           )}
                           {product.stock === 0 && (
                             <Badge variant="error" className="bg-red-100 text-red-800">
-                              Rupture
+                              {t('artisan', 'outOfStockStatus')}
                             </Badge>
                           )}
                         </div>
@@ -192,15 +194,15 @@ export default function ArtisanProductsPage() {
 
                       <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                         <div>
-                          <span className="text-gray-600">Prix:</span>
+                          <span className="text-gray-600">{t('artisan', 'price')}:</span>
                           <p className="font-semibold text-lg">{product.price}€</p>
                         </div>
                         <div>
-                          <span className="text-gray-600">Stock:</span>
+                          <span className="text-gray-600">{t('artisan', 'stock')}:</span>
                           <p className="font-semibold text-lg">{product.stock}</p>
                         </div>
                         <div>
-                          <span className="text-gray-600">Valeur:</span>
+                          <span className="text-gray-600">{t('artisan', 'value')}:</span>
                           <p className="font-semibold text-lg">
                             {(product.price * product.stock).toFixed(0)}€
                           </p>
@@ -214,21 +216,21 @@ export default function ArtisanProductsPage() {
                           size="sm"
                           onClick={() => router.push(`/client/marketplace/${product.id}`)}
                         >
-                          👁️ Voir
+                          👁️ {t('artisan', 'view')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setEditingProduct(product)}
                         >
-                          ✏️ Modifier
+                          ✏️ {t('common', 'edit')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleToggleActive(product.id)}
                         >
-                          {product.status === 'ACTIVE' ? '⏸️ Désactiver' : '▶️ Activer'}
+                          {product.status === 'ACTIVE' ? `⏸️ ${t('artisan', 'deactivate')}` : `▶️ ${t('artisan', 'activate')}`}
                         </Button>
                         <Button
                           variant="outline"
@@ -236,7 +238,7 @@ export default function ArtisanProductsPage() {
                           onClick={() => handleDeleteProduct(product.id)}
                           className="text-red-600 hover:text-red-700"
                         >
-                          🗑️ Supprimer
+                          🗑️ {t('common', 'delete')}
                         </Button>
                       </div>
                     </div>
@@ -253,7 +255,7 @@ export default function ArtisanProductsPage() {
             <Card className="w-full max-w-2xl">
               <CardHeader>
                 <CardTitle>
-                  {editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}
+                  {editingProduct ? t('artisan', 'editProduct') : t('artisan', 'addProduct')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -268,9 +270,9 @@ export default function ArtisanProductsPage() {
                       setEditingProduct(null);
                     }}
                   >
-                    Annuler
+                    {t('common', 'cancel')}
                   </Button>
-                  <Button>Enregistrer</Button>
+                  <Button>{t('common', 'save')}</Button>
                 </div>
               </CardContent>
             </Card>

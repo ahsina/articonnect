@@ -6,19 +6,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
-const SPECIALTIES = [
-  { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
-  { id: 'electricite', name: 'Électricité', icon: '⚡' },
-  { id: 'peinture', name: 'Peinture', icon: '🎨' },
-  { id: 'menuiserie', name: 'Menuiserie', icon: '🪚' },
-  { id: 'maconnerie', name: 'Maçonnerie', icon: '🧱' },
-  { id: 'jardinage', name: 'Jardinage', icon: '🌿' },
-  { id: 'climatisation', name: 'Climatisation', icon: '❄️' },
-  { id: 'serrurerie', name: 'Serrurerie', icon: '🔐' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ArtisanProfilePage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isSetup = searchParams.get('setup') === 'true';
@@ -39,6 +30,17 @@ export default function ArtisanProfilePage() {
     hourlyRate: '',
   });
 
+  const SPECIALTIES = [
+    { id: 'plomberie', name: t('artisan', 'plumbing'), icon: '🔧' },
+    { id: 'electricite', name: t('artisan', 'electricity'), icon: '⚡' },
+    { id: 'peinture', name: t('artisan', 'painting'), icon: '🎨' },
+    { id: 'menuiserie', name: t('artisan', 'carpentry'), icon: '🪚' },
+    { id: 'maconnerie', name: t('artisan', 'masonry'), icon: '🧱' },
+    { id: 'jardinage', name: t('artisan', 'gardening'), icon: '🌿' },
+    { id: 'climatisation', name: t('artisan', 'airConditioning'), icon: '❄️' },
+    { id: 'serrurerie', name: t('artisan', 'locksmith'), icon: '🔐' },
+  ];
+
   const handleSpecialtyToggle = (specialtyId: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -53,12 +55,12 @@ export default function ArtisanProfilePage() {
     setError('');
 
     if (!formData.companyName || !formData.siret) {
-      setError('Nom de l\'entreprise et SIRET sont obligatoires');
+      setError(t('artisan', 'companyRequired'));
       return;
     }
 
     if (formData.specialties.length === 0) {
-      setError('Veuillez sélectionner au moins une spécialité');
+      setError(t('artisan', 'selectSpecialty'));
       return;
     }
 
@@ -72,7 +74,7 @@ export default function ArtisanProfilePage() {
 
       router.push('/artisan/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+      setError(err.response?.data?.message || t('common', 'error'));
     } finally {
       setLoading(false);
     }
@@ -85,16 +87,16 @@ export default function ArtisanProfilePage() {
         <div className="mb-8">
           {isSetup && (
             <Badge variant="info" className="mb-4">
-              Configuration initiale
+              {t('artisan', 'initialSetup')}
             </Badge>
           )}
           <h1 className="text-3xl font-bold text-gray-900">
-            {isSetup ? 'Complétez votre profil artisan' : 'Mon profil'}
+            {isSetup ? t('artisan', 'completeProfile') : t('artisan', 'myProfile')}
           </h1>
           <p className="text-gray-600 mt-2">
             {isSetup
-              ? 'Quelques informations supplémentaires pour commencer à recevoir des missions'
-              : 'Gérez vos informations professionnelles'}
+              ? t('artisan', 'setupDescription')
+              : t('artisan', 'manageInfo')}
           </p>
         </div>
 
@@ -102,12 +104,12 @@ export default function ArtisanProfilePage() {
           {/* Company Information */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Informations de l'entreprise</CardTitle>
+              <CardTitle>{t('artisan', 'companyInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom de l'entreprise *
+                  {t('artisan', 'companyName')} *
                 </label>
                 <Input
                   value={formData.companyName}
@@ -122,7 +124,7 @@ export default function ArtisanProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    SIRET *
+                    {t('artisan', 'siret')} *
                   </label>
                   <Input
                     value={formData.siret}
@@ -136,7 +138,7 @@ export default function ArtisanProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Téléphone
+                    {t('auth', 'phone')}
                   </label>
                   <Input
                     value={formData.phone}
@@ -150,7 +152,7 @@ export default function ArtisanProfilePage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description de l'activité
+                  {t('artisan', 'businessDescription')}
                 </label>
                 <textarea
                   value={formData.description}
@@ -168,7 +170,7 @@ export default function ArtisanProfilePage() {
           {/* Specialties */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Spécialités *</CardTitle>
+              <CardTitle>{t('artisan', 'specialties')} *</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -196,13 +198,13 @@ export default function ArtisanProfilePage() {
           {/* Service Area */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Zone d'intervention</CardTitle>
+              <CardTitle>{t('artisan', 'serviceArea')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ville
+                    {t('artisan', 'city')}
                   </label>
                   <Input
                     value={formData.city}
@@ -215,7 +217,7 @@ export default function ArtisanProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Code postal
+                    {t('artisan', 'postalCode')}
                   </label>
                   <Input
                     value={formData.postalCode}
@@ -228,7 +230,7 @@ export default function ArtisanProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pays
+                    {t('artisan', 'country')}
                   </label>
                   <select
                     value={formData.country}
@@ -246,7 +248,7 @@ export default function ArtisanProfilePage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rayon d'intervention (km)
+                  {t('artisan', 'serviceRadius')}
                 </label>
                 <Input
                   type="number"
@@ -258,7 +260,7 @@ export default function ArtisanProfilePage() {
                   max="100"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Distance maximale depuis votre ville : {formData.serviceRadius} km
+                  {t('artisan', 'maxDistance')} : {formData.serviceRadius} km
                 </p>
               </div>
             </CardContent>
@@ -267,12 +269,12 @@ export default function ArtisanProfilePage() {
           {/* Pricing */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Tarification</CardTitle>
+              <CardTitle>{t('artisan', 'pricing')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Taux horaire indicatif (€)
+                  {t('artisan', 'hourlyRate')}
                 </label>
                 <Input
                   type="number"
@@ -284,7 +286,7 @@ export default function ArtisanProfilePage() {
                   min="0"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Ce tarif est indicatif et pourra être négocié pour chaque mission
+                  {t('artisan', 'rateNegotiable')}
                 </p>
               </div>
             </CardContent>
@@ -305,15 +307,15 @@ export default function ArtisanProfilePage() {
                 variant="outline"
                 onClick={() => router.push('/artisan/dashboard')}
               >
-                Annuler
+                {t('common', 'cancel')}
               </Button>
             )}
             <Button type="submit" disabled={loading}>
               {loading
-                ? 'Enregistrement...'
+                ? t('artisan', 'saving')
                 : isSetup
-                ? 'Terminer la configuration'
-                : 'Enregistrer les modifications'}
+                ? t('artisan', 'finishSetup')
+                : t('artisan', 'saveChanges')}
             </Button>
           </div>
         </form>

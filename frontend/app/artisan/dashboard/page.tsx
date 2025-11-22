@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { missionsApi } from '@/lib/api/missions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ArtisanDashboard() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [missions, setMissions] = useState([]);
   const [nearbyMissions, setNearbyMissions] = useState([]);
@@ -57,7 +59,7 @@ export default function ArtisanDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Chargement...</div>
+        <div className="text-gray-600">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -75,13 +77,13 @@ export default function ArtisanDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/artisan/missions">
-                <Button variant="ghost">Missions</Button>
+                <Button variant="ghost">{t('missions', 'title')}</Button>
               </Link>
               <Link href="/artisan/shop">
-                <Button variant="ghost">Ma Boutique</Button>
+                <Button variant="ghost">{t('artisan', 'myShop')}</Button>
               </Link>
               <Link href="/artisan/profile">
-                <Button variant="ghost">Profil</Button>
+                <Button variant="ghost">{t('artisan', 'profile')}</Button>
               </Link>
               <Button
                 variant="ghost"
@@ -90,7 +92,7 @@ export default function ArtisanDashboard() {
                   router.push('/');
                 }}
               >
-                Déconnexion
+                {t('common', 'logout')}
               </Button>
             </div>
           </div>
@@ -102,19 +104,19 @@ export default function ArtisanDashboard() {
         {/* Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Missions totales</div>
+            <div className="text-sm text-gray-600 mb-1">{t('artisan', 'totalMissions')}</div>
             <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
           </div>
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">En cours</div>
+            <div className="text-sm text-gray-600 mb-1">{t('missions', 'inProgress')}</div>
             <div className="text-3xl font-bold text-blue-600">{stats.inProgress}</div>
           </div>
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Terminées</div>
+            <div className="text-sm text-gray-600 mb-1">{t('missions', 'completed')}</div>
             <div className="text-3xl font-bold text-green-600">{stats.completed}</div>
           </div>
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="text-sm text-gray-600 mb-1">Note moyenne</div>
+            <div className="text-sm text-gray-600 mb-1">{t('artisan', 'averageRating')}</div>
             <div className="text-3xl font-bold text-yellow-600">
               ⭐ {stats.rating}
             </div>
@@ -124,12 +126,12 @@ export default function ArtisanDashboard() {
         {/* Nearby Missions */}
         <div className="bg-white shadow rounded-lg p-6 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Missions Disponibles Près de Vous
+            {t('artisan', 'availableNearby')}
           </h2>
 
           {nearbyMissions.length === 0 ? (
             <div className="text-center py-8 text-gray-600">
-              Aucune mission disponible dans votre zone pour le moment
+              {t('artisan', 'noMissionsAvailable')}
             </div>
           ) : (
             <div className="space-y-4">
@@ -148,17 +150,17 @@ export default function ArtisanDashboard() {
                       </p>
                       {mission.clientBudget && (
                         <p className="text-green-600 font-semibold mt-2">
-                          Budget client: {mission.clientBudget}€
+                          {t('artisan', 'clientBudget')}: {mission.clientBudget}€
                         </p>
                       )}
                     </div>
                     <div className="text-right">
                       <Link href={`/artisan/missions/${mission.id}`}>
-                        <Button>Voir Détails</Button>
+                        <Button>{t('artisan', 'viewDetails')}</Button>
                       </Link>
                       {mission.type === 'EMERGENCY' && (
                         <span className="block mt-2 text-red-600 text-xs font-semibold">
-                          🚨 URGENT
+                          🚨 {t('artisan', 'urgent')}
                         </span>
                       )}
                     </div>
@@ -171,12 +173,12 @@ export default function ArtisanDashboard() {
 
         {/* My Active Missions */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Mes Missions Actives</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('artisan', 'myActiveMissions')}</h2>
 
           {missions.filter((m: any) => ['ACCEPTED', 'IN_PROGRESS'].includes(m.status))
             .length === 0 ? (
             <div className="text-center py-8 text-gray-600">
-              Aucune mission active
+              {t('artisan', 'noActiveMissions')}
             </div>
           ) : (
             <div className="space-y-4">
@@ -194,7 +196,7 @@ export default function ArtisanDashboard() {
                           {mission.title}
                         </h3>
                         <p className="text-gray-600 text-sm mt-1">
-                          Client: {mission.client?.firstName} {mission.client?.lastName}
+                          {t('artisan', 'client')}: {mission.client?.firstName} {mission.client?.lastName}
                         </p>
                         <p className="text-gray-600 text-sm">
                           📍 {mission.address}, {mission.city}
@@ -205,7 +207,7 @@ export default function ArtisanDashboard() {
                           {mission.agreedPrice}€
                         </div>
                         <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                          {mission.status === 'IN_PROGRESS' ? 'En cours' : 'Acceptée'}
+                          {mission.status === 'IN_PROGRESS' ? t('missions', 'inProgress') : t('artisan', 'accepted')}
                         </span>
                       </div>
                     </div>
