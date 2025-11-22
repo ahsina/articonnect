@@ -16,7 +16,13 @@ export class PaymentService {
   async createPaymentIntent(missionId: string, userId: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
-      include: { client: true },
+      include: {
+        client: {
+          include: {
+            clientProfile: true,
+          },
+        },
+      },
     });
 
     if (!mission || mission.clientId !== userId) {
@@ -36,6 +42,8 @@ export class PaymentService {
         missionId: mission.id,
         userId,
       },
+      // Pass Stripe customer ID for 3D Secure authentication
+      customerId: mission.client.clientProfile?.stripeCustomerId || undefined,
     });
 
     await this.prisma.transaction.create({
@@ -179,7 +187,7 @@ export class PaymentService {
 
   async handleWebhook(event: Record<string, unknown>) {
     // Handle Stripe webhook events
-    const eventData = event as { type: string; data: { object: { id: string; metadata: Record<string, string> } } };
+    const eventData = event as { type: string; data: { object: { id: string; status?: string; metadata: Record<string, string> } } };
 
     switch (eventData.type) {
       case 'payment_intent.succeeded':
@@ -187,6 +195,14 @@ export class PaymentService {
         break;
       case 'payment_intent.payment_failed':
         await this.handlePaymentFailed(eventData.data.object);
+        break;
+      case 'payment_intent.requires_action':
+        // This event is triggered when 3D Secure authentication is required
+        await this.handlePaymentRequiresAction(eventData.data.object);
+        break;
+      case 'payment_intent.canceled':
+        // Handle canceled payments (e.g., when 3DS authentication times out)
+        await this.handlePaymentCanceled(eventData.data.object);
         break;
     }
   }
@@ -219,6 +235,52 @@ export class PaymentService {
         where: { id: transaction.id },
         data: { status: 'FAILED' },
       });
+    }
+  }
+
+  /**
+   * Handle 3D Secure authentication requirement
+   * This is triggered when the payment requires additional authentication
+   */
+  private async handlePaymentRequiresAction(paymentIntent: { id: string; status?: string; metadata: Record<string, string> }) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: paymentIntent.id },
+    });
+
+    if (transaction && transaction.status === 'PENDING') {
+      // Update status to indicate 3DS authentication is in progress
+      await this.prisma.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          status: 'PENDING', // Keep as PENDING while awaiting authentication
+          // We could add a new field like 'requiresAction: true' if we want more granularity
+        },
+      });
+
+      // Optionally, send a notification to the user to complete authentication
+      // await this.notificationService.notify3DSRequired(...)
+    }
+  }
+
+  /**
+   * Handle canceled payments (e.g., when 3DS authentication times out or is abandoned)
+   */
+  private async handlePaymentCanceled(paymentIntent: { id: string; metadata: Record<string, string> }) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { stripePaymentIntentId: paymentIntent.id },
+    });
+
+    if (transaction) {
+      await this.prisma.transaction.update({
+        where: { id: transaction.id },
+        data: { status: 'CANCELLED' },
+      });
+
+      // If this was a deposit payment that was canceled, notify the client
+      if (paymentIntent.metadata.type === 'DEPOSIT') {
+        // Optionally send notification
+        // await this.notificationService.notifyDepositCanceled(...)
+      }
     }
   }
 
@@ -258,7 +320,7 @@ export class PaymentService {
 
     const amount = depositAmount * 100; // Convert to cents
 
-    // Créer le Payment Intent Stripe
+    // Créer le Payment Intent Stripe avec support 3D Secure
     const paymentIntent = await this.stripeService.createPaymentIntent({
       amount,
       currency: 'eur',
@@ -268,6 +330,8 @@ export class PaymentService {
         type: 'DEPOSIT',
         depositPercentage: mission.depositPercentage.toString(),
       },
+      // Pass Stripe customer ID for 3D Secure authentication
+      customerId: mission.client.clientProfile?.stripeCustomerId || undefined,
     });
 
     // Créer l'enregistrement Payment

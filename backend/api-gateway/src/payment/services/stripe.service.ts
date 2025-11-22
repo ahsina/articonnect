@@ -15,12 +15,33 @@ export class StripeService {
     amount: number;
     currency: string;
     metadata?: Record<string, string>;
+    customerId?: string;
   }) {
     return this.stripe.paymentIntents.create({
       amount: params.amount,
       currency: params.currency,
       metadata: params.metadata,
       capture_method: 'manual', // For escrow
+
+      // Enable automatic payment methods (includes 3D Secure)
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'always', // Allow 3D Secure redirects
+      },
+
+      // Explicitly request 3D Secure for card payments (SCA compliance)
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'any', // Always request 3DS when available
+        },
+      },
+
+      // Link to customer if provided
+      ...(params.customerId && { customer: params.customerId }),
+
+      // Return URL after 3D Secure authentication (for redirect flow)
+      // Note: This is optional - the frontend will handle this via stripe.js
+      // but it's good practice to set it for webhook/server-side flows
     });
   }
 
