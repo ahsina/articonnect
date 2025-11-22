@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { missionsApi } from '@/lib/api/missions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const CATEGORIES = [
   { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
@@ -19,6 +20,7 @@ const CATEGORIES = [
 ];
 
 export default function NewMissionPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -63,7 +65,7 @@ export default function NewMissionPage() {
       const mission = await missionsApi.create(missionData);
       router.push(`/client/missions/${mission.id}`);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erreur lors de la création');
+      alert(error.response?.data?.message || t('missions', 'creationError'));
       setLoading(false);
     }
   };
@@ -111,9 +113,9 @@ export default function NewMissionPage() {
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Nouvelle Demande</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('missions', 'newRequest')}</h1>
           <p className="text-gray-600 mt-2">
-            Créez votre demande d'intervention en quelques étapes
+            {t('missions', 'createRequestSteps')}
           </p>
         </div>
 
@@ -143,13 +145,13 @@ export default function NewMissionPage() {
           </div>
           <div className="flex justify-between mt-2 text-sm">
             <span className={step >= 1 ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
-              Catégorie
+              {t('missions', 'categoryStep')}
             </span>
             <span className={step >= 2 ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
-              Détails
+              {t('missions', 'detailsStep')}
             </span>
             <span className={step >= 3 ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
-              Confirmation
+              {t('missions', 'confirmationStep')}
             </span>
           </div>
         </div>
@@ -158,7 +160,7 @@ export default function NewMissionPage() {
         {step === 1 && (
           <Card>
             <CardHeader>
-              <CardTitle>Quelle est la nature de votre demande ?</CardTitle>
+              <CardTitle>{t('missions', 'requestNature')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
@@ -182,33 +184,33 @@ export default function NewMissionPage() {
           <form onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
             <Card>
               <CardHeader>
-                <CardTitle>Détails de votre demande</CardTitle>
+                <CardTitle>{t('missions', 'requestDetails')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type de demande
+                    {t('missions', 'requestType')}
                   </label>
                   <select
                     className="w-full border border-gray-300 rounded-md px-3 py-2"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   >
-                    <option value="EMERGENCY">Urgence (intervention immédiate)</option>
-                    <option value="SCHEDULED">Planifiée</option>
-                    <option value="QUOTE">Demande de devis</option>
+                    <option value="EMERGENCY">{t('missions', 'emergency')}</option>
+                    <option value="SCHEDULED">{t('missions', 'scheduled')}</option>
+                    <option value="QUOTE">{t('missions', 'quote')}</option>
                   </select>
                 </div>
 
                 {/* Title */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Titre de la demande *
+                    {t('missions', 'requestTitle')} *
                   </label>
                   <Input
                     required
-                    placeholder="Ex: Fuite d'eau sous l'évier"
+                    placeholder={t('missions', 'titlePlaceholder')}
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   />
@@ -217,13 +219,13 @@ export default function NewMissionPage() {
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description détaillée *
+                    {t('missions', 'detailedDescription')} *
                   </label>
                   <textarea
                     required
                     rows={4}
                     className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    placeholder="Décrivez votre problème en détail..."
+                    placeholder={t('missions', 'descriptionPlaceholder')}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />
@@ -232,7 +234,7 @@ export default function NewMissionPage() {
                 {/* Address */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse *
+                    {t('common', 'address')} *
                   </label>
                   <Input
                     required
@@ -245,7 +247,7 @@ export default function NewMissionPage() {
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ville *
+                      {t('common', 'city')} *
                     </label>
                     <Input
                       required
@@ -256,7 +258,7 @@ export default function NewMissionPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Code Postal *
+                      {t('common', 'postalCode')} *
                     </label>
                     <Input
                       required
@@ -267,7 +269,7 @@ export default function NewMissionPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Pays *
+                      {t('common', 'country')} *
                     </label>
                     <select
                       className="w-full border border-gray-300 rounded-md px-3 py-2 h-10"
@@ -285,7 +287,7 @@ export default function NewMissionPage() {
                 {formData.type === 'SCHEDULED' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date souhaitée
+                      {t('missions', 'desiredDate')}
                     </label>
                     <Input
                       type="datetime-local"
@@ -298,7 +300,7 @@ export default function NewMissionPage() {
                 {/* Budget */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Budget indicatif (€)
+                    {t('missions', 'indicativeBudget')}
                   </label>
                   <Input
                     type="number"
@@ -307,16 +309,16 @@ export default function NewMissionPage() {
                     onChange={(e) => setFormData({ ...formData, clientBudget: e.target.value })}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Optionnel - Aide les artisans à vous faire une proposition adaptée
+                    {t('missions', 'budgetHelper')}
                   </p>
                 </div>
 
                 <div className="flex gap-4">
                   <Button type="button" variant="outline" onClick={() => setStep(1)}>
-                    Retour
+                    {t('common', 'back')}
                   </Button>
                   <Button type="submit" className="flex-1">
-                    Continuer
+                    {t('common', 'continue')}
                   </Button>
                 </div>
               </CardContent>
@@ -328,55 +330,55 @@ export default function NewMissionPage() {
         {step === 3 && (
           <Card>
             <CardHeader>
-              <CardTitle>Confirmer votre demande</CardTitle>
+              <CardTitle>{t('missions', 'confirmRequest')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                 <div>
-                  <span className="text-sm text-gray-600">Catégorie:</span>
+                  <span className="text-sm text-gray-600">{t('common', 'category')}:</span>
                   <p className="font-semibold">{formData.category}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Titre:</span>
+                  <span className="text-sm text-gray-600">{t('missions', 'title')}:</span>
                   <p className="font-semibold">{formData.title}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Description:</span>
+                  <span className="text-sm text-gray-600">{t('common', 'description')}:</span>
                   <p className="text-gray-900">{formData.description}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Adresse:</span>
+                  <span className="text-sm text-gray-600">{t('common', 'address')}:</span>
                   <p className="text-gray-900">
                     {formData.address}, {formData.postalCode} {formData.city}
                   </p>
                 </div>
                 {formData.clientBudget && (
                   <div>
-                    <span className="text-sm text-gray-600">Budget indicatif:</span>
+                    <span className="text-sm text-gray-600">{t('missions', 'indicativeBudget')}:</span>
                     <p className="font-semibold">{formData.clientBudget}€</p>
                   </div>
                 )}
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">Prochaines étapes:</h4>
+                <h4 className="font-semibold text-blue-900 mb-2">{t('missions', 'nextSteps')}:</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>✓ Votre demande sera envoyée aux artisans proches</li>
-                  <li>✓ Vous recevrez des propositions rapidement</li>
-                  <li>✓ Vous pourrez négocier et choisir le meilleur artisan</li>
+                  <li>✓ {t('missions', 'step1')}</li>
+                  <li>✓ {t('missions', 'step2')}</li>
+                  <li>✓ {t('missions', 'step3')}</li>
                 </ul>
               </div>
 
               <div className="flex gap-4">
                 <Button type="button" variant="outline" onClick={() => setStep(2)}>
-                  Retour
+                  {t('common', 'back')}
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={loading}
                   className="flex-1"
                 >
-                  {loading ? 'Création en cours...' : 'Créer la demande'}
+                  {loading ? t('missions', 'creating') : t('missions', 'createRequest')}
                 </Button>
               </div>
             </CardContent>
