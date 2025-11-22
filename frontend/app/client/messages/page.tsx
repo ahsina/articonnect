@@ -8,6 +8,7 @@ import { chatApi } from '@/lib/api/chat';
 import { useSocket } from '@/lib/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/lib/hooks/useToast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -32,6 +33,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -135,16 +137,16 @@ export default function MessagesPage() {
         setNewMessage('');
       } else {
         toast({
-          title: 'Erreur',
-          description: 'Socket non connecté. Veuillez rafraîchir la page.',
+          title: t('common', 'error'),
+          description: t('common', 'error'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible d\'envoyer le message',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
     }
@@ -165,9 +167,9 @@ export default function MessagesPage() {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Aujourd\'hui';
+      return t('common', 'today');
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Hier';
+      return t('common', 'yesterday');
     } else {
       return date.toLocaleDateString('fr-FR', {
         day: 'numeric',
@@ -181,7 +183,7 @@ export default function MessagesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -193,16 +195,16 @@ export default function MessagesPage() {
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+              <h1 className="text-xl font-bold text-gray-900">{t('common', 'messages')}</h1>
               <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
                     connected ? 'bg-green-500' : 'bg-gray-400'
                   }`}
-                  title={connected ? 'Connecté' : 'Déconnecté'}
+                  title={connected ? t('common', 'connected') : t('common', 'disconnected')}
                 />
                 <span className="text-xs text-gray-500">
-                  {connected ? 'En ligne' : 'Hors ligne'}
+                  {connected ? t('common', 'online') : t('common', 'offline')}
                 </span>
               </div>
             </div>
@@ -211,7 +213,7 @@ export default function MessagesPage() {
           <div className="flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
-                Aucune conversation
+                {t('common', 'noConversations')}
               </div>
             ) : (
               <div>
@@ -273,7 +275,7 @@ export default function MessagesPage() {
                     {selectedConv.user.firstName} {selectedConv.user.lastName}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    {selectedConv.user.role === 'ARTISAN' ? 'Artisan' : 'Client'}
+                    {selectedConv.user.role === 'ARTISAN' ? t('auth', 'artisan') : t('auth', 'client')}
                   </p>
                 </div>
               </div>
@@ -316,18 +318,18 @@ export default function MessagesPage() {
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Tapez votre message..."
+                    placeholder={t('common', 'typeMessage')}
                     className="flex-1"
                   />
                   <Button type="submit" disabled={!newMessage.trim()}>
-                    Envoyer
+                    {t('common', 'send')}
                   </Button>
                 </form>
               </div>
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
-              Sélectionnez une conversation pour commencer
+              {t('common', 'selectConversation')}
             </div>
           )}
         </div>
