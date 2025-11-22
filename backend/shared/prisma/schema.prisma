@@ -86,6 +86,7 @@ model User {
   // Marketplace
   products Product[]
   orders   Order[]
+  returns  OrderReturn[] @relation("ClientReturns")
 
   // Saved by clients
   savedByClients SavedArtisan[]
@@ -554,6 +555,7 @@ model Product {
   status      ProductStatus    @default(DRAFT)
   variants    ProductVariant[]
   orderItems  OrderItem[]
+  returnItems ReturnItem[]     @relation("ReturnItems")
   favorites   Favorite[]
   reports     Report[]
   createdAt   DateTime         @default(now())
@@ -587,21 +589,22 @@ enum OrderStatus {
 }
 
 model Order {
-  id              String       @id @default(uuid())
+  id              String        @id @default(uuid())
   clientId        String
-  client          User         @relation(fields: [clientId], references: [id])
+  client          User          @relation(fields: [clientId], references: [id])
   items           OrderItem[]
-  subtotal        Decimal      @db.Decimal(10, 2)
-  vat             Decimal      @db.Decimal(10, 2)
-  total           Decimal      @db.Decimal(10, 2)
+  returns         OrderReturn[] @relation("OrderReturns")
+  subtotal        Decimal       @db.Decimal(10, 2)
+  vat             Decimal       @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(10, 2)
   shippingAddress String
-  shippingCost    Decimal      @default(0) @db.Decimal(10, 2)
+  shippingCost    Decimal       @default(0) @db.Decimal(10, 2)
   trackingNumber  String?
-  status          OrderStatus  @default(PENDING)
+  status          OrderStatus   @default(PENDING)
   transaction     Transaction?
   invoices        Invoice[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   paidAt          DateTime?
   shippedAt       DateTime?
   deliveredAt     DateTime?
@@ -621,6 +624,74 @@ model OrderItem {
   totalPrice Decimal @db.Decimal(10, 2)
 
   @@index([orderId])
+}
+
+enum ReturnReason {
+  DEFECTIVE
+  WRONG_ITEM
+  NOT_AS_DESCRIBED
+  CHANGED_MIND
+  OTHER
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RETURN_SHIPPED
+  RECEIVED
+  REFUNDED
+  COMPLETED
+}
+
+model OrderReturn {
+  id               String       @id @default(uuid())
+  orderId          String
+  order            Order        @relation("OrderReturns", fields: [orderId], references: [id])
+  clientId         String
+  client           User         @relation("ClientReturns", fields: [clientId], references: [id])
+  items            ReturnItem[]
+  reason           ReturnReason
+  description      String?
+  status           ReturnStatus @default(REQUESTED)
+
+  // Shipping info
+  returnLabel      String? // URL to return shipping label
+  trackingNumber   String?
+
+  // Refund info
+  refundAmount     Decimal      @db.Decimal(10, 2)
+  refundedAmount   Decimal      @default(0) @db.Decimal(10, 2)
+
+  // Evidence
+  photos           String[]     @default([])
+
+  // Admin handling
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  resolution       String?
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  approvedAt       DateTime?
+  completedAt      DateTime?
+
+  @@index([orderId])
+  @@index([clientId])
+  @@index([status])
+}
+
+model ReturnItem {
+  id            String      @id @default(uuid())
+  returnId      String
+  return        OrderReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderItemId   String
+  productId     String
+  product       Product     @relation("ReturnItems", fields: [productId], references: [id])
+  quantity      Int
+  reason        String?
+
+  @@index([returnId])
 }
 
 // ================================

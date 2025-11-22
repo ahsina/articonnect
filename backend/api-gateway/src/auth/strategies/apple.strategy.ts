@@ -7,12 +7,11 @@ import { ConfigService } from '@nestjs/config';
 export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
   constructor(private configService: ConfigService) {
     super({
-      clientID: configService.get<string>('APPLE_CLIENT_ID') || 'com.articonnect.service',
+      clientID: configService.get<string>('APPLE_CLIENT_ID'),
       teamID: configService.get<string>('APPLE_TEAM_ID'),
       keyID: configService.get<string>('APPLE_KEY_ID'),
-      privateKeyString: configService.get<string>('APPLE_PRIVATE_KEY'),
-      callbackURL: configService.get<string>('APPLE_CALLBACK_URL') ||
-                   'http://localhost:4000/auth/apple/callback',
+      privateKeyLocation: configService.get<string>('APPLE_PRIVATE_KEY_LOCATION') || './keys/AuthKey.p8',
+      callbackURL: configService.get<string>('APPLE_CALLBACK_URL') || 'http://localhost:3000/auth/apple/callback',
       scope: ['name', 'email'],
       passReqToCallback: false,
     });
@@ -25,21 +24,18 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     profile: any,
     done: (err: any, user: any, info?: any) => void,
   ): Promise<any> {
-    // Apple returns user info only on first sign in
-    // On subsequent logins, only the ID token is provided
-    const { sub: providerId, email } = idToken;
-    const { name } = profile || {};
+    const { email, sub } = idToken;
+    const name = profile.name || {};
 
     const user = {
-      providerId,
-      provider: 'apple',
-      email: email || null,
-      firstName: name?.firstName || '',
-      lastName: name?.lastName || '',
-      avatar: null, // Apple doesn't provide avatar
+      email: email,
+      firstName: name.firstName || 'Apple',
+      lastName: name.lastName || 'User',
+      avatar: null,
       accessToken,
+      provider: 'apple',
+      providerId: sub,
     };
-
     done(null, user);
   }
 }
