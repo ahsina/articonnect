@@ -9,8 +9,10 @@ import { authApi } from '@/lib/api/auth';
 import { userApi } from '@/lib/api/user';
 import { toast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function TwoFactorAuthPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -55,15 +57,15 @@ export default function TwoFactorAuthPage() {
       setEnablePassword('');
 
       toast({
-        title: 'QR Code généré',
-        description: 'Scannez le code avec votre application',
+        title: t('common', 'qrCodeGenerated'),
+        description: t('common', 'scanWithApp'),
         variant: 'success',
       });
     } catch (error) {
       console.error('Enable 2FA error:', error);
       toast({
-        title: 'Erreur',
-        description: 'Mot de passe incorrect',
+        title: t('common', 'error'),
+        description: t('common', 'incorrectPassword'),
         variant: 'destructive',
       });
     } finally {
@@ -88,15 +90,15 @@ export default function TwoFactorAuthPage() {
       setVerifyToken('');
 
       toast({
-        title: 'Succès',
-        description: 'Authentification à deux facteurs activée',
+        title: t('common', 'success'),
+        description: t('common', 'twoFactorActivated'),
         variant: 'success',
       });
     } catch (error) {
       console.error('Verify 2FA error:', error);
       toast({
-        title: 'Erreur',
-        description: 'Code invalide',
+        title: t('common', 'error'),
+        description: t('common', 'invalidCode'),
         variant: 'destructive',
       });
     } finally {
@@ -116,15 +118,15 @@ export default function TwoFactorAuthPage() {
       setDisableToken('');
 
       toast({
-        title: 'Succès',
-        description: 'Authentification à deux facteurs désactivée',
+        title: t('common', 'success'),
+        description: t('common', 'twoFactorDeactivated'),
         variant: 'success',
       });
     } catch (error) {
       console.error('Disable 2FA error:', error);
       toast({
-        title: 'Erreur',
-        description: 'Mot de passe ou code incorrect',
+        title: t('common', 'error'),
+        description: t('common', 'passwordOrCodeIncorrect'),
         variant: 'destructive',
       });
     } finally {
@@ -148,23 +150,23 @@ export default function TwoFactorAuthPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-            ← Retour
+            ← {t('common', 'back')}
           </Button>
 
           <Card>
             <CardHeader>
-              <CardTitle>Codes de récupération</CardTitle>
+              <CardTitle>{t('common', 'backupCodes')}</CardTitle>
               <CardDescription>
-                Conservez ces codes en lieu sûr. Vous pourrez les utiliser pour accéder à votre compte si vous perdez votre téléphone.
+                {t('common', 'backupCodesDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800 font-medium mb-2">
-                  ⚠️ Important
+                  ⚠️ {t('common', 'important')}
                 </p>
                 <p className="text-sm text-yellow-700">
-                  Chaque code ne peut être utilisé qu'une seule fois. Ne partagez ces codes avec personne.
+                  {t('common', 'backupCodesWarning')}
                 </p>
               </div>
 
@@ -178,7 +180,7 @@ export default function TwoFactorAuthPage() {
 
               <div className="flex gap-3">
                 <Button onClick={downloadBackupCodes} className="flex-1">
-                  📥 Télécharger les codes
+                  📥 {t('common', 'downloadCodes')}
                 </Button>
                 <Button
                   variant="outline"
@@ -188,7 +190,7 @@ export default function TwoFactorAuthPage() {
                   }}
                   className="flex-1"
                 >
-                  J'ai sauvegardé mes codes
+                  {t('common', 'savedCodes')}
                 </Button>
               </div>
             </CardContent>
@@ -203,14 +205,14 @@ export default function TwoFactorAuthPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button variant="ghost" onClick={() => setShowSetup(false)} className="mb-6">
-            ← Retour
+            ← {t('common', 'back')}
           </Button>
 
           <Card>
             <CardHeader>
-              <CardTitle>Configuration 2FA</CardTitle>
+              <CardTitle>{t('common', 'setup2FA')}</CardTitle>
               <CardDescription>
-                Scannez le QR code avec votre application d'authentification
+                {t('common', 'scanQRCode')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -221,7 +223,7 @@ export default function TwoFactorAuthPage() {
 
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm font-medium text-gray-700 mb-2">
-                    Ou entrez ce code manuellement :
+                    {t('common', 'orEnterManually')}
                   </p>
                   <code className="block p-3 bg-white border rounded text-center font-mono text-sm break-all">
                     {secret}
@@ -230,7 +232,7 @@ export default function TwoFactorAuthPage() {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    <strong>Applications recommandées :</strong> Google Authenticator, Microsoft Authenticator, Authy
+                    <strong>{t('common', 'recommendedApps')}</strong> Google Authenticator, Microsoft Authenticator, Authy
                   </p>
                 </div>
               </div>
@@ -238,7 +240,7 @@ export default function TwoFactorAuthPage() {
               <form onSubmit={handleVerify2FA} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Entrez le code de vérification
+                    {t('common', 'enterVerificationCode')}
                   </label>
                   <Input
                     type="text"
@@ -258,7 +260,7 @@ export default function TwoFactorAuthPage() {
                   className="w-full"
                   disabled={loading || verifyToken.length !== 6}
                 >
-                  {loading ? 'Vérification...' : 'Activer 2FA'}
+                  {loading ? t('common', 'verifying') : t('common', 'activate')}
                 </Button>
               </form>
             </CardContent>
@@ -272,26 +274,26 @@ export default function TwoFactorAuthPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← Retour
+          ← {t('common', 'back')}
         </Button>
 
         <Card>
           <CardHeader>
-            <CardTitle>Authentification à deux facteurs (2FA)</CardTitle>
+            <CardTitle>{t('common', 'twoFactorSettings')}</CardTitle>
             <CardDescription>
-              Ajoutez une couche de sécurité supplémentaire à votre compte
+              {t('common', 'twoFactorDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900">
-                  {is2FAEnabled ? '✅ 2FA activée' : '🔓 2FA désactivée'}
+                  {is2FAEnabled ? t('common', 'twoFactorEnabled') : t('common', 'twoFactorDisabled')}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   {is2FAEnabled
-                    ? 'Votre compte est protégé par l\'authentification à deux facteurs'
-                    : 'Protégez votre compte avec un code de vérification supplémentaire'}
+                    ? t('common', 'twoFactorEnabledDesc')
+                    : t('common', 'twoFactorDisabledDesc')}
                 </p>
               </div>
             </div>
@@ -300,11 +302,11 @@ export default function TwoFactorAuthPage() {
               <form onSubmit={handleEnable2FA} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Mot de passe *
+                    {t('auth', 'password')} *
                   </label>
                   <Input
                     type="password"
-                    placeholder="Votre mot de passe"
+                    placeholder={t('auth', 'password')}
                     value={enablePassword}
                     onChange={(e) => setEnablePassword(e.target.value)}
                     required
@@ -312,7 +314,7 @@ export default function TwoFactorAuthPage() {
                 </div>
 
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Configuration...' : 'Activer la 2FA'}
+                  {loading ? t('common', 'configuring') : t('common', 'enable2FA')}
                 </Button>
               </form>
             ) : (
@@ -322,17 +324,17 @@ export default function TwoFactorAuthPage() {
                     variant="destructive"
                     onClick={() => setShowDisableForm(true)}
                   >
-                    Désactiver la 2FA
+                    {t('common', 'disable2FA')}
                   </Button>
                 ) : (
                   <form onSubmit={handleDisable2FA} className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700">
-                        Mot de passe *
+                        {t('auth', 'password')} *
                       </label>
                       <Input
                         type="password"
-                        placeholder="Votre mot de passe"
+                        placeholder={t('auth', 'password')}
                         value={disablePassword}
                         onChange={(e) => setDisablePassword(e.target.value)}
                         required
@@ -341,7 +343,7 @@ export default function TwoFactorAuthPage() {
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700">
-                        Code 2FA *
+                        {t('common', 'code2FA')} *
                       </label>
                       <Input
                         type="text"
@@ -363,7 +365,7 @@ export default function TwoFactorAuthPage() {
                         disabled={loading}
                         className="flex-1"
                       >
-                        {loading ? 'Désactivation...' : 'Désactiver'}
+                        {loading ? t('common', 'deactivating') : t('common', 'deactivate')}
                       </Button>
                       <Button
                         type="button"
@@ -371,7 +373,7 @@ export default function TwoFactorAuthPage() {
                         onClick={() => setShowDisableForm(false)}
                         className="flex-1"
                       >
-                        Annuler
+                        {t('common', 'cancel')}
                       </Button>
                     </div>
                   </form>
