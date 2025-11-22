@@ -24,10 +24,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function AnalyticsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [metrics, setMetrics] = useState<BusinessMetrics | null>(null);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
@@ -63,7 +65,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement des analytiques...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -71,7 +73,7 @@ export default function AnalyticsPage() {
   if (!metrics) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">Erreur de chargement des analytiques</div>
+        <div className="text-red-600">{t('admin', 'errorLoadingStats')}</div>
       </div>
     );
   }
@@ -110,10 +112,10 @@ export default function AnalyticsPage() {
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Analytiques détaillées
+              {t('admin', 'detailedAnalytics')}
             </h1>
             <p className="text-gray-600 mt-2">
-              Insights et métriques de la plateforme
+              {t('admin', 'platformInsights')}
             </p>
           </div>
 
@@ -126,7 +128,7 @@ export default function AnalyticsPage() {
                   : 'bg-white text-gray-700 border'
               }`}
             >
-              7 jours
+              {t('admin', 'lastDays').replace('{days}', '7')}
             </button>
             <button
               onClick={() => setDays(30)}
@@ -136,7 +138,7 @@ export default function AnalyticsPage() {
                   : 'bg-white text-gray-700 border'
               }`}
             >
-              30 jours
+              {t('admin', 'lastDays').replace('{days}', '30')}
             </button>
             <button
               onClick={() => setDays(90)}
@@ -146,31 +148,31 @@ export default function AnalyticsPage() {
                   : 'bg-white text-gray-700 border'
               }`}
             >
-              90 jours
+              {t('admin', 'lastDays').replace('{days}', '90')}
             </button>
           </div>
         </div>
 
         {/* Revenue Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
-            title="Revenu total"
+            title={t('admin', 'revenueTotal')}
             value={`${metrics.revenue.total.toLocaleString('fr-FR')}€`}
             trend={metrics.revenue.growth}
             color="green"
           />
           <MetricCard
-            title="Ce mois"
+            title={t('admin', 'thisMonth')}
             value={`${metrics.revenue.thisMonth.toLocaleString('fr-FR')}€`}
             color="blue"
           />
           <MetricCard
-            title="Cette semaine"
+            title={t('admin', 'thisWeek')}
             value={`${metrics.revenue.thisWeek.toLocaleString('fr-FR')}€`}
             color="purple"
           />
           <MetricCard
-            title="Aujourd'hui"
+            title={t('admin', 'today')}
             value={`${metrics.revenue.today.toLocaleString('fr-FR')}€`}
             color="yellow"
           />
