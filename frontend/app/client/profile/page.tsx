@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { userApi } from '@/lib/api/user';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UserProfile {
   id: string;
@@ -23,6 +24,7 @@ interface UserProfile {
 }
 
 export default function ClientProfilePage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,7 +67,7 @@ export default function ClientProfilePage() {
       });
     } catch (err) {
       console.error('Error loading profile:', err);
-      setError('Erreur lors du chargement du profil');
+      setError(t('common', 'error'));
     } finally {
       setLoading(false);
     }
@@ -81,16 +83,16 @@ export default function ClientProfilePage() {
       const updatedProfile = await userApi.updateProfile(formData);
       setProfile(updatedProfile);
       toast({
-        title: 'Succès',
-        description: 'Profil mis à jour avec succès',
+        title: t('common', 'success'),
+        description: t('common', 'success'),
         variant: 'success',
       });
     } catch (err: any) {
       console.error('Error updating profile:', err);
-      const errorMessage = err.response?.data?.message || 'Erreur lors de la mise à jour du profil';
+      const errorMessage = err.response?.data?.message || t('common', 'error');
       setError(errorMessage);
       toast({
-        title: 'Erreur',
+        title: t('common', 'error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -106,8 +108,8 @@ export default function ClientProfilePage() {
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
-        title: 'Erreur',
-        description: 'Les mots de passe ne correspondent pas',
+        title: t('common', 'error'),
+        description: t('auth', 'passwordMismatch'),
         variant: 'destructive',
       });
       return;
@@ -115,8 +117,8 @@ export default function ClientProfilePage() {
 
     if (passwordData.newPassword.length < 8) {
       toast({
-        title: 'Erreur',
-        description: 'Le mot de passe doit contenir au moins 8 caractères',
+        title: t('common', 'error'),
+        description: t('auth', 'passwordTooShort'),
         variant: 'destructive',
       });
       return;
@@ -130,8 +132,8 @@ export default function ClientProfilePage() {
       });
 
       toast({
-        title: 'Succès',
-        description: 'Mot de passe modifié avec succès',
+        title: t('common', 'success'),
+        description: t('common', 'success'),
         variant: 'success',
       });
       setPasswordData({
@@ -141,9 +143,9 @@ export default function ClientProfilePage() {
       });
     } catch (err: any) {
       console.error('Error changing password:', err);
-      const errorMessage = err.response?.data?.message || 'Erreur lors du changement de mot de passe';
+      const errorMessage = err.response?.data?.message || t('common', 'error');
       toast({
-        title: 'Erreur',
+        title: t('common', 'error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -160,8 +162,8 @@ export default function ClientProfilePage() {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       toast({
-        title: 'Erreur',
-        description: 'Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
       return;
@@ -170,8 +172,8 @@ export default function ClientProfilePage() {
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: 'Erreur',
-        description: 'Fichier trop volumineux. Maximum 5MB',
+        title: t('common', 'error'),
+        description: t('common', 'error'),
         variant: 'destructive',
       });
       return;
@@ -182,15 +184,15 @@ export default function ClientProfilePage() {
       const updatedUser = await userApi.uploadAvatar(file);
       setProfile((prev) => prev ? { ...prev, avatar: updatedUser.avatar } : null);
       toast({
-        title: 'Succès',
-        description: 'Avatar mis à jour avec succès',
+        title: t('common', 'success'),
+        description: t('common', 'success'),
         variant: 'success',
       });
     } catch (err: any) {
       console.error('Error uploading avatar:', err);
-      const errorMessage = err.response?.data?.message || 'Erreur lors de l\'upload de l\'avatar';
+      const errorMessage = err.response?.data?.message || t('common', 'error');
       toast({
-        title: 'Erreur',
+        title: t('common', 'error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -204,7 +206,7 @@ export default function ClientProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -213,9 +215,9 @@ export default function ClientProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Impossible de charger le profil</p>
+          <p className="text-gray-500 mb-4">{t('common', 'error')}</p>
           <Button onClick={() => router.push('/client/dashboard')}>
-            Retour au tableau de bord
+            {t('common', 'back')}
           </Button>
         </div>
       </div>
@@ -228,7 +230,7 @@ export default function ClientProfilePage() {
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" onClick={() => router.back()}>
-            ← Retour
+            ← {t('common', 'back')}
           </Button>
         </div>
 
@@ -237,7 +239,7 @@ export default function ClientProfilePage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Informations personnelles</CardTitle>
+                <CardTitle>{t('common', 'profile')}</CardTitle>
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <img
@@ -266,7 +268,7 @@ export default function ClientProfilePage() {
                         uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
-                      {uploadingAvatar ? 'Upload...' : 'Changer l\'avatar'}
+                      {uploadingAvatar ? t('common', 'loading') : t('common', 'edit')}
                     </label>
                   </div>
                 </div>
@@ -277,7 +279,7 @@ export default function ClientProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prénom *
+                      {t('auth', 'firstName')} *
                     </label>
                     <Input
                       type="text"
@@ -291,7 +293,7 @@ export default function ClientProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nom *
+                      {t('auth', 'lastName')} *
                     </label>
                     <Input
                       type="text"
@@ -306,14 +308,14 @@ export default function ClientProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email (non modifiable)
+                    {t('auth', 'email')}
                   </label>
                   <Input type="email" value={profile.email} disabled />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Téléphone *
+                    {t('auth', 'phone')} *
                   </label>
                   <Input
                     type="tel"
@@ -328,7 +330,7 @@ export default function ClientProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Adresse
+                    {t('common', 'address')}
                   </label>
                   <Input
                     type="text"
@@ -343,7 +345,7 @@ export default function ClientProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Code postal
+                      {t('common', 'postalCode')}
                     </label>
                     <Input
                       type="text"
@@ -357,7 +359,7 @@ export default function ClientProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ville
+                      {t('common', 'city')}
                     </label>
                     <Input
                       type="text"
@@ -371,7 +373,7 @@ export default function ClientProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pays
+                      {t('common', 'country')}
                     </label>
                     <select
                       value={formData.country}
@@ -389,7 +391,7 @@ export default function ClientProfilePage() {
 
                 <div className="flex justify-end">
                   <Button type="submit" disabled={saving}>
-                    {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                    {saving ? t('common', 'loading') : t('common', 'save')}
                   </Button>
                 </div>
               </form>
@@ -399,13 +401,13 @@ export default function ClientProfilePage() {
           {/* Password Change Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Changer le mot de passe</CardTitle>
+              <CardTitle>{t('auth', 'password')}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mot de passe actuel *
+                    {t('auth', 'password')} *
                   </label>
                   <Input
                     type="password"
@@ -422,7 +424,7 @@ export default function ClientProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nouveau mot de passe *
+                    {t('auth', 'newPassword')} *
                   </label>
                   <Input
                     type="password"
@@ -433,14 +435,13 @@ export default function ClientProfilePage() {
                         newPassword: e.target.value,
                       })
                     }
-                    placeholder="Au moins 8 caractères"
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirmer le nouveau mot de passe *
+                    {t('auth', 'confirmPassword')} *
                   </label>
                   <Input
                     type="password"
@@ -457,7 +458,7 @@ export default function ClientProfilePage() {
 
                 <div className="flex justify-end">
                   <Button type="submit" disabled={saving}>
-                    {saving ? 'Modification...' : 'Changer le mot de passe'}
+                    {saving ? t('common', 'loading') : t('common', 'save')}
                   </Button>
                 </div>
               </form>
