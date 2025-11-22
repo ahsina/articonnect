@@ -374,6 +374,12 @@ model Negotiation {
   senderId       String
   receiverId     String
   proposedPrice  Decimal   @db.Decimal(10, 2)
+
+  // Price breakdown (optional detailed pricing)
+  laborCost      Decimal?  @db.Decimal(10, 2) // Main d'œuvre
+  materialCost   Decimal?  @db.Decimal(10, 2) // Matériel
+  travelCost     Decimal?  @db.Decimal(10, 2) // Déplacement
+
   message        String?
   accepted       Boolean?
   rejectedReason String?
