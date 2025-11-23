@@ -85,12 +85,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://articonnect:test_password@localhost:5432/articonnect_test
         run: |
-          if [ -d "prisma/migrations" ]; then
-            npx prisma migrate deploy
-          else
-            echo "No migrations found, using db push instead"
-            npx prisma db push --skip-generate
-          fi
+          echo "Setting up test database with db push (recommended for CI/CD)"
+          npx prisma db push --skip-generate --accept-data-loss
 
       - name: Run Backend Tests
         working-directory: ./backend/api-gateway
