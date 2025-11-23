@@ -1,11 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateReviewDto, CreateArtisanReviewDto, UpdateReviewDto } from '../dto/review.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ReviewFraudDetectorService } from '../../fraud/services/review-fraud-detector.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 
 @Injectable()
 export class ReviewService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ReviewService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reviewFraudDetector: ReviewFraudDetectorService,
+    private readonly featureToggle: FeatureToggleService,
+  ) {}
 
   async create(userId: string, createDto: CreateReviewDto) {
     // Verify mission exists and user is the client
@@ -68,6 +76,52 @@ export class ReviewService {
         },
       },
     });
+
+    // Review Fraud Detection (if enabled)
+    const isReviewFraudDetectionEnabled = await this.featureToggle.isReviewFraudDetectionEnabled();
+    if (isReviewFraudDetectionEnabled) {
+      try {
+        const fraudResult = await this.reviewFraudDetector.detectFakeReview(review.id);
+
+        // Update review with fraud detection results
+        await this.prisma.review.update({
+          where: { id: review.id },
+          data: {
+            fraudScore: fraudResult.fraudScore,
+            fraudSignals: fraudResult.signals.map((s) => s.type),
+            aiGenerated: fraudResult.aiGenerated,
+          },
+        });
+
+        // Auto-hide review if fraud score exceeds threshold
+        const autoHideEnabled = await this.featureToggle.isReviewAutoHideEnabled();
+        const fraudThreshold = await this.featureToggle.getReviewFraudThreshold();
+
+        if (autoHideEnabled && fraudResult.fraudScore >= fraudThreshold) {
+          await this.prisma.review.update({
+            where: { id: review.id },
+            data: {
+              hidden: true,
+              hiddenReason: `Auto-hidden: fraud score ${fraudResult.fraudScore.toFixed(0)} (threshold: ${fraudThreshold})`,
+            },
+          });
+
+          this.logger.warn(
+            `Review ${review.id} auto-hidden due to fraud score ${fraudResult.fraudScore.toFixed(0)}`,
+          );
+        }
+
+        // Log high-risk reviews for admin review
+        if (fraudResult.recommendation === 'DELETE' || fraudResult.recommendation === 'MANUAL_REVIEW') {
+          this.logger.warn(
+            `High-risk review detected: ${review.id} (score: ${fraudResult.fraudScore.toFixed(0)}, recommendation: ${fraudResult.recommendation})`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(`Failed to run fraud detection on review ${review.id}:`, error);
+        // Don't block review creation if fraud detection fails
+      }
+    }
 
     // Update artisan rating
     await this.updateArtisanRating(mission.artisanId);
@@ -265,6 +319,52 @@ export class ReviewService {
         },
       },
     });
+
+    // Review Fraud Detection (if enabled)
+    const isReviewFraudDetectionEnabled = await this.featureToggle.isReviewFraudDetectionEnabled();
+    if (isReviewFraudDetectionEnabled) {
+      try {
+        const fraudResult = await this.reviewFraudDetector.detectFakeReview(review.id);
+
+        // Update review with fraud detection results
+        await this.prisma.review.update({
+          where: { id: review.id },
+          data: {
+            fraudScore: fraudResult.fraudScore,
+            fraudSignals: fraudResult.signals.map((s) => s.type),
+            aiGenerated: fraudResult.aiGenerated,
+          },
+        });
+
+        // Auto-hide review if fraud score exceeds threshold
+        const autoHideEnabled = await this.featureToggle.isReviewAutoHideEnabled();
+        const fraudThreshold = await this.featureToggle.getReviewFraudThreshold();
+
+        if (autoHideEnabled && fraudResult.fraudScore >= fraudThreshold) {
+          await this.prisma.review.update({
+            where: { id: review.id },
+            data: {
+              hidden: true,
+              hiddenReason: `Auto-hidden: fraud score ${fraudResult.fraudScore.toFixed(0)} (threshold: ${fraudThreshold})`,
+            },
+          });
+
+          this.logger.warn(
+            `Artisan review ${review.id} auto-hidden due to fraud score ${fraudResult.fraudScore.toFixed(0)}`,
+          );
+        }
+
+        // Log high-risk reviews for admin review
+        if (fraudResult.recommendation === 'DELETE' || fraudResult.recommendation === 'MANUAL_REVIEW') {
+          this.logger.warn(
+            `High-risk artisan review detected: ${review.id} (score: ${fraudResult.fraudScore.toFixed(0)}, recommendation: ${fraudResult.recommendation})`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(`Failed to run fraud detection on artisan review ${review.id}:`, error);
+        // Don't block review creation if fraud detection fails
+      }
+    }
 
     // Update client reputation score based on review
     await this.updateClientReputation(mission.clientId);

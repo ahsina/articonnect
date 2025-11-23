@@ -1,16 +1,22 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
 import { RefundReason, Payment } from '@prisma/client';
 import type { MissionWithRelations } from '../types/payment.types';
+import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-detector.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 
 @Injectable()
 export class PaymentService {
+  private readonly logger = new Logger(PaymentService.name);
+
   constructor(
     private prisma: PrismaService,
     private stripeService: StripeService,
     private reputationService: ReputationService,
+    private payoutFraudDetector: PayoutFraudDetectorService,
+    private featureToggle: FeatureToggleService,
   ) {}
 
   async createPaymentIntent(missionId: string, userId: string) {
@@ -98,6 +104,71 @@ export class PaymentService {
       where: { id: transaction.id },
       data: { status: 'COMPLETED' },
     });
+
+    // Payout Fraud Screening (if enabled) - BEFORE transfer to artisan
+    const isPayoutScreeningEnabled = await this.featureToggle.isPayoutFraudScreeningEnabled();
+    if (isPayoutScreeningEnabled && transaction.mission.artisan?.id) {
+      try {
+        const payoutAmount = Number(transaction.artisanAmount);
+        const fraudResult = await this.payoutFraudDetector.screenPayout(
+          transaction.mission.artisan.id,
+          payoutAmount
+        );
+
+        // Check if auto-hold is enabled
+        const autoHoldEnabled = await this.featureToggle.isPayoutAutoHoldEnabled();
+        const riskThreshold = await this.featureToggle.getPayoutRiskThreshold();
+
+        if (fraudResult.isRisky && fraudResult.riskScore >= riskThreshold) {
+          this.logger.warn(
+            `Payout to artisan ${transaction.mission.artisan.id} flagged as risky (score: ${fraudResult.riskScore}). Recommendation: ${fraudResult.recommendation}`
+          );
+
+          // Auto-hold payout if enabled and recommendation requires it
+          if (autoHoldEnabled &&
+              (fraudResult.recommendation === 'HOLD_24H' ||
+               fraudResult.recommendation === 'HOLD_48H' ||
+               fraudResult.recommendation === 'MANUAL_REVIEW')) {
+
+            const holdDuration = fraudResult.recommendation === 'HOLD_24H' ? 24 : 48;
+            this.logger.warn(
+              `Payout auto-held for ${holdDuration} hours due to fraud risk`
+            );
+
+            await this.prisma.transaction.update({
+              where: { id: transaction.id },
+              data: { status: 'HELD' },
+            });
+
+            return {
+              success: true,
+              message: `Paiement capturé mais retenu pour ${holdDuration}h (vérification de sécurité)`,
+              payoutHeld: true,
+              holdDuration,
+              riskScore: fraudResult.riskScore,
+            };
+          }
+
+          // Block payout if recommendation is BLOCK
+          if (fraudResult.recommendation === 'BLOCK') {
+            await this.prisma.transaction.update({
+              where: { id: transaction.id },
+              data: { status: 'HELD' },
+            });
+
+            throw new BadRequestException(
+              'Paiement bloqué pour raisons de sécurité. Contactez le support.'
+            );
+          }
+        }
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error; // Re-throw blocked payout errors
+        }
+        this.logger.error(`Failed to run payout fraud detection:`, error);
+        // Don't block legitimate payouts if fraud detection fails
+      }
+    }
 
     // Transfer to artisan if Stripe Connect configured
     if (transaction.mission.artisan?.artisanProfile?.stripeAccountId) {
@@ -750,6 +821,56 @@ export class PaymentService {
 
     if (mission.transaction.status === 'COMPLETED') {
       return { message: 'Paiement déjà effectué' };
+    }
+
+    // Payout Fraud Screening (if enabled)
+    const isPayoutScreeningEnabled = await this.featureToggle.isPayoutFraudScreeningEnabled();
+    if (isPayoutScreeningEnabled) {
+      try {
+        const payoutAmount = Number(mission.transaction.artisanAmount);
+        const fraudResult = await this.payoutFraudDetector.screenPayout(
+          mission.artisan.id,
+          payoutAmount
+        );
+
+        const autoHoldEnabled = await this.featureToggle.isPayoutAutoHoldEnabled();
+        const riskThreshold = await this.featureToggle.getPayoutRiskThreshold();
+
+        if (fraudResult.isRisky && fraudResult.riskScore >= riskThreshold) {
+          this.logger.warn(
+            `Payout to artisan ${mission.artisan.id} flagged as risky (score: ${fraudResult.riskScore})`
+          );
+
+          // Auto-hold payout if enabled
+          if (autoHoldEnabled &&
+              (fraudResult.recommendation === 'HOLD_24H' ||
+               fraudResult.recommendation === 'HOLD_48H' ||
+               fraudResult.recommendation === 'MANUAL_REVIEW')) {
+
+            const holdDuration = fraudResult.recommendation === 'HOLD_24H' ? 24 : 48;
+
+            return {
+              success: false,
+              message: `Paiement retenu pour ${holdDuration}h (vérification de sécurité)`,
+              payoutHeld: true,
+              holdDuration,
+              riskScore: fraudResult.riskScore,
+            };
+          }
+
+          // Block payout if recommendation is BLOCK
+          if (fraudResult.recommendation === 'BLOCK') {
+            throw new BadRequestException(
+              'Paiement bloqué pour raisons de sécurité. Contactez le support.'
+            );
+          }
+        }
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+        this.logger.error(`Failed to run payout fraud detection:`, error);
+      }
     }
 
     // Transférer à l'artisan

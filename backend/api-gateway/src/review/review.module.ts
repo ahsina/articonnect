@@ -4,9 +4,10 @@ import { ReviewResponseController } from './controllers/review-response.controll
 import { ReviewService } from './services/review.service';
 import { ReviewResponseService } from './services/review-response.service';
 import { NotificationModule } from '../notification/notification.module';
+import { FraudModule } from '../fraud/fraud.module';
 
 @Module({
-  imports: [NotificationModule],
+  imports: [NotificationModule, FraudModule],
   controllers: [ReviewController, ReviewResponseController],
   providers: [ReviewService, ReviewResponseService],
   exports: [ReviewService, ReviewResponseService],

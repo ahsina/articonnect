@@ -43,6 +43,7 @@ export class AuthController {
   async register(
     @Body() registerDto: RegisterDto,
     @Ip() ipAddress: string,
+    @Request() req: any,
     @Response({ passthrough: true }) res: any,
   ) {
     // Verify CAPTCHA if provided
@@ -50,7 +51,8 @@ export class AuthController {
       await this.captchaService.verifyRegisterCaptcha(registerDto.captchaToken, ipAddress);
     }
 
-    const result = await this.authService.register(registerDto, ipAddress);
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const result = await this.authService.register(registerDto, ipAddress, userAgent);
 
     // Set httpOnly cookies for tokens
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
@@ -68,6 +70,7 @@ export class AuthController {
   async login(
     @Body() loginDto: LoginDto,
     @Ip() ipAddress: string,
+    @Request() req: any,
     @Response({ passthrough: true }) res: any,
   ) {
     // Verify CAPTCHA if provided
@@ -75,7 +78,8 @@ export class AuthController {
       await this.captchaService.verifyLoginCaptcha(loginDto.captchaToken, ipAddress);
     }
 
-    const result = await this.authService.login(loginDto);
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const result = await this.authService.login(loginDto, ipAddress, userAgent);
 
     // If 2FA required, don't set cookies yet - return session token
     if (result.requires2FA) {

@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -28,8 +29,8 @@ export class AuthService {
     private featureToggle: FeatureToggleService,
   ) {}
 
-  async register(registerDto: RegisterDto, ipAddress?: string) {
-    const { email, password, firstName, lastName, role, phone } = registerDto;
+  async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string) {
+    const { email, password, firstName, lastName, role, phone, deviceId } = registerDto;
 
     // Check if user exists
     const existingUser = await this.prisma.user.findUnique({
@@ -54,6 +55,43 @@ export class AuthService {
         role: role || UserRole.CLIENT,
       },
     });
+
+    // Multi-Account Detection (if enabled)
+    const isMultiAccountDetectionEnabled = await this.featureToggle.isMultiAccountDetectionEnabled();
+    if (isMultiAccountDetectionEnabled) {
+      const deviceFingerprint = {
+        fingerprintId: deviceId || registerDto.userAgent || 'unknown',
+        userAgent: registerDto.userAgent || userAgent || 'unknown',
+        ipAddress: ipAddress || 'unknown',
+      };
+
+      const multiAccountResult = await this.multiAccountDetector.detectMultipleAccounts(
+        user.id,
+        deviceFingerprint
+      );
+
+      // Update user with detection results
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          multiAccountRiskScore: multiAccountResult.riskScore,
+          multiAccountFlagged: multiAccountResult.isSuspicious,
+          deviceFingerprints: deviceId ? [deviceId] : [],
+          lastUserAgent: deviceFingerprint.userAgent,
+          lastIpAddress: deviceFingerprint.ipAddress,
+        },
+      });
+
+      // Block registration if high risk
+      const threshold = await this.featureToggle.getMultiAccountRiskThreshold();
+      if (multiAccountResult.riskScore >= threshold && multiAccountResult.recommendation === 'BLOCK') {
+        // Delete the just-created user
+        await this.prisma.user.delete({ where: { id: user.id } });
+        throw new ConflictException(
+          'Création de compte bloquée. Contactez le support si vous pensez qu\'il s\'agit d\'une erreur.'
+        );
+      }
+    }
 
     // Create profile based on role
     if (user.role === UserRole.CLIENT) {
@@ -105,14 +143,54 @@ export class AuthService {
     };
   }
 
-  async login(loginDto: LoginDto) {
-    const { email, password, twoFactorToken } = loginDto;
+  async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
+    const { email, password, twoFactorToken, deviceId } = loginDto;
 
     // Validate user
     const user = await this.validateUser(email, password);
 
     if (!user) {
       throw new UnauthorizedException('Identifiants incorrects');
+    }
+
+    // Multi-Account Detection (if enabled)
+    const isMultiAccountDetectionEnabled = await this.featureToggle.isMultiAccountDetectionEnabled();
+    if (isMultiAccountDetectionEnabled) {
+      const deviceFingerprint = {
+        fingerprintId: deviceId || loginDto.userAgent || 'unknown',
+        userAgent: loginDto.userAgent || userAgent || 'unknown',
+        ipAddress: ipAddress || 'unknown',
+      };
+
+      const multiAccountResult = await this.multiAccountDetector.detectMultipleAccounts(
+        user.id,
+        deviceFingerprint
+      );
+
+      // Update user with latest device info
+      const existingFingerprints = user.deviceFingerprints || [];
+      const updatedFingerprints = deviceId && !existingFingerprints.includes(deviceId)
+        ? [...existingFingerprints, deviceId]
+        : existingFingerprints;
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          multiAccountRiskScore: multiAccountResult.riskScore,
+          multiAccountFlagged: multiAccountResult.isSuspicious,
+          deviceFingerprints: updatedFingerprints,
+          lastUserAgent: deviceFingerprint.userAgent,
+          lastIpAddress: deviceFingerprint.ipAddress,
+        },
+      });
+
+      // Block login if high risk
+      const threshold = await this.featureToggle.getMultiAccountRiskThreshold();
+      if (multiAccountResult.riskScore >= threshold && multiAccountResult.recommendation === 'BLOCK') {
+        throw new ForbiddenException(
+          'Connexion bloquée pour raisons de sécurité. Contactez le support.'
+        );
+      }
     }
 
     // Check if 2FA is enabled

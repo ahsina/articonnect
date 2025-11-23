@@ -52,6 +52,24 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   captchaToken?: string;
+
+  @ApiProperty({
+    example: 'fp_abc123xyz',
+    description: 'Client device fingerprint for fraud detection',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+
+  @ApiProperty({
+    example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...',
+    description: 'User agent string',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  userAgent?: string;
 }
 
 export class LoginDto {
@@ -76,6 +94,24 @@ export class LoginDto {
   @IsOptional()
   @IsString()
   captchaToken?: string;
+
+  @ApiProperty({
+    example: 'fp_abc123xyz',
+    description: 'Client device fingerprint for fraud detection',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+
+  @ApiProperty({
+    example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...',
+    description: 'User agent string',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  userAgent?: string;
 }
 
 export class RefreshTokenDto {

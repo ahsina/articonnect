@@ -11,9 +11,10 @@ import { CurrencyService } from './services/currency.service';
 import { DeferredPaymentService } from './services/deferred-payment.service';
 import { PaymentCronService } from './services/payment-cron.service';
 import { NotificationModule } from '../notification/notification.module';
+import { FraudModule } from '../fraud/fraud.module';
 
 @Module({
-  imports: [NotificationModule],
+  imports: [NotificationModule, FraudModule],
   controllers: [
     PaymentController,
     ReputationController,
