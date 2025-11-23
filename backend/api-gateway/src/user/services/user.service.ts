@@ -1,11 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { UpdateProfileDto, CreateArtisanProfileDto } from '../dto/user.dto';
 import { Prisma } from '@prisma/client';
+import { BusinessVerificationService } from '../../verification/services/business-verification.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
+import { Country } from '../../verification/dto/verification.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(UserService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private businessVerificationService: BusinessVerificationService,
+    private featureToggle: FeatureToggleService,
+  ) {}
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -62,6 +71,74 @@ export class UserService {
       data: { role: 'ARTISAN' },
     });
 
+    // Business Verification (if enabled and registration number provided)
+    const isBusinessVerificationRequired = await this.featureToggle.isBusinessVerificationRequired();
+    let businessVerified = false;
+    let businessCountry: string | null = null;
+    let verificationErrors: string[] = [];
+
+    if (isBusinessVerificationRequired && dto.siret) {
+      try {
+        // Infer country from registration number format
+        const cleanSiret = dto.siret.replace(/\s/g, '');
+        let country: Country;
+
+        if (/^\d{14}$/.test(cleanSiret)) {
+          // 14 digits = French SIRET
+          country = Country.FRANCE;
+        } else if (/^[A-Z]\d{5,7}$/.test(cleanSiret)) {
+          // Letter + digits = Luxembourg RCS
+          country = Country.LUXEMBOURG;
+        } else if (/^\d{10}$/.test(cleanSiret)) {
+          // 10 digits = Belgian KBO
+          country = Country.BELGIUM;
+        } else {
+          throw new Error('Format de numéro d\'enregistrement non reconnu');
+        }
+
+        // Verify business registration
+        const verificationResult = await this.businessVerificationService.verifyBusiness({
+          country,
+          registrationNumber: dto.siret,
+          companyName: dto.companyName,
+        });
+
+        businessVerified = verificationResult.verified;
+        businessCountry = country;
+
+        if (!verificationResult.verified) {
+          verificationErrors = verificationResult.errors || [];
+          this.logger.warn(
+            `Business verification failed for user ${userId}: ${verificationErrors.join(', ')}`
+          );
+
+          // Auto-reject if enabled
+          const autoRejectEnabled = await this.featureToggle.isBusinessVerificationAutoReject();
+          if (autoRejectEnabled) {
+            throw new BadRequestException(
+              `La vérification de votre entreprise a échoué: ${verificationErrors.join(', ')}. ` +
+              'Veuillez vérifier vos informations.'
+            );
+          }
+        }
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error; // Re-throw rejection errors
+        }
+
+        this.logger.error(`Business verification error for user ${userId}:`, error);
+        verificationErrors.push(error.message || 'Erreur de vérification');
+
+        // Auto-reject if enabled
+        const autoRejectEnabled = await this.featureToggle.isBusinessVerificationAutoReject();
+        if (autoRejectEnabled) {
+          throw new BadRequestException(
+            'La vérification de votre entreprise est obligatoire pour créer un profil artisan.'
+          );
+        }
+      }
+    }
+
     // Create artisan profile
     const artisanProfile = await this.prisma.artisanProfile.create({
       data: {
@@ -74,6 +151,12 @@ export class UserService {
         longitude: dto.longitude,
         serviceRadius: dto.serviceRadius || 20,
         hourlyRate: dto.hourlyRate,
+        businessVerified,
+        businessVerifiedAt: businessVerified ? new Date() : null,
+        businessVerificationStatus: businessVerified ? 'VERIFIED' : 'PENDING',
+        businessRegistrationNumber: dto.siret,
+        businessCountry,
+        businessVerificationErrors: verificationErrors,
       },
     });
 
@@ -87,6 +170,13 @@ export class UserService {
           },
         },
       });
+    }
+
+    // Log warning if verification required but failed
+    if (isBusinessVerificationRequired && !businessVerified) {
+      this.logger.warn(
+        `Artisan profile created for user ${userId} without business verification (status: PENDING)`
+      );
     }
 
     return artisanProfile;

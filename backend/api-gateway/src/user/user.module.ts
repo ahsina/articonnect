@@ -7,9 +7,11 @@ import { StripeConnectService } from './services/stripe-connect.service';
 import { GdprService } from './services/gdpr.service';
 import { AvailabilityService } from './services/availability.service';
 import { PaymentModule } from '../payment/payment.module';
+import { VerificationModule } from '../verification/verification.module';
+import { FraudModule } from '../fraud/fraud.module';
 
 @Module({
-  imports: [PaymentModule],
+  imports: [PaymentModule, VerificationModule, FraudModule],
   controllers: [UserController, StripeController, AvailabilityController],
   providers: [UserService, StripeConnectService, GdprService, AvailabilityService],
   exports: [UserService, StripeConnectService, GdprService, AvailabilityService],
