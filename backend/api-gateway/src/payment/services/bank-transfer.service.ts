@@ -270,8 +270,9 @@ export class BankTransferService {
       if (transaction.mission?.artisan?.artisanProfile?.stripeAccountId) {
         try {
           // Calculate platform commission (10% by default)
-          const platformCommission = transaction.amount * 0.1;
-          const artisanAmount = transaction.amount - platformCommission;
+          const amount = transaction.amount.toNumber();
+          const platformCommission = amount * 0.1;
+          const artisanAmount = amount - platformCommission;
 
           // Transfer to artisan's Stripe Connect account
           await this.stripeService.createTransfer({

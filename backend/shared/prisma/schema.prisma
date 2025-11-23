@@ -44,6 +44,11 @@ model User {
   avatar    String? // URL S3
   fcmTokens String[] @default([]) // Firebase Cloud Messaging tokens for push notifications
 
+  // Outlook Calendar Integration
+  outlookAccessToken  String? // OAuth access token for Microsoft Graph API
+  outlookRefreshToken String? // OAuth refresh token
+  outlookTokenExpiry  DateTime? // Token expiration timestamp
+
   // Metadata
   emailVerified   Boolean   @default(false)
   emailVerifiedAt DateTime?

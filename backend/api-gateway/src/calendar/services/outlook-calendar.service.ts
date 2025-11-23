@@ -201,7 +201,7 @@ export class OutlookCalendarService {
         },
       });
 
-      if (!mission || !mission.scheduledDate) {
+      if (!mission || !mission.scheduledFor) {
         this.logger.warn(`Mission ${missionId} not found or has no scheduled date`);
         return null;
       }
@@ -218,7 +218,7 @@ export class OutlookCalendarService {
       });
 
       // Calculate event end time (2 hours by default)
-      const startTime = new Date(mission.scheduledDate);
+      const startTime = new Date(mission.scheduledFor);
       const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
 
       // Create event
@@ -231,7 +231,7 @@ export class OutlookCalendarService {
             <p><strong>Client:</strong> ${mission.client?.firstName || ''} ${mission.client?.lastName || ''}</p>
             <p><strong>Description:</strong> ${mission.description || 'Aucune description'}</p>
             <p><strong>Adresse:</strong> ${mission.address || 'Non spécifiée'}</p>
-            ${mission.budget ? `<p><strong>Budget:</strong> ${mission.budget}€</p>` : ''}
+            ${mission.clientBudget ? `<p><strong>Budget:</strong> ${mission.clientBudget}€</p>` : ''}
           `,
         },
         start: {
