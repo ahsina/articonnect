@@ -120,6 +120,9 @@ model User {
   reportsReceived Report[] @relation("ReportsReceived")
   reportsResolved Report[] @relation("ReportsResolved")
 
+  // Content Moderation
+  contentViolations ContentViolation[] @relation("ContentViolations")
+
   // Badges
   badges UserBadge[]
 
@@ -1066,6 +1069,26 @@ model Message {
   createdAt   DateTime  @default(now())
 
   @@index([senderId, receiverId])
+  @@index([createdAt])
+}
+
+// Content Moderation - Violation tracking
+model ContentViolation {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation("ContentViolations", fields: [userId], references: [id], onDelete: Cascade)
+  content          String   // Stored for admin review (first 500 chars)
+  detectedPatterns String[] // Array of pattern names that matched
+  severity         String   // LOW, MEDIUM, HIGH
+  reviewed         Boolean  @default(false)
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  actionTaken      String?  // WARNING, ACCOUNT_SUSPENDED, etc.
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([severity])
+  @@index([reviewed])
   @@index([createdAt])
 }
 

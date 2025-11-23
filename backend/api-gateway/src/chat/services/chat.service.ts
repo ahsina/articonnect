@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
 import { FcmService } from '../../fcm/services/fcm.service';
 import { EncryptionService } from './encryption.service';
+import { ContentFilterService } from './content-filter.service';
 
 @Injectable()
 export class ChatService {
@@ -13,6 +14,7 @@ export class ChatService {
     private jwtService: JwtService,
     private fcmService: FcmService,
     private encryptionService: EncryptionService,
+    private contentFilter: ContentFilterService,
   ) {}
 
   async validateToken(token: string) {
@@ -29,6 +31,24 @@ export class ChatService {
     content: string;
     missionId?: string;
   }) {
+    // 🛡️ CONTENT MODERATION - Filter for contact information
+    const filterResult = await this.contentFilter.filterContent(data.content, data.senderId);
+
+    // Block message if HIGH severity violations detected
+    if (filterResult.isBlocked) {
+      throw new BadRequestException({
+        message: 'Votre message contient des informations de contact interdites. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via ArtiConnect.',
+        detectedPatterns: filterResult.detectedPatterns,
+        violationType: filterResult.violationType,
+        code: 'CONTACT_INFO_BLOCKED'
+      });
+    }
+
+    // Use filtered content (for MEDIUM severity, we allow but filter)
+    const contentToSend = filterResult.detectedPatterns.length > 0
+      ? filterResult.filteredContent
+      : data.content;
+
     // Generate conversation key for encryption
     const conversationKey = this.encryptionService.generateConversationKey(
       data.senderId,
@@ -37,7 +57,7 @@ export class ChatService {
 
     // Encrypt message content
     const encryptedContent = this.encryptionService.encryptMessage(
-      data.content,
+      contentToSend,
       conversationKey
     );
 
