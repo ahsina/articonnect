@@ -34,6 +34,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { ExportModule } from './export/export.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
+import { MigrationModule } from './common/migrations/migration.module';
 import { LoggerService } from './common/logger/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -63,6 +64,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     ]),
     PrismaModule,
     RedisModule,
+    MigrationModule,
     HealthModule,
     AuthModule,
     UserModule,

@@ -125,38 +125,42 @@ model User {
 
   // Fraud Detection & Security
   // Multi-Account Detection
-  deviceFingerprints      String[]  @default([]) // Array of device fingerprint IDs
-  lastUserAgent           String?
-  lastIpAddress           String?
-  multiAccountRiskScore   Int       @default(0) // 0-100
-  multiAccountFlagged     Boolean   @default(false)
-  multiAccountReviewedAt  DateTime?
+  deviceFingerprints     String[]  @default([]) // Array of device fingerprint IDs
+  lastUserAgent          String?
+  lastIpAddress          String?
+  multiAccountRiskScore  Int       @default(0) // 0-100
+  multiAccountFlagged    Boolean   @default(false)
+  multiAccountReviewedAt DateTime?
 
   // KYC/AML Compliance
-  kycVerified             Boolean   @default(false)
-  kycVerifiedAt           DateTime?
-  kycStatus               String    @default("PENDING") // PENDING, VERIFIED, REJECTED, REQUIRED
-  kycProvider             String?   // STRIPE_IDENTITY, ONFIDO, etc.
-  kycSessionId            String?
+  kycVerified   Boolean   @default(false)
+  kycVerifiedAt DateTime?
+  kycStatus     String    @default("PENDING") // PENDING, VERIFIED, REJECTED, REQUIRED
+  kycProvider   String? // STRIPE_IDENTITY, ONFIDO, etc.
+  kycSessionId  String?
 
   // Refund Abuse Tracking
-  refundCount             Int       @default(0)
-  refundRate              Decimal   @default(0) @db.Decimal(5, 2) // Percentage
-  refundAbuseScore        Int       @default(0) // 0-100
-  refundBlocked           Boolean   @default(false)
+  refundCount      Int     @default(0)
+  refundRate       Decimal @default(0) @db.Decimal(5, 2) // Percentage
+  refundAbuseScore Int     @default(0) // 0-100
+  refundBlocked    Boolean @default(false)
 
   // Session Security
-  lastSessionId           String?
-  lastSessionLocation     String?   // "lat,lng"
-  sessionAnomalyCount     Int       @default(0)
+  lastSessionId       String?
+  lastSessionLocation String? // "lat,lng"
+  sessionAnomalyCount Int     @default(0)
 
   // Bot Detection
-  botDetectionScore       Int       @default(0) // 0-100
-  botFlagged              Boolean   @default(false)
-  captchaRequired         Boolean   @default(false)
+  botDetectionScore Int     @default(0) // 0-100
+  botFlagged        Boolean @default(false)
+  captchaRequired   Boolean @default(false)
 
   // Badges
   badges UserBadge[]
+
+  // Company & Employee Relationships
+  ownedCompany Company?          @relation("CompanyOwner")
+  employments  CompanyEmployee[] @relation("CompanyEmployees")
 
   @@index([email])
   @@index([role])
@@ -179,10 +183,10 @@ model ClientProfile {
   defaultPaymentMethod String?
 
   // Deferred Payment (Professional Clients)
-  deferredPaymentEnabled Boolean @default(false) // Pro client with payment terms
-  paymentTermDays        Int     @default(30) // Net-30, Net-60, etc.
-  creditLimit            Decimal @default(0) @db.Decimal(10, 2) // Maximum outstanding amount
-  currentOutstanding     Decimal @default(0) @db.Decimal(10, 2) // Current unpaid invoices
+  deferredPaymentEnabled Boolean   @default(false) // Pro client with payment terms
+  paymentTermDays        Int       @default(30) // Net-30, Net-60, etc.
+  creditLimit            Decimal   @default(0) @db.Decimal(10, 2) // Maximum outstanding amount
+  currentOutstanding     Decimal   @default(0) @db.Decimal(10, 2) // Current unpaid invoices
   lastCreditReview       DateTime? // Last time credit was reviewed
   deferredPaymentNotes   String? // Internal notes about payment terms
 
@@ -197,6 +201,10 @@ model ArtisanProfile {
   id     String @id @default(uuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Company Association (optional - for solo artisans converted to company employees)
+  companyId String?
+  company   Company? @relation("CompanyArtisans", fields: [companyId], references: [id], onDelete: SetNull)
 
   // Business info
   companyName String
@@ -227,16 +235,16 @@ model ArtisanProfile {
   stripeOnboarded Boolean @default(false)
 
   // Business Verification (Multi-country: FR/LU/BE)
-  businessVerified               Boolean   @default(false)
-  businessVerifiedAt             DateTime?
-  businessVerificationStatus     String    @default("PENDING") // PENDING, VERIFIED, REJECTED, MANUAL_REVIEW
-  businessRegistrationNumber     String?   // SIRET (FR), RCS (LU), KBO (BE)
-  businessCountry                String?   // FR, LU, BE
-  businessVerificationErrors     String[]  @default([])
-  businessVerificationWarnings   String[]  @default([])
-  businessLegalForm              String?   // SARL, SPRL, S.à r.l., etc.
-  businessActivityCode           String?   // NAF (FR), NACE (BE/LU)
-  businessVerificationLastCheck  DateTime?
+  businessVerified              Boolean   @default(false)
+  businessVerifiedAt            DateTime?
+  businessVerificationStatus    String    @default("PENDING") // PENDING, VERIFIED, REJECTED, MANUAL_REVIEW
+  businessRegistrationNumber    String? // SIRET (FR), RCS (LU), KBO (BE)
+  businessCountry               String? // FR, LU, BE
+  businessVerificationErrors    String[]  @default([])
+  businessVerificationWarnings  String[]  @default([])
+  businessLegalForm             String? // SARL, SPRL, S.à r.l., etc.
+  businessActivityCode          String? // NAF (FR), NACE (BE/LU)
+  businessVerificationLastCheck DateTime?
 
   // Stats
   rating       Decimal @default(0) @db.Decimal(3, 2)
@@ -282,13 +290,15 @@ model Address {
 }
 
 model Specialty {
-  id          String           @id @default(uuid())
-  name        String           @unique
-  category    String
-  description String?
-  icon        String?
-  artisans    ArtisanProfile[]
-  createdAt   DateTime         @default(now())
+  id                String           @id @default(uuid())
+  name              String           @unique
+  category          String
+  description       String?
+  icon              String?
+  artisans          ArtisanProfile[]
+  createdAt         DateTime         @default(now())
+  CompanyEmployee   CompanyEmployee? @relation(fields: [companyEmployeeId], references: [id])
+  companyEmployeeId String?
 }
 
 model Certification {
@@ -302,6 +312,220 @@ model Certification {
   document   String?
   verified   Boolean        @default(false)
   createdAt  DateTime       @default(now())
+}
+
+// ================================
+// COMPANIES & EMPLOYEES
+// ================================
+
+enum EmployeeRole {
+  OWNER // Full access, company owner
+  MANAGER // Can manage employees and assign missions
+  SUPERVISOR // Can assign missions, view reports
+  TECHNICIAN // Performs missions, limited access
+  CONTRACTOR // External contractor, temporary access
+}
+
+enum EmployeeStatus {
+  ACTIVE // Currently employed
+  INACTIVE // Temporarily inactive
+  TERMINATED // Employment ended
+  PENDING_INVITATION // Invitation sent, not accepted
+}
+
+enum PaymentModel {
+  SALARY // Fixed salary, no mission commissions
+  COMMISSION // Commission-based on missions
+  HYBRID // Base salary + commission on missions
+}
+
+model Company {
+  id String @id @default(uuid())
+
+  // Business Information
+  companyName String
+  siret       String  @unique
+  vatNumber   String?
+  description String?
+  website     String?
+  logo        String? // S3 URL
+
+  // Owner (original artisan who created the company)
+  ownerId String @unique
+  owner   User   @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  // Location & Service Area
+  baseAddress   String
+  city          String
+  postalCode    String
+  country       String // FR, LU, BE
+  latitude      Float
+  longitude     Float
+  serviceRadius Int    @default(20)
+
+  // Business Verification
+  businessVerified              Boolean   @default(false)
+  businessVerifiedAt            DateTime?
+  businessVerificationStatus    String    @default("PENDING")
+  businessRegistrationNumber    String?
+  businessCountry               String?
+  businessVerificationErrors    String[]  @default([])
+  businessVerificationWarnings  String[]  @default([])
+  businessLegalForm             String?
+  businessActivityCode          String?
+  businessVerificationLastCheck DateTime?
+
+  // Stripe Connect (company-level account)
+  stripeAccountId String? @unique
+  stripeOnboarded Boolean @default(false)
+
+  // Company Stats (aggregated from all employees)
+  totalMissions Int     @default(0)
+  totalRevenue  Decimal @default(0) @db.Decimal(12, 2)
+  averageRating Decimal @default(0) @db.Decimal(3, 2)
+  totalReviews  Int     @default(0)
+
+  // Relationships
+  employees       CompanyEmployee[]
+  artisanProfiles ArtisanProfile[]  @relation("CompanyArtisans")
+  missions        Mission[]
+  settings        CompanySettings?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siret])
+  @@index([ownerId])
+  @@index([latitude, longitude])
+  @@index([averageRating])
+}
+
+model CompanyEmployee {
+  id String @id @default(uuid())
+
+  // Company & User Relationship
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation("CompanyEmployees", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Employment Details
+  role                 EmployeeRole   @default(TECHNICIAN)
+  status               EmployeeStatus @default(PENDING_INVITATION)
+  invitationToken      String?        @unique
+  invitationSentAt     DateTime?
+  invitationAcceptedAt DateTime?
+
+  // Employment Dates
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  // Payment Configuration
+  paymentModel   PaymentModel @default(COMMISSION)
+  baseSalary     Decimal?     @db.Decimal(10, 2) // Monthly base salary (if SALARY or HYBRID)
+  commissionRate Decimal?     @db.Decimal(5, 2) // Percentage of mission revenue (0-100)
+  hourlyRate     Decimal?     @db.Decimal(10, 2) // Hourly rate for time tracking
+
+  // Permissions (JSON array of permission strings)
+  permissions Json @default("[]") // ["canViewAllMissions", "canAssignMissions", etc.]
+
+  // Skills & Specialties
+  specialties Specialty[]
+
+  // Performance Stats
+  totalMissions Int     @default(0)
+  totalEarnings Decimal @default(0) @db.Decimal(12, 2)
+  averageRating Decimal @default(0) @db.Decimal(3, 2)
+  totalReviews  Int     @default(0)
+
+  // Assigned Missions
+  assignedMissions  Mission[] @relation("EmployeeAssignedMissions")
+  completedMissions Mission[] @relation("EmployeeCompletedMissions")
+
+  // Earnings History
+  earnings EmployeeEarnings[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, userId]) // One user can only be employed once per company
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([role])
+}
+
+model EmployeeEarnings {
+  id String @id @default(uuid())
+
+  // Employee & Mission
+  employeeId String
+  employee   CompanyEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  missionId  String
+  mission    Mission         @relation(fields: [missionId], references: [id], onDelete: Restrict)
+
+  // Earnings Breakdown
+  missionRevenue         Decimal @db.Decimal(10, 2) // Total mission price
+  platformCommission     Decimal @db.Decimal(10, 2) // 12% platform fee
+  companyRevenue         Decimal @db.Decimal(10, 2) // After platform fee
+  employeeCommission     Decimal @db.Decimal(10, 2) // Employee's share
+  employeeCommissionRate Decimal @db.Decimal(5, 2) // Percentage used
+
+  // Payout Status
+  status       String    @default("PENDING") // PENDING, PROCESSING, PAID, FAILED
+  payoutDate   DateTime?
+  payoutMethod String?   @default("STRIPE_TRANSFER") // STRIPE_TRANSFER, BANK_TRANSFER, MANUAL
+
+  // Stripe Reference
+  stripeTransferId String? @unique
+
+  // Notes
+  notes String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([missionId])
+  @@index([status])
+  @@index([payoutDate])
+}
+
+model CompanySettings {
+  id String @id @default(uuid())
+
+  // Company Reference
+  companyId String  @unique
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Commission Settings
+  defaultCommissionRate Decimal @default(50) @db.Decimal(5, 2) // Default employee commission % (0-100)
+  ownerCommissionRate   Decimal @default(100) @db.Decimal(5, 2) // Owner gets 100% by default
+
+  // Mission Assignment
+  autoAssignMissions          Boolean @default(false) // Auto-assign based on availability & skills
+  requireManagerApproval      Boolean @default(false) // Manager must approve mission acceptance
+  allowEmployeeSelfAssignment Boolean @default(true) // Employees can claim unassigned missions
+
+  // Payment Settings
+  payoutFrequency String  @default("WEEKLY") // DAILY, WEEKLY, BIWEEKLY, MONTHLY
+  minimumPayout   Decimal @default(50) @db.Decimal(10, 2) // Minimum amount to trigger payout
+
+  // Notification Settings
+  notifyOwnerOnNewMission    Boolean @default(true)
+  notifyManagerOnNewMission  Boolean @default(true)
+  notifyEmployeeOnAssignment Boolean @default(true)
+
+  // Working Hours (company-wide defaults)
+  defaultWorkingHoursStart String? // "09:00"
+  defaultWorkingHoursEnd   String? // "18:00"
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SavedArtisan {
@@ -342,11 +566,24 @@ enum MissionStatus {
 }
 
 model Mission {
-  id          String        @id @default(uuid())
-  clientId    String
-  client      User          @relation("ClientMissions", fields: [clientId], references: [id])
-  artisanId   String?
-  artisan     User?         @relation("ArtisanMissions", fields: [artisanId], references: [id])
+  id       String @id @default(uuid())
+  clientId String
+  client   User   @relation("ClientMissions", fields: [clientId], references: [id])
+
+  // Solo Artisan Assignment (legacy/backward compatibility)
+  artisanId String?
+  artisan   User?   @relation("ArtisanMissions", fields: [artisanId], references: [id])
+
+  // Company Assignment (new multi-employee support)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Employee Assignment (who actually performs the work)
+  assignedToId  String?
+  assignedTo    CompanyEmployee? @relation("EmployeeAssignedMissions", fields: [assignedToId], references: [id], onDelete: SetNull)
+  completedById String?
+  completedBy   CompanyEmployee? @relation("EmployeeCompletedMissions", fields: [completedById], references: [id], onDelete: SetNull)
+
   type        MissionType
   status      MissionStatus @default(PENDING)
   title       String
@@ -382,34 +619,35 @@ model Mission {
   autoValidated       Boolean   @default(false) // True if auto-validated after 7 days
 
   // Price Anomaly Detection
-  priceAnomalyFlag      Boolean   @default(false) // Flagged as suspicious pricing
-  expectedPrice         Decimal?  @db.Decimal(10, 2) // ML-predicted fair price
-  priceDeviation        Int?      // Percentage deviation from norm (-100 to +100)
-  priceAnomalySignals   String[]  @default([]) // Array of anomaly signals
-  priceReviewedAt       DateTime? // When price was reviewed
-  priceReviewedBy       String?   // Admin who reviewed
+  priceAnomalyFlag    Boolean   @default(false) // Flagged as suspicious pricing
+  expectedPrice       Decimal?  @db.Decimal(10, 2) // ML-predicted fair price
+  priceDeviation      Int? // Percentage deviation from norm (-100 to +100)
+  priceAnomalySignals String[]  @default([]) // Array of anomaly signals
+  priceReviewedAt     DateTime? // When price was reviewed
+  priceReviewedBy     String? // Admin who reviewed
 
   // Media
   photos String[]
 
   // Radius Expansion (automatic search expansion when no artisan responds)
-  initialSearchRadius   Int      @default(20) // Initial search radius in km
-  currentSearchRadius   Int      @default(20) // Current search radius in km
-  lastRadiusExpansion   DateTime? // When radius was last expanded
-  maxRadiusReached      Boolean  @default(false) // True if max radius (100km) reached
-  notificationsSent     Int      @default(0) // Track number of artisans notified
+  initialSearchRadius Int       @default(20) // Initial search radius in km
+  currentSearchRadius Int       @default(20) // Current search radius in km
+  lastRadiusExpansion DateTime? // When radius was last expanded
+  maxRadiusReached    Boolean   @default(false) // True if max radius (100km) reached
+  notificationsSent   Int       @default(0) // Track number of artisans notified
 
   // Relations
-  negotiations        Negotiation[]
-  transaction         Transaction?
-  payments            Payment[]
-  review              Review?
-  disputes            Dispute[]
-  history             MissionHistory[]
-  noShowEvent         NoShowEvent?
-  invoices            Invoice[]
-  reports             Report[]
-  availabilitySlots   AvailabilitySlot[]
+  negotiations      Negotiation[]
+  transaction       Transaction?
+  payments          Payment[]
+  review            Review?
+  disputes          Dispute[]
+  history           MissionHistory[]
+  noShowEvent       NoShowEvent?
+  invoices          Invoice[]
+  reports           Report[]
+  availabilitySlots AvailabilitySlot[]
+  employeeEarnings  EmployeeEarnings[]
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -424,11 +662,14 @@ model Mission {
 
   @@index([clientId])
   @@index([artisanId])
+  @@index([companyId])
+  @@index([assignedToId])
+  @@index([completedById])
   @@index([status])
   @@index([type])
   @@index([latitude, longitude])
   @@index([createdAt])
-  @@index([completedAt]) // NEW: For auto-validation CRON job
+  @@index([completedAt])
 }
 
 model MissionHistory {
@@ -446,17 +687,17 @@ model MissionHistory {
 }
 
 model Negotiation {
-  id             String    @id @default(uuid())
-  missionId      String
-  mission        Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  senderId       String
-  receiverId     String
-  proposedPrice  Decimal   @db.Decimal(10, 2)
+  id            String  @id @default(uuid())
+  missionId     String
+  mission       Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  senderId      String
+  receiverId    String
+  proposedPrice Decimal @db.Decimal(10, 2)
 
   // Price breakdown (optional detailed pricing)
-  laborCost      Decimal?  @db.Decimal(10, 2) // Main d'œuvre
-  materialCost   Decimal?  @db.Decimal(10, 2) // Matériel
-  travelCost     Decimal?  @db.Decimal(10, 2) // Déplacement
+  laborCost    Decimal? @db.Decimal(10, 2) // Main d'œuvre
+  materialCost Decimal? @db.Decimal(10, 2) // Matériel
+  travelCost   Decimal? @db.Decimal(10, 2) // Déplacement
 
   message        String?
   accepted       Boolean?
@@ -478,16 +719,16 @@ enum ReviewType {
 }
 
 model Review {
-  id                  String          @id @default(uuid())
-  missionId           String          @unique
-  mission             Mission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  reviewerId          String
-  reviewer            User            @relation("GivenReviews", fields: [reviewerId], references: [id])
-  reviewedId          String
-  reviewed            User            @relation("ReceivedReviews", fields: [reviewedId], references: [id])
+  id         String  @id @default(uuid())
+  missionId  String  @unique
+  mission    Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User    @relation("GivenReviews", fields: [reviewerId], references: [id])
+  reviewedId String
+  reviewed   User    @relation("ReceivedReviews", fields: [reviewedId], references: [id])
 
   // Review type (bidirectional reviews)
-  reviewType          ReviewType      @default(CLIENT_TO_ARTISAN)
+  reviewType ReviewType @default(CLIENT_TO_ARTISAN)
 
   // Common ratings (1-5 stars)
   overallRating       Int
@@ -497,27 +738,27 @@ model Review {
   valueRating         Int? // Value for money (artisan) / Fair pricing expectations (client)
 
   // Artisan→Client specific ratings
-  paymentPromptness   Int? // Client paid on time (1-5)
-  respectRating       Int? // Client was respectful and professional (1-5)
-  safetyRating        Int? // Work environment was safe (1-5)
+  paymentPromptness Int? // Client paid on time (1-5)
+  respectRating     Int? // Client was respectful and professional (1-5)
+  safetyRating      Int? // Work environment was safe (1-5)
 
-  comment             String?
-  photos              String[]
-  helpful             Int             @default(0)
-  verified            Boolean         @default(true)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  ReviewResponse      ReviewResponse?
-  reports             Report[]
+  comment        String?
+  photos         String[]
+  helpful        Int             @default(0)
+  verified       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  ReviewResponse ReviewResponse?
+  reports        Report[]
 
   // Fraud Detection
-  fraudScore          Float           @default(0) // 0-100
-  fraudSignals        String[]        @default([]) // Array of detected fraud signals
-  aiGenerated         Boolean         @default(false) // AI-generated text detection
-  hidden              Boolean         @default(false) // Hidden due to fraud
-  hiddenReason        String?         // Why the review was hidden
-  fraudReviewedAt     DateTime?       // When fraud review was done
-  fraudReviewedBy     String?         // Admin who reviewed
+  fraudScore      Float     @default(0) // 0-100
+  fraudSignals    String[]  @default([]) // Array of detected fraud signals
+  aiGenerated     Boolean   @default(false) // AI-generated text detection
+  hidden          Boolean   @default(false) // Hidden due to fraud
+  hiddenReason    String? // Why the review was hidden
+  fraudReviewedAt DateTime? // When fraud review was done
+  fraudReviewedBy String? // Admin who reviewed
 
   @@index([reviewedId])
   @@index([fraudScore])
@@ -594,18 +835,18 @@ enum ProductStatus {
 }
 
 model Category {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
   description String?
   icon        String?
   parentId    String?
-  parent      Category? @relation("CategoryChildren", fields: [parentId], references: [id])
+  parent      Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryChildren")
   products    Product[]
-  active      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@index([slug])
   @@index([parentId])
@@ -718,36 +959,36 @@ enum ReturnStatus {
 }
 
 model OrderReturn {
-  id               String       @id @default(uuid())
-  orderId          String
-  order            Order        @relation("OrderReturns", fields: [orderId], references: [id])
-  clientId         String
-  client           User         @relation("ClientReturns", fields: [clientId], references: [id])
-  items            ReturnItem[]
-  reason           ReturnReason
-  description      String?
-  status           ReturnStatus @default(REQUESTED)
+  id          String       @id @default(uuid())
+  orderId     String
+  order       Order        @relation("OrderReturns", fields: [orderId], references: [id])
+  clientId    String
+  client      User         @relation("ClientReturns", fields: [clientId], references: [id])
+  items       ReturnItem[]
+  reason      ReturnReason
+  description String?
+  status      ReturnStatus @default(REQUESTED)
 
   // Shipping info
-  returnLabel      String? // URL to return shipping label
-  trackingNumber   String?
+  returnLabel    String? // URL to return shipping label
+  trackingNumber String?
 
   // Refund info
-  refundAmount     Decimal      @db.Decimal(10, 2)
-  refundedAmount   Decimal      @default(0) @db.Decimal(10, 2)
+  refundAmount   Decimal @db.Decimal(10, 2)
+  refundedAmount Decimal @default(0) @db.Decimal(10, 2)
 
   // Evidence
-  photos           String[]     @default([])
+  photos String[] @default([])
 
   // Admin handling
-  reviewedBy       String?
-  reviewedAt       DateTime?
-  resolution       String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  resolution String?
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  approvedAt       DateTime?
-  completedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  approvedAt  DateTime?
+  completedAt DateTime?
 
   @@index([orderId])
   @@index([clientId])
@@ -755,14 +996,14 @@ model OrderReturn {
 }
 
 model ReturnItem {
-  id            String      @id @default(uuid())
-  returnId      String
-  return        OrderReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
-  orderItemId   String
-  productId     String
-  product       Product     @relation("ReturnItems", fields: [productId], references: [id])
-  quantity      Int
-  reason        String?
+  id          String      @id @default(uuid())
+  returnId    String
+  return      OrderReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderItemId String
+  productId   String
+  product     Product     @relation("ReturnItems", fields: [productId], references: [id])
+  quantity    Int
+  reason      String?
 
   @@index([returnId])
 }
@@ -788,33 +1029,33 @@ enum TransactionStatus {
 }
 
 model Transaction {
-  id                    String            @id @default(uuid())
-  type                  TransactionType
-  missionId             String?           @unique
-  mission               Mission?          @relation(fields: [missionId], references: [id])
-  orderId               String?           @unique
-  order                 Order?            @relation(fields: [orderId], references: [id])
-  amount                Decimal           @db.Decimal(10, 2)
-  currency              String            @default("EUR")
-  commission            Decimal           @db.Decimal(10, 2)
-  artisanAmount         Decimal           @db.Decimal(10, 2)
+  id            String          @id @default(uuid())
+  type          TransactionType
+  missionId     String?         @unique
+  mission       Mission?        @relation(fields: [missionId], references: [id])
+  orderId       String?         @unique
+  order         Order?          @relation(fields: [orderId], references: [id])
+  amount        Decimal         @db.Decimal(10, 2)
+  currency      String          @default("EUR")
+  commission    Decimal         @db.Decimal(10, 2)
+  artisanAmount Decimal         @db.Decimal(10, 2)
 
   // Stripe payment fields
-  stripePaymentIntentId String?           @unique
-  stripeTransferId      String?           @unique
+  stripePaymentIntentId String? @unique
+  stripeTransferId      String? @unique
 
   // PayPal payment fields
-  paypalOrderId         String?           @unique
-  paypalCaptureId       String?           @unique
+  paypalOrderId   String? @unique
+  paypalCaptureId String? @unique
 
   // Payment method tracking
-  paymentMethod         PaymentMethod     @default(STRIPE)
+  paymentMethod PaymentMethod @default(STRIPE)
 
-  status                TransactionStatus @default(PENDING)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  completedAt           DateTime?
-  refundedAt            DateTime?
+  status      TransactionStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  completedAt DateTime?
+  refundedAt  DateTime?
 
   @@index([status])
   @@index([type])
@@ -917,8 +1158,8 @@ model Invoice {
   id String @id @default(uuid())
 
   // Invoice numbering (e.g. INV-2025-00001)
-  invoiceNumber String @unique
-  year          Int
+  invoiceNumber  String @unique
+  year           Int
   sequenceNumber Int
 
   // Related entities
@@ -939,14 +1180,14 @@ model Invoice {
   client   User   @relation("ReceivedInvoices", fields: [clientId], references: [id])
 
   // Invoice details
-  type        InvoiceType
-  status      InvoiceStatus @default(DRAFT)
+  type   InvoiceType
+  status InvoiceStatus @default(DRAFT)
 
   // Amounts (all in EUR)
-  subtotal         Decimal @db.Decimal(10, 2) // Amount before tax
-  taxRate          Decimal @db.Decimal(5, 2)  // Tax percentage (e.g., 17.00 for 17%)
-  taxAmount        Decimal @db.Decimal(10, 2) // Calculated tax
-  totalAmount      Decimal @db.Decimal(10, 2) // Total including tax
+  subtotal    Decimal @db.Decimal(10, 2) // Amount before tax
+  taxRate     Decimal @db.Decimal(5, 2) // Tax percentage (e.g., 17.00 for 17%)
+  taxAmount   Decimal @db.Decimal(10, 2) // Calculated tax
+  totalAmount Decimal @db.Decimal(10, 2) // Total including tax
 
   platformCommissionRate Decimal @db.Decimal(5, 2) // Commission percentage (e.g., 12.00)
   platformCommission     Decimal @db.Decimal(10, 2) // Commission amount
@@ -986,10 +1227,10 @@ model Invoice {
 
 // Invoice numbering sequence (per year)
 model InvoiceSequence {
-  id             String @id @default(uuid())
-  year           Int    @unique
-  lastSequence   Int    @default(0)
-  updatedAt      DateTime @updatedAt
+  id           String   @id @default(uuid())
+  year         Int      @unique
+  lastSequence Int      @default(0)
+  updatedAt    DateTime @updatedAt
 }
 
 // ================================
@@ -1139,17 +1380,17 @@ model Message {
 
 // Content Moderation - Violation tracking
 model ContentViolation {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   userId           String
-  user             User     @relation("ContentViolations", fields: [userId], references: [id], onDelete: Cascade)
-  content          String   // Stored for admin review (first 500 chars)
+  user             User      @relation("ContentViolations", fields: [userId], references: [id], onDelete: Cascade)
+  content          String // Stored for admin review (first 500 chars)
   detectedPatterns String[] // Array of pattern names that matched
-  severity         String   // LOW, MEDIUM, HIGH
-  reviewed         Boolean  @default(false)
+  severity         String // LOW, MEDIUM, HIGH
+  reviewed         Boolean   @default(false)
   reviewedBy       String?
   reviewedAt       DateTime?
-  actionTaken      String?  // WARNING, ACCOUNT_SUSPENDED, etc.
-  createdAt        DateTime @default(now())
+  actionTaken      String? // WARNING, ACCOUNT_SUSPENDED, etc.
+  createdAt        DateTime  @default(now())
 
   @@index([userId])
   @@index([severity])
@@ -1162,58 +1403,58 @@ model ContentViolation {
 // ================================
 
 model FraudProtectionConfig {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // Multi-Account Detection
-  multiAccountDetectionEnabled     Boolean @default(true)
-  multiAccountRiskThreshold        Int     @default(70) // 0-100
+  multiAccountDetectionEnabled Boolean @default(true)
+  multiAccountRiskThreshold    Int     @default(70) // 0-100
 
   // Review Fraud Detection
-  reviewFraudDetectionEnabled      Boolean @default(true)
-  reviewFraudScoreThreshold        Float   @default(70) // 0-100
-  reviewAutoHideEnabled            Boolean @default(true)
+  reviewFraudDetectionEnabled Boolean @default(true)
+  reviewFraudScoreThreshold   Float   @default(70) // 0-100
+  reviewAutoHideEnabled       Boolean @default(true)
 
   // Payout Fraud Screening
-  payoutFraudScreeningEnabled      Boolean @default(true)
-  payoutRiskThreshold              Int     @default(60) // 0-100
-  payoutAutoHoldEnabled            Boolean @default(true)
+  payoutFraudScreeningEnabled Boolean @default(true)
+  payoutRiskThreshold         Int     @default(60) // 0-100
+  payoutAutoHoldEnabled       Boolean @default(true)
 
   // Price Anomaly Detection
-  priceAnomalyDetectionEnabled     Boolean @default(true)
-  priceDeviationThreshold          Int     @default(-30) // Percentage
-  priceAutoFlagEnabled             Boolean @default(true)
+  priceAnomalyDetectionEnabled Boolean @default(true)
+  priceDeviationThreshold      Int     @default(-30) // Percentage
+  priceAutoFlagEnabled         Boolean @default(true)
 
   // Refund Abuse Detection
-  refundAbuseDetectionEnabled      Boolean @default(true)
-  refundAbuseScoreThreshold        Int     @default(60) // 0-100
-  refundAutoRejectEnabled          Boolean @default(false)
+  refundAbuseDetectionEnabled Boolean @default(true)
+  refundAbuseScoreThreshold   Int     @default(60) // 0-100
+  refundAutoRejectEnabled     Boolean @default(false)
 
   // Session Anomaly Detection
-  sessionAnomalyDetectionEnabled   Boolean @default(true)
-  sessionThreatLevelThreshold      String  @default("HIGH") // LOW, MEDIUM, HIGH, CRITICAL
-  sessionAutoLogoutEnabled         Boolean @default(true)
+  sessionAnomalyDetectionEnabled Boolean @default(true)
+  sessionThreatLevelThreshold    String  @default("HIGH") // LOW, MEDIUM, HIGH, CRITICAL
+  sessionAutoLogoutEnabled       Boolean @default(true)
 
   // KYC/AML
-  kycEnabled                       Boolean @default(true)
-  kycSingleTransactionThreshold    Int     @default(1000) // EUR
-  kycCumulativeThreshold           Int     @default(3000) // EUR/month
-  kycAutoBlockEnabled              Boolean @default(true)
+  kycEnabled                    Boolean @default(true)
+  kycSingleTransactionThreshold Int     @default(1000) // EUR
+  kycCumulativeThreshold        Int     @default(3000) // EUR/month
+  kycAutoBlockEnabled           Boolean @default(true)
 
   // Bot Detection
-  botDetectionEnabled              Boolean @default(true)
-  botScoreThreshold                Int     @default(70) // 0-100
-  botCaptchaEnabled                Boolean @default(true)
+  botDetectionEnabled Boolean @default(true)
+  botScoreThreshold   Int     @default(70) // 0-100
+  botCaptchaEnabled   Boolean @default(true)
 
   // Business Verification
-  businessVerificationRequired     Boolean @default(true)
-  businessVerificationAutoReject   Boolean @default(false)
+  businessVerificationRequired   Boolean @default(true)
+  businessVerificationAutoReject Boolean @default(false)
 
   // Global Settings
-  fraudAlertEmailEnabled           Boolean @default(true)
-  fraudAlertEmail                  String  @default("admin@articonnect.com")
+  fraudAlertEmailEnabled Boolean @default(true)
+  fraudAlertEmail        String  @default("admin@articonnect.com")
 
   updatedAt DateTime @updatedAt
-  updatedBy String?  // Admin user ID who last updated
+  updatedBy String? // Admin user ID who last updated
 
   @@map("fraud_protection_config")
 }
@@ -1377,10 +1618,10 @@ model Country {
   name String
 
   // Standard tax rates for this country
-  standardRate      Decimal @db.Decimal(5, 2) // e.g., 17.00
-  reducedRate       Decimal @db.Decimal(5, 2) // e.g., 8.00
-  intermediateRate  Decimal? @db.Decimal(5, 2) // e.g., 14.00
-  superReducedRate  Decimal? @db.Decimal(5, 2) // e.g., 3.00
+  standardRate     Decimal  @db.Decimal(5, 2) // e.g., 17.00
+  reducedRate      Decimal  @db.Decimal(5, 2) // e.g., 8.00
+  intermediateRate Decimal? @db.Decimal(5, 2) // e.g., 14.00
+  superReducedRate Decimal? @db.Decimal(5, 2) // e.g., 3.00
 
   // VAT configuration
   taxRates TaxRate[]
@@ -1392,7 +1633,7 @@ model Country {
 }
 
 model TaxRate {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   countryId String
   country   Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
 
@@ -1406,7 +1647,7 @@ model TaxRate {
   description String?
 
   // Effective dates
-  effectiveFrom DateTime @default(now())
+  effectiveFrom DateTime  @default(now())
   effectiveTo   DateTime?
 
   createdAt DateTime @default(now())
@@ -1427,14 +1668,14 @@ model VatDeclaration {
   countryCode String // LU, FR, BE
 
   // Amounts
-  totalSales      Decimal @db.Decimal(10, 2)
-  totalTax        Decimal @db.Decimal(10, 2)
-  totalPurchases  Decimal? @db.Decimal(10, 2)
-  totalTaxCredit  Decimal? @db.Decimal(10, 2)
-  netTaxDue       Decimal @db.Decimal(10, 2)
+  totalSales     Decimal  @db.Decimal(10, 2)
+  totalTax       Decimal  @db.Decimal(10, 2)
+  totalPurchases Decimal? @db.Decimal(10, 2)
+  totalTaxCredit Decimal? @db.Decimal(10, 2)
+  netTaxDue      Decimal  @db.Decimal(10, 2)
 
   // Status
-  status      String   @default("DRAFT") // DRAFT, SUBMITTED, PAID
+  status      String    @default("DRAFT") // DRAFT, SUBMITTED, PAID
   submittedAt DateTime?
   paidAt      DateTime?
 
@@ -1481,23 +1722,23 @@ enum ReportStatus {
 }
 
 model Report {
-  id          String   @id @default(uuid())
-  reporterId  String
-  reporter    User     @relation("ReportsMade", fields: [reporterId], references: [id])
+  id         String @id @default(uuid())
+  reporterId String
+  reporter   User   @relation("ReportsMade", fields: [reporterId], references: [id])
 
   type        ReportType
   reason      ReportReason
   description String?
 
   // Reported entity (polymorphic)
-  reviewId  String?
-  review    Review? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String?
+  review   Review? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   reportedUserId String?
-  reportedUser   User? @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+  reportedUser   User?   @relation("ReportsReceived", fields: [reportedUserId], references: [id])
 
   missionId String?
   mission   Mission? @relation(fields: [missionId], references: [id], onDelete: Cascade)
@@ -1505,12 +1746,12 @@ model Report {
   // Status & resolution
   status      ReportStatus @default(PENDING)
   resolvedBy  String?
-  resolver    User?    @relation("ReportsResolved", fields: [resolvedBy], references: [id])
+  resolver    User?        @relation("ReportsResolved", fields: [resolvedBy], references: [id])
   resolution  String?
   actionTaken String? // "USER_WARNED", "CONTENT_REMOVED", "USER_SUSPENDED", etc.
 
-  createdAt   DateTime @default(now())
-  resolvedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
 
   @@index([reporterId])
   @@index([reportedUserId])
@@ -1555,15 +1796,15 @@ enum TimeOffStatus {
 
 // Regular working hours (weekly schedule)
 model WorkingHours {
-  id         String    @id @default(uuid())
-  artisanId  String
-  artisan    ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
-  dayOfWeek  DayOfWeek
-  startTime  String    // HH:mm format (e.g., "09:00")
-  endTime    String    // HH:mm format (e.g., "17:00")
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id        String         @id @default(uuid())
+  artisanId String
+  artisan   ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  dayOfWeek DayOfWeek
+  startTime String // HH:mm format (e.g., "09:00")
+  endTime   String // HH:mm format (e.g., "17:00")
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@unique([artisanId, dayOfWeek])
   @@index([artisanId])
@@ -1571,16 +1812,16 @@ model WorkingHours {
 
 // Specific availability slots
 model AvailabilitySlot {
-  id        String   @id @default(uuid())
+  id        String         @id @default(uuid())
   artisanId String
   artisan   ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
   startTime DateTime
   endTime   DateTime
-  isBooked  Boolean  @default(false)
+  isBooked  Boolean        @default(false)
   missionId String?
-  mission   Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  mission   Mission?       @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([artisanId])
   @@index([startTime])
@@ -1589,18 +1830,18 @@ model AvailabilitySlot {
 
 // Time off / Unavailability
 model TimeOff {
-  id          String         @id @default(uuid())
-  artisanId   String
-  artisan     ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
-  type        TimeOffType
-  startDate   DateTime
-  endDate     DateTime
-  reason      String?
-  status      TimeOffStatus  @default(PENDING)
-  approvedBy  String?
-  approvedAt  DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id         String         @id @default(uuid())
+  artisanId  String
+  artisan    ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  type       TimeOffType
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  status     TimeOffStatus  @default(PENDING)
+  approvedBy String?
+  approvedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
   @@index([artisanId])
   @@index([startDate])
@@ -1614,12 +1855,12 @@ model RecurringUnavailability {
   artisan    ArtisanProfile    @relation(fields: [artisanId], references: [id], onDelete: Cascade)
   title      String
   pattern    RecurrencePattern
-  dayOfWeek  DayOfWeek?        // For WEEKLY pattern
-  dayOfMonth Int?              // For MONTHLY pattern (1-31)
-  startTime  String            // HH:mm format
-  endTime    String            // HH:mm format
-  startDate  DateTime          // When this recurrence starts
-  endDate    DateTime?         // Optional end date
+  dayOfWeek  DayOfWeek? // For WEEKLY pattern
+  dayOfMonth Int? // For MONTHLY pattern (1-31)
+  startTime  String // HH:mm format
+  endTime    String // HH:mm format
+  startDate  DateTime // When this recurrence starts
+  endDate    DateTime? // Optional end date
   isActive   Boolean           @default(true)
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
@@ -1651,7 +1892,7 @@ enum ConfigDataType {
 model PlatformConfig {
   id          String         @id @default(uuid())
   key         String         @unique
-  value       String         // Stored as string, parsed based on dataType
+  value       String // Stored as string, parsed based on dataType
   dataType    ConfigDataType @default(STRING)
   category    ConfigCategory
   description String?
@@ -1695,14 +1936,14 @@ model Badge {
   tier        BadgeTier
 
   // Criteria for earning (stored as JSON)
-  criteria    Json // { "missions_completed": 10 } or { "avg_rating": 4.5, "min_reviews": 20 }
+  criteria Json // { "missions_completed": 10 } or { "avg_rating": 4.5, "min_reviews": 20 }
 
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  userBadges  UserBadge[]
+  userBadges UserBadge[]
 
   @@index([type])
   @@index([tier])
@@ -1710,12 +1951,12 @@ model Badge {
 }
 
 model UserBadge {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badgeId   String
-  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-  earnedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
 
   // Optional: Track what triggered the badge
   triggerData Json?
