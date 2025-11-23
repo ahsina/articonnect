@@ -123,6 +123,38 @@ model User {
   // Content Moderation
   contentViolations ContentViolation[] @relation("ContentViolations")
 
+  // Fraud Detection & Security
+  // Multi-Account Detection
+  deviceFingerprints      String[]  @default([]) // Array of device fingerprint IDs
+  lastUserAgent           String?
+  lastIpAddress           String?
+  multiAccountRiskScore   Int       @default(0) // 0-100
+  multiAccountFlagged     Boolean   @default(false)
+  multiAccountReviewedAt  DateTime?
+
+  // KYC/AML Compliance
+  kycVerified             Boolean   @default(false)
+  kycVerifiedAt           DateTime?
+  kycStatus               String    @default("PENDING") // PENDING, VERIFIED, REJECTED, REQUIRED
+  kycProvider             String?   // STRIPE_IDENTITY, ONFIDO, etc.
+  kycSessionId            String?
+
+  // Refund Abuse Tracking
+  refundCount             Int       @default(0)
+  refundRate              Decimal   @default(0) @db.Decimal(5, 2) // Percentage
+  refundAbuseScore        Int       @default(0) // 0-100
+  refundBlocked           Boolean   @default(false)
+
+  // Session Security
+  lastSessionId           String?
+  lastSessionLocation     String?   // "lat,lng"
+  sessionAnomalyCount     Int       @default(0)
+
+  // Bot Detection
+  botDetectionScore       Int       @default(0) // 0-100
+  botFlagged              Boolean   @default(false)
+  captchaRequired         Boolean   @default(false)
+
   // Badges
   badges UserBadge[]
 
@@ -130,6 +162,8 @@ model User {
   @@index([role])
   @@index([status])
   @@index([reputationScore])
+  @@index([multiAccountRiskScore])
+  @@index([kycStatus])
 }
 
 model ClientProfile {
@@ -191,6 +225,18 @@ model ArtisanProfile {
   // Stripe Connect
   stripeAccountId String? @unique
   stripeOnboarded Boolean @default(false)
+
+  // Business Verification (Multi-country: FR/LU/BE)
+  businessVerified               Boolean   @default(false)
+  businessVerifiedAt             DateTime?
+  businessVerificationStatus     String    @default("PENDING") // PENDING, VERIFIED, REJECTED, MANUAL_REVIEW
+  businessRegistrationNumber     String?   // SIRET (FR), RCS (LU), KBO (BE)
+  businessCountry                String?   // FR, LU, BE
+  businessVerificationErrors     String[]  @default([])
+  businessVerificationWarnings   String[]  @default([])
+  businessLegalForm              String?   // SARL, SPRL, S.à r.l., etc.
+  businessActivityCode           String?   // NAF (FR), NACE (BE/LU)
+  businessVerificationLastCheck  DateTime?
 
   // Stats
   rating       Decimal @default(0) @db.Decimal(3, 2)
@@ -335,6 +381,14 @@ model Mission {
   retractionExpiresAt DateTime? // 48h after completion
   autoValidated       Boolean   @default(false) // True if auto-validated after 7 days
 
+  // Price Anomaly Detection
+  priceAnomalyFlag      Boolean   @default(false) // Flagged as suspicious pricing
+  expectedPrice         Decimal?  @db.Decimal(10, 2) // ML-predicted fair price
+  priceDeviation        Int?      // Percentage deviation from norm (-100 to +100)
+  priceAnomalySignals   String[]  @default([]) // Array of anomaly signals
+  priceReviewedAt       DateTime? // When price was reviewed
+  priceReviewedBy       String?   // Admin who reviewed
+
   // Media
   photos String[]
 
@@ -456,7 +510,18 @@ model Review {
   ReviewResponse      ReviewResponse?
   reports             Report[]
 
+  // Fraud Detection
+  fraudScore          Float           @default(0) // 0-100
+  fraudSignals        String[]        @default([]) // Array of detected fraud signals
+  aiGenerated         Boolean         @default(false) // AI-generated text detection
+  hidden              Boolean         @default(false) // Hidden due to fraud
+  hiddenReason        String?         // Why the review was hidden
+  fraudReviewedAt     DateTime?       // When fraud review was done
+  fraudReviewedBy     String?         // Admin who reviewed
+
   @@index([reviewedId])
+  @@index([fraudScore])
+  @@index([hidden])
   @@index([overallRating])
   @@index([reviewType])
 }

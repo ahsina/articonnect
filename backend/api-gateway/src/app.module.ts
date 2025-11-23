@@ -24,6 +24,9 @@ import { HealthModule } from './health/health.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { VatModule } from './vat/vat.module';
 import { ModerationModule } from './moderation/moderation.module';
+import { VerificationModule } from './verification/verification.module';
+import { FraudModule } from './fraud/fraud.module';
+import { ComplianceModule } from './compliance/compliance.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ConfigModule as AppConfigModule } from './config/config.module';
 import { BadgesModule } from './badges/badges.module';
@@ -81,6 +84,9 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     InvoiceModule,
     VatModule,
     ModerationModule,
+    VerificationModule,
+    FraudModule,
+    ComplianceModule,
     CalendarModule,
     AppConfigModule,
     BadgesModule,
