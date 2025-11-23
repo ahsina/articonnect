@@ -8,6 +8,8 @@ import { RefundAbuseDetectorService } from './services/refund-abuse-detector.ser
 import { SessionAnomalyDetectorService } from './services/session-anomaly-detector.service';
 import { BotDetectorService } from './services/bot-detector.service';
 import { FeatureToggleService } from './services/feature-toggle.service';
+import { SessionAnomalyGuard } from './guards/session-anomaly.guard';
+import { BotDetectionGuard } from './guards/bot-detection.guard';
 import { FraudController } from './controllers/fraud.controller';
 
 @Module({
@@ -22,6 +24,8 @@ import { FraudController } from './controllers/fraud.controller';
     RefundAbuseDetectorService,
     SessionAnomalyDetectorService,
     BotDetectorService,
+    SessionAnomalyGuard,
+    BotDetectionGuard,
   ],
   exports: [
     FeatureToggleService,
@@ -32,6 +36,8 @@ import { FraudController } from './controllers/fraud.controller';
     RefundAbuseDetectorService,
     SessionAnomalyDetectorService,
     BotDetectorService,
+    SessionAnomalyGuard,
+    BotDetectionGuard,
   ],
 })
 export class FraudModule {}
