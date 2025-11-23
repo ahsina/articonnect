@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PaymentController } from './controllers/payment.controller';
 import { ReputationController } from './controllers/reputation.controller';
 import { PaymentService } from './services/payment.service';
@@ -12,9 +12,10 @@ import { DeferredPaymentService } from './services/deferred-payment.service';
 import { PaymentCronService } from './services/payment-cron.service';
 import { NotificationModule } from '../notification/notification.module';
 import { FraudModule } from '../fraud/fraud.module';
+import { ComplianceModule } from '../compliance/compliance.module';
 
 @Module({
-  imports: [NotificationModule, FraudModule],
+  imports: [NotificationModule, FraudModule, forwardRef(() => ComplianceModule)],
   controllers: [
     PaymentController,
     ReputationController,

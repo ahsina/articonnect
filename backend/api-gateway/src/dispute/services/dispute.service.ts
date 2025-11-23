@@ -1,11 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateDisputeDto, UpdateDisputeDto, ResolveDisputeDto } from '../dto/dispute.dto';
 import { DisputeStatus } from '@prisma/client';
+import { RefundAbuseDetectorService } from '../../fraud/services/refund-abuse-detector.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 
 @Injectable()
 export class DisputeService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(DisputeService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly refundAbuseDetector: RefundAbuseDetectorService,
+    private readonly featureToggle: FeatureToggleService,
+  ) {}
 
   async create(userId: string, createDto: CreateDisputeDto) {
     // Verify mission exists and user is involved
@@ -37,6 +45,59 @@ export class DisputeService {
 
     if (existingDispute) {
       throw new BadRequestException('Un litige actif existe déjà pour cette mission');
+    }
+
+    // Refund Abuse Detection (if enabled and dispute is for refund)
+    const isRefundAbuseDetectionEnabled = await this.featureToggle.isRefundAbuseDetectionEnabled();
+    const isRefundRelated = createDto.reason?.toLowerCase().includes('refund') ||
+                            createDto.reason?.toLowerCase().includes('remboursement') ||
+                            createDto.description?.toLowerCase().includes('refund') ||
+                            createDto.description?.toLowerCase().includes('remboursement');
+
+    if (isRefundAbuseDetectionEnabled && isRefundRelated) {
+      try {
+        const abuseResult = await this.refundAbuseDetector.detectRefundAbuse(userId, createDto.missionId);
+
+        // Update user refund statistics
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            refundAbuseScore: abuseResult.abuseScore,
+            refundBlocked: abuseResult.isAbusive,
+          },
+        });
+
+        // Check if auto-reject is enabled
+        const autoRejectEnabled = await this.featureToggle.isRefundAutoRejectEnabled();
+        const abuseThreshold = await this.featureToggle.getRefundAbuseThreshold();
+
+        if (abuseResult.isAbusive && abuseResult.abuseScore >= abuseThreshold) {
+          this.logger.warn(
+            `Refund dispute from user ${userId} flagged as abusive (score: ${abuseResult.abuseScore})`
+          );
+
+          // Auto-reject if enabled and recommendation requires it
+          if (autoRejectEnabled && abuseResult.recommendation === 'REJECT') {
+            throw new BadRequestException(
+              'Votre demande de remboursement ne peut pas être traitée. Contactez le support pour plus d\'informations.'
+            );
+          }
+
+          // Manually review if high-risk but not auto-reject
+          if (abuseResult.recommendation === 'MANUAL_REVIEW') {
+            this.logger.warn(
+              `Refund dispute ${userId} requires manual review (abuse score: ${abuseResult.abuseScore})`
+            );
+            // Dispute will be created but flagged for admin review
+          }
+        }
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error; // Re-throw rejection errors
+        }
+        this.logger.error(`Failed to run refund abuse detection:`, error);
+        // Don't block legitimate disputes if fraud detection fails
+      }
     }
 
     // Create dispute

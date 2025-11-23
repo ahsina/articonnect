@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
@@ -6,6 +6,7 @@ import { RefundReason, Payment } from '@prisma/client';
 import type { MissionWithRelations } from '../types/payment.types';
 import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
+import { KycService } from '../../compliance/services/kyc.service';
 
 @Injectable()
 export class PaymentService {
@@ -17,6 +18,8 @@ export class PaymentService {
     private reputationService: ReputationService,
     private payoutFraudDetector: PayoutFraudDetectorService,
     private featureToggle: FeatureToggleService,
+    @Inject(forwardRef(() => KycService))
+    private kycService: KycService,
   ) {}
 
   async createPaymentIntent(missionId: string, userId: string) {
@@ -40,6 +43,84 @@ export class PaymentService {
     }
 
     const amount = Number(mission.agreedPrice) * 100; // Convert to cents
+    const amountInEuros = Number(mission.agreedPrice);
+
+    // KYC Check for high-value payments (if enabled)
+    const isKycEnabled = await this.featureToggle.isKycEnabled();
+    if (isKycEnabled) {
+      const singleTransactionThreshold = await this.featureToggle.getKycSingleTransactionThreshold();
+      const cumulativeThreshold = await this.featureToggle.getKycCumulativeThreshold();
+
+      // Check if this transaction exceeds single transaction threshold
+      if (amountInEuros >= singleTransactionThreshold) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+
+        if (!user?.kycVerified) {
+          const autoBlockEnabled = await this.featureToggle.isKycAutoBlockEnabled();
+
+          if (autoBlockEnabled) {
+            this.logger.warn(
+              `Payment blocked for user ${userId}: amount ${amountInEuros}€ exceeds KYC threshold ${singleTransactionThreshold}€`
+            );
+
+            throw new BadRequestException(
+              `Vérification d'identité requise pour les transactions supérieures à ${singleTransactionThreshold}€. ` +
+              'Veuillez compléter votre vérification KYC dans votre profil.'
+            );
+          } else {
+            this.logger.warn(
+              `Payment flagged for user ${userId}: KYC required but auto-block disabled`
+            );
+          }
+        }
+      }
+
+      // Check cumulative transaction amount in last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentTransactions = await this.prisma.transaction.aggregate({
+        where: {
+          mission: {
+            clientId: userId,
+          },
+          status: { in: ['COMPLETED', 'HELD'] },
+          createdAt: { gte: thirtyDaysAgo },
+        },
+        _sum: {
+          amount: true,
+        },
+      });
+
+      const cumulativeAmount = Number(recentTransactions._sum.amount || 0) + amountInEuros;
+
+      if (cumulativeAmount >= cumulativeThreshold) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
+
+        if (!user?.kycVerified) {
+          const autoBlockEnabled = await this.featureToggle.isKycAutoBlockEnabled();
+
+          if (autoBlockEnabled) {
+            this.logger.warn(
+              `Payment blocked for user ${userId}: cumulative amount ${cumulativeAmount.toFixed(2)}€ exceeds KYC threshold ${cumulativeThreshold}€`
+            );
+
+            throw new BadRequestException(
+              `Vérification d'identité requise: vous avez atteint ${cumulativeAmount.toFixed(2)}€ de transactions sur 30 jours. ` +
+              `Le seuil est de ${cumulativeThreshold}€. Veuillez compléter votre vérification KYC.`
+            );
+          } else {
+            this.logger.warn(
+              `Payment flagged for user ${userId}: cumulative KYC threshold exceeded but auto-block disabled`
+            );
+          }
+        }
+      }
+    }
 
     const paymentIntent = await this.stripeService.createPaymentIntent({
       amount,
