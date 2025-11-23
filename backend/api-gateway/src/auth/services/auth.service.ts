@@ -248,10 +248,14 @@ export class AuthService {
   }
 
   async generateRefreshToken(userId: string): Promise<string> {
+    // Use separate secret for refresh tokens (defense-in-depth)
+    // Falls back to JWT_SECRET if JWT_REFRESH_SECRET not set (backward compatibility)
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+
     const token = this.jwtService.sign(
-      { sub: userId },
+      { sub: userId, type: 'refresh' },
       {
-        secret: process.env.JWT_SECRET,
+        secret: refreshSecret,
         expiresIn: '30d',
       },
     );
@@ -272,8 +276,11 @@ export class AuthService {
 
   async refreshAccessToken(refreshToken: string) {
     try {
+      // Verify refresh token using the separate refresh secret
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+
       const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_SECRET,
+        secret: refreshSecret,
       });
 
       const userId = payload.sub;

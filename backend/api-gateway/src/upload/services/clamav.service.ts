@@ -186,9 +186,20 @@ export class ClamavService {
   }
 
   /**
-   * Scan and validate - throws exception if infected
+   * Scan and validate - throws exception if infected or ClamAV unavailable in production
    */
   async scanAndValidate(buffer: Buffer, filename: string, userId?: string): Promise<void> {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // In production, reject uploads if ClamAV is not available
+    // This prevents malware uploads when antivirus service is down
+    if (isProduction && !this.enabled) {
+      this.logger.error('ClamAV unavailable in production - rejecting upload for security');
+      throw new BadRequestException(
+        'Le service antivirus est temporairement indisponible. Veuillez réessayer plus tard.',
+      );
+    }
+
     const result = await this.scanBuffer(buffer, filename, userId);
 
     if (result.isInfected) {

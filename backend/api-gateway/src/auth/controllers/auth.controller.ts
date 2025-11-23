@@ -303,22 +303,38 @@ export class AuthController {
   // Helper Methods for Cookies
   // ================================
 
+  /**
+   * Set authentication cookies with security headers
+   *
+   * CSRF Protection Strategy:
+   * - httpOnly: true  -> Prevents XSS attacks from reading tokens
+   * - sameSite: 'strict' -> Prevents CSRF attacks (cookies not sent cross-site)
+   * - secure: true (production) -> Prevents MITM attacks (HTTPS only)
+   *
+   * Note: SameSite=strict provides strong CSRF protection without requiring
+   * explicit CSRF tokens. The browser will not send these cookies in
+   * cross-site requests, preventing CSRF attacks.
+   *
+   * For applications requiring cross-site functionality (OAuth, external links),
+   * consider using SameSite=lax for refresh tokens and implementing
+   * explicit CSRF tokens via csurf middleware.
+   */
   private setAuthCookies(res: any, accessToken: string, refreshToken: string) {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Set access token cookie (short-lived: 15 minutes)
     res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      httpOnly: true,  // XSS protection
+      secure: isProduction,  // HTTPS only in production
+      sameSite: 'strict',  // CSRF protection
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     // Set refresh token cookie (long-lived: 30 days)
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      httpOnly: true,  // XSS protection
+      secure: isProduction,  // HTTPS only in production
+      sameSite: 'strict',  // CSRF protection
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
   }
