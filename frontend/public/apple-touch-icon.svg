@@ -1,0 +1,16 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="180" height="180" fill="#2563EB" rx="27"/>
+
+  <!-- Letter "A" -->
+  <text
+    x="50%"
+    y="50%"
+    dominant-baseline="middle"
+    text-anchor="middle"
+    font-family="Arial, sans-serif"
+    font-weight="bold"
+    font-size="108"
+    fill="white"
+  >A</text>
+</svg>

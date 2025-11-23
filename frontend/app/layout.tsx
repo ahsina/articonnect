@@ -7,6 +7,43 @@ export const metadata: Metadata = {
   description: 'Plateforme de mise en relation entre clients et artisans',
   manifest: '/manifest.json',
   themeColor: '#2563EB',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ArtiConnect',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: 'https://articonnect.app',
+    title: 'ArtiConnect - Trouvez des artisans locaux',
+    description: 'Plateforme de mise en relation entre clients et artisans',
+    siteName: 'ArtiConnect',
+    images: [
+      {
+        url: '/icon-512x512.png',
+        width: 512,
+        height: 512,
+        alt: 'ArtiConnect Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'ArtiConnect - Trouvez des artisans locaux',
+    description: 'Plateforme de mise en relation entre clients et artisans',
+    images: ['/icon-512x512.png'],
+  },
 };
 
 export default function RootLayout({
