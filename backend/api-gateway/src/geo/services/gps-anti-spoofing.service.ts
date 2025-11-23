@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import axios from 'axios';
@@ -53,6 +54,7 @@ export class GpsAntiSpoofingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -274,8 +276,9 @@ export class GpsAntiSpoofingService {
     }
 
     try {
-      // Use ip-api.com (free, no API key needed)
-      const response = await axios.get(`http://ip-api.com/json/${location.ipAddress}`, {
+      // Use configurable IP geolocation API (default: ip-api.com)
+      const ipGeoApiUrl = this.configService.get<string>('IP_GEOLOCATION_API_URL') || 'http://ip-api.com/json';
+      const response = await axios.get(`${ipGeoApiUrl}/${location.ipAddress}`, {
         timeout: 3000,
       });
 

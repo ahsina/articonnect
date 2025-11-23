@@ -10,10 +10,11 @@ import { SiretVerificationResult } from '../dto/verification.dto';
 @Injectable()
 export class SiretVerificationService {
   private readonly logger = new Logger(SiretVerificationService.name);
-  private readonly inseeApiUrl = 'https://api.insee.fr/entreprises/sirene/V3';
+  private readonly inseeApiUrl: string;
   private readonly inseeToken: string;
 
   constructor(private configService: ConfigService) {
+    this.inseeApiUrl = this.configService.get<string>('INSEE_API_URL') || 'https://api.insee.fr/entreprises/sirene/V3';
     this.inseeToken = this.configService.get<string>('INSEE_API_TOKEN') || '';
   }
 

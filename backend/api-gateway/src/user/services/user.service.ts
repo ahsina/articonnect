@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { UpdateProfileDto, CreateArtisanProfileDto } from '../dto/user.dto';
 import { Prisma } from '@prisma/client';
@@ -14,6 +15,7 @@ export class UserService {
     private prisma: PrismaService,
     private businessVerificationService: BusinessVerificationService,
     private featureToggle: FeatureToggleService,
+    private configService: ConfigService,
   ) {}
 
   async getProfile(userId: string) {
@@ -272,8 +274,9 @@ export class UserService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    // Generate avatar URL using DiceBear (placeholder for actual upload)
-    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.firstName}${user.lastName}`;
+    // Generate avatar URL using configurable avatar API (default: DiceBear)
+    const avatarApiUrl = this.configService.get<string>('AVATAR_API_URL') || 'https://api.dicebear.com/7.x/avataaars/svg';
+    const avatarUrl = `${avatarApiUrl}?seed=${user.firstName}${user.lastName}`;
 
     // Update user avatar
     const updatedUser = await this.prisma.user.update({

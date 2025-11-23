@@ -10,10 +10,13 @@ import { RcsVerificationResult } from '../dto/verification.dto';
 @Injectable()
 export class RcsVerificationService {
   private readonly logger = new Logger(RcsVerificationService.name);
-  private readonly rcsApiUrl = 'https://data.public.lu/api/3/action';
-  private readonly lbrApiUrl = 'https://www.lbr.lu/mjrcs/jsp'; // Luxembourg Business Registers
+  private readonly rcsApiUrl: string;
+  private readonly lbrApiUrl: string;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    this.rcsApiUrl = this.configService.get<string>('RCS_API_URL') || 'https://data.public.lu/api/3/action';
+    this.lbrApiUrl = this.configService.get<string>('LBR_API_URL') || 'https://www.lbr.lu/mjrcs/jsp';
+  }
 
   /**
    * Validate RCS format (Luxembourg)

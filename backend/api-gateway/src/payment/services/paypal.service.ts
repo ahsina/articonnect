@@ -81,10 +81,9 @@ export class PaypalService {
 
     // Use sandbox for development, live for production
     const mode = this.configService.get<string>('PAYPAL_MODE') || 'sandbox';
-    this.baseUrl =
-      mode === 'live'
-        ? 'https://api-m.paypal.com'
-        : 'https://api-m.sandbox.paypal.com';
+    const liveUrl = this.configService.get<string>('PAYPAL_API_URL_LIVE') || 'https://api-m.paypal.com';
+    const sandboxUrl = this.configService.get<string>('PAYPAL_API_URL_SANDBOX') || 'https://api-m.sandbox.paypal.com';
+    this.baseUrl = mode === 'live' ? liveUrl : sandboxUrl;
 
     this.enabled = !!(this.clientId && this.clientSecret);
 

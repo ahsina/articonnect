@@ -10,9 +10,11 @@ import { KboVerificationResult } from '../dto/verification.dto';
 @Injectable()
 export class KboVerificationService {
   private readonly logger = new Logger(KboVerificationService.name);
-  private readonly kboApiUrl = 'https://kbopub.economie.fgov.be/kbopub/api/v1';
+  private readonly kboApiUrl: string;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    this.kboApiUrl = this.configService.get<string>('KBO_API_URL') || 'https://kbopub.economie.fgov.be/kbopub/api/v1';
+  }
 
   /**
    * Validate KBO/BCE format (Belgium)

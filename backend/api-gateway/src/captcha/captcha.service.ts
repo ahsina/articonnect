@@ -7,11 +7,13 @@ export class CaptchaService {
   private readonly logger = new Logger(CaptchaService.name);
   private readonly recaptchaSecretKey: string;
   private readonly recaptchaEnabled: boolean;
+  private readonly recaptchaApiUrl: string;
   private readonly minScore: number = 0.5; // Google reCAPTCHA v3 score threshold
 
   constructor(private configService: ConfigService) {
     this.recaptchaSecretKey = this.configService.get<string>('RECAPTCHA_SECRET_KEY') || '';
     this.recaptchaEnabled = this.configService.get<string>('RECAPTCHA_ENABLED') === 'true';
+    this.recaptchaApiUrl = this.configService.get<string>('RECAPTCHA_API_URL') || 'https://www.google.com/recaptcha/api/siteverify';
 
     if (!this.recaptchaSecretKey && this.recaptchaEnabled) {
       this.logger.warn('RECAPTCHA_SECRET_KEY is not configured, CAPTCHA verification will be skipped');
@@ -46,7 +48,7 @@ export class CaptchaService {
 
     try {
       const response = await axios.post(
-        'https://www.google.com/recaptcha/api/siteverify',
+        this.recaptchaApiUrl,
         null,
         {
           params: {
