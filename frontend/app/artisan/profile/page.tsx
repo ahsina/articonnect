@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { userApi } from '@/lib/api/user';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ArtisanProfilePage() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isSetup = searchParams.get('setup') === 'true';
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,15 +69,59 @@ export default function ArtisanProfilePage() {
 
     setLoading(true);
     try {
-      // TODO: API call to create/update artisan profile
-      // await userApi.createArtisanProfile(formData);
+      // Build base address from form fields
+      const addressParts = [
+        formData.address,
+        formData.city,
+        formData.postalCode,
+        formData.country,
+      ].filter(Boolean);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const baseAddress = addressParts.length > 0
+        ? addressParts.join(', ')
+        : formData.country || 'Luxembourg';
 
+      // TODO: Implement geocoding service to get actual coordinates from address
+      // For now, using Luxembourg city center as default coordinates
+      const defaultCoords = {
+        Luxembourg: { lat: 49.6116, lng: 6.1319 },
+        France: { lat: 48.8566, lng: 2.3522 },
+        Belgium: { lat: 50.8503, lng: 4.3517 },
+      };
+
+      const coords = defaultCoords[formData.country as keyof typeof defaultCoords] || defaultCoords.Luxembourg;
+
+      // Create artisan profile via API
+      await userApi.createArtisanProfile({
+        companyName: formData.companyName,
+        siret: formData.siret,
+        description: formData.description || undefined,
+        baseAddress,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        serviceRadius: formData.serviceRadius ? parseInt(formData.serviceRadius) : undefined,
+        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
+        specialtyIds: formData.specialties.length > 0 ? formData.specialties : undefined,
+      });
+
+      // Show success message
+      toast({
+        title: t('artisan', 'profileSaved'),
+        description: t('artisan', 'profileSavedDescription'),
+        variant: 'success',
+      });
+
+      // Redirect to dashboard
       router.push('/artisan/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || t('common', 'error'));
+      console.error('Profile creation error:', err);
+      const errorMessage = err.response?.data?.message || t('common', 'error');
+      setError(errorMessage);
+      toast({
+        title: t('artisan', 'profileError'),
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }

@@ -9,10 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { marketplaceApi, PaginatedResponse, Product } from '@/lib/api/marketplace';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCartStore } from '@/lib/stores/cartStore';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MarketplacePage() {
   const { t } = useLanguage();
   const router = useRouter();
+  const { addItem } = useCartStore();
+  const { toast } = useToast();
 
   const CATEGORIES = [
     { id: 'all', name: t('marketplace', 'all'), icon: '🔍' },
@@ -86,6 +90,39 @@ export default function MarketplacePage() {
       setProducts([]);
       setLoading(false);
     }
+  };
+
+  const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (product.stock <= 0) {
+      toast({
+        title: t('marketplace', 'outOfStock'),
+        description: t('marketplace', 'productOutOfStock'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    addItem({
+      productId: product.id,
+      productName: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.images?.[0],
+      artisan: product.artisan
+        ? {
+            id: product.artisan.id,
+            name: product.artisan.companyName || `${product.artisan.firstName} ${product.artisan.lastName}`,
+          }
+        : undefined,
+    });
+
+    toast({
+      title: t('marketplace', 'addedToCart'),
+      description: `${product.name} ${t('marketplace', 'hasBeenAdded')}`,
+      variant: 'success',
+    });
   };
 
 
@@ -321,12 +358,14 @@ export default function MarketplacePage() {
                     </div>
 
                     {/* Actions */}
-                    <Button className="w-full" onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Add to cart
-                      alert('Fonctionnalité panier à venir');
-                    }}>
-                      Ajouter au panier
+                    <Button
+                      className="w-full"
+                      onClick={(e) => handleAddToCart(product, e)}
+                      disabled={product.stock <= 0}
+                    >
+                      {product.stock <= 0
+                        ? t('marketplace', 'outOfStock')
+                        : t('marketplace', 'addToCart')}
                     </Button>
                   </div>
                 </CardContent>

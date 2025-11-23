@@ -149,10 +149,45 @@ export class BadgesService {
 
       // Check response time (if criteria exists)
       if (criteria.avg_response_time_hours !== undefined || criteria.avg_response_time_minutes !== undefined) {
-        // This would require tracking response times in the database
-        // For now, we'll skip this check
-        // TODO: Implement response time tracking
-        return false;
+        // Calculate average response time from accepted missions
+        const acceptedMissions = await this.prisma.mission.findMany({
+          where: {
+            artisanId: userId,
+            acceptedAt: { not: null },
+          },
+          select: {
+            createdAt: true,
+            acceptedAt: true,
+          },
+        });
+
+        if (acceptedMissions.length === 0) {
+          // No missions accepted yet, can't calculate response time
+          return false;
+        }
+
+        // Calculate average response time in minutes
+        const totalResponseTimeMinutes = acceptedMissions.reduce((sum, mission) => {
+          const responseTimeMs = mission.acceptedAt!.getTime() - mission.createdAt.getTime();
+          const responseTimeMinutes = responseTimeMs / (1000 * 60);
+          return sum + responseTimeMinutes;
+        }, 0);
+
+        const avgResponseTimeMinutes = totalResponseTimeMinutes / acceptedMissions.length;
+        const avgResponseTimeHours = avgResponseTimeMinutes / 60;
+
+        // Check against criteria
+        if (criteria.avg_response_time_hours !== undefined) {
+          if (avgResponseTimeHours > criteria.avg_response_time_hours) {
+            return false;
+          }
+        }
+
+        if (criteria.avg_response_time_minutes !== undefined) {
+          if (avgResponseTimeMinutes > criteria.avg_response_time_minutes) {
+            return false;
+          }
+        }
       }
 
       return true;

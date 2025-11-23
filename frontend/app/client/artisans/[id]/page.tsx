@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Map } from '@/components/map/Map';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { userApi } from '@/lib/api/user';
 
 interface ArtisanProfile {
   id: string;
@@ -104,108 +105,13 @@ export default function ArtisanDetailsPage() {
 
   const loadArtisan = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const data = await userApi.getArtisanById(artisanId);
-
-      // Mock data
-      const mockArtisan: ArtisanProfile = {
-        id: artisanId,
-        firstName: 'Marc',
-        lastName: 'Plombier',
-        email: 'marc.plombier@example.com',
-        phone: '+352 621 123 456',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marc',
-        createdAt: '2023-06-15T10:00:00Z',
-        artisanProfile: {
-          companyName: 'Plomberie Marc Pro',
-          siret: '12345678900015',
-          description:
-            'Artisan plombier avec plus de 15 ans d\'expérience. Spécialisé dans la rénovation de salles de bain, l\'installation de systèmes de chauffage et le dépannage d\'urgence. Interventions rapides et travail soigné garanti. Certifié RGE pour les installations écologiques.',
-          specialties: ['plomberie', 'climatisation'],
-          address: '12 Rue des Artisans',
-          city: 'Luxembourg',
-          postalCode: '1234',
-          country: 'LU',
-          latitude: 49.6116,
-          longitude: 6.1319,
-          serviceRadius: 25,
-          hourlyRate: 65,
-          rating: 4.8,
-          reviewCount: 47,
-          completedMissions: 156,
-          responseTime: '< 2h',
-          verified: true,
-          portfolio: [
-            'https://via.placeholder.com/600x400?text=Projet+1',
-            'https://via.placeholder.com/600x400?text=Projet+2',
-            'https://via.placeholder.com/600x400?text=Projet+3',
-            'https://via.placeholder.com/600x400?text=Projet+4',
-          ],
-        },
-        reviews: [
-          {
-            id: '1',
-            rating: 5,
-            comment:
-              'Excellent travail ! Marc est très professionnel et a résolu mon problème de fuite rapidement. Je recommande vivement.',
-            createdAt: '2024-01-15T14:30:00Z',
-            client: {
-              firstName: 'Sophie',
-              lastName: 'Martin',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie',
-            },
-            mission: {
-              title: 'Réparation fuite salle de bain',
-              category: 'plomberie',
-            },
-          },
-          {
-            id: '2',
-            rating: 5,
-            comment:
-              'Installation de ma nouvelle chaudière parfaite. Très bon conseil et travail impeccable.',
-            createdAt: '2024-01-10T10:00:00Z',
-            client: {
-              firstName: 'Jean',
-              lastName: 'Dupont',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean',
-            },
-            mission: {
-              title: 'Installation chaudière',
-              category: 'plomberie',
-            },
-          },
-          {
-            id: '3',
-            rating: 4,
-            comment:
-              'Bon travail, juste un léger retard sur le planning initial mais le résultat est là.',
-            createdAt: '2024-01-05T16:45:00Z',
-            client: {
-              firstName: 'Marie',
-              lastName: 'Dubois',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marie',
-            },
-            mission: {
-              title: 'Rénovation salle de bain',
-              category: 'plomberie',
-            },
-          },
-        ],
-        availability: {
-          monday: true,
-          tuesday: true,
-          wednesday: true,
-          thursday: true,
-          friday: true,
-          saturday: true,
-          sunday: false,
-        },
-      };
-
-      setArtisan(mockArtisan);
-    } catch (error) {
+      // Fetch artisan data from API
+      const data = await userApi.getArtisanById(artisanId);
+      setArtisan(data);
+    } catch (error: any) {
       console.error('Error loading artisan:', error);
+      // If artisan not found or error, user will see "Artisan not found" message
+      // because artisan state remains null
     } finally {
       setLoading(false);
     }

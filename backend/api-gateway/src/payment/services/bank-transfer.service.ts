@@ -2,6 +2,9 @@ import { Injectable, Logger, BadRequestException, NotFoundException } from '@nes
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { StripeService } from './stripe.service';
+import { NotificationService } from '../../notification/services/notification.service';
+import { NotificationType } from '@prisma/client';
 
 export interface BankTransferInstructions {
   accountHolder: string;
@@ -88,6 +91,8 @@ export class BankTransferService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly stripeService: StripeService,
+    private readonly notificationService: NotificationService,
   ) {
     // Bank account details for receiving payments
     this.bankAccountIban = this.configService.get<string>('BANK_TRANSFER_IBAN') || '';
@@ -261,8 +266,54 @@ export class BankTransferService {
         `Bank transfer verified: ${transactionId} | Admin: ${adminId} | Notes: ${notes || 'N/A'}`,
       );
 
-      // TODO: Transfer funds to artisan Stripe Connect account
-      // This would typically use StripeService.transferToArtisan()
+      // Transfer funds to artisan Stripe Connect account
+      if (transaction.mission?.artisan?.artisanProfile?.stripeAccountId) {
+        try {
+          // Calculate platform commission (10% by default)
+          const platformCommission = transaction.amount * 0.1;
+          const artisanAmount = transaction.amount - platformCommission;
+
+          // Transfer to artisan's Stripe Connect account
+          await this.stripeService.createTransfer({
+            amount: Math.round(artisanAmount * 100), // Convert to cents
+            destination: transaction.mission.artisan.artisanProfile.stripeAccountId,
+            metadata: {
+              transactionId: transaction.id,
+              missionId: transaction.mission.id,
+              type: 'bank_transfer_payout',
+              platformCommission: platformCommission.toString(),
+            },
+          });
+
+          this.logger.log(
+            `Funds transferred to artisan: ${transaction.mission.artisan.id} | Amount: ${artisanAmount}€ | Transaction: ${transactionId}`,
+          );
+
+          // Notify artisan of payment
+          await this.notificationService.createNotification(
+            transaction.mission.artisan.id,
+            NotificationType.PAYMENT_RECEIVED,
+            'Paiement reçu',
+            `Vous avez reçu un paiement de ${artisanAmount.toFixed(2)}€ pour la mission "${transaction.mission.title || 'Mission'}"`,
+            `/artisan/missions/${transaction.mission.id}`,
+            {
+              transactionId: transaction.id,
+              amount: artisanAmount,
+              missionId: transaction.mission.id,
+            },
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to transfer funds to artisan: ${error.message} | Transaction: ${transactionId}`,
+          );
+          // Don't fail the verification, but log the error for manual intervention
+          // The transaction is still marked as completed, but funds need manual transfer
+        }
+      } else {
+        this.logger.warn(
+          `Artisan has no Stripe Connect account. Manual payout required. | Transaction: ${transactionId}`,
+        );
+      }
     } else {
       // Reject payment
       await this.prisma.transaction.update({
@@ -276,7 +327,31 @@ export class BankTransferService {
         `Bank transfer rejected: ${transactionId} | Admin: ${adminId} | Reason: ${notes || 'N/A'}`,
       );
 
-      // TODO: Notify client of rejection
+      // Notify client of rejection
+      if (transaction.mission?.clientId) {
+        try {
+          await this.notificationService.createNotification(
+            transaction.mission.clientId,
+            NotificationType.SYSTEM,
+            'Paiement refusé',
+            `Votre preuve de paiement pour la mission "${transaction.mission.title || 'Mission'}" a été refusée. ${notes ? `Raison: ${notes}` : 'Veuillez soumettre une nouvelle preuve de paiement valide.'}`,
+            `/client/missions/${transaction.mission.id}`,
+            {
+              transactionId: transaction.id,
+              missionId: transaction.mission.id,
+              reason: notes || 'Non spécifiée',
+            },
+          );
+
+          this.logger.log(
+            `Client notified of payment rejection: ${transaction.mission.clientId} | Transaction: ${transactionId}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to notify client of rejection: ${error.message} | Transaction: ${transactionId}`,
+          );
+        }
+      }
     }
   }
 

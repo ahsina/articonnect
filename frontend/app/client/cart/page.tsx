@@ -1,21 +1,73 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCartStore } from '@/lib/stores/cartStore';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { marketplaceApi } from '@/lib/api/marketplace';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CartPage() {
   const { t } = useLanguage();
   const router = useRouter();
+  const { toast } = useToast();
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice } =
     useCartStore();
+  const [loading, setLoading] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState('');
 
-  const handleCheckout = () => {
-    // TODO: Implement checkout flow with Stripe
-    alert(t('cart', 'checkoutInDev'));
+  const handleCheckout = async () => {
+    if (!shippingAddress.trim()) {
+      toast({
+        title: t('cart', 'error'),
+        description: t('cart', 'shippingAddressRequired'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Prepare order items
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        variantId: item.variantId,
+      }));
+
+      // Create order
+      const order = await marketplaceApi.createOrder({
+        items: orderItems,
+        shippingAddress,
+      });
+
+      // Clear cart
+      clearCart();
+
+      // Show success message
+      toast({
+        title: t('cart', 'orderPlaced'),
+        description: t('cart', 'orderPlacedDescription'),
+        variant: 'success',
+      });
+
+      // Redirect to orders page
+      router.push('/client/orders');
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: t('cart', 'checkoutError'),
+        description:
+          error.response?.data?.message ||
+          t('cart', 'checkoutErrorDescription'),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (items.length === 0) {
@@ -160,6 +212,25 @@ export default function CartPage() {
                   {t('cart', 'summary')}
                 </h2>
 
+                {/* Shipping Address */}
+                <div className="mb-6">
+                  <label
+                    htmlFor="shippingAddress"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    {t('cart', 'shippingAddress')} *
+                  </label>
+                  <textarea
+                    id="shippingAddress"
+                    value={shippingAddress}
+                    onChange={(e) => setShippingAddress(e.target.value)}
+                    placeholder={t('cart', 'shippingAddressPlaceholder')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    rows={3}
+                    required
+                  />
+                </div>
+
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-gray-700">
                     <span>{t('cart', 'subtotal')}</span>
@@ -177,8 +248,13 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Button className="w-full mb-3" size="lg" onClick={handleCheckout}>
-                  {t('cart', 'placeOrder')}
+                <Button
+                  className="w-full mb-3"
+                  size="lg"
+                  onClick={handleCheckout}
+                  disabled={loading || !shippingAddress.trim()}
+                >
+                  {loading ? t('cart', 'processing') : t('cart', 'placeOrder')}
                 </Button>
 
                 <Button

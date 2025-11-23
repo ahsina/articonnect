@@ -47,9 +47,9 @@ async function bootstrap() {
           "'self'",
           // Allow Google Fonts
           'https://fonts.googleapis.com',
-          // TODO: Remove unsafe-inline in production by using CSS-in-JS with nonces
-          // For now, keeping it for development convenience
-          "'unsafe-inline'",
+          // Only allow unsafe-inline in development for hot reload convenience
+          // In production, enforce strict CSP without unsafe-inline
+          ...(!isProduction ? ["'unsafe-inline'"] : []),
         ],
         fontSrc: [
           "'self'",

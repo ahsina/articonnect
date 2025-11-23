@@ -117,6 +117,7 @@ export const marketplaceApi = {
 
   createOrder: async (data: {
     items: { productId: string; quantity: number; variantId?: string }[];
+    shippingAddress: string;
   }) => {
     const response = await apiClient.post('/marketplace/orders', data);
     return response.data;
