@@ -1,15 +1,29 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, IsEnum, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
+
+// Strong password regex:
+// - At least 12 characters
+// - At least one uppercase letter
+// - At least one lowercase letter
+// - At least one number
+// - At least one special character
+const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
 
 export class RegisterDto {
   @ApiProperty({ example: 'john@example.com' })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'StrongPass123!' })
+  @ApiProperty({
+    example: 'StrongPass123!',
+    description: 'Password must be at least 12 characters with uppercase, lowercase, number, and special character'
+  })
   @IsString()
-  @MinLength(8)
+  @MinLength(12, { message: 'Le mot de passe doit contenir au moins 12 caractères' })
+  @Matches(STRONG_PASSWORD_REGEX, {
+    message: 'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)',
+  })
   password: string;
 
   @ApiProperty({ example: 'John' })
@@ -73,12 +87,17 @@ export class RefreshTokenDto {
 export class ChangePasswordDto {
   @ApiProperty({ example: 'CurrentPass123!' })
   @IsString()
-  @MinLength(8)
   currentPassword: string;
 
-  @ApiProperty({ example: 'NewPass123!' })
+  @ApiProperty({
+    example: 'NewStrongPass123!',
+    description: 'New password must be at least 12 characters with uppercase, lowercase, number, and special character'
+  })
   @IsString()
-  @MinLength(8)
+  @MinLength(12, { message: 'Le nouveau mot de passe doit contenir au moins 12 caractères' })
+  @Matches(STRONG_PASSWORD_REGEX, {
+    message: 'Le nouveau mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)',
+  })
   newPassword: string;
 }
 
@@ -102,9 +121,15 @@ export class ResetPasswordDto {
   @IsString()
   token: string;
 
-  @ApiProperty({ example: 'NewPass123!' })
+  @ApiProperty({
+    example: 'NewStrongPass123!',
+    description: 'New password must be at least 12 characters with uppercase, lowercase, number, and special character'
+  })
   @IsString()
-  @MinLength(8)
+  @MinLength(12, { message: 'Le nouveau mot de passe doit contenir au moins 12 caractères' })
+  @Matches(STRONG_PASSWORD_REGEX, {
+    message: 'Le nouveau mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&)',
+  })
   newPassword: string;
 }
 

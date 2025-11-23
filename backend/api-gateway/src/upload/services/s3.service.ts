@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as crypto from 'crypto';
 import { ClamavService } from './clamav.service';
@@ -70,15 +70,16 @@ export class S3Service {
         Key: filename,
         Body: file.buffer,
         ContentType: file.mimetype,
-        ACL: 'public-read', // Make files publicly accessible
+        // ACL removed - files are private by default
+        // Access controlled via pre-signed URLs
       });
 
       await this.s3Client.send(command);
 
-      // Return public URL
-      const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${filename}`;
-      this.logger.log(`File uploaded successfully: ${url}`);
-      return url;
+      // Return S3 key (not public URL - files are private)
+      // Frontend can request pre-signed URLs for viewing/downloading
+      this.logger.log(`File uploaded successfully: ${filename}`);
+      return filename;
     } catch (error) {
       this.logger.error('Failed to upload file to S3', error);
       throw new BadRequestException('Échec du téléchargement du fichier');
@@ -105,15 +106,15 @@ export class S3Service {
         Key: filename,
         Body: buffer,
         ContentType: contentType,
-        ACL: 'public-read',
+        // ACL removed - files are private by default
+        // Access controlled via pre-signed URLs
       });
 
       await this.s3Client.send(command);
 
-      // Return public URL
-      const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${filename}`;
-      this.logger.log(`Buffer uploaded successfully: ${url}`);
-      return url;
+      // Return S3 key (not public URL - files are private)
+      this.logger.log(`Buffer uploaded successfully: ${filename}`);
+      return filename;
     } catch (error) {
       this.logger.error('Failed to upload buffer to S3', error);
       throw new BadRequestException('Échec du téléchargement du fichier');
@@ -140,13 +141,13 @@ export class S3Service {
     const randomString = crypto.randomBytes(16).toString('hex');
     const key = `${fileType}/${userId}/${Date.now()}-${randomString}.${extension}`;
 
-    // Create presigned URL
+    // Create presigned URL for upload
     try {
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
         ContentType: mimeType,
-        ACL: 'public-read',
+        // ACL removed - files are private by default
       });
 
       const url = await getSignedUrl(this.s3Client, command, { expiresIn });
@@ -155,6 +156,50 @@ export class S3Service {
     } catch (error) {
       this.logger.error('Failed to generate presigned URL', error);
       throw new BadRequestException('Échec de génération de l\'URL de téléchargement');
+    }
+  }
+
+  /**
+   * Generate presigned URL for downloading/viewing a file
+   * This provides temporary authorized access to private files
+   */
+  async getDownloadUrl(
+    s3Key: string,
+    expiresIn: number = 3600, // 1 hour by default
+  ): Promise<string> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: s3Key,
+      });
+
+      const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+      return url;
+    } catch (error) {
+      this.logger.error('Failed to generate download URL', error);
+      throw new BadRequestException('Échec de génération de l\'URL de téléchargement');
+    }
+  }
+
+  /**
+   * Generate presigned URL for inline viewing (e.g., images, PDFs)
+   */
+  async getViewUrl(
+    s3Key: string,
+    expiresIn: number = 3600,
+  ): Promise<string> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: s3Key,
+        ResponseContentDisposition: 'inline', // Display in browser instead of download
+      });
+
+      const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+      return url;
+    } catch (error) {
+      this.logger.error('Failed to generate view URL', error);
+      throw new BadRequestException('Échec de génération de l\'URL de visualisation');
     }
   }
 
