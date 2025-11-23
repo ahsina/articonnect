@@ -113,16 +113,31 @@ export class AuthService {
 
     // Check if 2FA is enabled
     if (user.twoFactorEnabled && !twoFactorToken) {
+      // Generate temporary 2FA session token (5 minutes expiry)
+      const sessionToken = this.jwtService.sign(
+        { sub: user.id, type: '2fa_session' },
+        { expiresIn: '5m' }
+      );
+
+      // Store in Redis with 5-minute expiry
+      await this.redis.set(
+        `2fa_session:${sessionToken}`,
+        JSON.stringify({ userId: user.id, email: user.email }),
+        300 // 5 minutes in seconds
+      );
+
       return {
         requires2FA: true,
-        userId: user.id,
+        sessionToken, // Send session token instead of exposing userId
       };
     }
 
     // If 2FA enabled, verify token
     if (user.twoFactorEnabled && twoFactorToken) {
-      // This would be handled by TwoFactorService
-      // For now, we'll skip actual verification
+      const isValid = await this.twoFactorService.verifyToken(user.id, twoFactorToken);
+      if (!isValid) {
+        throw new UnauthorizedException('Code 2FA invalide');
+      }
     }
 
     // Update last login
@@ -132,6 +147,64 @@ export class AuthService {
     });
 
     // Generate tokens
+    const { accessToken, refreshToken } = await this.generateTokens(user);
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  /**
+   * Complete 2FA login using session token
+   * This method verifies the 2FA code without requiring the password again
+   */
+  async complete2FALogin(sessionToken: string, twoFactorCode: string) {
+    // Verify session token
+    let sessionData;
+    try {
+      const payload = this.jwtService.verify(sessionToken);
+      if (payload.type !== '2fa_session') {
+        throw new UnauthorizedException('Token de session invalide');
+      }
+
+      // Get session data from Redis
+      const redisData = await this.redis.get(`2fa_session:${sessionToken}`);
+      if (!redisData) {
+        throw new UnauthorizedException('Session expirée ou invalide');
+      }
+
+      sessionData = JSON.parse(redisData);
+    } catch (error) {
+      throw new UnauthorizedException('Session expirée ou invalide');
+    }
+
+    // Get user
+    const user = await this.prisma.user.findUnique({
+      where: { id: sessionData.userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    // Verify 2FA code
+    const isValid = await this.twoFactorService.verifyToken(user.id, twoFactorCode);
+    if (!isValid) {
+      throw new UnauthorizedException('Code 2FA invalide');
+    }
+
+    // Delete session token from Redis (one-time use)
+    await this.redis.del(`2fa_session:${sessionToken}`);
+
+    // Update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    // Generate auth tokens
     const { accessToken, refreshToken } = await this.generateTokens(user);
 
     return {

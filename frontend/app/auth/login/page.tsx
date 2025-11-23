@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/lib/hooks/useToast';
+import { authApi } from '@/lib/api/auth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { refreshUser } = useAuth();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,25 +31,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(formData.email, formData.password);
+      const response = await authApi.login(formData);
 
-      toast({
-        title: t('auth', 'loginSuccess'),
-        description: t('common', 'welcome') + ' sur ArtiConnect !',
-        variant: 'success',
-      });
-
-      // Redirect based on user role (will be handled by auth context)
-      router.push('/client/dashboard');
-    } catch (error: unknown) {
-      console.error('Login error:', error);
-
-      const err = error as { message?: string; response?: { data?: { message?: string } } };
-
-      if (err.message === '2FA_REQUIRED') {
-        // Store credentials temporarily for 2FA verification
-        sessionStorage.setItem('2fa_email', formData.email);
-        sessionStorage.setItem('2fa_password', formData.password);
+      // Check if 2FA is required
+      if (response.requires2FA && response.sessionToken) {
+        // Store temporary session token (NOT password!)
+        sessionStorage.setItem('2fa_sessionToken', response.sessionToken);
 
         toast({
           title: 'Authentification à deux facteurs',
@@ -56,13 +44,36 @@ export default function LoginPage() {
         });
 
         router.push('/auth/2fa-verify');
-      } else {
-        toast({
-          title: t('auth', 'loginError'),
-          description: err.response?.data?.message || 'Identifiants incorrects',
-          variant: 'destructive',
-        });
+        return;
       }
+
+      // Login successful - tokens are set as httpOnly cookies
+      await refreshUser();
+
+      toast({
+        title: t('auth', 'loginSuccess'),
+        description: t('common', 'welcome') + ' sur ArtiConnect !',
+        variant: 'success',
+      });
+
+      // Redirect based on user role
+      if (response.user?.role === 'ARTISAN') {
+        router.push('/artisan/dashboard');
+      } else if (response.user?.role === 'ADMIN') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/client/dashboard');
+      }
+    } catch (error: unknown) {
+      console.error('Login error:', error);
+
+      const err = error as { message?: string; response?: { data?: { message?: string } } };
+
+      toast({
+        title: t('auth', 'loginError'),
+        description: err.response?.data?.message || 'Identifiants incorrects',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }

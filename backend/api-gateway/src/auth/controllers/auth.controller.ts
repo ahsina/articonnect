@@ -77,15 +77,39 @@ export class AuthController {
 
     const result = await this.authService.login(loginDto);
 
-    // If 2FA required, don't set cookies yet
+    // If 2FA required, don't set cookies yet - return session token
     if (result.requires2FA) {
-      return result;
+      return {
+        requires2FA: true,
+        sessionToken: result.sessionToken,
+      };
     }
 
     // Set httpOnly cookies for tokens
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
 
     // Return user info without tokens in body (tokens are in cookies)
+    return {
+      user: result.user,
+    };
+  }
+
+  @Post('2fa/complete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Complete 2FA login with session token' })
+  async complete2FA(
+    @Body() body: { sessionToken: string; twoFactorCode: string },
+    @Response({ passthrough: true }) res: any,
+  ) {
+    const result = await this.authService.complete2FALogin(
+      body.sessionToken,
+      body.twoFactorCode,
+    );
+
+    // Set httpOnly cookies for tokens
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+
+    // Return user info without tokens in body
     return {
       user: result.user,
     };

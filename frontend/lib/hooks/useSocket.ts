@@ -19,11 +19,10 @@ export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
+    // Socket.io will automatically send cookies with connection request
+    // The backend gateway needs to extract auth from cookies instead of auth.token
     const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000', {
-      auth: { token },
+      withCredentials: true, // Send cookies with socket connection
       transports: ['websocket'],
     });
 

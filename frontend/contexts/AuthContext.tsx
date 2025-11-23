@@ -35,15 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        const userData = await userApi.getProfile();
-        setUser(userData);
-      }
+      // Try to get user profile - auth token will be sent automatically via httpOnly cookie
+      const userData = await userApi.getProfile();
+      setUser(userData);
     } catch (error) {
+      // User not authenticated or session expired
       console.error('Auth check failed:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
     } finally {
       setLoading(false);
     }
@@ -56,8 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('2FA_REQUIRED');
     }
 
-    localStorage.setItem('accessToken', response.accessToken);
-    localStorage.setItem('refreshToken', response.refreshToken);
+    // Tokens are now set as httpOnly cookies by the backend
+    // No need to store them in localStorage
     setUser(response.user);
   };
 
@@ -67,8 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // Backend clears httpOnly cookies - no localStorage to clear
       setUser(null);
     }
   };

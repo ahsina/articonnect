@@ -43,8 +43,7 @@ export const authApi = {
 
   logout: async () => {
     const response = await apiClient.post('/auth/logout');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    // Backend clears httpOnly cookies automatically
     return response.data;
   },
 

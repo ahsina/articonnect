@@ -59,9 +59,7 @@ export default function RegisterPage() {
         role: formData.role,
       });
 
-      // Save tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      // Tokens are set as httpOnly cookies by backend
 
       toast({
         title: t('auth', 'accountCreated'),

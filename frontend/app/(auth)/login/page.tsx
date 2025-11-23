@@ -32,10 +32,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-
+      // Tokens are set as httpOnly cookies by backend
       // Redirect based on role
       if (response.user.role === 'ARTISAN') {
         router.push('/artisan/dashboard');

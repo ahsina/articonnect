@@ -6,25 +6,25 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { authApi } from '@/lib/api/auth';
+import apiClient from '@/lib/api/client';
 import { toast } from '@/lib/hooks/useToast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 function TwoFactorVerifyForm() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [sessionToken, setSessionToken] = useState('');
 
   useEffect(() => {
-    // Get email and password from session storage (set by login page)
-    const storedEmail = sessionStorage.getItem('2fa_email');
-    const storedPassword = sessionStorage.getItem('2fa_password');
+    // Get session token from session storage (set by login page)
+    const storedSessionToken = sessionStorage.getItem('2fa_sessionToken');
 
-    if (!storedEmail || !storedPassword) {
+    if (!storedSessionToken) {
       toast({
         title: t('auth', 'sessionExpired'),
         description: t('auth', 'pleaseReconnect'),
@@ -34,8 +34,7 @@ function TwoFactorVerifyForm() {
       return;
     }
 
-    setEmail(storedEmail);
-    setPassword(storedPassword);
+    setSessionToken(storedSessionToken);
   }, [router, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,20 +52,17 @@ function TwoFactorVerifyForm() {
     setLoading(true);
 
     try {
-      // Login with 2FA token
-      const response = await authApi.login({
-        email,
-        password,
-        twoFactorToken: token,
+      // Complete 2FA login with session token
+      const response = await apiClient.post('/auth/2fa/complete', {
+        sessionToken,
+        twoFactorCode: token,
       });
 
-      // Clear temporary credentials
-      sessionStorage.removeItem('2fa_email');
-      sessionStorage.removeItem('2fa_password');
+      // Clear temporary session token
+      sessionStorage.removeItem('2fa_sessionToken');
 
-      // Save tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      // Refresh user data (tokens are set as httpOnly cookies)
+      await refreshUser();
 
       toast({
         title: t('auth', 'loginSuccess'),
@@ -75,9 +71,9 @@ function TwoFactorVerifyForm() {
       });
 
       // Redirect based on user role
-      if (response.user.role === 'ARTISAN') {
+      if (response.data.user.role === 'ARTISAN') {
         router.push('/artisan/dashboard');
-      } else if (response.user.role === 'CLIENT') {
+      } else if (response.data.user.role === 'CLIENT') {
         router.push('/client/dashboard');
       } else {
         router.push('/admin/dashboard');
@@ -96,8 +92,7 @@ function TwoFactorVerifyForm() {
   };
 
   const handleCancel = () => {
-    sessionStorage.removeItem('2fa_email');
-    sessionStorage.removeItem('2fa_password');
+    sessionStorage.removeItem('2fa_sessionToken');
     router.push('/auth/login');
   };
 
