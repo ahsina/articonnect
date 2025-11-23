@@ -9,9 +9,10 @@ import { NegotiationService } from './services/negotiation.service';
 import { MissionCronService } from './services/mission-cron.service';
 import { PaymentModule } from '../payment/payment.module';
 import { NotificationModule } from '../notification/notification.module';
+import { FraudModule } from '../fraud/fraud.module';
 
 @Module({
-  imports: [PaymentModule, NotificationModule],
+  imports: [PaymentModule, NotificationModule, FraudModule],
   controllers: [MissionController, MissionSearchController, MissionTemplateController],
   providers: [MissionService, MissionSearchService, MissionTemplateService, NegotiationService, MissionCronService],
   exports: [MissionService, MissionSearchService, MissionTemplateService, MissionCronService],

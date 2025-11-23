@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateNegotiationDto, AcceptNegotiationDto } from '../dto/negotiation.dto';
 import { NotificationService } from '../../notification/services/notification.service';
 import { MissionType } from '@prisma/client';
+import { PriceAnomalyDetectorService } from '../../fraud/services/price-anomaly-detector.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 
 @Injectable()
 export class NegotiationService {
+  private readonly logger = new Logger(NegotiationService.name);
+
   constructor(
     private prisma: PrismaService,
     private notificationService: NotificationService,
+    private priceAnomalyDetector: PriceAnomalyDetectorService,
+    private featureToggle: FeatureToggleService,
   ) {}
 
   async create(userId: string, createDto: CreateNegotiationDto) {
@@ -116,7 +122,7 @@ export class NegotiationService {
       },
     });
 
-    // If accepted, update mission
+    // If accepted, update mission and check for price anomalies
     if (dto.accepted) {
       await this.prisma.mission.update({
         where: { id: negotiation.missionId },
@@ -125,6 +131,47 @@ export class NegotiationService {
           status: 'ACCEPTED',
         },
       });
+
+      // Price Anomaly Detection (if enabled)
+      const isPriceAnomalyDetectionEnabled = await this.featureToggle.isPriceAnomalyDetectionEnabled();
+      if (isPriceAnomalyDetectionEnabled) {
+        try {
+          const anomalyResult = await this.priceAnomalyDetector.detectPriceAnomaly(
+            negotiation.missionId
+          );
+
+          // Update mission with anomaly detection results
+          await this.prisma.mission.update({
+            where: { id: negotiation.missionId },
+            data: {
+              priceAnomalyFlag: anomalyResult.isAnomalous,
+              expectedPrice: anomalyResult.expectedPrice,
+              priceDeviation: anomalyResult.deviationPercentage,
+              priceAnomalySignals: anomalyResult.signals.map((s) => s.type),
+            },
+          });
+
+          // Auto-flag for review if enabled
+          const autoFlagEnabled = await this.featureToggle.isPriceAutoFlagEnabled();
+          const deviationThreshold = await this.featureToggle.getPriceDeviationThreshold();
+
+          if (autoFlagEnabled &&
+              anomalyResult.isAnomalous &&
+              anomalyResult.deviationPercentage <= deviationThreshold) {
+
+            this.logger.warn(
+              `Mission ${negotiation.missionId} price flagged as anomalous: ${Number(negotiation.proposedPrice)}€ ` +
+              `(expected: ${Number(anomalyResult.expectedPrice)}€, deviation: ${anomalyResult.deviationPercentage}%)`
+            );
+
+            // Could send notification to admin for manual review
+            // await this.notificationService.notifyAdminPriceAnomaly(...)
+          }
+        } catch (error) {
+          this.logger.error(`Failed to run price anomaly detection:`, error);
+          // Don't block price agreement if fraud detection fails
+        }
+      }
     }
 
     return updated;
