@@ -156,10 +156,8 @@ export default function DesignSystemPage() {
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap gap-4">
                     <Button variant="default">Default</Button>
-                    <Button variant="secondary">Secondary</Button>
                     <Button variant="outline">Outline</Button>
                     <Button variant="ghost">Ghost</Button>
-                    <Button variant="link">Link</Button>
                     <Button variant="destructive">Destructive</Button>
                     <Button disabled>Disabled</Button>
                   </div>
@@ -212,9 +210,10 @@ export default function DesignSystemPage() {
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap gap-4">
                     <Badge variant="default">Default</Badge>
-                    <Badge variant="secondary">Secondary</Badge>
-                    <Badge variant="outline">Outline</Badge>
-                    <Badge variant="destructive">Destructive</Badge>
+                    <Badge variant="success">Success</Badge>
+                    <Badge variant="warning">Warning</Badge>
+                    <Badge variant="error">Error</Badge>
+                    <Badge variant="info">Info</Badge>
                   </div>
                 </CardContent>
               </Card>

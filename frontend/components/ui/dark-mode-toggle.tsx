@@ -12,14 +12,14 @@ import { Button } from './button';
 
 interface DarkModeToggleProps {
   variant?: 'default' | 'outline' | 'ghost';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  size?: 'default' | 'sm' | 'lg';
   className?: string;
   showLabel?: boolean;
 }
 
 export const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
   variant = 'ghost',
-  size = 'icon',
+  size = 'sm',
   className = '',
   showLabel = false,
 }) => {

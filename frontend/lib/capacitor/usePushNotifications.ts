@@ -26,6 +26,8 @@ export const usePushNotifications = (onNotificationReceived?: (notification: any
       return;
     }
 
+    let mounted = true;
+
     const setupPushNotifications = async () => {
       try {
         // Request permission
@@ -35,73 +37,102 @@ export const usePushNotifications = (onNotificationReceived?: (notification: any
           // Register with APNs or FCM
           await PushNotifications.register();
         } else {
-          setState((prev) => ({
-            ...prev,
-            error: 'Push notification permission denied',
-          }));
+          if (mounted) {
+            setState((prev) => ({
+              ...prev,
+              error: 'Push notification permission denied',
+            }));
+          }
         }
       } catch (error) {
         console.error('Push notification setup error:', error);
-        setState((prev) => ({
-          ...prev,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        }));
+        if (mounted) {
+          setState((prev) => ({
+            ...prev,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }));
+        }
       }
     };
 
-    // Setup listeners
-    const registrationListener = PushNotifications.addListener('registration', (token: Token) => {
-      console.log('Push registration success, token:', token.value);
-      setState((prev) => ({
-        ...prev,
-        token: token.value,
-        registered: true,
-      }));
+    // Setup listeners (these return Promises)
+    const setupListeners = async () => {
+      const registrationListener = await PushNotifications.addListener(
+        'registration',
+        (token: Token) => {
+          console.log('Push registration success, token:', token.value);
+          if (mounted) {
+            setState((prev) => ({
+              ...prev,
+              token: token.value,
+              registered: true,
+            }));
+          }
 
-      // TODO: Send token to backend
-      // await sendTokenToBackend(token.value);
+          // TODO: Send token to backend
+          // await sendTokenToBackend(token.value);
+        }
+      );
+
+      const registrationErrorListener = await PushNotifications.addListener(
+        'registrationError',
+        (error: any) => {
+          console.error('Push registration error:', error);
+          if (mounted) {
+            setState((prev) => ({
+              ...prev,
+              error: error.error || 'Registration failed',
+            }));
+          }
+        }
+      );
+
+      const pushNotificationReceivedListener = await PushNotifications.addListener(
+        'pushNotificationReceived',
+        (notification: any) => {
+          console.log('Push notification received:', notification);
+          if (onNotificationReceived && mounted) {
+            onNotificationReceived(notification);
+          }
+        }
+      );
+
+      const pushNotificationActionListener = await PushNotifications.addListener(
+        'pushNotificationActionPerformed',
+        (action: ActionPerformed) => {
+          console.log('Push notification action:', action);
+          // Handle notification tap
+          if (action.notification.data?.url) {
+            window.location.href = action.notification.data.url;
+          }
+        }
+      );
+
+      return {
+        registrationListener,
+        registrationErrorListener,
+        pushNotificationReceivedListener,
+        pushNotificationActionListener,
+      };
+    };
+
+    let listeners: Awaited<ReturnType<typeof setupListeners>> | null = null;
+
+    setupListeners().then((l) => {
+      listeners = l;
     });
-
-    const registrationErrorListener = PushNotifications.addListener(
-      'registrationError',
-      (error: any) => {
-        console.error('Push registration error:', error);
-        setState((prev) => ({
-          ...prev,
-          error: error.error || 'Registration failed',
-        }));
-      }
-    );
-
-    const pushNotificationReceivedListener = PushNotifications.addListener(
-      'pushNotificationReceived',
-      (notification: any) => {
-        console.log('Push notification received:', notification);
-        if (onNotificationReceived) {
-          onNotificationReceived(notification);
-        }
-      }
-    );
-
-    const pushNotificationActionListener = PushNotifications.addListener(
-      'pushNotificationActionPerformed',
-      (action: ActionPerformed) => {
-        console.log('Push notification action:', action);
-        // Handle notification tap
-        if (action.notification.data?.url) {
-          window.location.href = action.notification.data.url;
-        }
-      }
-    );
 
     setupPushNotifications();
 
     // Cleanup
     return () => {
-      registrationListener.remove();
-      registrationErrorListener.remove();
-      pushNotificationReceivedListener.remove();
-      pushNotificationActionListener.remove();
+      mounted = false;
+      if (listeners) {
+        listeners.registrationListener.remove();
+        listeners.registrationErrorListener.remove();
+        listeners.pushNotificationReceivedListener.remove();
+        listeners.pushNotificationActionListener.remove();
+      }
     };
   }, [onNotificationReceived]);
 

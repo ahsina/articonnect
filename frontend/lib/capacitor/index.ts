@@ -71,7 +71,7 @@ export const getCurrentLocation = async (): Promise<Position> => {
  * Geolocation - Watch position changes
  */
 export const watchLocation = async (
-  callback: (position: Position) => void
+  callback: (position: Position | null) => void
 ): Promise<string> => {
   const watchId = await Geolocation.watchPosition(
     {
