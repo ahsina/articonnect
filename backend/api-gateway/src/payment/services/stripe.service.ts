@@ -321,17 +321,20 @@ export class StripeService {
    * Actions: approve or refund
    */
   async reviewCharge(chargeId: string, action: 'approve' | 'refund') {
+    // List reviews without charge filter (Stripe API doesn't support charge parameter)
     const review = await this.stripe.reviews.list({
-      charge: chargeId,
-      limit: 1,
+      limit: 100,
     });
 
-    if (review.data.length === 0) {
+    // Find the review for this charge
+    const chargeReview = review.data.find((r) => r.charge === chargeId);
+
+    if (!chargeReview) {
       throw new Error('No review found for this charge');
     }
 
     if (action === 'approve') {
-      return this.stripe.reviews.approve(review.data[0].id);
+      return this.stripe.reviews.approve(chargeReview.id);
     } else {
       // Refund the charge
       return this.refundPayment(chargeId);
@@ -358,12 +361,17 @@ export class StripeService {
   /**
    * List early fraud warnings (EFWs)
    * These are notifications from card issuers about disputed charges
+   * Note: Early Fraud Warnings API has been deprecated by Stripe
+   * Use Disputes API instead for fraud monitoring
    */
   async listEarlyFraudWarnings(chargeId?: string) {
-    return this.stripe.earlyFraudWarnings.list({
+    // Early Fraud Warnings API is deprecated
+    // Use Disputes API as alternative
+    const disputes = await this.stripe.disputes.list({
       ...(chargeId && { charge: chargeId }),
       limit: 100,
     });
+    return disputes;
   }
 
   /**

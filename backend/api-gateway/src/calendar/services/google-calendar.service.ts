@@ -82,7 +82,7 @@ export class GoogleCalendarService {
     this.enabled = !!(clientId && clientSecret);
 
     if (this.enabled) {
-      this.oauth2Client = new google.auth.OAuth2(clientId, clientSecret, this.redirectUri);
+      this.oauth2Client = new google.auth.OAuth2(clientId, clientSecret, this.redirectUri) as unknown as OAuth2Client;
       this.logger.log('✅ Google Calendar service initialized');
     } else {
       this.logger.warn('⚠️  Google Calendar service disabled (missing configuration)');
@@ -163,7 +163,7 @@ export class GoogleCalendarService {
       },
     });
 
-    if (!mission || !mission.scheduledAt) {
+    if (!mission || !mission.scheduledFor) {
       return null;
     }
 
@@ -172,8 +172,8 @@ export class GoogleCalendarService {
       summary: `Mission: ${mission.title}`,
       description: `${mission.description}\n\nClient: ${mission.client.firstName} ${mission.client.lastName}\nBudget: €${mission.agreedPrice || mission.clientBudget}`,
       location: mission.address || undefined,
-      start: mission.scheduledAt,
-      end: new Date(mission.scheduledAt.getTime() + 2 * 60 * 60 * 1000), // +2 hours default
+      start: mission.scheduledFor,
+      end: new Date(mission.scheduledFor.getTime() + 2 * 60 * 60 * 1000), // +2 hours default
       attendees: [
         {
           email: mission.client.email,
@@ -187,8 +187,8 @@ export class GoogleCalendarService {
       summary: `Service: ${mission.title}`,
       description: `${mission.description}\n\nArtisan: ${mission.artisan?.firstName} ${mission.artisan?.lastName}\nPrix: €${mission.agreedPrice || mission.clientBudget}`,
       location: mission.address || undefined,
-      start: mission.scheduledAt,
-      end: new Date(mission.scheduledAt.getTime() + 2 * 60 * 60 * 1000),
+      start: mission.scheduledFor,
+      end: new Date(mission.scheduledFor.getTime() + 2 * 60 * 60 * 1000),
       attendees: mission.artisan
         ? [
             {
@@ -230,7 +230,7 @@ export class GoogleCalendarService {
         expiry_date: tokens.expiryDate,
       });
 
-      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client as any });
 
       // In production, delete specific event by ID
       // await calendar.events.delete({
@@ -266,7 +266,7 @@ export class GoogleCalendarService {
         await this.refreshTokens(userId);
       }
 
-      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client as any });
 
       // Create event
       const response = await calendar.events.insert({
@@ -411,7 +411,7 @@ export class GoogleCalendarService {
         expiry_date: tokens.expiryDate,
       });
 
-      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client as any });
 
       const response = await calendar.events.list({
         calendarId: 'primary',

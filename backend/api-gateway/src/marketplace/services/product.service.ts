@@ -11,12 +11,12 @@ export class ProductService {
   async create(artisanId: string, data: CreateProductDto) {
     return this.prisma.product.create({
       data: {
-        artisan: { connect: { id: artisanId } },
+        artisanId,
         name: data.name,
         description: data.description,
         price: data.price,
         vatRate: data.vatRate || 17, // Luxembourg standard VAT rate
-        category: data.category,
+        categoryId: data.category,
         stock: data.stock,
         sku: data.sku,
         status: data.status || 'DRAFT',
@@ -44,7 +44,7 @@ export class ProductService {
     };
 
     if (filters?.category) {
-      where.category = filters.category;
+      where.categoryId = filters.category;
     }
 
     if (filters?.artisanId) {
@@ -176,9 +176,16 @@ export class ProductService {
     // Verify product exists
     await this.findOne(id);
 
+    // Transform category to categoryId if present
+    const updateData: any = { ...data };
+    if (updateData.category) {
+      updateData.categoryId = updateData.category;
+      delete updateData.category;
+    }
+
     return this.prisma.product.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
         artisan: {
           select: {

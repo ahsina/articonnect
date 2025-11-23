@@ -305,7 +305,7 @@ export class PaymentService {
     if (transaction) {
       await this.prisma.transaction.update({
         where: { id: transaction.id },
-        data: { status: 'CANCELLED' },
+        data: { status: 'FAILED' },
       });
 
       // If this was a deposit payment that was canceled, notify the client
@@ -327,7 +327,11 @@ export class PaymentService {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: {
-        client: true,
+        client: {
+          include: {
+            clientProfile: true,
+          },
+        },
       },
     });
 
@@ -1003,7 +1007,7 @@ export class PaymentService {
    * Handle SEPA charge succeeded
    * Payment completed successfully (after 5-7 business days)
    */
-  private async handleSepaChargeSucceeded(charge: { id: string; payment_intent?: string; amount: number; metadata: Record<string, string> }) {
+  private async handleSepaChargeSucceeded(charge: { id: string; payment_intent?: string; amount?: number; metadata?: Record<string, string> }) {
     if (!charge.payment_intent) return;
 
     const transaction = await this.prisma.transaction.findUnique({
@@ -1018,7 +1022,7 @@ export class PaymentService {
       });
 
       console.log(
-        `[SEPA CHARGE SUCCESS] Transaction ${transaction.id} succeeded via SEPA. Amount: ${charge.amount / 100}€`,
+        `[SEPA CHARGE SUCCESS] Transaction ${transaction.id} succeeded via SEPA. Amount: ${charge.amount ? charge.amount / 100 : 'unknown'}€`,
       );
 
       // Notify parties that SEPA payment is complete

@@ -43,7 +43,7 @@ export interface QuarantineRecord {
 export class ClamavService {
   private readonly logger = new Logger(ClamavService.name);
   private clamav: NodeClam | null = null;
-  private readonly enabled: boolean;
+  private enabled: boolean;
   private readonly quarantinePath: string;
   private readonly scanTimeout: number;
 
