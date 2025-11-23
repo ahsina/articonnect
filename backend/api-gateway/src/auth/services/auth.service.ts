@@ -9,6 +9,8 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { EmailService } from '../../email/services/email.service';
 import { TwoFactorService } from './two-factor.service';
+import { MultiAccountDetectorService } from '../../fraud/services/multi-account-detector.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import * as bcrypt from 'bcrypt';
 import * as speakeasy from 'speakeasy';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
@@ -22,6 +24,8 @@ export class AuthService {
     private redis: RedisService,
     private emailService: EmailService,
     private twoFactorService: TwoFactorService,
+    private multiAccountDetector: MultiAccountDetectorService,
+    private featureToggle: FeatureToggleService,
   ) {}
 
   async register(registerDto: RegisterDto, ipAddress?: string) {

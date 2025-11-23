@@ -7,12 +7,14 @@ import { PriceAnomalyDetectorService } from './services/price-anomaly-detector.s
 import { RefundAbuseDetectorService } from './services/refund-abuse-detector.service';
 import { SessionAnomalyDetectorService } from './services/session-anomaly-detector.service';
 import { BotDetectorService } from './services/bot-detector.service';
+import { FeatureToggleService } from './services/feature-toggle.service';
 import { FraudController } from './controllers/fraud.controller';
 
 @Module({
   imports: [PrismaModule],
   controllers: [FraudController],
   providers: [
+    FeatureToggleService,
     MultiAccountDetectorService,
     ReviewFraudDetectorService,
     PayoutFraudDetectorService,
@@ -22,6 +24,7 @@ import { FraudController } from './controllers/fraud.controller';
     BotDetectorService,
   ],
   exports: [
+    FeatureToggleService,
     MultiAccountDetectorService,
     ReviewFraudDetectorService,
     PayoutFraudDetectorService,

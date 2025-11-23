@@ -16,10 +16,12 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
 import { AppleStrategy } from './strategies/apple.strategy';
 import { OAuthController } from './controllers/oauth.controller';
 import { CaptchaModule } from '../captcha/captcha.module';
+import { FraudModule } from '../fraud/fraud.module';
 
 @Module({
   imports: [
     PassportModule,
+    FraudModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

@@ -1158,6 +1158,67 @@ model ContentViolation {
 }
 
 // ================================
+// FRAUD PROTECTION - FEATURE TOGGLES
+// ================================
+
+model FraudProtectionConfig {
+  id        String   @id @default(uuid())
+
+  // Multi-Account Detection
+  multiAccountDetectionEnabled     Boolean @default(true)
+  multiAccountRiskThreshold        Int     @default(70) // 0-100
+
+  // Review Fraud Detection
+  reviewFraudDetectionEnabled      Boolean @default(true)
+  reviewFraudScoreThreshold        Float   @default(70) // 0-100
+  reviewAutoHideEnabled            Boolean @default(true)
+
+  // Payout Fraud Screening
+  payoutFraudScreeningEnabled      Boolean @default(true)
+  payoutRiskThreshold              Int     @default(60) // 0-100
+  payoutAutoHoldEnabled            Boolean @default(true)
+
+  // Price Anomaly Detection
+  priceAnomalyDetectionEnabled     Boolean @default(true)
+  priceDeviationThreshold          Int     @default(-30) // Percentage
+  priceAutoFlagEnabled             Boolean @default(true)
+
+  // Refund Abuse Detection
+  refundAbuseDetectionEnabled      Boolean @default(true)
+  refundAbuseScoreThreshold        Int     @default(60) // 0-100
+  refundAutoRejectEnabled          Boolean @default(false)
+
+  // Session Anomaly Detection
+  sessionAnomalyDetectionEnabled   Boolean @default(true)
+  sessionThreatLevelThreshold      String  @default("HIGH") // LOW, MEDIUM, HIGH, CRITICAL
+  sessionAutoLogoutEnabled         Boolean @default(true)
+
+  // KYC/AML
+  kycEnabled                       Boolean @default(true)
+  kycSingleTransactionThreshold    Int     @default(1000) // EUR
+  kycCumulativeThreshold           Int     @default(3000) // EUR/month
+  kycAutoBlockEnabled              Boolean @default(true)
+
+  // Bot Detection
+  botDetectionEnabled              Boolean @default(true)
+  botScoreThreshold                Int     @default(70) // 0-100
+  botCaptchaEnabled                Boolean @default(true)
+
+  // Business Verification
+  businessVerificationRequired     Boolean @default(true)
+  businessVerificationAutoReject   Boolean @default(false)
+
+  // Global Settings
+  fraudAlertEmailEnabled           Boolean @default(true)
+  fraudAlertEmail                  String  @default("admin@articonnect.com")
+
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // Admin user ID who last updated
+
+  @@map("fraud_protection_config")
+}
+
+// ================================
 // NOTIFICATIONS
 // ================================
 
