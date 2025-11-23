@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ArtiConnect</string>
+    <string name="title_activity_main">ArtiConnect</string>
+    <string name="package_name">com.articonnect.app</string>
+    <string name="custom_url_scheme">com.articonnect.app</string>
+</resources>

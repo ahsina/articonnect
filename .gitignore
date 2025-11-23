@@ -52,3 +52,17 @@ yarn-error.log*
 # Uploads (dev)
 uploads/
 temp/
+
+# Capacitor
+frontend/ios/App/Pods/
+frontend/ios/App/build/
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/android/key.properties
+*.jks
+*.keystore
+
+# Mobile build artifacts
+frontend/out/
