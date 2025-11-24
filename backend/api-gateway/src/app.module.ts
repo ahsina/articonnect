@@ -34,6 +34,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { ExportModule } from './export/export.module';
 import { CompanyModule } from './company/company.module';
 import { EmployeeModule } from './employee/employee.module';
+import { ReportsModule } from './reports/reports.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
@@ -98,6 +99,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     BadgesModule,
     AnalyticsModule,
     ExportModule,
+    ReportsModule,
   ],
   providers: [
     LoggerService,
