@@ -32,6 +32,7 @@ import { ConfigModule as AppConfigModule } from './config/config.module';
 import { BadgesModule } from './badges/badges.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ExportModule } from './export/export.module';
+import { CompanyModule } from './company/company.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
@@ -68,6 +69,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     HealthModule,
     AuthModule,
     UserModule,
+    CompanyModule,
     MissionModule,
     GeoModule,
     PaymentModule,
