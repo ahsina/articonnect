@@ -446,6 +446,17 @@ model CompanyEmployee {
   // Earnings History
   earnings EmployeeEarnings[]
 
+  // Scheduling & Time Tracking
+  shifts       EmployeeShift[]
+  timeTracking MissionTimeTracking[]
+
+  // Performance Reviews
+  reviewsReceived  PerformanceReview[] @relation("EmployeeReviews")
+  reviewsConducted PerformanceReview[] @relation("ConductedReviews")
+
+  // Skills & Certifications
+  skills EmployeeSkill[]
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -526,6 +537,152 @@ model CompanySettings {
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EmployeeShift {
+  id String @id @default(uuid())
+
+  // Employee Reference
+  employeeId String
+  employee   CompanyEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Shift Details
+  startTime DateTime
+  endTime   DateTime
+  shiftType String   @default("REGULAR") // REGULAR, OVERTIME, ONCALL, BREAK
+  status    String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, CANCELLED
+
+  // Notes & Metadata
+  notes      String?
+  createdBy  String // User ID who created the shift
+  updatedBy  String? // User ID who last updated the shift
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([startTime])
+  @@index([endTime])
+  @@index([status])
+}
+
+model MissionTimeTracking {
+  id String @id @default(uuid())
+
+  // Mission & Employee
+  missionId  String
+  mission    Mission         @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   CompanyEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Time Tracking
+  startTime  DateTime
+  endTime    DateTime?
+  totalHours Decimal?  @db.Decimal(8, 2)
+  breakTime  Decimal?  @default(0) @db.Decimal(8, 2) // Hours
+  billable   Boolean   @default(true)
+
+  // Location Tracking (optional)
+  startLocation String? // Lat,Long or address
+  endLocation   String? // Lat,Long or address
+
+  // Notes
+  notes String?
+
+  // Status
+  status String @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, PAUSED
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([missionId])
+  @@index([employeeId])
+  @@index([status])
+}
+
+model PerformanceReview {
+  id String @id @default(uuid())
+
+  // Employee & Reviewer
+  employeeId String
+  employee   CompanyEmployee @relation("EmployeeReviews", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   CompanyEmployee @relation("ConductedReviews", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  // Review Period
+  reviewPeriodStart DateTime
+  reviewPeriodEnd   DateTime
+
+  // Ratings (1-5 scale)
+  qualityOfWork      Int? // 1-5
+  communication      Int? // 1-5
+  reliability        Int? // 1-5
+  technicalSkills    Int? // 1-5
+  customerService    Int? // 1-5
+  teamwork           Int? // 1-5
+  overallRating      Decimal? @db.Decimal(3, 2) // Average or custom overall
+
+  // Feedback
+  strengths          String?
+  areasForImprovement String?
+  goals              String?
+  notes              String?
+
+  // Status
+  status String @default("DRAFT") // DRAFT, SUBMITTED, ACKNOWLEDGED
+
+  // Acknowledgement
+  acknowledgedAt DateTime?
+  acknowledgedBy String? // Employee acknowledges review
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([reviewerId])
+  @@index([reviewPeriodStart])
+  @@index([status])
+}
+
+model EmployeeSkill {
+  id String @id @default(uuid())
+
+  // Employee Reference
+  employeeId String
+  employee   CompanyEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Skill Details
+  skillName        String
+  skillCategory    String? // e.g., "Plumbing", "Electrical", "Carpentry"
+  proficiencyLevel String  @default("INTERMEDIATE") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+
+  // Certification
+  certified        Boolean @default(false)
+  certificationName String?
+  certificationNumber String?
+  certifiedBy      String? // Certifying body/organization
+  certificationDate DateTime?
+  expirationDate   DateTime?
+
+  // Verification
+  verified   Boolean @default(false)
+  verifiedBy String? // User ID who verified
+  verifiedAt DateTime?
+
+  // Document Reference
+  documentUrl String? // Link to certificate/credential
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, skillName])
+  @@index([employeeId])
+  @@index([skillCategory])
+  @@index([certified])
 }
 
 model SavedArtisan {
@@ -648,6 +805,7 @@ model Mission {
   reports           Report[]
   availabilitySlots AvailabilitySlot[]
   employeeEarnings  EmployeeEarnings[]
+  timeTracking      MissionTimeTracking[]
 
   // Timestamps
   createdAt       DateTime  @default(now())
