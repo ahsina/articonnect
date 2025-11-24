@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { PaymentController } from './controllers/payment.controller';
 import { ReputationController } from './controllers/reputation.controller';
 import { EmployeeEarningsController } from './controllers/employee-earnings.controller';
+import { AutomatedPayoutController } from './controllers/automated-payout.controller';
 import { PaymentService } from './services/payment.service';
 import { StripeService } from './services/stripe.service';
 import { PaypalService } from './services/paypal.service';
@@ -12,6 +13,7 @@ import { CurrencyService } from './services/currency.service';
 import { DeferredPaymentService } from './services/deferred-payment.service';
 import { PaymentCronService } from './services/payment-cron.service';
 import { EmployeeEarningsService } from './services/employee-earnings.service';
+import { AutomatedPayoutService } from './services/automated-payout.service';
 import { NotificationModule } from '../notification/notification.module';
 import { FraudModule } from '../fraud/fraud.module';
 import { ComplianceModule } from '../compliance/compliance.module';
@@ -22,6 +24,7 @@ import { ComplianceModule } from '../compliance/compliance.module';
     PaymentController,
     ReputationController,
     EmployeeEarningsController,
+    AutomatedPayoutController,
   ],
   providers: [
     PaymentService,
@@ -34,6 +37,7 @@ import { ComplianceModule } from '../compliance/compliance.module';
     DeferredPaymentService,
     PaymentCronService,
     EmployeeEarningsService,
+    AutomatedPayoutService,
   ],
   exports: [
     PaymentService,
@@ -46,6 +50,7 @@ import { ComplianceModule } from '../compliance/compliance.module';
     DeferredPaymentService,
     PaymentCronService,
     EmployeeEarningsService,
+    AutomatedPayoutService,
   ],
 })
 export class PaymentModule {}
