@@ -33,6 +33,7 @@ import { BadgesModule } from './badges/badges.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ExportModule } from './export/export.module';
 import { CompanyModule } from './company/company.module';
+import { EmployeeModule } from './employee/employee.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
@@ -70,6 +71,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     AuthModule,
     UserModule,
     CompanyModule,
+    EmployeeModule,
     MissionModule,
     GeoModule,
     PaymentModule,
