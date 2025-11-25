@@ -457,7 +457,7 @@ export class MissionService {
       data: {
         missionId,
         status,
-        changedBy,
+        changedById: changedBy,
         changedByRole,
         note,
       },

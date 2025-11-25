@@ -297,7 +297,6 @@ export class MissionCronService {
               data: {
                 missionId: mission.id,
                 status: mission.status,
-                changedBy: 'SYSTEM',
                 changedByRole: 'SYSTEM',
                 note: `Rayon maximum atteint (${MAX_RADIUS}km) - Aucun artisan disponible`,
               },
@@ -389,7 +388,6 @@ export class MissionCronService {
             data: {
               missionId: mission.id,
               status: mission.status,
-              changedBy: 'SYSTEM',
               changedByRole: 'SYSTEM',
               note: `Rayon élargi de ${mission.currentSearchRadius}km à ${newRadius}km - ${newArtisans.length} nouveaux artisans notifiés`,
             },

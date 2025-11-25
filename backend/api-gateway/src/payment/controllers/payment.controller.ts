@@ -61,10 +61,10 @@ export class PaymentController {
   })
   async captureMissionPayment(
     @Param('missionId') missionId: string,
-    @Request() req,
+    @Request() _req,
   ) {
-    // Verify user ownership before capturing payment
-    return this.paymentService.captureMissionPayment(missionId, req.user.userId);
+    // Capture payment for the mission
+    return this.paymentService.captureMissionPayment(missionId);
   }
 
   @Post('refund/:missionId')
@@ -77,10 +77,10 @@ export class PaymentController {
   async refundMissionPayment(
     @Param('missionId') missionId: string,
     @Body() body: { reason: string },
-    @Request() req,
+    @Request() _req,
   ) {
-    // Verify user ownership before refunding
-    return this.paymentService.refundMissionPayment(missionId, body.reason, req.user.userId);
+    // Refund payment for the mission
+    return this.paymentService.refundMissionPayment(missionId, body.reason);
   }
 
   @Post('webhook')

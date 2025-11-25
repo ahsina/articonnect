@@ -79,7 +79,7 @@ export class ShiftSchedulingService {
         shiftType: createDto.shiftType,
         status: 'SCHEDULED',
         notes: createDto.notes,
-        createdBy: requesterId,
+        createdById: requesterId,
       },
       include: {
         employee: {
@@ -113,7 +113,7 @@ export class ShiftSchedulingService {
       where: { id: shiftId },
       data: {
         ...updateDto,
-        updatedBy: requesterId,
+        updatedById: requesterId,
       },
       include: {
         employee: {

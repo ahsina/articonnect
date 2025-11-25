@@ -198,7 +198,7 @@ export class MonitoringService {
       this.prisma.missionHistory.count({
         where: {
           status: 'CANCELLED',
-          changedBy: 'SYSTEM',
+          changedByRole: 'SYSTEM',
           createdAt: { gte: last30days },
         },
       }),
