@@ -26,7 +26,7 @@ describe('BankTransferService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
+    get: jest.fn().mockImplementation((key: string) => {
       const config: Record<string, string> = {
         BANK_TRANSFER_IBAN: 'LU12 3456 7890 1234 5678',
         BANK_TRANSFER_BIC: 'BGLLLULL',
@@ -73,6 +73,18 @@ describe('BankTransferService', () => {
   };
 
   beforeEach(async () => {
+    // Reset mock implementation for ConfigService
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        BANK_TRANSFER_IBAN: 'LU12 3456 7890 1234 5678',
+        BANK_TRANSFER_BIC: 'BGLLLULL',
+        BANK_TRANSFER_ACCOUNT_HOLDER: 'ArtiConnect SAS',
+        BANK_TRANSFER_BANK_NAME: 'BGL BNP Paribas',
+        BANK_TRANSFER_EXPIRY_DAYS: '7',
+      };
+      return config[key];
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BankTransferService,
@@ -393,10 +405,11 @@ describe('BankTransferService', () => {
 
   describe('getStatistics', () => {
     it('should return bank transfer statistics', async () => {
+      // Service uses Number(t.amount) so mock should return plain numbers
       mockPrismaService.transaction.findMany.mockResolvedValue([
-        { ...mockTransaction, status: 'PENDING', amount: { toNumber: () => 100 } },
-        { ...mockTransaction, status: 'COMPLETED', amount: { toNumber: () => 200 } },
-        { ...mockTransaction, status: 'COMPLETED', amount: { toNumber: () => 150 } },
+        { ...mockTransaction, status: 'PENDING', amount: 100 },
+        { ...mockTransaction, status: 'COMPLETED', amount: 200 },
+        { ...mockTransaction, status: 'COMPLETED', amount: 150 },
       ]);
 
       const result = await service.getStatistics(30);

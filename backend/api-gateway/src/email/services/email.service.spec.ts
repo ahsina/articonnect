@@ -5,6 +5,23 @@ import * as nodemailer from 'nodemailer';
 
 jest.mock('nodemailer');
 
+// Mock email config to provide credentials so the synchronous transporter path is used
+jest.mock('../email.config', () => ({
+  getEmailConfig: () => ({
+    host: 'smtp.test.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: 'test@test.com',
+      pass: 'test-password',
+    },
+    from: {
+      name: 'ArtiConnect',
+      email: 'noreply@articonnect.com',
+    },
+  }),
+}));
+
 describe('EmailService', () => {
   let service: EmailService;
   let emailTemplateService: EmailTemplateService;

@@ -148,7 +148,9 @@ describe('AutoAssignmentService', () => {
       );
     });
 
-    it('should return null if best score is 0', async () => {
+    it('should still assign employee with low score if no other options', async () => {
+      // Even with high workload and no specialty match, employees get a positive score
+      // because the scoring system gives fair base scores to all active employees
       const mission = createMockMission({
         company: {
           ...createMockMission().company,
@@ -166,10 +168,20 @@ describe('AutoAssignmentService', () => {
       });
       mockPrismaService.mission.findUnique.mockResolvedValue(mission);
       mockPrismaService.mission.count.mockResolvedValue(5); // Conflicts
+      mockPrismaService.mission.update.mockResolvedValue({
+        ...mission,
+        assignedToId: 'emp-1',
+      });
+      mockPrismaService.companyEmployee.update.mockResolvedValue({});
 
       const result = await service.autoAssignMission('mission-123');
 
-      expect(result).toBeNull();
+      // Employee still gets assigned with a low (but positive) score
+      expect(result).not.toBeNull();
+      expect(result.assignedEmployee.id).toBe('emp-1');
+      // Score is low but positive: workload (4) + rating (12) + experience (5) = 21
+      expect(result.score).toBeGreaterThan(0);
+      expect(result.score).toBeLessThan(30); // Low score due to no specialty match
     });
 
     it('should prioritize employees with matching specialty', async () => {

@@ -106,7 +106,9 @@ describe('NoShowService', () => {
 
   describe('reportNoShow', () => {
     it('should create a no-show report successfully', async () => {
+      // Use waitDurationMinutes < 20 to trigger admin review path (not auto-validate)
       const dto = createValidNoShowDto();
+      dto.waitDurationMinutes = 18; // Less than 20 means it goes to admin review
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
       mockPrismaService.noShowEvent.create.mockResolvedValue({
         id: 'no-show-123',
@@ -229,6 +231,7 @@ describe('NoShowService', () => {
         mission: {
           ...mockMission,
           artisan: {
+            id: 'artisan-123',
             artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
           },
         },
@@ -237,11 +240,24 @@ describe('NoShowService', () => {
         id: 'no-show-123',
         status: 'VALIDATED',
       });
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: 'client-123',
-        reputationScore: 100,
+      // Mock user.findUnique to return different values for client and artisan
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === 'client-123') {
+          return Promise.resolve({ id: 'client-123', reputationScore: 100 });
+        }
+        // For artisan lookup in transferToArtisan
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
       });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.payment.create.mockResolvedValue({});
+      mockPrismaService.compensationLog.create.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
       mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
+      mockReputationService.applyPenalty.mockResolvedValue({});
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       const result = await service.reportNoShow('artisan-123', dto);
 
@@ -250,7 +266,9 @@ describe('NoShowService', () => {
     });
 
     it('should calculate 50€ fee for emergency missions', async () => {
+      // Use waitDurationMinutes < 20 to trigger admin review path (not auto-validate)
       const dto = createValidNoShowDto();
+      dto.waitDurationMinutes = 18;
       mockPrismaService.mission.findUnique.mockResolvedValue({
         ...mockMission,
         type: 'EMERGENCY',
@@ -262,6 +280,7 @@ describe('NoShowService', () => {
       });
       mockPrismaService.noShowEvent.update.mockResolvedValue({});
       mockPrismaService.user.findMany.mockResolvedValue([]);
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       await service.reportNoShow('artisan-123', dto);
 
@@ -275,7 +294,9 @@ describe('NoShowService', () => {
     });
 
     it('should calculate 30€ fee for scheduled missions', async () => {
+      // Use waitDurationMinutes < 20 to trigger admin review path (not auto-validate)
       const dto = createValidNoShowDto();
+      dto.waitDurationMinutes = 18;
       mockPrismaService.mission.findUnique.mockResolvedValue({
         ...mockMission,
         type: 'SCHEDULED',
@@ -287,6 +308,7 @@ describe('NoShowService', () => {
       });
       mockPrismaService.noShowEvent.update.mockResolvedValue({});
       mockPrismaService.user.findMany.mockResolvedValue([]);
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       await service.reportNoShow('artisan-123', dto);
 
@@ -323,11 +345,24 @@ describe('NoShowService', () => {
         ...mockNoShowEvent,
         status: 'VALIDATED',
       });
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: 'client-123',
-        reputationScore: 100,
+      // Mock user.findUnique to return different values for client and artisan
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === 'client-123') {
+          return Promise.resolve({ id: 'client-123', reputationScore: 100 });
+        }
+        // For artisan lookup in transferToArtisan
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
       });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.payment.create.mockResolvedValue({});
+      mockPrismaService.compensationLog.create.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
       mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
+      mockReputationService.applyPenalty.mockResolvedValue({});
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       const result = await service.validateNoShow('no-show-123', 'admin-123');
 
@@ -341,11 +376,24 @@ describe('NoShowService', () => {
         ...mockNoShowEvent,
         status: 'VALIDATED',
       });
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: 'client-123',
-        reputationScore: 100,
+      // Mock user.findUnique to return different values for client and artisan
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === 'client-123') {
+          return Promise.resolve({ id: 'client-123', reputationScore: 100 });
+        }
+        // For artisan lookup in transferToArtisan
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
       });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.payment.create.mockResolvedValue({});
+      mockPrismaService.compensationLog.create.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
       mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
+      mockReputationService.applyPenalty.mockResolvedValue({});
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       const result = await service.validateNoShow('no-show-123', 'AUTO');
 

@@ -273,7 +273,7 @@ describe('UserService', () => {
 
       expect(mockBusinessVerificationService.verifyBusiness).toHaveBeenCalledWith(
         expect.objectContaining({
-          country: 'BELGIUM',
+          country: 'BE', // Country.BELGIUM enum value is 'BE'
         }),
       );
     });
