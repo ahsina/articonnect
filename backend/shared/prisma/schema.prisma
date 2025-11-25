@@ -112,6 +112,17 @@ model User {
   issuedInvoices   Invoice[] @relation("IssuedInvoices")
   receivedInvoices Invoice[] @relation("ReceivedInvoices")
 
+  // Negotiations
+  negotiationsSent     Negotiation[] @relation("NegotiationsSent")
+  negotiationsReceived Negotiation[] @relation("NegotiationsReceived")
+
+  // Mission History
+  missionHistoryChanges MissionHistory[] @relation("MissionHistoryChanges")
+
+  // Employee Shifts
+  shiftsCreated EmployeeShift[] @relation("ShiftsCreated")
+  shiftsUpdated EmployeeShift[] @relation("ShiftsUpdated")
+
   // VAT declarations
   vatDeclarations VatDeclaration[]
 
@@ -392,8 +403,9 @@ model Company {
   settings        CompanySettings?
 
   // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
 
   @@index([siret])
   @@index([ownerId])
@@ -503,6 +515,8 @@ model EmployeeEarnings {
   @@index([missionId])
   @@index([status])
   @@index([payoutDate])
+  // Additional composite index for earnings queries
+  @@index([employeeId, status, createdAt])
 }
 
 model CompanySettings {
@@ -553,9 +567,11 @@ model EmployeeShift {
   status    String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, CANCELLED
 
   // Notes & Metadata
-  notes      String?
-  createdBy  String // User ID who created the shift
-  updatedBy  String? // User ID who last updated the shift
+  notes       String?
+  createdById String
+  createdBy   User    @relation("ShiftsCreated", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?   @relation("ShiftsUpdated", fields: [updatedById], references: [id])
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -565,6 +581,7 @@ model EmployeeShift {
   @@index([startTime])
   @@index([endTime])
   @@index([status])
+  @@index([createdById])
 }
 
 model MissionTimeTracking {
@@ -797,7 +814,7 @@ model Mission {
   negotiations      Negotiation[]
   transaction       Transaction?
   payments          Payment[]
-  review            Review?
+  reviews           Review[]
   disputes          Dispute[]
   history           MissionHistory[]
   noShowEvent       NoShowEvent?
@@ -817,6 +834,7 @@ model Mission {
   arrivedAt       DateTime? // NEW: When artisan arrived at client location
   validatedAt     DateTime? // NEW: When client validated work (or 48h passed)
   autoValidatedAt DateTime? // NEW: When system auto-validated (7-day timeout)
+  deletedAt       DateTime? // Soft delete
 
   @@index([clientId])
   @@index([artisanId])
@@ -828,6 +846,9 @@ model Mission {
   @@index([latitude, longitude])
   @@index([createdAt])
   @@index([completedAt])
+  // Additional composite indexes for performance
+  @@index([clientId, status])
+  @@index([companyId, status, completedAt])
 }
 
 model MissionHistory {
@@ -835,12 +856,14 @@ model MissionHistory {
   missionId     String
   mission       Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
   status        MissionStatus
-  changedBy     String // userId who made the change
-  changedByRole String // ARTISAN, CLIENT, or ADMIN
-  note          String? // Optional note about the change
+  changedById   String?       // Nullable for system-level changes
+  changedBy     User?         @relation("MissionHistoryChanges", fields: [changedById], references: [id])
+  changedByRole String        // ARTISAN, CLIENT, ADMIN, or SYSTEM
+  note          String?       // Optional note about the change
   createdAt     DateTime      @default(now())
 
   @@index([missionId])
+  @@index([changedById])
   @@index([createdAt])
 }
 
@@ -849,7 +872,9 @@ model Negotiation {
   missionId     String
   mission       Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
   senderId      String
+  sender        User    @relation("NegotiationsSent", fields: [senderId], references: [id])
   receiverId    String
+  receiver      User    @relation("NegotiationsReceived", fields: [receiverId], references: [id])
   proposedPrice Decimal @db.Decimal(10, 2)
 
   // Price breakdown (optional detailed pricing)
@@ -878,7 +903,7 @@ enum ReviewType {
 
 model Review {
   id         String  @id @default(uuid())
-  missionId  String  @unique
+  missionId  String
   mission    Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
   reviewerId String
   reviewer   User    @relation("GivenReviews", fields: [reviewerId], references: [id])
@@ -917,7 +942,11 @@ model Review {
   hiddenReason    String? // Why the review was hidden
   fraudReviewedAt DateTime? // When fraud review was done
   fraudReviewedBy String? // Admin who reviewed
+  deletedAt       DateTime? // Soft delete
 
+  // Unique constraint: one review per mission per type (allows bidirectional reviews)
+  @@unique([missionId, reviewType])
+  @@index([missionId])
   @@index([reviewedId])
   @@index([fraudScore])
   @@index([hidden])
@@ -1032,6 +1061,7 @@ model Product {
   reports     Report[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?        // Soft delete
 
   @@index([artisanId])
   @@index([status])
@@ -1534,6 +1564,8 @@ model Message {
 
   @@index([senderId, receiverId])
   @@index([createdAt])
+  // Additional composite index for conversation queries
+  @@index([senderId, receiverId, createdAt])
 }
 
 // Content Moderation - Violation tracking

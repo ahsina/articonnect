@@ -7,6 +7,20 @@ import helmet from 'helmet';
 import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
 
+// Global unhandled rejection handler
+process.on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Log the error but don't exit - let NestJS handle cleanup
+});
+
+// Global uncaught exception handler
+process.on('uncaughtException', (error: Error) => {
+  console.error('Uncaught Exception:', error);
+  // For uncaught exceptions, we should exit after logging
+  // The process manager (PM2, Docker, etc.) should restart the app
+  process.exit(1);
+});
+
 async function bootstrap() {
   // Create custom logger instance
   const logger = new LoggerService();
@@ -181,7 +195,8 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document, {
       swaggerOptions: {
-        persistAuthorization: true,
+        // Disable token persistence for security - tokens should not be stored in localStorage
+        persistAuthorization: false,
         tagsSorter: 'alpha',
         operationsSorter: 'alpha',
       },

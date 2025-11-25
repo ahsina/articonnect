@@ -127,39 +127,32 @@ export class MissionCronService {
         return;
       }
 
-      // Annuler chaque mission expirée
-      let cancelledCount = 0;
-      for (const mission of expiredMissions) {
-        try {
-          await this.missionService['prisma'].mission.update({
-            where: { id: mission.id },
-            data: {
-              status: 'CANCELLED',
-              cancelledAt: new Date(),
-            },
-          });
+      const missionIds = expiredMissions.map((m) => m.id);
+      const now = new Date();
 
-          // Log l'historique
-          await this.missionService['prisma'].missionHistory.create({
-            data: {
-              missionId: mission.id,
-              status: 'CANCELLED',
-              changedBy: 'SYSTEM',
-              changedByRole: 'SYSTEM',
-              note: 'Mission expirée automatiquement (> 30 jours sans action)',
-            },
-          });
+      // Batch update all expired missions (N+1 fix)
+      const updateResult = await this.missionService['prisma'].mission.updateMany({
+        where: { id: { in: missionIds } },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: now,
+        },
+      });
 
-          cancelledCount++;
-        } catch (error) {
-          this.logger.error(
-            `Erreur annulation mission ${mission.id}: ${error.message}`,
-          );
-        }
-      }
+      // Batch create history records (N+1 fix)
+      await this.missionService['prisma'].missionHistory.createMany({
+        data: missionIds.map((missionId) => ({
+          missionId,
+          status: 'CANCELLED',
+          changedById: null, // System-level change
+          changedByRole: 'SYSTEM',
+          note: 'Mission expirée automatiquement (> 30 jours sans action)',
+        })),
+        skipDuplicates: true,
+      });
 
       this.logger.log(
-        `✅ CRON terminé: ${cancelledCount}/${expiredMissions.length} mission(s) expirée(s) annulée(s)`,
+        `✅ CRON terminé: ${updateResult.count}/${expiredMissions.length} mission(s) expirée(s) annulée(s)`,
       );
     } catch (error) {
       this.logger.error(
@@ -304,7 +297,6 @@ export class MissionCronService {
               data: {
                 missionId: mission.id,
                 status: mission.status,
-                changedBy: 'SYSTEM',
                 changedByRole: 'SYSTEM',
                 note: `Rayon maximum atteint (${MAX_RADIUS}km) - Aucun artisan disponible`,
               },
@@ -396,7 +388,6 @@ export class MissionCronService {
             data: {
               missionId: mission.id,
               status: mission.status,
-              changedBy: 'SYSTEM',
               changedByRole: 'SYSTEM',
               note: `Rayon élargi de ${mission.currentSearchRadius}km à ${newRadius}km - ${newArtisans.length} nouveaux artisans notifiés`,
             },

@@ -14,6 +14,7 @@ import { MultiAccountDetectorService } from '../../fraud/services/multi-account-
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import * as bcrypt from 'bcrypt';
 import * as speakeasy from 'speakeasy';
+import { randomBytes, randomInt } from 'crypto';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
 import { User, UserRole } from '@prisma/client';
 
@@ -108,10 +109,8 @@ export class AuthService {
       },
     });
 
-    // Generate email verification token
-    const verificationToken = Array.from({ length: 32 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
+    // Generate cryptographically secure email verification token
+    const verificationToken = randomBytes(32).toString('hex');
 
     // Store verification token (expires in 24 hours)
     const expiresAt = new Date();
@@ -486,10 +485,8 @@ export class AuthService {
       };
     }
 
-    // Generate random token (32 bytes = 64 hex characters)
-    const resetToken = Array.from({ length: 32 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
+    // Generate cryptographically secure reset token (32 bytes = 64 hex characters)
+    const resetToken = randomBytes(32).toString('hex');
 
     // Token expires in 1 hour
     const expiresAt = new Date();
@@ -626,11 +623,9 @@ export class AuthService {
         data: { twoFactorEnabled: true },
       });
 
-      // Generate backup codes
+      // Generate cryptographically secure backup codes
       const backupCodes = Array.from({ length: 10 }, () =>
-        Array.from({ length: 8 }, () =>
-          Math.floor(Math.random() * 10)
-        ).join('')
+        randomInt(10000000, 99999999).toString()
       );
 
       // Hash and store backup codes
@@ -757,10 +752,8 @@ export class AuthService {
       data: { used: true },
     });
 
-    // Generate new verification token
-    const verificationToken = Array.from({ length: 32 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
+    // Generate cryptographically secure verification token
+    const verificationToken = randomBytes(32).toString('hex');
 
     // Store verification token (expires in 24 hours)
     const expiresAt = new Date();
@@ -828,8 +821,8 @@ export class AuthService {
     provider: string;
     providerId: string;
   }) {
-    // Create user with random password (OAuth users don't use password)
-    const randomPassword = Math.random().toString(36).slice(-12);
+    // Create user with cryptographically secure random password (OAuth users don't use password)
+    const randomPassword = randomBytes(16).toString('base64');
     const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
     const user = await this.prisma.user.create({

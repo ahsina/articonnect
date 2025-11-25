@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { randomInt, timingSafeEqual } from 'crypto';
 
 @Injectable()
 export class PhoneVerificationService {
@@ -14,8 +15,8 @@ export class PhoneVerificationService {
     // Normalize phone number (remove spaces, dashes, etc.)
     const normalizedPhone = phone.replace(/\D/g, '');
 
-    // Generate 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate cryptographically secure 6-digit code
+    const code = randomInt(100000, 999999).toString();
 
     // Set expiry to 10 minutes from now
     const expiresAt = new Date();
@@ -81,8 +82,13 @@ export class PhoneVerificationService {
       throw new BadRequestException('Nombre maximal de tentatives dépassé');
     }
 
-    // Verify the code
-    if (token.code !== code) {
+    // Verify the code using timing-safe comparison to prevent timing attacks
+    const codeBuffer = Buffer.from(token.code.padEnd(6, '0'));
+    const inputBuffer = Buffer.from(code.padEnd(6, '0'));
+    const isCodeValid = codeBuffer.length === inputBuffer.length &&
+      timingSafeEqual(codeBuffer, inputBuffer);
+
+    if (!isCodeValid) {
       // Increment attempts
       await this.prisma.phoneVerificationToken.update({
         where: { id: token.id },

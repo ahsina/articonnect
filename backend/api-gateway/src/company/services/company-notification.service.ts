@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 export interface CompanyNotification {
@@ -14,6 +14,8 @@ export interface CompanyNotification {
 
 @Injectable()
 export class CompanyNotificationService {
+  private readonly logger = new Logger(CompanyNotificationService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async notifyMissionAssignment(missionId: string, employeeId: string, assignedBy: string) {
@@ -267,7 +269,7 @@ export class CompanyNotificationService {
   }
 
   private async createNotification(notification: CompanyNotification) {
-    console.log('[Notification]', notification);
+    this.logger.debug(`Creating notification: ${notification.type} for user ${notification.userId}`);
     return notification;
   }
 

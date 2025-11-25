@@ -1,10 +1,22 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RedisService } from '../../common/redis/redis.service';
 import { CreateSpecialtyDto, UpdateSpecialtyDto } from '../dto/specialty.dto';
+
+// Cache keys
+const CACHE_KEYS = {
+  ALL_SPECIALTIES: 'specialties:all',
+  BY_CATEGORY: (category: string) => `specialties:category:${category}`,
+  CATEGORIES: 'specialties:categories',
+};
+const CACHE_TTL = 3600; // 1 hour
 
 @Injectable()
 export class SpecialtyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async create(createDto: CreateSpecialtyDto) {
     // Check if specialty with same name already exists
@@ -16,21 +28,36 @@ export class SpecialtyService {
       throw new ConflictException('Une spécialité avec ce nom existe déjà');
     }
 
-    return this.prisma.specialty.create({
+    const result = await this.prisma.specialty.create({
       data: createDto,
     });
+
+    // Invalidate cache
+    await this.invalidateCache();
+
+    return result;
   }
 
   async findAll(category?: string) {
-    const where = category ? { category } : {};
+    const cacheKey = category
+      ? CACHE_KEYS.BY_CATEGORY(category)
+      : CACHE_KEYS.ALL_SPECIALTIES;
 
-    return this.prisma.specialty.findMany({
-      where,
-      orderBy: [
-        { category: 'asc' },
-        { name: 'asc' },
-      ],
-    });
+    // Try cache first
+    return this.redis.getOrSet(
+      cacheKey,
+      async () => {
+        const where = category ? { category } : {};
+        return this.prisma.specialty.findMany({
+          where,
+          orderBy: [
+            { category: 'asc' },
+            { name: 'asc' },
+          ],
+        });
+      },
+      CACHE_TTL,
+    );
   }
 
   async findOne(id: string) {
@@ -65,10 +92,15 @@ export class SpecialtyService {
       }
     }
 
-    return this.prisma.specialty.update({
+    const result = await this.prisma.specialty.update({
       where: { id },
       data: updateDto,
     });
+
+    // Invalidate cache
+    await this.invalidateCache();
+
+    return result;
   }
 
   async delete(id: string) {
@@ -80,16 +112,32 @@ export class SpecialtyService {
       where: { id },
     });
 
+    // Invalidate cache
+    await this.invalidateCache();
+
     return { message: 'Spécialité supprimée avec succès' };
   }
 
   async getCategories() {
-    const specialties = await this.prisma.specialty.findMany({
-      select: { category: true },
-      distinct: ['category'],
-      orderBy: { category: 'asc' },
-    });
+    // Try cache first
+    return this.redis.getOrSet(
+      CACHE_KEYS.CATEGORIES,
+      async () => {
+        const specialties = await this.prisma.specialty.findMany({
+          select: { category: true },
+          distinct: ['category'],
+          orderBy: { category: 'asc' },
+        });
+        return specialties.map((s) => s.category);
+      },
+      CACHE_TTL,
+    );
+  }
 
-    return specialties.map((s) => s.category);
+  /**
+   * Invalidate all specialty caches
+   */
+  private async invalidateCache(): Promise<void> {
+    await this.redis.invalidateByPattern('specialties:*');
   }
 }

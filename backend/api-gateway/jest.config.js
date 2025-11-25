@@ -3,7 +3,13 @@ module.exports = {
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': [
+      'ts-jest',
+      {
+        // isolatedModules significantly reduces memory usage
+        isolatedModules: true,
+      },
+    ],
   },
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
@@ -16,4 +22,11 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Memory optimization for CI
+  maxWorkers: process.env.CI ? 1 : '50%',
+  workerIdleMemoryLimit: '512MB',
+  // Prevent memory leaks between tests
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
 };
