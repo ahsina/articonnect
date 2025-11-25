@@ -30,6 +30,9 @@ describe('AvailabilityService', () => {
   };
 
   beforeEach(async () => {
+    // Reset mock implementations before each test
+    mockRedisService.getClient.mockReturnValue(mockRedisClient);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AvailabilityService,
@@ -167,10 +170,12 @@ describe('AvailabilityService', () => {
     });
 
     it('should skip days with no availability', async () => {
+      // When daily availability returns null, getDailyAvailability also checks recurring
       mockRedisService.get
-        .mockResolvedValueOnce(JSON.stringify([{ available: true }]))
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(JSON.stringify([{ available: true }]));
+        .mockResolvedValueOnce(JSON.stringify([{ available: true }])) // Day 1: daily slots
+        .mockResolvedValueOnce(null) // Day 2: no daily slots
+        .mockResolvedValueOnce(null) // Day 2: no recurring slots
+        .mockResolvedValueOnce(JSON.stringify([{ available: true }])); // Day 3: daily slots
 
       const result = await service.getAvailabilityRange(
         artisanId,

@@ -39,6 +39,11 @@ describe('FcmService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Reset mock implementations
+    mockMessaging.sendEachForMulticast.mockReset();
+    mockMessaging.send.mockReset();
+    mockFirebaseApp.messaging.mockReturnValue(mockMessaging);
     (admin.initializeApp as jest.Mock).mockReturnValue(mockFirebaseApp);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -367,10 +372,22 @@ describe('FcmService', () => {
     });
 
     it('should skip if FCM not configured', async () => {
+      // Create a fresh service instance with FCM not configured
       mockConfigService.get.mockReturnValue(null);
-      service.onModuleInit();
+      const module = await Test.createTestingModule({
+        providers: [
+          FcmService,
+          { provide: ConfigService, useValue: mockConfigService },
+          { provide: PrismaService, useValue: mockPrismaService },
+        ],
+      }).compile();
+      const unconfiguredService = module.get<FcmService>(FcmService);
+      unconfiguredService.onModuleInit();
 
-      await service.sendToTopic('announcements', {
+      // Reset the mock to clear any previous calls
+      mockMessaging.send.mockClear();
+
+      await unconfiguredService.sendToTopic('announcements', {
         title: 'Test',
         body: 'Test message',
       });

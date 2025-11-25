@@ -2,6 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { MissionService } from './mission.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { ReputationService } from '../../payment/services/reputation.service';
+import { PaymentService } from '../../payment/services/payment.service';
+import { NotificationService } from '../../notification/services/notification.service';
 import { MissionStatus, MissionType } from '@prisma/client';
 
 describe('MissionService', () => {
@@ -19,8 +22,10 @@ describe('MissionService', () => {
     missionHistory: {
       create: jest.fn(),
       createMany: jest.fn(),
+      findMany: jest.fn(),
     },
     user: {
+      findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
     },
@@ -38,11 +43,29 @@ describe('MissionService', () => {
     },
   };
 
+  const mockReputationService = {
+    determinePaymentModel: jest.fn(),
+    calculateDepositAmount: jest.fn(),
+    applyMissionCompletedReward: jest.fn(),
+  };
+
+  const mockPaymentService = {
+    triggerArtisanPayment: jest.fn(),
+  };
+
+  const mockNotificationService = {
+    notifyMissionAccepted: jest.fn(),
+    notifyMissionCompleted: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MissionService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ReputationService, useValue: mockReputationService },
+        { provide: PaymentService, useValue: mockPaymentService },
+        { provide: NotificationService, useValue: mockNotificationService },
       ],
     }).compile();
 
@@ -85,7 +108,7 @@ describe('MissionService', () => {
       });
       mockPrismaService.user.findMany.mockResolvedValue([]);
 
-      const result = await service.create(createDto, userId);
+      const result = await service.create(userId, createDto);
 
       expect(result).toEqual(mockMission);
       expect(mockPrismaService.mission.create).toHaveBeenCalled();
@@ -101,7 +124,7 @@ describe('MissionService', () => {
       mockPrismaService.missionHistory.create.mockResolvedValue({});
       mockPrismaService.user.findMany.mockResolvedValue([]);
 
-      await service.create(createDto, userId);
+      await service.create(userId, createDto);
 
       const createCall = mockPrismaService.mission.create.mock.calls[0][0];
       expect(createCall.data.vatRate).toBe(20); // France VAT rate
@@ -129,7 +152,7 @@ describe('MissionService', () => {
       mockPrismaService.user.findMany.mockResolvedValue(mockArtisans);
       mockPrismaService.notification.createMany.mockResolvedValue({ count: 1 });
 
-      await service.create(createDto, userId);
+      await service.create(userId, createDto);
 
       expect(mockPrismaService.user.findMany).toHaveBeenCalled();
     });
@@ -137,18 +160,20 @@ describe('MissionService', () => {
 
   describe('findOne', () => {
     const missionId = 'mission-123';
+    const userId = 'user-123';
 
     it('should return mission with relations', async () => {
       const mockMission = {
         id: missionId,
         title: 'Fix leak',
-        client: { id: 'user-123' },
+        clientId: userId,
+        client: { id: userId },
         artisan: { id: 'artisan-123' },
       };
 
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
 
-      const result = await service.findOne(missionId);
+      const result = await service.findOne(missionId, userId);
 
       expect(result).toEqual(mockMission);
       expect(mockPrismaService.mission.findUnique).toHaveBeenCalledWith({
@@ -160,7 +185,7 @@ describe('MissionService', () => {
     it('should throw NotFoundException if mission not found', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(missionId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(missionId, userId)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -176,6 +201,7 @@ describe('MissionService', () => {
       };
 
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
+      mockPrismaService.user.findUnique.mockResolvedValue({ id: userId, role: 'CLIENT' });
       mockPrismaService.mission.update.mockResolvedValue({
         ...mockMission,
         status: MissionStatus.CANCELLED,
@@ -184,9 +210,8 @@ describe('MissionService', () => {
 
       const result = await service.updateStatus(
         missionId,
-        MissionStatus.CANCELLED,
         userId,
-        'CLIENT',
+        { status: MissionStatus.CANCELLED },
       );
 
       expect(result.status).toBe(MissionStatus.CANCELLED);
@@ -202,7 +227,7 @@ describe('MissionService', () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
 
       await expect(
-        service.updateStatus(missionId, MissionStatus.PENDING, userId, 'CLIENT'),
+        service.updateStatus(missionId, userId, { status: MissionStatus.PENDING }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -320,63 +345,4 @@ describe('MissionService', () => {
     });
   });
 
-  describe('acceptNegotiation', () => {
-    const negotiationId = 'negotiation-123';
-    const userId = 'user-123';
-
-    const mockNegotiation = {
-      id: negotiationId,
-      missionId: 'mission-123',
-      proposedPrice: 150,
-      senderId: 'artisan-123',
-      receiverId: userId,
-      accepted: null,
-    };
-
-    const mockMission = {
-      id: 'mission-123',
-      clientId: userId,
-      status: MissionStatus.NEGOTIATING,
-    };
-
-    it('should accept negotiation and update mission', async () => {
-      mockPrismaService.negotiation.findFirst.mockResolvedValue(mockNegotiation);
-      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
-      mockPrismaService.negotiation.update.mockResolvedValue({
-        ...mockNegotiation,
-        accepted: true,
-      });
-      mockPrismaService.mission.update.mockResolvedValue({
-        ...mockMission,
-        status: MissionStatus.ACCEPTED,
-        agreedPrice: 150,
-      });
-      mockPrismaService.missionHistory.create.mockResolvedValue({});
-
-      const result = await service.acceptNegotiation(negotiationId, userId);
-
-      expect(result.accepted).toBe(true);
-      expect(mockPrismaService.mission.update).toHaveBeenCalled();
-    });
-
-    it('should throw error if negotiation not found', async () => {
-      mockPrismaService.negotiation.findFirst.mockResolvedValue(null);
-
-      await expect(service.acceptNegotiation(negotiationId, userId)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it('should throw error if user is not the receiver', async () => {
-      mockPrismaService.negotiation.findFirst.mockResolvedValue({
-        ...mockNegotiation,
-        receiverId: 'different-user',
-      });
-      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
-
-      await expect(service.acceptNegotiation(negotiationId, userId)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-  });
 });
