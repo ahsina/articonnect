@@ -126,9 +126,15 @@ export class AutoAssignmentService {
   }
 
   private async scoreEmployees(mission: any, employees: any[]): Promise<EmployeeScore[]> {
-    const scored: EmployeeScore[] = [];
+    // Parallelize availability score calculations (N+1 fix)
+    const availabilityScores = await Promise.all(
+      employees.map((employee) =>
+        this.calculateAvailabilityScore(employee.id, mission.scheduledFor)
+      )
+    );
 
-    for (const employee of employees) {
+    // Calculate all scores with pre-fetched availability scores
+    return employees.map((employee, index) => {
       let score = 0;
 
       const specialtyMatch = this.calculateSpecialtyMatch(mission.category, employee.specialties);
@@ -140,23 +146,18 @@ export class AutoAssignmentService {
       const ratingScore = this.calculateRatingScore(employee.averageRating);
       score += ratingScore * 15;
 
-      const availabilityScore = await this.calculateAvailabilityScore(
-        employee.id,
-        mission.scheduledFor
-      );
-      score += availabilityScore * 15;
+      // Use pre-fetched availability score
+      score += availabilityScores[index] * 15;
 
       const experienceScore = this.calculateExperienceScore(employee.totalMissions);
       score += experienceScore * 10;
 
-      scored.push({
+      return {
         employeeId: employee.id,
         score,
         employee,
-      });
-    }
-
-    return scored;
+      };
+    });
   }
 
   private calculateSpecialtyMatch(missionCategory: string, employeeSpecialties: any[]): number {

@@ -1,7 +1,20 @@
 import { PrismaClient, UserRole, MissionType, MissionStatus, ProductStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
+
+// Generate secure random passwords for test users if not provided via environment
+const getTestPassword = (envVar: string, defaultLength: number = 16): string => {
+  return process.env[envVar] || randomBytes(defaultLength).toString('base64').slice(0, defaultLength) + '!Aa1';
+};
+
+// Test credentials (use environment variables in production, random in dev)
+const TEST_PASSWORDS = {
+  admin: getTestPassword('SEED_ADMIN_PASSWORD'),
+  client: getTestPassword('SEED_CLIENT_PASSWORD'),
+  artisan: getTestPassword('SEED_ARTISAN_PASSWORD'),
+};
 
 async function main() {
   console.log('🌱 Starting database seeding...');
@@ -77,7 +90,7 @@ async function main() {
 
   // Create Admin User
   console.log('👤 Creating admin user...');
-  const hashedPassword = await bcrypt.hash('Admin123!', 12);
+  const hashedPassword = await bcrypt.hash(TEST_PASSWORDS.admin, 12);
   const admin = await prisma.user.create({
     data: {
       email: 'admin@articonnect.com',
@@ -103,7 +116,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'jean.dupont@example.com',
-        password: await bcrypt.hash('Client123!', 12),
+        password: await bcrypt.hash(TEST_PASSWORDS.client, 12),
         firstName: 'Jean',
         lastName: 'Dupont',
         phone: '+352621123456',
@@ -140,7 +153,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'marie.martin@example.com',
-        password: await bcrypt.hash('Client123!', 12),
+        password: await bcrypt.hash(TEST_PASSWORDS.client, 12),
         firstName: 'Marie',
         lastName: 'Martin',
         phone: '+33612345678',
@@ -182,7 +195,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'pierre.plombier@example.com',
-        password: await bcrypt.hash('Artisan123!', 12),
+        password: await bcrypt.hash(TEST_PASSWORDS.artisan, 12),
         firstName: 'Pierre',
         lastName: 'Lebon',
         phone: '+352621234567',
@@ -221,7 +234,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'luc.electricien@example.com',
-        password: await bcrypt.hash('Artisan123!', 12),
+        password: await bcrypt.hash(TEST_PASSWORDS.artisan, 12),
         firstName: 'Luc',
         lastName: 'Durand',
         phone: '+33612987654',
@@ -260,7 +273,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'sophie.menuisier@example.com',
-        password: await bcrypt.hash('Artisan123!', 12),
+        password: await bcrypt.hash(TEST_PASSWORDS.artisan, 12),
         firstName: 'Sophie',
         lastName: 'Carpentier',
         phone: '+32487654321',
@@ -630,19 +643,18 @@ Qualité:
 
   console.log('✅ Seeding completed successfully!');
   console.log('');
-  console.log('📧 Test Credentials:');
+  console.log('📧 Test accounts created:');
   console.log('');
-  console.log('Admin:');
-  console.log('  Email: admin@articonnect.com');
-  console.log('  Password: Admin123!');
+  console.log('Admin:    admin@articonnect.com');
+  console.log('Client:   jean.dupont@example.com');
+  console.log('Artisan:  pierre.plombier@example.com');
   console.log('');
-  console.log('Client:');
-  console.log('  Email: jean.dupont@example.com');
-  console.log('  Password: Client123!');
-  console.log('');
-  console.log('Artisan:');
-  console.log('  Email: pierre.plombier@example.com');
-  console.log('  Password: Artisan123!');
+  if (process.env.SEED_ADMIN_PASSWORD || process.env.SEED_CLIENT_PASSWORD || process.env.SEED_ARTISAN_PASSWORD) {
+    console.log('ℹ️  Passwords were set via environment variables');
+  } else {
+    console.log('⚠️  Random passwords generated. Set SEED_ADMIN_PASSWORD, SEED_CLIENT_PASSWORD,');
+    console.log('   and SEED_ARTISAN_PASSWORD environment variables for consistent credentials.');
+  }
   console.log('');
 }
 

@@ -55,18 +55,32 @@ export class PaymentController {
   @Post('capture/:missionId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async captureMissionPayment(@Param('missionId') missionId: string) {
-    return this.paymentService.captureMissionPayment(missionId);
+  @ApiOperation({
+    summary: 'Capturer le paiement d\'une mission',
+    description: 'Capture le paiement après vérification de la propriété de la mission',
+  })
+  async captureMissionPayment(
+    @Param('missionId') missionId: string,
+    @Request() req,
+  ) {
+    // Verify user ownership before capturing payment
+    return this.paymentService.captureMissionPayment(missionId, req.user.userId);
   }
 
   @Post('refund/:missionId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Rembourser le paiement d\'une mission',
+    description: 'Rembourse le paiement après vérification de la propriété',
+  })
   async refundMissionPayment(
     @Param('missionId') missionId: string,
     @Body() body: { reason: string },
+    @Request() req,
   ) {
-    return this.paymentService.refundMissionPayment(missionId, body.reason);
+    // Verify user ownership before refunding
+    return this.paymentService.refundMissionPayment(missionId, body.reason, req.user.userId);
   }
 
   @Post('webhook')

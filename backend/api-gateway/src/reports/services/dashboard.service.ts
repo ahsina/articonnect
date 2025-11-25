@@ -1,13 +1,33 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RedisService } from '../../common/redis/redis.service';
+
+// Cache configuration
+const CACHE_KEYS = {
+  COMPANY_KPIS: (companyId: string) => `dashboard:company:${companyId}:kpis`,
+  EMPLOYEE_DASHBOARD: (employeeId: string) => `dashboard:employee:${employeeId}`,
+};
+const KPI_CACHE_TTL = 300; // 5 minutes - KPIs don't need to be real-time
 
 @Injectable()
 export class DashboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redis: RedisService,
+  ) {}
 
   async getCompanyKPIs(companyId: string, requesterId: string) {
     await this.validateCompanyAccess(companyId, requesterId);
 
+    // Try cache first
+    return this.redis.getOrSet(
+      CACHE_KEYS.COMPANY_KPIS(companyId),
+      () => this.fetchCompanyKPIs(companyId),
+      KPI_CACHE_TTL,
+    );
+  }
+
+  private async fetchCompanyKPIs(companyId: string) {
     const now = new Date();
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

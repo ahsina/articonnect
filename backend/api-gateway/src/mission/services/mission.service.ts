@@ -338,17 +338,18 @@ export class MissionService {
     // Send notifications to matched artisans (max 10)
     const artisansToNotify = nearbyArtisans.slice(0, 10);
 
-    for (const artisan of artisansToNotify) {
-      // Create notification in database
-      await this.prisma.notification.create({
-        data: {
+    // Batch create notifications for performance (N+1 fix)
+    if (artisansToNotify.length > 0) {
+      await this.prisma.notification.createMany({
+        data: artisansToNotify.map((artisan) => ({
           userId: artisan.id,
           type: 'NEW_MISSION',
           title: 'Nouvelle mission disponible',
           message: `Une nouvelle mission "${mission.title}" correspond à vos compétences`,
           link: `/artisan/missions/${mission.id}`,
           metadata: { missionId: mission.id },
-        },
+        })),
+        skipDuplicates: true,
       });
     }
 

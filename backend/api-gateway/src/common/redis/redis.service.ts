@@ -1,18 +1,19 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis;
+  private readonly logger = new Logger(RedisService.name);
 
   async onModuleInit() {
     this.client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-    console.log('✅ Redis connected');
+    this.logger.log('Redis connected');
   }
 
   async onModuleDestroy() {
     await this.client.quit();
-    console.log('❌ Redis disconnected');
+    this.logger.log('Redis disconnected');
   }
 
   getClient(): Redis {
@@ -62,5 +63,74 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async lrange(key: string, start: number, stop: number): Promise<string[]> {
     return await this.client.lrange(key, start, stop);
+  }
+
+  // ================================
+  // JSON CACHING HELPERS
+  // ================================
+
+  /**
+   * Set a JSON object with optional TTL
+   */
+  async setJson<T>(key: string, value: T, ttl?: number): Promise<void> {
+    const jsonValue = JSON.stringify(value);
+    if (ttl) {
+      await this.client.setex(key, ttl, jsonValue);
+    } else {
+      await this.client.set(key, jsonValue);
+    }
+  }
+
+  /**
+   * Get a JSON object from cache
+   */
+  async getJson<T>(key: string): Promise<T | null> {
+    const value = await this.client.get(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get cached value or fetch from source and cache
+   * @param key Cache key
+   * @param fetcher Function to fetch data if not cached
+   * @param ttl Time to live in seconds
+   */
+  async getOrSet<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl: number,
+  ): Promise<T> {
+    const cached = await this.getJson<T>(key);
+    if (cached !== null) {
+      return cached;
+    }
+
+    const value = await fetcher();
+    await this.setJson(key, value, ttl);
+    return value;
+  }
+
+  /**
+   * Invalidate cache by pattern
+   */
+  async invalidateByPattern(pattern: string): Promise<void> {
+    const keys = await this.client.keys(pattern);
+    if (keys.length > 0) {
+      await this.client.del(...keys);
+    }
+  }
+
+  /**
+   * Invalidate multiple keys
+   */
+  async invalidateMany(keys: string[]): Promise<void> {
+    if (keys.length > 0) {
+      await this.client.del(...keys);
+    }
   }
 }
