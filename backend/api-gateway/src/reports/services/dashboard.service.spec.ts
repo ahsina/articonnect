@@ -46,7 +46,7 @@ describe('DashboardService', () => {
     companyId: 'company-123',
     role: 'OWNER',
     status: 'ACTIVE',
-    commissionRate: 50,
+    commissionRate: { toNumber: () => 50 },
     user: {
       firstName: 'John',
       lastName: 'Doe',
