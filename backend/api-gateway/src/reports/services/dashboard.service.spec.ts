@@ -26,6 +26,7 @@ describe('DashboardService', () => {
     employeeEarnings: {
       aggregate: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
     },
   };
 

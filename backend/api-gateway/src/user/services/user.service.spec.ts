@@ -253,7 +253,7 @@ describe('UserService', () => {
 
       expect(mockBusinessVerificationService.verifyBusiness).toHaveBeenCalledWith(
         expect.objectContaining({
-          country: 'LUXEMBOURG',
+          country: 'LU',
         }),
       );
     });

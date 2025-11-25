@@ -4,6 +4,9 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { RedisService } from '../common/redis/redis.service';
+import { EmailService } from '../email/services/email.service';
+import { TwoFactorService } from './services/two-factor.service';
+import { MultiAccountDetectorService } from '../fraud/services/multi-account-detector.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -43,6 +46,24 @@ describe('AuthService', () => {
     verify: jest.fn(),
   };
 
+  const mockEmailService = {
+    sendVerificationEmail: jest.fn(),
+    sendPasswordResetEmail: jest.fn(),
+    sendWelcomeEmail: jest.fn(),
+  };
+
+  const mockTwoFactorService = {
+    generateSecret: jest.fn(),
+    verifyToken: jest.fn(),
+    enableTwoFactor: jest.fn(),
+    disableTwoFactor: jest.fn(),
+  };
+
+  const mockMultiAccountDetectorService = {
+    checkForDuplicates: jest.fn(),
+    analyzeRegistration: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +71,9 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: EmailService, useValue: mockEmailService },
+        { provide: TwoFactorService, useValue: mockTwoFactorService },
+        { provide: MultiAccountDetectorService, useValue: mockMultiAccountDetectorService },
       ],
     }).compile();
 
