@@ -814,7 +814,7 @@ model Mission {
   negotiations      Negotiation[]
   transaction       Transaction?
   payments          Payment[]
-  review            Review?
+  reviews           Review[]
   disputes          Dispute[]
   history           MissionHistory[]
   noShowEvent       NoShowEvent?
