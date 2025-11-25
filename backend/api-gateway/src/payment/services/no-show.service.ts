@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
 import { StripeService } from './stripe.service';
@@ -52,6 +52,8 @@ export interface ContactAttempt {
 
 @Injectable()
 export class NoShowService {
+  private readonly logger = new Logger(NoShowService.name);
+
   constructor(
     private prisma: PrismaService,
     private reputationService: ReputationService,
@@ -558,15 +560,15 @@ export class NoShowService {
     // 2. Vérifier que l'artisan a un compte Stripe Connect
     if (!stripeAccountId) {
       // Log warning but don't fail - artisan needs to complete onboarding
-      console.warn(
-        `[TRANSFER WARNING] Artisan ${artisanId} has no Stripe account. Transfer skipped.`,
+      this.logger.warn(
+        `Artisan ${artisanId} has no Stripe account. Transfer skipped.`,
       );
       return;
     }
 
     if (!stripeOnboarded) {
-      console.warn(
-        `[TRANSFER WARNING] Artisan ${artisanId} Stripe account not onboarded. Transfer skipped.`,
+      this.logger.warn(
+        `Artisan ${artisanId} Stripe account not onboarded. Transfer skipped.`,
       );
       return;
     }
@@ -581,13 +583,12 @@ export class NoShowService {
         metadata: metadata || {},
       });
 
-      console.log(
-        `[TRANSFER SUCCESS] ${amount}€ transferred to artisan ${artisanId} (Stripe Transfer: ${transfer.id})`,
+      this.logger.log(
+        `Transfer success: ${amount}€ to artisan ${artisanId} (Stripe: ${transfer.id})`,
       );
     } catch (error) {
-      console.error(
-        `[TRANSFER ERROR] Failed to transfer ${amount}€ to artisan ${artisanId}:`,
-        error.message,
+      this.logger.error(
+        `Transfer failed: ${amount}€ to artisan ${artisanId}: ${error.message}`,
       );
       throw new BadRequestException(
         `Échec du transfert vers l'artisan: ${error.message}`,

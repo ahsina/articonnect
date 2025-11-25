@@ -1018,15 +1018,15 @@ export class PaymentService {
     // 2. Vérifier que l'artisan a un compte Stripe Connect
     if (!stripeAccountId) {
       // Log warning but don't fail - artisan needs to complete onboarding
-      console.warn(
-        `[TRANSFER WARNING] Artisan ${artisanId} has no Stripe account. Transfer skipped.`,
+      this.logger.warn(
+        `Artisan ${artisanId} has no Stripe account. Transfer skipped.`,
       );
       return;
     }
 
     if (!stripeOnboarded) {
-      console.warn(
-        `[TRANSFER WARNING] Artisan ${artisanId} Stripe account not onboarded. Transfer skipped.`,
+      this.logger.warn(
+        `Artisan ${artisanId} Stripe account not onboarded. Transfer skipped.`,
       );
       return;
     }
@@ -1041,13 +1041,12 @@ export class PaymentService {
         metadata: metadata || {},
       });
 
-      console.log(
-        `[TRANSFER SUCCESS] ${amount}€ transferred to artisan ${artisanId} (Stripe Transfer: ${transfer.id})`,
+      this.logger.log(
+        `Transfer success: ${amount}€ to artisan ${artisanId} (Stripe: ${transfer.id})`,
       );
     } catch (error) {
-      console.error(
-        `[TRANSFER ERROR] Failed to transfer ${amount}€ to artisan ${artisanId}:`,
-        error.message,
+      this.logger.error(
+        `Transfer failed: ${amount}€ to artisan ${artisanId}: ${error.message}`,
       );
       throw new BadRequestException(
         `Échec du transfert vers l'artisan: ${error.message}`,
@@ -1083,8 +1082,8 @@ export class PaymentService {
       });
 
       // Log the review for admin action
-      console.warn(
-        `[RADAR REVIEW] Transaction ${transaction.id} flagged for review. Review ID: ${review.id}`,
+      this.logger.warn(
+        `Radar review: Transaction ${transaction.id} flagged. Review ID: ${review.id}`,
       );
 
       // Optionally send notification to admin
@@ -1108,8 +1107,8 @@ export class PaymentService {
       // Check if review was approved or resulted in refund
       const wasApproved = review.reason === 'approved';
 
-      console.log(
-        `[RADAR REVIEW CLOSED] Transaction ${transaction.id} review ${wasApproved ? 'approved' : 'refunded/closed'}`,
+      this.logger.log(
+        `Radar review closed: Transaction ${transaction.id} ${wasApproved ? 'approved' : 'refunded/closed'}`,
       );
 
       // If approved, proceed with payment
@@ -1136,8 +1135,8 @@ export class PaymentService {
 
     if (transaction) {
       // Log early fraud warning
-      console.error(
-        `[EARLY FRAUD WARNING] Transaction ${transaction.id} has early fraud warning. Charge: ${warning.charge}`,
+      this.logger.error(
+        `Early fraud warning: Transaction ${transaction.id}. Charge: ${warning.charge}`,
       );
 
       // Update transaction status to reflect fraud warning
@@ -1157,7 +1156,7 @@ export class PaymentService {
             data: { status: 'REFUNDED' },
           });
         } catch (error) {
-          console.error('Failed to auto-refund after early fraud warning:', error);
+          this.logger.error(`Failed to auto-refund after early fraud warning: ${error.message}`);
         }
       }
 
@@ -1175,8 +1174,8 @@ export class PaymentService {
    * Customer has authorized bank account debits
    */
   private async handleSepaSetupSuccess(setupIntent: { id: string; payment_method?: string; customer?: string; metadata: Record<string, string> }) {
-    console.log(
-      `[SEPA SETUP SUCCESS] Customer ${setupIntent.customer} authorized SEPA mandate. Payment Method: ${setupIntent.payment_method}`,
+    this.logger.log(
+      `SEPA setup success: Customer ${setupIntent.customer} authorized mandate. PM: ${setupIntent.payment_method}`,
     );
 
     // Store payment method ID for future payments
@@ -1197,8 +1196,8 @@ export class PaymentService {
    * Customer authorization failed or IBAN invalid
    */
   private async handleSepaSetupFailed(setupIntent: { id: string; last_setup_error?: { message?: string }; customer?: string; metadata: Record<string, string> }) {
-    console.error(
-      `[SEPA SETUP FAILED] Setup failed for customer ${setupIntent.customer}. Error: ${setupIntent.last_setup_error?.message}`,
+    this.logger.error(
+      `SEPA setup failed: Customer ${setupIntent.customer}. Error: ${setupIntent.last_setup_error?.message}`,
     );
 
     // Notify customer about setup failure
@@ -1223,8 +1222,8 @@ export class PaymentService {
         data: { status: 'HELD' },
       });
 
-      console.log(
-        `[SEPA CHARGE SUCCESS] Transaction ${transaction.id} succeeded via SEPA. Amount: ${charge.amount ? charge.amount / 100 : 'unknown'}€`,
+      this.logger.log(
+        `SEPA charge success: Transaction ${transaction.id}. Amount: ${charge.amount ? charge.amount / 100 : 'unknown'}€`,
       );
 
       // Notify parties that SEPA payment is complete
@@ -1250,8 +1249,8 @@ export class PaymentService {
         data: { status: 'FAILED' },
       });
 
-      console.error(
-        `[SEPA CHARGE FAILED] Transaction ${transaction.id} failed. Reason: ${charge.failure_code} - ${charge.failure_message}`,
+      this.logger.error(
+        `SEPA charge failed: Transaction ${transaction.id}. Reason: ${charge.failure_code} - ${charge.failure_message}`,
       );
 
       // Common SEPA failure reasons:
