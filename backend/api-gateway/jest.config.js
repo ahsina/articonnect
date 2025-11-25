@@ -16,4 +16,11 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Memory optimization for CI
+  maxWorkers: process.env.CI ? 2 : '50%',
+  workerIdleMemoryLimit: '512MB',
+  // Prevent memory leaks between tests
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
 };
