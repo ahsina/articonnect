@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ReviewCard } from './ReviewCard';
 import { StarRating } from '../ui/star-rating';
 import { reviewsApi, Review } from '@/lib/api/reviews';
+import { ReviewSkeleton, Skeleton } from '../ui/skeleton';
 
 interface ReviewListProps {
   artisanId: string;
@@ -67,8 +68,28 @@ export function ReviewList({ artisanId }: ReviewListProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">Chargement des avis...</div>
+      <div className="space-y-6" role="status" aria-label="Chargement des avis">
+        {/* Stats skeleton */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="text-center md:text-left space-y-2">
+              <Skeleton className="h-12 w-20 mx-auto md:mx-0" />
+              <Skeleton className="h-5 w-32 mx-auto md:mx-0" />
+              <Skeleton className="h-4 w-24 mx-auto md:mx-0" />
+            </div>
+            <div className="space-y-2">
+              {[5, 4, 3, 2, 1].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-2 flex-1" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Reviews skeleton */}
+        <ReviewSkeleton />
       </div>
     );
   }
