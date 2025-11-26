@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MissionCronService } from './mission-cron.service';
 import { MissionService } from './mission.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 describe('MissionCronService', () => {
   let service: MissionCronService;
@@ -29,11 +30,75 @@ describe('MissionCronService', () => {
     },
   };
 
+  const mockPlatformConfigService = {
+    getMissionSettings: jest.fn().mockResolvedValue({
+      autoValidationDelayHours: 48,
+      autoValidationEnabled: true,
+      autoMatchingEnabled: true,
+      autoMatchingRadius: 25,
+      autoMatchingMaxCandidates: 10,
+      quotationValidityDays: 7,
+      quotationMaxRevisions: 3,
+      negotiationEnabled: true,
+      maxNegotiationRounds: 5,
+      negotiationTimeoutHours: 48,
+      depositRequired: true,
+      depositRefundableUntilHours: 24,
+      clientValidationWindowHours: 72,
+      minMissionValue: 1000,
+      maxMissionValue: 1000000,
+      maxActiveMissionsPerClient: 5,
+      maxActiveMissionsPerArtisan: 10,
+      allowRescheduling: true,
+      maxReschedulesPerMission: 2,
+      reschedulingDeadlineHours: 24,
+      cancellationPolicy: 'MODERATE',
+      categories: [],
+      urgencyLevels: [],
+      workingHoursStart: '08:00',
+      workingHoursEnd: '20:00',
+      weekendMissionsAllowed: true,
+      holidayMissionsAllowed: false,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getMissionSettings.mockResolvedValue({
+      autoValidationDelayHours: 48,
+      autoValidationEnabled: true,
+      autoMatchingEnabled: true,
+      autoMatchingRadius: 25,
+      autoMatchingMaxCandidates: 10,
+      quotationValidityDays: 7,
+      quotationMaxRevisions: 3,
+      negotiationEnabled: true,
+      maxNegotiationRounds: 5,
+      negotiationTimeoutHours: 48,
+      depositRequired: true,
+      depositRefundableUntilHours: 24,
+      clientValidationWindowHours: 72,
+      minMissionValue: 1000,
+      maxMissionValue: 1000000,
+      maxActiveMissionsPerClient: 5,
+      maxActiveMissionsPerArtisan: 10,
+      allowRescheduling: true,
+      maxReschedulesPerMission: 2,
+      reschedulingDeadlineHours: 24,
+      cancellationPolicy: 'MODERATE',
+      categories: [],
+      urgencyLevels: [],
+      workingHoursStart: '08:00',
+      workingHoursEnd: '20:00',
+      weekendMissionsAllowed: true,
+      holidayMissionsAllowed: false,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MissionCronService,
         { provide: MissionService, useValue: mockMissionService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -73,9 +138,7 @@ describe('MissionCronService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockMissionService.autoValidateStuckMissions.mockRejectedValue(
-        new Error('Database error'),
-      );
+      mockMissionService.autoValidateStuckMissions.mockRejectedValue(new Error('Database error'));
 
       // Should not throw
       await expect(service.autoValidateStuckMissions()).resolves.not.toThrow();
@@ -119,9 +182,7 @@ describe('MissionCronService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockMissionService.prisma.mission.findMany.mockRejectedValue(
-        new Error('Database error'),
-      );
+      mockMissionService.prisma.mission.findMany.mockRejectedValue(new Error('Database error'));
 
       await expect(service.cleanupExpiredMissions()).resolves.not.toThrow();
     });
@@ -139,9 +200,7 @@ describe('MissionCronService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockMissionService.prisma.mission.count.mockRejectedValue(
-        new Error('Database error'),
-      );
+      mockMissionService.prisma.mission.count.mockRejectedValue(new Error('Database error'));
 
       await expect(service.alertPendingActions()).resolves.not.toThrow();
     });
@@ -222,9 +281,7 @@ describe('MissionCronService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockMissionService.prisma.mission.findMany.mockRejectedValue(
-        new Error('Database error'),
-      );
+      mockMissionService.prisma.mission.findMany.mockRejectedValue(new Error('Database error'));
 
       await expect(service.expandMissionSearchRadius()).resolves.not.toThrow();
     });
@@ -252,9 +309,7 @@ describe('MissionCronService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockMissionService.prisma.mission.groupBy.mockRejectedValue(
-        new Error('Database error'),
-      );
+      mockMissionService.prisma.mission.groupBy.mockRejectedValue(new Error('Database error'));
 
       await expect(service.generateWeeklyStatistics()).resolves.not.toThrow();
     });
@@ -274,8 +329,8 @@ describe('MissionCronService', () => {
   });
 
   describe('getCronJobsStatus', () => {
-    it('should return status of all cron jobs', () => {
-      const status = service.getCronJobsStatus();
+    it('should return status of all cron jobs', async () => {
+      const status = await service.getCronJobsStatus();
 
       expect(status).toHaveProperty('jobs');
       expect(status).toHaveProperty('timezone');
@@ -284,10 +339,10 @@ describe('MissionCronService', () => {
       expect(status.timezone).toBe('Europe/Paris');
     });
 
-    it('should include all job details', () => {
-      const status = service.getCronJobsStatus();
+    it('should include all job details', async () => {
+      const status = await service.getCronJobsStatus();
 
-      const jobNames = status.jobs.map(j => j.name);
+      const jobNames = status.jobs.map((j) => j.name);
       expect(jobNames).toContain('auto-validate-stuck-missions');
       expect(jobNames).toContain('expand-mission-radius');
       expect(jobNames).toContain('cleanup-expired-missions');
@@ -295,11 +350,11 @@ describe('MissionCronService', () => {
       expect(jobNames).toContain('weekly-statistics');
     });
 
-    it('should calculate valid next execution times', () => {
-      const status = service.getCronJobsStatus();
+    it('should calculate valid next execution times', async () => {
+      const status = await service.getCronJobsStatus();
 
       const now = new Date();
-      Object.values(status.nextExecutions).forEach(execution => {
+      Object.values(status.nextExecutions).forEach((execution) => {
         const nextDate = new Date(execution);
         expect(nextDate.getTime()).toBeGreaterThan(now.getTime() - 1000);
       });

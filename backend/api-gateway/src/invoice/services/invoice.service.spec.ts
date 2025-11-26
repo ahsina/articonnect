@@ -3,6 +3,7 @@ import { InvoiceService } from './invoice.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PdfGeneratorService } from './pdf-generator.service';
 import { S3Service } from '../../upload/services/s3.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { InvoiceType } from '@prisma/client';
 
@@ -43,6 +44,13 @@ describe('InvoiceService', () => {
     uploadBuffer: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
+  };
+
   const mockInvoice = {
     id: 'invoice-123',
     invoiceNumber: 'INV-2025-00001',
@@ -77,12 +85,19 @@ describe('InvoiceService', () => {
   };
 
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoiceService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: PdfGeneratorService, useValue: mockPdfGenerator },
         { provide: S3Service, useValue: mockS3Service },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -181,9 +196,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if invoice not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.generatePDF('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.generatePDF('nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -206,9 +219,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if invoice not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.issue('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.issue('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if not draft', async () => {
@@ -217,9 +228,7 @@ describe('InvoiceService', () => {
         status: 'ISSUED',
       });
 
-      await expect(service.issue('invoice-123')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.issue('invoice-123')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -294,9 +303,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -312,9 +319,9 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.findByInvoiceNumber('INV-NONEXISTENT'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findByInvoiceNumber('INV-NONEXISTENT')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -338,9 +345,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.update('nonexistent', updateDto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.update('nonexistent', updateDto)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException for non-draft invoice full update', async () => {
@@ -349,9 +354,9 @@ describe('InvoiceService', () => {
         status: 'ISSUED',
       });
 
-      await expect(
-        service.update('invoice-123', { subtotal: 200, notes: 'test' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update('invoice-123', { subtotal: 200, notes: 'test' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should recalculate amounts when subtotal changes', async () => {
@@ -404,9 +409,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException for issued invoice', async () => {
@@ -415,9 +418,7 @@ describe('InvoiceService', () => {
         status: 'ISSUED',
       });
 
-      await expect(service.remove('invoice-123')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.remove('invoice-123')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -470,9 +471,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if mission not found', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(null);
 
-      await expect(service.createFromMission('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.createFromMission('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if mission has no artisan', async () => {
@@ -481,9 +480,7 @@ describe('InvoiceService', () => {
         artisan: null,
       });
 
-      await expect(service.createFromMission('mission-123')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createFromMission('mission-123')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -544,9 +541,7 @@ describe('InvoiceService', () => {
     it('should throw NotFoundException if order not found', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.createFromOrder('nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.createFromOrder('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if order has no artisan', async () => {
@@ -563,9 +558,7 @@ describe('InvoiceService', () => {
         ],
       });
 
-      await expect(service.createFromOrder('order-123')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createFromOrder('order-123')).rejects.toThrow(BadRequestException);
     });
   });
 });

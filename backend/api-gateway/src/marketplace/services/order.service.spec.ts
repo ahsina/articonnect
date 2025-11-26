@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrderService } from './order.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -62,11 +63,25 @@ describe('OrderService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getTaxSettings: jest.fn().mockResolvedValue({
+      defaultVatRate: 17,
+      vatRates: [{ country: 'LU', rate: 17 }],
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getTaxSettings.mockResolvedValue({
+      defaultVatRate: 17,
+      vatRates: [{ country: 'LU', rate: 17 }],
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrderService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -104,9 +119,9 @@ describe('OrderService', () => {
     it('should throw NotFoundException if product not found', async () => {
       mockPrismaService.product.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.create('client-123', orderItems, shippingAddress),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.create('client-123', orderItems, shippingAddress)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException if insufficient stock', async () => {
@@ -115,9 +130,9 @@ describe('OrderService', () => {
         stock: 1, // Less than requested quantity
       });
 
-      await expect(
-        service.create('client-123', orderItems, shippingAddress),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.create('client-123', orderItems, shippingAddress)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should calculate totals correctly', async () => {
@@ -257,17 +272,13 @@ describe('OrderService', () => {
     it('should throw NotFoundException if order not found', async () => {
       mockPrismaService.order.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findOne('nonexistent', 'client-123'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('nonexistent', 'client-123')).rejects.toThrow(NotFoundException);
     });
 
     it('should not return orders belonging to other clients', async () => {
       mockPrismaService.order.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findOne('order-123', 'other-client'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('order-123', 'other-client')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -299,17 +310,15 @@ describe('OrderService', () => {
     it('should throw NotFoundException if order not found', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.updateStatus('nonexistent', 'PAID'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateStatus('nonexistent', 'PAID')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException for invalid status', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);
 
-      await expect(
-        service.updateStatus('order-123', 'INVALID_STATUS'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateStatus('order-123', 'INVALID_STATUS')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should accept all valid statuses', async () => {

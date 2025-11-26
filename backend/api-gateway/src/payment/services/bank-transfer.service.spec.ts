@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { StripeService } from './stripe.service';
 import { NotificationService } from '../../notification/services/notification.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('BankTransferService', () => {
@@ -46,6 +47,13 @@ describe('BankTransferService', () => {
     createNotification: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
+  };
+
   const mockMission = {
     id: 'mission-123',
     clientId: 'client-123',
@@ -85,6 +93,12 @@ describe('BankTransferService', () => {
       return config[key];
     });
 
+    // Reset mock implementations
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BankTransferService,
@@ -92,6 +106,7 @@ describe('BankTransferService', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: StripeService, useValue: mockStripeService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -367,9 +382,7 @@ describe('BankTransferService', () => {
     it('should throw NotFoundException if transaction not found', async () => {
       mockPrismaService.transaction.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getBankTransferStatus('nonexistent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getBankTransferStatus('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should not return instructions for completed transactions', async () => {

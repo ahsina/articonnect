@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentCronService } from './payment-cron.service';
 import { DeferredPaymentService } from './deferred-payment.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 describe('PaymentCronService', () => {
   let service: PaymentCronService;
@@ -45,11 +46,35 @@ describe('PaymentCronService', () => {
     },
   };
 
+  const mockPlatformConfigService = {
+    getReputationRules: jest.fn().mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    }),
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getReputationRules.mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    });
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentCronService,
         { provide: DeferredPaymentService, useValue: mockDeferredPaymentService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -89,9 +114,7 @@ describe('PaymentCronService', () => {
 
       await service.checkOverdueInvoices();
 
-      expect(mockDeferredPaymentService.suspendForNonPayment).toHaveBeenCalledWith(
-        'client-123',
-      );
+      expect(mockDeferredPaymentService.suspendForNonPayment).toHaveBeenCalledWith('client-123');
     });
 
     it('should not suspend for less than 3 overdue invoices', async () => {
@@ -121,9 +144,7 @@ describe('PaymentCronService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockDeferredPaymentService.getOverdueInvoices.mockRejectedValue(
-        new Error('DB error'),
-      );
+      mockDeferredPaymentService.getOverdueInvoices.mockRejectedValue(new Error('DB error'));
 
       // Should not throw
       await expect(service.checkOverdueInvoices()).resolves.not.toThrow();
@@ -135,9 +156,7 @@ describe('PaymentCronService', () => {
         { ...mockOverdueInvoice, id: 'inv-2' },
         { ...mockOverdueInvoice, id: 'inv-3' },
       ]);
-      mockDeferredPaymentService.suspendForNonPayment.mockRejectedValue(
-        new Error('Suspend error'),
-      );
+      mockDeferredPaymentService.suspendForNonPayment.mockRejectedValue(new Error('Suspend error'));
 
       await expect(service.checkOverdueInvoices()).resolves.not.toThrow();
     });
@@ -181,9 +200,7 @@ describe('PaymentCronService', () => {
 
       await service.quarterlyCreditReview();
 
-      expect(mockDeferredPaymentService.checkEligibility).toHaveBeenCalledWith(
-        'client-123',
-      );
+      expect(mockDeferredPaymentService.checkEligibility).toHaveBeenCalledWith('client-123');
     });
 
     it('should revoke payment for ineligible clients', async () => {
@@ -195,9 +212,7 @@ describe('PaymentCronService', () => {
 
       await service.quarterlyCreditReview();
 
-      expect(mockDeferredPaymentService.disableDeferredPayment).toHaveBeenCalledWith(
-        'client-123',
-      );
+      expect(mockDeferredPaymentService.disableDeferredPayment).toHaveBeenCalledWith('client-123');
     });
 
     it('should increase credit limit for high scorers with many missions', async () => {
@@ -283,9 +298,7 @@ describe('PaymentCronService', () => {
 
     it('should handle individual client errors', async () => {
       mockPrisma.clientProfile.findMany.mockResolvedValue([mockClientProfile]);
-      mockDeferredPaymentService.checkEligibility.mockRejectedValue(
-        new Error('Check error'),
-      );
+      mockDeferredPaymentService.checkEligibility.mockRejectedValue(new Error('Check error'));
 
       await expect(service.quarterlyCreditReview()).resolves.not.toThrow();
     });

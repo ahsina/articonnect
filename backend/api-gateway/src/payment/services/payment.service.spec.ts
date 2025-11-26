@@ -7,6 +7,7 @@ import { ReputationService } from './reputation.service';
 import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { KycService } from '../../compliance/services/kyc.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 describe('PaymentService', () => {
   let service: PaymentService;
@@ -84,7 +85,30 @@ describe('PaymentService', () => {
     isVerificationRequired: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
+    getReputationRules: jest.fn().mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+    mockPlatformConfigService.getReputationRules.mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentService,
@@ -94,6 +118,7 @@ describe('PaymentService', () => {
         { provide: PayoutFraudDetectorService, useValue: mockPayoutFraudDetectorService },
         { provide: FeatureToggleService, useValue: mockFeatureToggleService },
         { provide: KycService, useValue: mockKycService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -281,7 +306,11 @@ describe('PaymentService', () => {
       const result = await service.verifyWebhookSignature(payload, signature);
 
       expect(result).toEqual(mockEvent);
-      expect(mockStripeService.constructWebhookEvent).toHaveBeenCalledWith(payload, signature, 'whsec_test');
+      expect(mockStripeService.constructWebhookEvent).toHaveBeenCalledWith(
+        payload,
+        signature,
+        'whsec_test',
+      );
     });
 
     it('should throw error for invalid signature', async () => {
@@ -372,9 +401,9 @@ describe('PaymentService', () => {
         payments: [],
       });
 
-      await expect(
-        service.processRefund(missionId, reason, undefined, userId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.processRefund(missionId, reason, undefined, userId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should compensate artisan for client-fault refunds', async () => {

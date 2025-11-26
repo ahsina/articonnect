@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
 import { StripeService } from './stripe.service';
 import { NotificationService } from '../../notification/services/notification.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('NoShowService', () => {
@@ -53,7 +54,38 @@ describe('NoShowService', () => {
     createNotification: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getNoShowConfig: jest.fn().mockResolvedValue({
+      emergencyFee: 50,
+      scheduledFee: 30,
+      minimumWaitTimeMinutes: 15,
+      minimumContactAttempts: 2,
+      maxDistanceMeters: 500,
+      autoValidationThreshold: 80,
+    }),
+    getReputationRules: jest.fn().mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getNoShowConfig.mockResolvedValue({
+      emergencyFee: 50,
+      scheduledFee: 30,
+      minimumWaitTimeMinutes: 15,
+      minimumContactAttempts: 2,
+      maxDistanceMeters: 500,
+      autoValidationThreshold: 80,
+    });
+    mockPlatformConfigService.getReputationRules.mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NoShowService,
@@ -61,6 +93,7 @@ describe('NoShowService', () => {
         { provide: ReputationService, useValue: mockReputationService },
         { provide: StripeService, useValue: mockStripeService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -132,9 +165,9 @@ describe('NoShowService', () => {
     it('should throw if mission not found', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.reportNoShow('artisan-123', createValidNoShowDto()),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.reportNoShow('artisan-123', createValidNoShowDto())).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw if artisan does not own mission', async () => {
@@ -143,9 +176,9 @@ describe('NoShowService', () => {
         artisanId: 'different-artisan',
       });
 
-      await expect(
-        service.reportNoShow('artisan-123', createValidNoShowDto()),
-      ).rejects.toThrow('Cette mission ne vous appartient pas');
+      await expect(service.reportNoShow('artisan-123', createValidNoShowDto())).rejects.toThrow(
+        'Cette mission ne vous appartient pas',
+      );
     });
 
     it('should throw if mission status is not appropriate', async () => {
@@ -154,9 +187,9 @@ describe('NoShowService', () => {
         status: 'PENDING',
       });
 
-      await expect(
-        service.reportNoShow('artisan-123', createValidNoShowDto()),
-      ).rejects.toThrow('La mission doit être en cours');
+      await expect(service.reportNoShow('artisan-123', createValidNoShowDto())).rejects.toThrow(
+        'La mission doit être en cours',
+      );
     });
 
     it('should throw if wait duration is less than 15 minutes', async () => {
@@ -403,9 +436,9 @@ describe('NoShowService', () => {
     it('should throw if no-show event not found', async () => {
       mockPrismaService.noShowEvent.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.validateNoShow('invalid-id', 'admin-123'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.validateNoShow('invalid-id', 'admin-123')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -438,9 +471,9 @@ describe('NoShowService', () => {
     it('should throw if no-show not found', async () => {
       mockPrismaService.noShowEvent.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.rejectNoShow('invalid-id', 'admin-123', 'reason'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.rejectNoShow('invalid-id', 'admin-123', 'reason')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
