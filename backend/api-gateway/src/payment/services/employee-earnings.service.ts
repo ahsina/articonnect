@@ -8,13 +8,16 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateEmployeeEarningsDto, UpdateEarningsStatusDto, EmployeeEarningsQueryDto, ProcessPayoutDto } from '../dto/employee-earnings.dto';
 import { EmployeeStatus, PaymentModel, Prisma } from '@prisma/client';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 @Injectable()
 export class EmployeeEarningsService {
   private readonly logger = new Logger(EmployeeEarningsService.name);
-  private readonly PLATFORM_COMMISSION_RATE = 0.12; // 12% platform fee
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly platformConfig: PlatformConfigService,
+  ) {}
 
   async createEarningsFromMission(missionId: string, employeeId: string, notes?: string) {
     const mission = await this.prisma.mission.findUnique({
@@ -65,8 +68,12 @@ export class EmployeeEarningsService {
       throw new BadRequestException('Des gains existent déjà pour cette mission et cet employé');
     }
 
+    // Get configurable commission rate
+    const feeSettings = await this.platformConfig.getFeeSettings();
+    const platformCommissionRate = feeSettings.platformCommissionRate / 100;
+
     const missionRevenue = new Prisma.Decimal(mission.finalPrice.toString());
-    const platformCommission = missionRevenue.mul(this.PLATFORM_COMMISSION_RATE);
+    const platformCommission = missionRevenue.mul(platformCommissionRate);
     const companyRevenue = missionRevenue.sub(platformCommission);
 
     let employeeCommission: Prisma.Decimal;

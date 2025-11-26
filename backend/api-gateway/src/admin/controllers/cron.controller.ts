@@ -113,8 +113,8 @@ export class CronController {
       },
     },
   })
-  getCronHealth() {
-    const status = this.missionCronService.getCronJobsStatus();
+  async getCronHealth() {
+    const status = await this.missionCronService.getCronJobsStatus();
 
     return {
       status: 'healthy',

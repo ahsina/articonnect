@@ -9,12 +9,13 @@ import { AdminService } from './services/admin.service';
 import { MonitoringService } from './services/monitoring.service';
 import { AnalyticsService } from './services/analytics.service';
 import { EmailCronService } from './services/email-cron.service';
-import { PlatformConfigService } from './services/platform-config.service';
 import { AuditLogService } from '../common/services/audit-log.service';
 import { MissionModule } from '../mission/mission.module';
 import { RedisModule } from '../common/redis/redis.module';
 import { EmailModule } from '../email/email.module';
 import { FraudModule } from '../fraud/fraud.module';
+
+// Note: PlatformConfigService is now provided by the global ConfigModule
 
 @Module({
   imports: [MissionModule, RedisModule, EmailModule, FraudModule],
@@ -31,9 +32,8 @@ import { FraudModule } from '../fraud/fraud.module';
     MonitoringService,
     AnalyticsService,
     EmailCronService,
-    PlatformConfigService,
     AuditLogService,
   ],
-  exports: [AnalyticsService, EmailCronService, PlatformConfigService],
+  exports: [AnalyticsService, EmailCronService],
 })
 export class AdminModule {}

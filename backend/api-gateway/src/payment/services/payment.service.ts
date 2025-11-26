@@ -7,6 +7,7 @@ import type { MissionWithRelations } from '../types/payment.types';
 import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { KycService } from '../../compliance/services/kyc.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 @Injectable()
 export class PaymentService {
@@ -20,6 +21,7 @@ export class PaymentService {
     private featureToggle: FeatureToggleService,
     @Inject(forwardRef(() => KycService))
     private kycService: KycService,
+    private platformConfig: PlatformConfigService,
   ) {}
 
   async createPaymentIntent(missionId: string, userId: string) {
@@ -133,13 +135,18 @@ export class PaymentService {
       customerId: mission.client.clientProfile?.stripeCustomerId || undefined,
     });
 
+    // Get commission rates from platform config
+    const feeSettings = await this.platformConfig.getFeeSettings();
+    const commissionRate = feeSettings.platformCommissionRate / 100; // Convert percentage to decimal
+    const artisanRate = feeSettings.artisanPayoutPercentage / 100;
+
     await this.prisma.transaction.create({
       data: {
         type: 'MISSION',
         missionId: mission.id,
         amount: mission.agreedPrice,
-        commission: Number(mission.agreedPrice) * 0.12,
-        artisanAmount: Number(mission.agreedPrice) * 0.88,
+        commission: Number(mission.agreedPrice) * commissionRate,
+        artisanAmount: Number(mission.agreedPrice) * artisanRate,
         stripePaymentIntentId: paymentIntent.id,
         status: 'PENDING',
       },
@@ -533,14 +540,19 @@ export class PaymentService {
       },
     });
 
+    // Get commission rates from platform config
+    const feeSettings = await this.platformConfig.getFeeSettings();
+    const commissionRate = feeSettings.platformCommissionRate / 100;
+    const artisanRate = feeSettings.artisanPayoutPercentage / 100;
+
     // Créer aussi une transaction (legacy)
     await this.prisma.transaction.create({
       data: {
         type: 'DEPOSIT',
         missionId: mission.id,
         amount: depositAmount,
-        commission: depositAmount * 0.12,
-        artisanAmount: depositAmount * 0.88,
+        commission: depositAmount * commissionRate,
+        artisanAmount: depositAmount * artisanRate,
         stripePaymentIntentId: paymentIntent.id,
         status: 'PENDING',
       },
@@ -825,8 +837,9 @@ export class PaymentService {
     const artisanTraveling = mission.status === 'IN_TRANSIT';
 
     if (artisanTraveling) {
-      // Compensation artisan pour déplacement
-      const compensationAmount = 20; // 20€ frais déplacement
+      // Compensation artisan pour déplacement - use no-show compensation minimum as travel fee
+      const noShowConfig = await this.platformConfig.getNoShowConfig();
+      const compensationAmount = noShowConfig.compensationMinimum / 100; // Convert cents to euros
       await this.refundWithCompensation(
         mission,
         payment,

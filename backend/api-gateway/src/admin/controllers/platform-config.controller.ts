@@ -1,7 +1,7 @@
 import { Controller, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { PlatformConfigService } from '../services/platform-config.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import {
   FeeSettingsDto,
   PaymentSettingsDto,
@@ -16,7 +16,7 @@ import {
   MissionSettingsDto,
   UserProfileSettingsDto,
   PerformanceSettingsDto,
-} from '../dto/platform-config.dto';
+} from '../../config/dto/platform-config.dto';
 
 @ApiTags('Admin - Platform Configuration')
 @Controller('admin/platform-config')

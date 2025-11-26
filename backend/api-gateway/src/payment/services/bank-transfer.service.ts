@@ -5,6 +5,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { StripeService } from './stripe.service';
 import { NotificationService } from '../../notification/services/notification.service';
 import { NotificationType } from '@prisma/client';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 export interface BankTransferInstructions {
   accountHolder: string;
@@ -93,6 +94,7 @@ export class BankTransferService {
     private readonly configService: ConfigService,
     private readonly stripeService: StripeService,
     private readonly notificationService: NotificationService,
+    private readonly platformConfig: PlatformConfigService,
   ) {
     // Bank account details for receiving payments
     this.bankAccountIban = this.configService.get<string>('BANK_TRANSFER_IBAN') || '';
@@ -139,6 +141,11 @@ export class BankTransferService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + this.transferExpiryDays);
 
+    // Get configurable commission rates
+    const feeSettings = await this.platformConfig.getFeeSettings();
+    const commissionRate = feeSettings.platformCommissionRate / 100;
+    const artisanRate = feeSettings.artisanPayoutPercentage / 100;
+
     // Create transaction record
     const transaction = await this.prisma.transaction.create({
       data: {
@@ -146,8 +153,8 @@ export class BankTransferService {
         missionId,
         amount,
         currency,
-        commission: amount * 0.12,
-        artisanAmount: amount * 0.88,
+        commission: amount * commissionRate,
+        artisanAmount: amount * artisanRate,
         paymentMethod: 'BANK_TRANSFER',
         status: 'PENDING',
       },
@@ -269,10 +276,14 @@ export class BankTransferService {
       // Transfer funds to artisan Stripe Connect account
       if (transaction.mission?.artisan?.artisanProfile?.stripeAccountId) {
         try {
-          // Calculate platform commission (10% by default)
+          // Get configurable commission rates
+          const feeSettings = await this.platformConfig.getFeeSettings();
+          const commissionRate = feeSettings.platformCommissionRate / 100;
+          const artisanRate = feeSettings.artisanPayoutPercentage / 100;
+
           const amount = transaction.amount.toNumber();
-          const platformCommission = amount * 0.1;
-          const artisanAmount = amount - platformCommission;
+          const platformCommission = amount * commissionRate;
+          const artisanAmount = amount * artisanRate;
 
           // Transfer to artisan's Stripe Connect account
           await this.stripeService.createTransfer({
