@@ -395,6 +395,25 @@ export default function AdminDashboardPage() {
             <span className="font-medium text-gray-700">Reputation</span>
           </button>
         </div>
+
+        {/* Platform Settings - Prominent Link */}
+        <div className="mt-8">
+          <button
+            onClick={() => router.push('/admin/settings')}
+            className="w-full p-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl text-left"
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-4xl">⚙️</span>
+              <div>
+                <span className="text-xl font-semibold text-white block">Platform Settings</span>
+                <span className="text-blue-100 text-sm">
+                  Configure fees, payments, limits, notifications, integrations, and more
+                </span>
+              </div>
+              <span className="ml-auto text-white text-2xl">→</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -548,6 +548,366 @@ export interface ReputationAdjustment {
   adjustedAt?: string;
 }
 
+// Platform Configuration Types
+export interface PlatformConfig {
+  id: string;
+  fees: FeeSettings;
+  payments: PaymentSettings;
+  rateLimits: RateLimitSettings;
+  reputationRules: ReputationRules;
+  noShow: NoShowConfig;
+  tax: TaxSettings;
+  notifications: NotificationSettings;
+  integrations: IntegrationSettings;
+  contentModeration: ContentModerationSettings;
+  compliance: ComplianceSettings;
+  missions: MissionSettings;
+  users: UserProfileSettings;
+  performance: PerformanceSettings;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export interface FeeSettings {
+  platformCommissionRate: number; // percentage (e.g., 15 for 15%)
+  minCommissionAmount: number; // in cents
+  maxCommissionAmount: number; // in cents
+  depositPercentage: number; // percentage of mission cost
+  depositMinimum: number; // minimum deposit in cents
+  depositMaximum: number; // maximum deposit in cents
+  urgentMissionMultiplier: number; // multiplier for urgent missions
+  weekendMultiplier: number; // multiplier for weekend missions
+  holidayMultiplier: number; // multiplier for holiday missions
+  cancellationFeePercentage: number; // percentage charged on cancellation
+  lateCancellationHours: number; // hours before mission for late cancellation
+  lateCancellationFeePercentage: number; // higher fee for late cancellation
+  artisanPayoutPercentage: number; // percentage artisan receives
+  referralBonusAmount: number; // bonus for referrals in cents
+  firstMissionDiscount: number; // percentage discount for first mission
+}
+
+export interface PaymentSettings {
+  stripeEnabled: boolean;
+  paypalEnabled: boolean;
+  bankTransferEnabled: boolean;
+  walletEnabled: boolean;
+  minPaymentAmount: number; // in cents
+  maxPaymentAmount: number; // in cents
+  payoutDelayDays: number; // days before artisan payout
+  autoPayoutEnabled: boolean;
+  autoPayoutThreshold: number; // minimum balance for auto-payout
+  refundWindowDays: number; // days after payment for refund eligibility
+  partialRefundEnabled: boolean;
+  instantPayoutEnabled: boolean;
+  instantPayoutFeePercentage: number;
+  holdFundsForDisputes: boolean;
+  escrowDurationHours: number; // hours funds are held in escrow
+  paymentRetryAttempts: number;
+  paymentRetryDelayMinutes: number;
+  failedPaymentNotification: boolean;
+}
+
+export interface RateLimitSettings {
+  apiRateLimit: number; // requests per minute
+  apiRateLimitWindow: number; // window in minutes
+  loginAttemptsLimit: number; // max login attempts
+  loginLockoutMinutes: number; // lockout duration
+  passwordResetLimit: number; // resets per day
+  missionCreationLimit: number; // missions per day per user
+  messageLimit: number; // messages per hour
+  reviewLimit: number; // reviews per day
+  reportLimit: number; // reports per day
+  fileUploadLimit: number; // uploads per hour
+  fileUploadMaxSizeMb: number; // max file size in MB
+  searchRequestsLimit: number; // searches per minute
+  ipBlocklistEnabled: boolean;
+  geoBlockingEnabled: boolean;
+  blockedCountries: string[];
+  allowedCountries: string[];
+  captchaEnabled: boolean;
+  captchaThreshold: number; // suspicious activity score to trigger captcha
+}
+
+export interface ReputationRules {
+  initialScore: number; // starting reputation score
+  maxScore: number; // maximum possible score
+  minScore: number; // minimum possible score
+  completedMissionBonus: number; // points for completing a mission
+  fiveStarReviewBonus: number; // points for 5-star review
+  fourStarReviewBonus: number; // points for 4-star review
+  threeStarReviewBonus: number; // points for 3-star review
+  twoStarReviewPenalty: number; // penalty for 2-star review
+  oneStarReviewPenalty: number; // penalty for 1-star review
+  noShowPenalty: number; // penalty for no-show
+  cancellationPenalty: number; // penalty for cancellation
+  lateCancellationPenalty: number; // penalty for late cancellation
+  disputeLossPenalty: number; // penalty for losing dispute
+  disputeWinBonus: number; // bonus for winning dispute
+  verificationBonus: number; // bonus for verification
+  responseTimeBonus: number; // bonus for fast response
+  streakBonus: number; // bonus for consecutive completed missions
+  streakThreshold: number; // missions needed for streak bonus
+  inactivityPenalty: number; // penalty per month of inactivity
+  inactivityThresholdDays: number; // days before considered inactive
+  goldThreshold: number; // score needed for gold status
+  silverThreshold: number; // score needed for silver status
+  bronzeThreshold: number; // score needed for bronze status
+  trustedThreshold: number; // score needed for trusted status
+  warningThreshold: number; // score triggering warning status
+}
+
+export interface NoShowConfig {
+  enabled: boolean;
+  minimumWaitTimeMinutes: number; // how long artisan must wait
+  gpsVerificationRequired: boolean;
+  gpsRadiusMeters: number; // how close to location
+  photoEvidenceRequired: boolean;
+  minContactAttempts: number; // minimum contact attempts required
+  compensationPercentage: number; // percentage of mission value
+  compensationMinimum: number; // minimum compensation in cents
+  compensationMaximum: number; // maximum compensation in cents
+  clientPenaltyPercentage: number; // penalty charged to client
+  autoValidationEnabled: boolean; // auto-validate with sufficient evidence
+  autoValidationRequirements: {
+    minWaitTime: number;
+    gpsVerified: boolean;
+    minContactAttempts: number;
+  };
+  disputeWindowHours: number; // hours client has to dispute
+  repeatOffenderThreshold: number; // no-shows before escalation
+  repeatOffenderPenaltyMultiplier: number; // penalty multiplier
+}
+
+export interface TaxSettings {
+  vatEnabled: boolean;
+  defaultVatRate: number; // default VAT rate percentage
+  vatRates: Array<{
+    country: string;
+    rate: number;
+    reducedRate?: number;
+    superReducedRate?: number;
+  }>;
+  vatExemptCategories: string[]; // mission categories exempt from VAT
+  reverseChargeEnabled: boolean; // for B2B transactions
+  invoiceNumberPrefix: string;
+  invoiceNumberFormat: string; // e.g., "INV-{YEAR}-{NUMBER}"
+  autoGenerateInvoices: boolean;
+  invoiceRetentionYears: number;
+  taxReportingEnabled: boolean;
+  taxReportingThreshold: number; // threshold for tax reporting
+  witholdingTaxEnabled: boolean;
+  witholdingTaxRate: number;
+}
+
+export interface NotificationSettings {
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  pushEnabled: boolean;
+  inAppEnabled: boolean;
+  missionCreatedNotify: boolean;
+  missionAcceptedNotify: boolean;
+  missionCompletedNotify: boolean;
+  missionCancelledNotify: boolean;
+  paymentReceivedNotify: boolean;
+  paymentFailedNotify: boolean;
+  payoutProcessedNotify: boolean;
+  newMessageNotify: boolean;
+  newReviewNotify: boolean;
+  disputeOpenedNotify: boolean;
+  disputeResolvedNotify: boolean;
+  verificationStatusNotify: boolean;
+  promotionalEmailsEnabled: boolean;
+  weeklyDigestEnabled: boolean;
+  marketingOptInDefault: boolean;
+  reminderBeforeMissionHours: number; // hours before mission to send reminder
+  followUpAfterMissionHours: number; // hours after mission for follow-up
+  inactivityReminderDays: number; // days before sending inactivity reminder
+  maxEmailsPerDay: number;
+  maxSmsPerDay: number;
+  quietHoursStart: string; // e.g., "22:00"
+  quietHoursEnd: string; // e.g., "08:00"
+  respectQuietHours: boolean;
+}
+
+export interface IntegrationSettings {
+  stripePublicKey: string;
+  stripeWebhookEnabled: boolean;
+  googleMapsEnabled: boolean;
+  googleMapsApiKey: string;
+  twilioEnabled: boolean;
+  twilioSmsEnabled: boolean;
+  twilioVoiceEnabled: boolean;
+  sendgridEnabled: boolean;
+  firebaseEnabled: boolean;
+  firebasePushEnabled: boolean;
+  sentryEnabled: boolean;
+  sentryDsn?: string;
+  analyticsEnabled: boolean;
+  googleAnalyticsId?: string;
+  intercomEnabled: boolean;
+  intercomAppId?: string;
+  slackWebhookEnabled: boolean;
+  slackWebhookUrl?: string;
+  slackAlertChannel?: string;
+  zapierEnabled: boolean;
+  apiWebhooksEnabled: boolean;
+  webhookRetryAttempts: number;
+  webhookTimeoutSeconds: number;
+}
+
+export interface ContentModerationSettings {
+  autoModerationEnabled: boolean;
+  profanityFilterEnabled: boolean;
+  profanityFilterStrength: 'LOW' | 'MEDIUM' | 'HIGH';
+  customBannedWords: string[];
+  spamDetectionEnabled: boolean;
+  spamScoreThreshold: number;
+  imagesModerationEnabled: boolean;
+  imagesModerationProvider: string;
+  linkFilterEnabled: boolean;
+  allowedDomains: string[];
+  maxLinksPerMessage: number;
+  duplicateContentCheck: boolean;
+  minReviewLength: number;
+  maxReviewLength: number;
+  minDescriptionLength: number;
+  maxDescriptionLength: number;
+  requireReviewForPublish: boolean;
+  autoApproveVerifiedUsers: boolean;
+  flagThresholdForReview: number; // reports needed for manual review
+  autoHideAfterFlags: number; // flags to auto-hide content
+  appealWindowDays: number; // days to appeal moderation decision
+}
+
+export interface ComplianceSettings {
+  gdprEnabled: boolean;
+  gdprDataRetentionDays: number;
+  gdprRightToErasure: boolean;
+  gdprDataPortability: boolean;
+  gdprConsentRequired: boolean;
+  gdprCookieConsentRequired: boolean;
+  ccpaEnabled: boolean;
+  ccpaDoNotSellEnabled: boolean;
+  ageVerificationRequired: boolean;
+  minimumAge: number;
+  termsVersion: string;
+  termsLastUpdated: string;
+  privacyPolicyVersion: string;
+  privacyPolicyLastUpdated: string;
+  requiredDocuments: string[];
+  documentExpiryCheckEnabled: boolean;
+  documentExpiryReminderDays: number;
+  amlCheckRequired: boolean;
+  amlCheckProvider?: string;
+  amlCheckThreshold: number; // transaction amount triggering AML check
+  pep_screening_enabled: boolean;
+  sanctionsListCheckEnabled: boolean;
+  dataEncryptionAtRest: boolean;
+  dataEncryptionInTransit: boolean;
+  auditLoggingEnabled: boolean;
+  auditLogRetentionDays: number;
+}
+
+export interface MissionSettings {
+  minMissionValue: number; // in cents
+  maxMissionValue: number; // in cents
+  maxActiveMissionsPerClient: number;
+  maxActiveMissionsPerArtisan: number;
+  autoMatchingEnabled: boolean;
+  autoMatchingRadius: number; // km
+  autoMatchingMaxCandidates: number;
+  quotationValidityDays: number;
+  quotationMaxRevisions: number;
+  negotiationEnabled: boolean;
+  maxNegotiationRounds: number;
+  negotiationTimeoutHours: number;
+  depositRequired: boolean;
+  depositRefundableUntilHours: number; // hours before mission
+  autoValidationEnabled: boolean;
+  autoValidationDelayHours: number; // hours after completion
+  clientValidationWindowHours: number;
+  allowRescheduling: boolean;
+  maxReschedulesPerMission: number;
+  reschedulingDeadlineHours: number;
+  cancellationPolicy: 'FLEXIBLE' | 'MODERATE' | 'STRICT';
+  categories: string[];
+  urgencyLevels: Array<{ name: string; multiplier: number; maxResponseHours: number }>;
+  workingHoursStart: string; // e.g., "08:00"
+  workingHoursEnd: string; // e.g., "20:00"
+  weekendMissionsAllowed: boolean;
+  holidayMissionsAllowed: boolean;
+}
+
+export interface UserProfileSettings {
+  requireEmailVerification: boolean;
+  requirePhoneVerification: boolean;
+  allowUsernameChange: boolean;
+  usernameChangeLimit: number; // changes per year
+  profilePhotoRequired: boolean;
+  profilePhotoModeration: boolean;
+  bioMaxLength: number;
+  displayNameMaxLength: number;
+  allowAnonymousProfiles: boolean;
+  showOnlineStatus: boolean;
+  showLastActive: boolean;
+  allowProfileHiding: boolean;
+  artisanRequirements: {
+    businessVerificationRequired: boolean;
+    insuranceRequired: boolean;
+    minCertifications: number;
+    portfolioRequired: boolean;
+    minPortfolioItems: number;
+  };
+  clientRequirements: {
+    addressRequired: boolean;
+    phoneRequired: boolean;
+    identityVerificationRequired: boolean;
+  };
+  passwordMinLength: number;
+  passwordRequireUppercase: boolean;
+  passwordRequireLowercase: boolean;
+  passwordRequireNumbers: boolean;
+  passwordRequireSymbols: boolean;
+  passwordExpiryDays: number; // 0 = never expires
+  sessionTimeoutMinutes: number;
+  maxConcurrentSessions: number;
+  twoFactorAuthRequired: boolean;
+  twoFactorAuthMethods: string[]; // ['sms', 'authenticator', 'email']
+  accountDeletionEnabled: boolean;
+  accountDeletionCooldownDays: number;
+}
+
+export interface PerformanceSettings {
+  cacheEnabled: boolean;
+  cacheTtlSeconds: number;
+  cacheMaxSize: number; // in MB
+  cdnEnabled: boolean;
+  cdnUrl?: string;
+  imageOptimizationEnabled: boolean;
+  imageMaxWidth: number;
+  imageMaxHeight: number;
+  imageQuality: number; // 1-100
+  lazyLoadingEnabled: boolean;
+  paginationDefaultLimit: number;
+  paginationMaxLimit: number;
+  searchIndexEnabled: boolean;
+  searchIndexRefreshMinutes: number;
+  databaseConnectionPoolSize: number;
+  databaseQueryTimeout: number; // in ms
+  backgroundJobsEnabled: boolean;
+  backgroundJobConcurrency: number;
+  rateLimitingEnabled: boolean;
+  requestTimeoutMs: number;
+  enableCompression: boolean;
+  compressionLevel: number; // 1-9
+  logLevel: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+  logRetentionDays: number;
+  metricsEnabled: boolean;
+  metricsCollectionInterval: number; // in seconds
+  healthCheckEnabled: boolean;
+  healthCheckInterval: number; // in seconds
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalClients: number;
@@ -1025,6 +1385,174 @@ export const adminApi = {
       adjustment,
       reason,
     });
+    return response.data;
+  },
+
+  // Platform Configuration
+  getPlatformConfig: async (): Promise<PlatformConfig> => {
+    const response = await apiClient.get('/admin/platform-config');
+    return response.data;
+  },
+
+  updatePlatformConfig: async (updates: Partial<PlatformConfig>): Promise<PlatformConfig> => {
+    const response = await apiClient.put('/admin/platform-config', updates);
+    return response.data;
+  },
+
+  // Fee Settings
+  getFeeSettings: async (): Promise<FeeSettings> => {
+    const response = await apiClient.get('/admin/platform-config/fees');
+    return response.data;
+  },
+
+  updateFeeSettings: async (settings: Partial<FeeSettings>): Promise<FeeSettings> => {
+    const response = await apiClient.put('/admin/platform-config/fees', settings);
+    return response.data;
+  },
+
+  // Payment Settings
+  getPaymentSettings: async (): Promise<PaymentSettings> => {
+    const response = await apiClient.get('/admin/platform-config/payments');
+    return response.data;
+  },
+
+  updatePaymentSettings: async (settings: Partial<PaymentSettings>): Promise<PaymentSettings> => {
+    const response = await apiClient.put('/admin/platform-config/payments', settings);
+    return response.data;
+  },
+
+  // Rate Limit Settings
+  getRateLimitSettings: async (): Promise<RateLimitSettings> => {
+    const response = await apiClient.get('/admin/platform-config/rate-limits');
+    return response.data;
+  },
+
+  updateRateLimitSettings: async (
+    settings: Partial<RateLimitSettings>,
+  ): Promise<RateLimitSettings> => {
+    const response = await apiClient.put('/admin/platform-config/rate-limits', settings);
+    return response.data;
+  },
+
+  // Reputation Rules
+  getReputationRules: async (): Promise<ReputationRules> => {
+    const response = await apiClient.get('/admin/platform-config/reputation-rules');
+    return response.data;
+  },
+
+  updateReputationRules: async (rules: Partial<ReputationRules>): Promise<ReputationRules> => {
+    const response = await apiClient.put('/admin/platform-config/reputation-rules', rules);
+    return response.data;
+  },
+
+  // No-Show Configuration
+  getNoShowConfig: async (): Promise<NoShowConfig> => {
+    const response = await apiClient.get('/admin/platform-config/no-show');
+    return response.data;
+  },
+
+  updateNoShowConfig: async (config: Partial<NoShowConfig>): Promise<NoShowConfig> => {
+    const response = await apiClient.put('/admin/platform-config/no-show', config);
+    return response.data;
+  },
+
+  // Tax/VAT Settings
+  getTaxSettings: async (): Promise<TaxSettings> => {
+    const response = await apiClient.get('/admin/platform-config/tax');
+    return response.data;
+  },
+
+  updateTaxSettings: async (settings: Partial<TaxSettings>): Promise<TaxSettings> => {
+    const response = await apiClient.put('/admin/platform-config/tax', settings);
+    return response.data;
+  },
+
+  // Notification Settings
+  getNotificationSettings: async (): Promise<NotificationSettings> => {
+    const response = await apiClient.get('/admin/platform-config/notifications');
+    return response.data;
+  },
+
+  updateNotificationSettings: async (
+    settings: Partial<NotificationSettings>,
+  ): Promise<NotificationSettings> => {
+    const response = await apiClient.put('/admin/platform-config/notifications', settings);
+    return response.data;
+  },
+
+  // Integration Settings
+  getIntegrationSettings: async (): Promise<IntegrationSettings> => {
+    const response = await apiClient.get('/admin/platform-config/integrations');
+    return response.data;
+  },
+
+  updateIntegrationSettings: async (
+    settings: Partial<IntegrationSettings>,
+  ): Promise<IntegrationSettings> => {
+    const response = await apiClient.put('/admin/platform-config/integrations', settings);
+    return response.data;
+  },
+
+  // Content Moderation Settings
+  getContentModerationSettings: async (): Promise<ContentModerationSettings> => {
+    const response = await apiClient.get('/admin/platform-config/content-moderation');
+    return response.data;
+  },
+
+  updateContentModerationSettings: async (
+    settings: Partial<ContentModerationSettings>,
+  ): Promise<ContentModerationSettings> => {
+    const response = await apiClient.put('/admin/platform-config/content-moderation', settings);
+    return response.data;
+  },
+
+  // Compliance Settings
+  getComplianceSettings: async (): Promise<ComplianceSettings> => {
+    const response = await apiClient.get('/admin/platform-config/compliance');
+    return response.data;
+  },
+
+  updateComplianceSettings: async (
+    settings: Partial<ComplianceSettings>,
+  ): Promise<ComplianceSettings> => {
+    const response = await apiClient.put('/admin/platform-config/compliance', settings);
+    return response.data;
+  },
+
+  // Mission Settings
+  getMissionSettings: async (): Promise<MissionSettings> => {
+    const response = await apiClient.get('/admin/platform-config/missions');
+    return response.data;
+  },
+
+  updateMissionSettings: async (settings: Partial<MissionSettings>): Promise<MissionSettings> => {
+    const response = await apiClient.put('/admin/platform-config/missions', settings);
+    return response.data;
+  },
+
+  // User Settings
+  getUserSettings: async (): Promise<UserProfileSettings> => {
+    const response = await apiClient.get('/admin/platform-config/users');
+    return response.data;
+  },
+
+  updateUserSettings: async (
+    settings: Partial<UserProfileSettings>,
+  ): Promise<UserProfileSettings> => {
+    const response = await apiClient.put('/admin/platform-config/users', settings);
+    return response.data;
+  },
+
+  // Performance Settings
+  getPerformanceSettings: async (): Promise<PerformanceSettings> => {
+    const response = await apiClient.get('/admin/platform-config/performance');
+    return response.data;
+  },
+
+  updatePerformanceSettings: async (
+    settings: Partial<PerformanceSettings>,
+  ): Promise<PerformanceSettings> => {
+    const response = await apiClient.put('/admin/platform-config/performance', settings);
     return response.data;
   },
 };
