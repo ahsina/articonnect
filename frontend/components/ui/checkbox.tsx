@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export interface CheckboxProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label?: string;
   description?: string;
   error?: string;
@@ -10,7 +9,8 @@ export interface CheckboxProps
 
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, description, error, id, ...props }, ref) => {
-    const checkboxId = id || React.useId();
+    const generatedId = React.useId();
+    const checkboxId = id || generatedId;
     const descriptionId = `${checkboxId}-description`;
     const errorId = `${checkboxId}-error`;
 
@@ -27,12 +27,10 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               'disabled:cursor-not-allowed disabled:opacity-50',
               'transition-colors duration-200',
               error && 'border-red-500',
-              className
+              className,
             )}
             aria-invalid={!!error}
-            aria-describedby={
-              description ? descriptionId : error ? errorId : undefined
-            }
+            aria-describedby={description ? descriptionId : error ? errorId : undefined}
             {...props}
           />
         </div>
@@ -44,7 +42,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                 className={cn(
                   'text-sm font-medium',
                   error ? 'text-red-700' : 'text-gray-700',
-                  props.disabled && 'opacity-50 cursor-not-allowed'
+                  props.disabled && 'opacity-50 cursor-not-allowed',
                 )}
               >
                 {label}
@@ -64,7 +62,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         )}
       </div>
     );
-  }
+  },
 );
 Checkbox.displayName = 'Checkbox';
 

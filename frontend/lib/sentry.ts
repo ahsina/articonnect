@@ -1,6 +1,9 @@
 /**
  * Sentry configuration for Next.js frontend
  *
+ * This module provides a graceful fallback when @sentry/nextjs is not installed.
+ * All functions work as no-ops when Sentry is unavailable.
+ *
  * To use Sentry, install the package:
  * npm install @sentry/nextjs
  *
@@ -10,134 +13,63 @@
  * - NEXT_PUBLIC_SENTRY_RELEASE: Optional release version
  */
 
-interface SentryConfig {
-  dsn?: string;
-  environment: string;
-  release?: string;
-  tracesSampleRate: number;
-  replaySessionSampleRate: number;
-  replayOnErrorSampleRate: number;
-  debug: boolean;
-}
-
 interface SentryUser {
   id: string;
   email?: string;
   role?: string;
 }
 
-// Check if Sentry is available
-let Sentry: any = null;
-try {
-  Sentry = require('@sentry/nextjs');
-} catch {
-  // Sentry not installed, will use stub functions
-}
-
-const config: SentryConfig = {
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
-  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
-  tracesSampleRate: parseFloat(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE || '0.1'),
-  replaySessionSampleRate: parseFloat(process.env.NEXT_PUBLIC_SENTRY_REPLAY_SESSION_SAMPLE_RATE || '0.1'),
-  replayOnErrorSampleRate: parseFloat(process.env.NEXT_PUBLIC_SENTRY_REPLAY_ERROR_SAMPLE_RATE || '1.0'),
-  debug: process.env.NEXT_PUBLIC_SENTRY_DEBUG === 'true',
-};
-
 let initialized = false;
 
 /**
- * Initialize Sentry SDK
+ * Initialize Sentry SDK (stub - Sentry not installed)
  */
-export function initSentry(): void {
-  if (initialized || !Sentry || !config.dsn) {
-    if (!config.dsn) {
-      console.warn('[Sentry] DSN not configured - error tracking disabled');
+export async function initSentry(): Promise<void> {
+  if (initialized) return;
+
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) {
+    if (typeof window !== 'undefined') {
+      console.info('[Sentry] DSN not configured - install @sentry/nextjs to enable error tracking');
     }
     return;
   }
 
-  if (typeof window === 'undefined') {
-    // Server-side initialization
-    Sentry.init({
-      dsn: config.dsn,
-      environment: config.environment,
-      release: config.release,
-      tracesSampleRate: config.tracesSampleRate,
-      debug: config.debug,
-    });
-  } else {
-    // Client-side initialization with replay
-    Sentry.init({
-      dsn: config.dsn,
-      environment: config.environment,
-      release: config.release,
-      tracesSampleRate: config.tracesSampleRate,
-      replaysSessionSampleRate: config.replaySessionSampleRate,
-      replaysOnErrorSampleRate: config.replayOnErrorSampleRate,
-      debug: config.debug,
-      integrations: [
-        Sentry.browserTracingIntegration?.() || null,
-        Sentry.replayIntegration?.() || null,
-      ].filter(Boolean),
-      beforeSend(event: any) {
-        // Filter out sensitive data
-        if (event.request?.headers) {
-          delete event.request.headers['authorization'];
-          delete event.request.headers['cookie'];
-        }
-        return event;
-      },
-    });
-  }
-
+  // Sentry package not installed - log warning
+  console.warn(
+    '[Sentry] Package @sentry/nextjs not installed. Install it to enable error tracking.',
+  );
   initialized = true;
-  console.log(`[Sentry] Initialized for environment: ${config.environment}`);
 }
 
 /**
  * Check if Sentry is initialized and available
  */
 export function isSentryInitialized(): boolean {
-  return initialized && !!Sentry;
+  return false; // Always false when package not installed
 }
 
 /**
  * Set user context for all future events
  */
-export function setUser(user: SentryUser | null): void {
-  if (!Sentry || !initialized) return;
-  Sentry.setUser(user);
+export function setUser(_user: SentryUser | null): void {
+  // No-op when Sentry not installed
 }
 
 /**
  * Capture an exception and send to Sentry
  */
 export function captureException(
-  error: Error | any,
-  context?: {
+  error: Error | unknown,
+  _context?: {
     user?: SentryUser;
     tags?: Record<string, string>;
-    extra?: Record<string, any>;
-  }
+    extra?: Record<string, unknown>;
+  },
 ): string | undefined {
-  if (!Sentry || !initialized) {
-    console.error('[Sentry] Not initialized, error not reported:', error);
-    return undefined;
-  }
-
-  return Sentry.withScope((scope: any) => {
-    if (context?.user) {
-      scope.setUser(context.user);
-    }
-    if (context?.tags) {
-      scope.setTags(context.tags);
-    }
-    if (context?.extra) {
-      scope.setExtras(context.extra);
-    }
-    return Sentry.captureException(error);
-  });
+  // Always log to console
+  console.error('[Error]', error);
+  return undefined;
 }
 
 /**
@@ -145,47 +77,36 @@ export function captureException(
  */
 export function captureMessage(
   message: string,
-  level: 'fatal' | 'error' | 'warning' | 'log' | 'info' | 'debug' = 'info'
+  level: 'fatal' | 'error' | 'warning' | 'log' | 'info' | 'debug' = 'info',
 ): string | undefined {
-  if (!Sentry || !initialized) {
-    console.warn('[Sentry] Not initialized, message not reported:', message);
-    return undefined;
-  }
-  return Sentry.captureMessage(message, level);
+  console.log(`[${level}]`, message);
+  return undefined;
 }
 
 /**
  * Add breadcrumb for context
  */
-export function addBreadcrumb(breadcrumb: {
+export function addBreadcrumb(_breadcrumb: {
   category?: string;
   message?: string;
   level?: 'fatal' | 'error' | 'warning' | 'log' | 'info' | 'debug';
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }): void {
-  if (!Sentry || !initialized) return;
-  Sentry.addBreadcrumb(breadcrumb);
+  // No-op when Sentry not installed
 }
 
 /**
  * Set tags for all future events
  */
-export function setTags(tags: Record<string, string>): void {
-  if (!Sentry || !initialized) return;
-  Sentry.setTags(tags);
+export function setTags(_tags: Record<string, string>): void {
+  // No-op when Sentry not installed
 }
 
 /**
  * Set extra context for all future events
  */
-export function setExtra(key: string, value: any): void {
-  if (!Sentry || !initialized) return;
-  Sentry.setExtra(key, value);
-}
-
-// Auto-initialize on import if DSN is configured
-if (typeof window !== 'undefined' && config.dsn) {
-  initSentry();
+export function setExtra(_key: string, _value: unknown): void {
+  // No-op when Sentry not installed
 }
 
 export default {

@@ -12,25 +12,29 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, error, hint, label, leftIcon, rightIcon, id, ...props }, ref) => {
     // Generate unique ID if not provided
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
     const hintId = `${inputId}-hint`;
 
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
             {label}
-            {props.required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
+            {props.required && (
+              <span className="text-red-500 ml-1" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-400" aria-hidden="true">{leftIcon}</span>
+              <span className="text-gray-400" aria-hidden="true">
+                {leftIcon}
+              </span>
             </div>
           )}
           <input
@@ -47,18 +51,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 : 'border-gray-300 focus:ring-blue-500',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
-              className
+              className,
             )}
             ref={ref}
             aria-invalid={!!error}
-            aria-describedby={
-              error ? errorId : hint ? hintId : undefined
-            }
+            aria-describedby={error ? errorId : hint ? hintId : undefined}
             {...props}
           />
           {rightIcon && (
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="text-gray-400" aria-hidden="true">{rightIcon}</span>
+              <span className="text-gray-400" aria-hidden="true">
+                {rightIcon}
+              </span>
             </div>
           )}
         </div>
@@ -74,7 +78,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 Input.displayName = 'Input';
 

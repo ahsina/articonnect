@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string;
   hint?: string;
   label?: string;
@@ -12,20 +11,11 @@ export interface TextareaProps
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
-    {
-      className,
-      error,
-      hint,
-      label,
-      showCharCount = false,
-      maxLength,
-      id,
-      value,
-      ...props
-    },
-    ref
+    { className, error, hint, label, showCharCount = false, maxLength, id, value, ...props },
+    ref,
   ) => {
-    const textareaId = id || React.useId();
+    const generatedId = React.useId();
+    const textareaId = id || generatedId;
     const errorId = `${textareaId}-error`;
     const hintId = `${textareaId}-hint`;
     const charCount = typeof value === 'string' ? value.length : 0;
@@ -33,10 +23,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={textareaId}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label htmlFor={textareaId} className="block text-sm font-medium text-gray-700 mb-1">
             {label}
             {props.required && (
               <span className="text-red-500 ml-1" aria-hidden="true">
@@ -56,7 +43,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             error
               ? 'border-red-500 focus:ring-red-500 text-red-900 placeholder:text-red-300'
               : 'border-gray-300 focus:ring-blue-500',
-            className
+            className,
           )}
           ref={ref}
           value={value}
@@ -82,7 +69,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             <p
               className={cn(
                 'text-sm',
-                charCount > maxLength * 0.9 ? 'text-orange-500' : 'text-gray-400'
+                charCount > maxLength * 0.9 ? 'text-orange-500' : 'text-gray-400',
               )}
             >
               {charCount}/{maxLength}
@@ -91,7 +78,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 Textarea.displayName = 'Textarea';
 

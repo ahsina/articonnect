@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, Page } from '@playwright/test';
 
 /**
  * Custom test fixtures for ArtiConnect E2E tests
@@ -25,7 +25,7 @@ export const testUsers = {
 
 // Extend base test with custom fixtures
 export const test = base.extend<{
-  authenticatedPage: ReturnType<typeof base.extend>;
+  authenticatedPage: Page;
 }>({
   // Authenticated page fixture
   authenticatedPage: async ({ page }, use) => {
