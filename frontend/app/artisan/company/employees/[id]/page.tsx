@@ -376,7 +376,17 @@ export default function EmployeeDetailPage() {
                 </label>
                 <select
                   value={editForm.role || employee.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      role: e.target.value as
+                        | 'OWNER'
+                        | 'MANAGER'
+                        | 'SUPERVISOR'
+                        | 'TECHNICIAN'
+                        | 'CONTRACTOR',
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="TECHNICIAN">Technician</option>
@@ -392,7 +402,12 @@ export default function EmployeeDetailPage() {
                 </label>
                 <select
                   value={editForm.paymentModel || employee.paymentModel}
-                  onChange={(e) => setEditForm({ ...editForm, paymentModel: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      paymentModel: e.target.value as 'SALARY' | 'COMMISSION' | 'HYBRID',
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="COMMISSION">Commission Only</option>

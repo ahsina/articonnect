@@ -52,21 +52,26 @@ export interface CompanyEmployee {
   invitationSentAt?: string;
   invitationAcceptedAt?: string;
   startDate: string;
+  joinedAt: string;
   endDate?: string;
   paymentModel: PaymentModel;
   baseSalary?: number;
   commissionRate?: number;
   hourlyRate?: number;
   permissions: string[];
+  canAcceptMissions?: boolean;
+  canViewFinancials?: boolean;
+  canManageTeam?: boolean;
   totalMissions: number;
   totalEarnings: number;
   averageRating: number;
   totalReviews: number;
-  user?: {
+  user: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
+    phone?: string;
     avatar?: string;
   };
   specialties?: { id: string; name: string }[];

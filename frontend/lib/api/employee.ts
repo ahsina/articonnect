@@ -7,6 +7,9 @@ import {
   PaginatedResponse,
 } from './company';
 
+// Re-export types for convenience
+export type { EmployeeRole, EmployeeStatus, PaymentModel, CompanyEmployee, PaginatedResponse };
+
 export interface InviteEmployeeDto {
   email: string;
   role: EmployeeRole;
@@ -28,6 +31,9 @@ export interface UpdateEmployeeDto {
   permissions?: string[];
   specialtyIds?: string[];
   endDate?: Date;
+  canAcceptMissions?: boolean;
+  canViewFinancials?: boolean;
+  canManageTeam?: boolean;
 }
 
 export interface EmployeeQueryParams {
@@ -44,6 +50,7 @@ export interface EmployeeStats {
   completedMissions: number;
   activeMissions: number;
   totalEarnings: number | null;
+  pendingEarnings: number | null;
   averageRating: number;
   totalReviews: number;
   role: EmployeeRole;
@@ -56,7 +63,10 @@ export interface EmployeeEarning {
   id: string;
   employeeId: string;
   missionId: string;
+  missionTitle: string;
   missionRevenue: number;
+  grossAmount: number;
+  netAmount: number;
   platformCommission: number;
   companyRevenue: number;
   employeeCommission: number;
@@ -79,8 +89,10 @@ export interface EmployeeEarning {
 export interface EmployeeShift {
   id: string;
   employeeId: string;
+  date: string;
   startTime: string;
   endTime: string;
+  type: 'REGULAR' | 'OVERTIME' | 'ON_CALL' | 'TRAINING';
   shiftType: 'REGULAR' | 'OVERTIME' | 'ONCALL' | 'BREAK';
   status: 'SCHEDULED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   notes?: string;
