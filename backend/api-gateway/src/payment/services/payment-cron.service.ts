@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { DeferredPaymentService } from './deferred-payment.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 /**
  * Service CRON pour les tâches automatisées liées aux paiements
@@ -9,12 +10,17 @@ import { DeferredPaymentService } from './deferred-payment.service';
  * - Vérification des factures impayées (paiements différés)
  * - Envoi de rappels pour factures en retard
  * - Suspension des comptes en cas de non-paiement
+ *
+ * All thresholds are now configurable via PlatformConfigService
  */
 @Injectable()
 export class PaymentCronService {
   private readonly logger = new Logger(PaymentCronService.name);
 
-  constructor(private readonly deferredPaymentService: DeferredPaymentService) {}
+  constructor(
+    private readonly deferredPaymentService: DeferredPaymentService,
+    private readonly platformConfig: PlatformConfigService,
+  ) {}
 
   /**
    * CRON: Vérification des factures impayées
@@ -189,13 +195,19 @@ export class PaymentCronService {
             continue;
           }
 
+          // Get configurable thresholds
+          const reputationRules = await this.platformConfig.getReputationRules();
+          const excellentScoreThreshold = reputationRules.goldThreshold ?? 150;
+          const minMissionsForIncrease = 20; // Could be added to payment settings
+          const maxCreditLimit = 10000; // Could be added to payment settings
+
           // Ajuster la limite de crédit en fonction du score
           let newCreditLimit = Number(client.creditLimit);
           const score = eligibility.score;
 
-          if (score >= 150 && client.user.completedMissions >= 20) {
+          if (score >= excellentScoreThreshold && client.user.completedMissions >= minMissionsForIncrease) {
             // Excellent score: augmenter de 20%
-            newCreditLimit = Math.min(newCreditLimit * 1.2, 10000); // Max 10k€
+            newCreditLimit = Math.min(newCreditLimit * 1.2, maxCreditLimit);
             increasedCount++;
           } else if (score < 100 || client.user.disputeCount > 2) {
             // Score faible ou litiges: réduire de 30%

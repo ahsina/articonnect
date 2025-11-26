@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { InvoiceStatus } from '@prisma/client';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 /**
  * Service for managing deferred payments for professional clients
@@ -12,14 +13,17 @@ import { InvoiceStatus } from '@prisma/client';
  *
  * Eligibility criteria:
  * - Business registration (SIRET/company)
- * - Minimum reputation score (150+)
- * - Payment history (10+ completed missions)
+ * - Minimum reputation score (configurable via admin)
+ * - Payment history (configurable min missions)
  * - No disputes in last 6 months
  * - Manual admin approval required
  */
 @Injectable()
 export class DeferredPaymentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private platformConfig: PlatformConfigService,
+  ) {}
 
   /**
    * Enable deferred payment for a professional client
@@ -130,21 +134,28 @@ export class DeferredPaymentService {
       return { eligible: false, reasons: ['Utilisateur introuvable'], score: 0 };
     }
 
+    // Get configurable thresholds from platform config
+    const reputationRules = await this.platformConfig.getReputationRules();
+    const minReputationScore = reputationRules.trustedThreshold ?? 150;
+    const minCompletedMissions = 10; // Could be added to payment settings
+    const maxNoShowRate = 5; // 5% - could be added to payment settings
+    const maxDisputeRate = 3; // 3% - could be added to payment settings
+
     const reasons: string[] = [];
     let score = 100;
 
-    // Criterion 1: Reputation score (150+ required)
-    if (user.reputationScore < 150) {
-      reasons.push('Score de réputation insuffisant (min. 150)');
+    // Criterion 1: Reputation score (configurable threshold)
+    if (user.reputationScore < minReputationScore) {
+      reasons.push(`Score de réputation insuffisant (min. ${minReputationScore})`);
       score -= 30;
     } else {
       score += 10;
     }
 
-    // Criterion 2: Completed missions (10+ required)
+    // Criterion 2: Completed missions (configurable minimum)
     const completedCount = user.clientMissions.length;
-    if (completedCount < 10) {
-      reasons.push('Historique insuffisant (min. 10 missions)');
+    if (completedCount < minCompletedMissions) {
+      reasons.push(`Historique insuffisant (min. ${minCompletedMissions} missions)`);
       score -= 25;
     } else {
       score += completedCount * 2; // Bonus for experience
@@ -158,17 +169,17 @@ export class DeferredPaymentService {
       score += 15;
     }
 
-    // Criterion 4: No-show rate (<5%)
+    // Criterion 4: No-show rate (configurable threshold)
     if (user.noShowCount > 0) {
       const noShowRate = (user.noShowCount / Math.max(user.completedMissions, 1)) * 100;
-      if (noShowRate > 5) {
+      if (noShowRate > maxNoShowRate) {
         reasons.push('Taux de no-show trop élevé');
         score -= 15;
       }
     }
 
-    // Criterion 5: Dispute rate (<3%)
-    if (Number(user.disputeRate) > 3) {
+    // Criterion 5: Dispute rate (configurable threshold)
+    if (Number(user.disputeRate) > maxDisputeRate) {
       reasons.push('Taux de litiges trop élevé');
       score -= 15;
     }

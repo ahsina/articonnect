@@ -393,12 +393,19 @@ export class ReputationService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
+    // Get configurable thresholds
+    const reputationRules = await this.platformConfig.getReputationRules();
+    const lowRiskThreshold = reputationRules.silverThreshold ?? 120; // Silver status = low risk
+    const highRiskThreshold = reputationRules.warningThreshold ?? 80; // Warning threshold = high risk
+    const vipThreshold = reputationRules.trustedThreshold ?? 100;
+    const vipMinMissions = 10; // Could be added to config if needed
+
     // Determine risk level
     let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'MEDIUM';
-    if (user.reputationScore > 120 && user.noShowCount === 0) {
+    if (user.reputationScore > lowRiskThreshold && user.noShowCount === 0) {
       riskLevel = 'LOW';
     } else if (
-      user.reputationScore < 80 ||
+      user.reputationScore < highRiskThreshold ||
       user.noShowCount > 0 ||
       Number(user.disputeRate) > 5
     ) {
@@ -408,7 +415,7 @@ export class ReputationService {
     return {
       ...user,
       riskLevel,
-      vipStatus: user.reputationScore > 100 && user.completedMissions >= 10,
+      vipStatus: user.reputationScore > vipThreshold && user.completedMissions >= vipMinMissions,
     };
   }
 }
