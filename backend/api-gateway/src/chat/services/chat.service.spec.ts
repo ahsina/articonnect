@@ -56,6 +56,7 @@ describe('ChatService', () => {
     decrypt: jest.fn((text) => Promise.resolve(text.replace('encrypted:', ''))),
     generateConversationKey: jest.fn(() => 'conversation-key-123'),
     decryptWithKey: jest.fn((text) => text),
+    decryptMessage: jest.fn((text) => text),
   };
 
   const mockContentFilterService = {
@@ -278,8 +279,7 @@ describe('ChatService', () => {
 
       expect(mockPrismaService.message.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          skip: 20,
-          take: 20,
+          take: { page: 2, limit: 20 },
         }),
       );
     });
