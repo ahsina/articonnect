@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: articonnect-pgbouncer
+    restart: unless-stopped
+    ports:
+      - "${PGBOUNCER_PORT:-6432}:6432"
+    environment:
+      # Database connection
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-articonnect}
+      - DB_USER=${DB_USER:-articonnect}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+      # PgBouncer settings
+      - POOL_MODE=${POOL_MODE:-transaction}
+      - MAX_CLIENT_CONN=${MAX_CLIENT_CONN:-1000}
+      - DEFAULT_POOL_SIZE=${DEFAULT_POOL_SIZE:-20}
+      - MIN_POOL_SIZE=${MIN_POOL_SIZE:-5}
+      - RESERVE_POOL_SIZE=${RESERVE_POOL_SIZE:-5}
+      - MAX_DB_CONNECTIONS=${MAX_DB_CONNECTIONS:-100}
+
+      # Admin settings
+      - ADMIN_USERS=${PGBOUNCER_ADMIN_USERS:-admin}
+      - STATS_USERS=${PGBOUNCER_STATS_USERS:-stats}
+
+      # Logging
+      - LOG_CONNECTIONS=${LOG_CONNECTIONS:-1}
+      - LOG_DISCONNECTIONS=${LOG_DISCONNECTIONS:-1}
+
+      # Auth settings
+      - AUTH_TYPE=${AUTH_TYPE:-md5}
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      - pgbouncer_logs:/var/log/pgbouncer
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-p", "6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-network
+
+  # Optional: pgbouncer metrics exporter for Prometheus
+  pgbouncer-exporter:
+    image: prometheuscommunity/pgbouncer-exporter:latest
+    container_name: articonnect-pgbouncer-exporter
+    restart: unless-stopped
+    ports:
+      - "${PGBOUNCER_EXPORTER_PORT:-9127}:9127"
+    environment:
+      - PGBOUNCER_EXPORTER_HOST=pgbouncer
+      - PGBOUNCER_EXPORTER_PORT=6432
+      - PGBOUNCER_EXPORTER_USER=stats
+      - PGBOUNCER_EXPORTER_PASS=${PGBOUNCER_STATS_PASSWORD}
+    depends_on:
+      - pgbouncer
+    networks:
+      - articonnect-network
+    profiles:
+      - monitoring
+
+volumes:
+  pgbouncer_logs:
+
+networks:
+  articonnect-network:
+    external: true

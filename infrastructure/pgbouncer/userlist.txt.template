@@ -1,0 +1,21 @@
+;; PgBouncer userlist file
+;; Format: "username" "password"
+;;
+;; Password can be:
+;; - MD5 hash: "md5" + md5(password + username)
+;; - Plain text: the actual password
+;; - SCRAM-SHA-256: SCRAM-SHA-256$<iteration_count>:<salt>$<stored_key>:<server_key>
+;;
+;; Generate MD5 hash: echo -n "passwordusername" | md5sum | cut -d' ' -f1 | sed 's/^/md5/'
+;;
+;; IMPORTANT: Replace these with actual credentials in production!
+;; This file should NOT be committed to version control with real passwords.
+
+;; Application user
+"${DB_USER}" "${DB_PASSWORD}"
+
+;; Admin user for PgBouncer console
+"admin" "${PGBOUNCER_ADMIN_PASSWORD}"
+
+;; Stats user (read-only access to stats)
+"stats" "${PGBOUNCER_STATS_PASSWORD}"
