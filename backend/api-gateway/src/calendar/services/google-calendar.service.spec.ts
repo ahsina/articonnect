@@ -3,47 +3,54 @@ import { GoogleCalendarService } from './google-calendar.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
+import { google } from 'googleapis';
+
+// Mock OAuth2 client instance
+const mockOAuth2Client = {
+  generateAuthUrl: jest.fn().mockReturnValue('https://accounts.google.com/auth'),
+  getToken: jest.fn().mockResolvedValue({
+    tokens: {
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
+      expiry_date: Date.now() + 3600000,
+    },
+  }),
+  setCredentials: jest.fn(),
+  refreshAccessToken: jest.fn().mockResolvedValue({
+    credentials: {
+      access_token: 'new-access-token',
+      expiry_date: Date.now() + 3600000,
+    },
+  }),
+};
+
+// Mock calendar API
+const mockCalendarApi = {
+  events: {
+    insert: jest.fn().mockResolvedValue({ data: { id: 'event-123' } }),
+    delete: jest.fn().mockResolvedValue({}),
+    list: jest.fn().mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 'event-1',
+            summary: 'Test Event',
+            start: { dateTime: new Date().toISOString() },
+            end: { dateTime: new Date().toISOString() },
+          },
+        ],
+      },
+    }),
+  },
+};
 
 // Mock googleapis
 jest.mock('googleapis', () => ({
   google: {
     auth: {
-      OAuth2: jest.fn().mockImplementation(() => ({
-        generateAuthUrl: jest.fn().mockReturnValue('https://accounts.google.com/auth'),
-        getToken: jest.fn().mockResolvedValue({
-          tokens: {
-            access_token: 'access-token',
-            refresh_token: 'refresh-token',
-            expiry_date: Date.now() + 3600000,
-          },
-        }),
-        setCredentials: jest.fn(),
-        refreshAccessToken: jest.fn().mockResolvedValue({
-          credentials: {
-            access_token: 'new-access-token',
-            expiry_date: Date.now() + 3600000,
-          },
-        }),
-      })),
+      OAuth2: jest.fn(),
     },
-    calendar: jest.fn().mockReturnValue({
-      events: {
-        insert: jest.fn().mockResolvedValue({ data: { id: 'event-123' } }),
-        delete: jest.fn().mockResolvedValue({}),
-        list: jest.fn().mockResolvedValue({
-          data: {
-            items: [
-              {
-                id: 'event-1',
-                summary: 'Test Event',
-                start: { dateTime: new Date().toISOString() },
-                end: { dateTime: new Date().toISOString() },
-              },
-            ],
-          },
-        }),
-      },
-    }),
+    calendar: jest.fn(),
   },
 }));
 
@@ -102,6 +109,20 @@ describe('GoogleCalendarService', () => {
         GOOGLE_CALENDAR_REDIRECT_URI: 'http://localhost:4000/calendar/google/callback',
       };
       return config[key];
+    });
+
+    // Reset googleapis mocks
+    (google.auth.OAuth2 as jest.Mock).mockImplementation(() => mockOAuth2Client);
+    (google.calendar as jest.Mock).mockReturnValue(mockCalendarApi);
+
+    // Reset OAuth2 client mock methods
+    mockOAuth2Client.generateAuthUrl.mockReturnValue('https://accounts.google.com/auth');
+    mockOAuth2Client.getToken.mockResolvedValue({
+      tokens: {
+        access_token: 'access-token',
+        refresh_token: 'refresh-token',
+        expiry_date: Date.now() + 3600000,
+      },
     });
 
     const module: TestingModule = await Test.createTestingModule({

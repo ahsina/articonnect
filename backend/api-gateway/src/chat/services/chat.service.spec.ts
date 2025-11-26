@@ -57,6 +57,7 @@ describe('ChatService', () => {
     generateConversationKey: jest.fn(() => 'conversation-key-123'),
     decryptWithKey: jest.fn((text) => text),
     decryptMessage: jest.fn((text) => text),
+    encryptMessage: jest.fn((text) => `encrypted:${text}`),
   };
 
   const mockContentFilterService = {
