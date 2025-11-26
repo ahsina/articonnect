@@ -38,6 +38,7 @@ import { ReportsModule } from './reports/reports.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
+import { SentryModule } from './common/sentry/sentry.module';
 import { LoggerService } from './common/logger/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -65,6 +66,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
         limit: 1000, // 1000 requests per hour
       },
     ]),
+    SentryModule.forRootAsync(),
     PrismaModule,
     RedisModule,
     MigrationModule,

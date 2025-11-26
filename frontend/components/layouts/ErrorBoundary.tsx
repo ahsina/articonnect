@@ -2,6 +2,7 @@
 
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
+import { captureException } from '@/lib/sentry';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -12,15 +13,16 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  eventId: string | null;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, eventId: null };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
@@ -31,12 +33,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
 
-    // In production, you would send this to an error tracking service
-    // e.g., Sentry.captureException(error, { extra: errorInfo });
+    // Send to Sentry
+    const eventId = captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+        ...errorInfo,
+      },
+    });
+
+    if (eventId) {
+      this.setState({ eventId });
+    }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, eventId: null });
   };
 
   render() {
