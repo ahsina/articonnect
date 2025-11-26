@@ -3,6 +3,9 @@ import { ChatService } from './chat.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { JwtService } from '@nestjs/jwt';
+import { FcmService } from '../../fcm/services/fcm.service';
+import { EncryptionService } from './encryption.service';
+import { ContentFilterService } from './content-filter.service';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 
 describe('ChatService', () => {
@@ -43,13 +46,38 @@ describe('ChatService', () => {
     sign: jest.fn(),
   };
 
+  const mockFcmService = {
+    sendToUser: jest.fn(),
+    sendToTopic: jest.fn(),
+  };
+
+  const mockEncryptionService = {
+    encrypt: jest.fn((text) => Promise.resolve(`encrypted:${text}`)),
+    decrypt: jest.fn((text) => Promise.resolve(text.replace('encrypted:', ''))),
+  };
+
+  const mockContentFilterService = {
+    filterContent: jest.fn((text) => text),
+    sanitize: jest.fn((text) => text),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations before each test
+    mockRedisService.getClient.mockReturnValue({
+      setex: jest.fn(),
+      get: jest.fn(),
+      del: jest.fn(),
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: RedisService, useValue: mockRedisService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: FcmService, useValue: mockFcmService },
+        { provide: EncryptionService, useValue: mockEncryptionService },
+        { provide: ContentFilterService, useValue: mockContentFilterService },
       ],
     }).compile();
 

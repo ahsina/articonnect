@@ -16,6 +16,9 @@ describe('GeoService', () => {
   };
 
   beforeEach(async () => {
+    // Reset Redis mock before each test
+    mockRedisService.getClient.mockReturnValue(mockRedisClient);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GeoService,

@@ -94,6 +94,16 @@ describe('GoogleCalendarService', () => {
   };
 
   beforeEach(async () => {
+    // Reset ConfigService mock before each test
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        GOOGLE_CALENDAR_CLIENT_ID: 'test-client-id',
+        GOOGLE_CALENDAR_CLIENT_SECRET: 'test-client-secret',
+        GOOGLE_CALENDAR_REDIRECT_URI: 'http://localhost:4000/calendar/google/callback',
+      };
+      return config[key];
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GoogleCalendarService,
