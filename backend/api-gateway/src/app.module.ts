@@ -39,6 +39,7 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
 import { SentryModule } from './common/sentry/sentry.module';
+import { TracingModule } from './common/tracing/tracing.module';
 import { LoggerService } from './common/logger/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -67,6 +68,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       },
     ]),
     SentryModule.forRootAsync(),
+    TracingModule.forRootAsync(),
     PrismaModule,
     RedisModule,
     MigrationModule,
