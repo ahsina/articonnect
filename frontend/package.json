@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "echo 'No tests configured yet' && exit 0",
+    "test": "echo 'No unit tests configured yet' && exit 0",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
     "mobile:build": "MOBILE_BUILD=true next build",
     "mobile:sync": "npm run mobile:build && npx cap sync",
     "mobile:sync:ios": "npm run mobile:build && npx cap sync ios",
@@ -69,6 +74,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "@types/leaflet": "^1.9.8",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
