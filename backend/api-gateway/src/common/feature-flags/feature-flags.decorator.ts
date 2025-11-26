@@ -12,14 +12,14 @@ export const FEATURE_FLAG_CONTEXT = 'feature_flag_context';
  *
  * @example
  * ```ts
- * @FeatureFlag('new-dashboard')
+ * @RequireFeatureFlag('new-dashboard')
  * @Get('dashboard/v2')
  * getNewDashboard() {
  *   return this.dashboardService.getNewVersion();
  * }
  * ```
  */
-export const FeatureFlag = (key: string, options?: FeatureFlagDecoratorOptions) =>
+export const RequireFeatureFlag = (key: string, options?: FeatureFlagDecoratorOptions) =>
   SetMetadata(FEATURE_FLAG_KEY, { key, ...options });
 
 export interface FeatureFlagDecoratorOptions {
@@ -60,12 +60,12 @@ export const getFeatureFlagMetadata = (target: any): { key: string } & FeatureFl
  * @example
  * ```ts
  * @Get('feature-status')
- * async getStatus(@FeatureFlagContext() context: FeatureFlagContext) {
+ * async getStatus(@InjectFeatureFlagContext() context: FeatureFlagContext) {
  *   return this.featureFlagsService.evaluate('my-flag', context);
  * }
  * ```
  */
-export const FeatureFlagContext = () => SetMetadata(FEATURE_FLAG_CONTEXT, true);
+export const InjectFeatureFlagContext = () => SetMetadata(FEATURE_FLAG_CONTEXT, true);
 
 /**
  * Require multiple feature flags to be enabled
