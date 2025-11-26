@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,7 +45,7 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || 'Erreur de connexion');
+      setError(error.response?.data?.message || t('login.connectionError'));
       setLoading(false);
     }
   };
@@ -53,12 +55,12 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Connexion à ArtiConnect
+            {t('login.title')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Ou{' '}
+            {t('login.or')}{' '}
             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              créer un compte gratuitement
+              {t('login.createAccountLink')}
             </Link>
           </p>
         </div>
@@ -82,14 +84,14 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 className="rounded-t-md"
-                placeholder="Adresse email"
+                placeholder={t('login.emailPlaceholder')}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                Mot de passe
+                {t('login.passwordPlaceholder')}
               </label>
               <Input
                 id="password"
@@ -98,7 +100,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 required
                 className={requires2FA ? '' : 'rounded-b-md'}
-                placeholder="Mot de passe"
+                placeholder={t('login.passwordPlaceholder')}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
@@ -107,14 +109,14 @@ export default function LoginPage() {
             {requires2FA && (
               <div>
                 <label htmlFor="twoFactorToken" className="sr-only">
-                  Code 2FA
+                  {t('login.twoFactorPlaceholder')}
                 </label>
                 <Input
                   id="twoFactorToken"
                   name="twoFactorToken"
                   type="text"
                   className="rounded-b-md"
-                  placeholder="Code 2FA (6 chiffres)"
+                  placeholder={t('login.twoFactorPlaceholder')}
                   value={formData.twoFactorToken}
                   onChange={(e) => setFormData({ ...formData, twoFactorToken: e.target.value })}
                 />
@@ -131,20 +133,20 @@ export default function LoginPage() {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Se souvenir de moi
+                {t('login.rememberMe')}
               </label>
             </div>
 
             <div className="text-sm">
               <Link href="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
-                Mot de passe oublié?
+                {t('login.forgotPassword')}
               </Link>
             </div>
           </div>
 
           <div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Connexion...' : 'Se connecter'}
+              {loading ? t('login.connecting') : t('login.connect')}
             </Button>
           </div>
         </form>

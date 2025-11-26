@@ -6,7 +6,7 @@ import { translations, Language } from '@/lib/i18n/translations';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (category: keyof typeof translations.fr, key: string) => string;
+  t: (keyOrCategory: string, key?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -33,9 +33,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('language', lang);
   };
 
-  const t = (category: keyof typeof translations.fr, key: string): string => {
-    const categoryTranslations = translations[language][category] as Record<string, string>;
-    return categoryTranslations?.[key] || key;
+  const t = (keyOrCategory: string, key?: string): string => {
+    // Support both formats:
+    // 1. Dot notation: t('nav.login') - new format
+    // 2. Two arguments: t('nav', 'login') - legacy format
+    let keys: string[];
+
+    if (key !== undefined) {
+      // Two-argument format: t('category', 'key')
+      keys = [keyOrCategory, key];
+    } else {
+      // Dot notation: t('category.key')
+      keys = keyOrCategory.split('.');
+    }
+
+    let result: any = translations[language];
+
+    for (const k of keys) {
+      if (result && typeof result === 'object' && k in result) {
+        result = result[k];
+      } else {
+        return key !== undefined ? `${keyOrCategory}.${key}` : keyOrCategory;
+      }
+    }
+
+    return typeof result === 'string' ? result : (key !== undefined ? `${keyOrCategory}.${key}` : keyOrCategory);
   };
 
   return (
