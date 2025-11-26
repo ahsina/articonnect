@@ -337,6 +337,88 @@ export interface AuditLogResponse {
   };
 }
 
+// Dispute Types
+export enum DisputeStatus {
+  OPEN = 'OPEN',
+  IN_REVIEW = 'IN_REVIEW',
+  RESOLVED = 'RESOLVED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum DisputePriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL',
+}
+
+export interface Dispute {
+  id: string;
+  missionId: string;
+  userId: string;
+  reason: string;
+  description: string;
+  status: DisputeStatus;
+  priority: DisputePriority;
+  resolution?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  mission?: {
+    id: string;
+    title: string;
+    status: string;
+    agreedPrice?: number;
+  };
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+export interface ResolveDisputeDto {
+  resolution: string;
+}
+
+// Verification Types
+export interface VerificationStatus {
+  verified: boolean;
+  verificationDate?: string;
+  businessName?: string;
+  registrationNumber?: string;
+  registrationType?: string;
+  status: 'VERIFIED' | 'UNVERIFIED' | 'PENDING' | 'FAILED';
+  lastCheck?: string;
+  nextCheckDue?: string;
+}
+
+export interface UnverifiedArtisan {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  businessName?: string;
+  registrationNumber?: string;
+  registrationType?: string;
+  createdAt: string;
+  verificationStatus?: string;
+}
+
+export interface KycStatus {
+  userId: string;
+  kycVerified: boolean;
+  kycLevel?: string;
+  verificationDate?: string;
+  documents?: Array<{
+    type: string;
+    status: string;
+    uploadedAt: string;
+  }>;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalClients: number;
@@ -497,21 +579,14 @@ export const adminApi = {
   },
 
   // Moderation
-  getReports: async (filters?: {
-    status?: string;
-    type?: string;
-  }): Promise<Report[]> => {
+  getReports: async (filters?: { status?: string; type?: string }): Promise<Report[]> => {
     const response = await apiClient.get('/admin/moderation/reports', {
       params: filters,
     });
     return response.data;
   },
 
-  resolveReport: async (
-    reportId: string,
-    action: string,
-    resolution: string,
-  ): Promise<void> => {
+  resolveReport: async (reportId: string, action: string, resolution: string): Promise<void> => {
     await apiClient.post(`/admin/moderation/reports/${reportId}/resolve`, {
       action,
       resolution,
@@ -686,6 +761,51 @@ export const adminApi = {
 
   getAuditLog: async (id: string): Promise<AuditLog> => {
     const response = await apiClient.get(`/admin/audit-logs/${id}`);
+    return response.data;
+  },
+
+  // Disputes
+  getDisputes: async (filters?: {
+    status?: DisputeStatus;
+    priority?: DisputePriority;
+  }): Promise<Dispute[]> => {
+    const response = await apiClient.get('/disputes', { params: filters });
+    return response.data;
+  },
+
+  getDispute: async (id: string): Promise<Dispute> => {
+    const response = await apiClient.get(`/disputes/${id}`);
+    return response.data;
+  },
+
+  resolveDispute: async (id: string, dto: ResolveDisputeDto): Promise<Dispute> => {
+    const response = await apiClient.post(`/disputes/${id}/resolve`, dto);
+    return response.data;
+  },
+
+  // Verification / KYC
+  getUnverifiedArtisans: async (): Promise<UnverifiedArtisan[]> => {
+    const response = await apiClient.get('/verification/admin/unverified');
+    return response.data;
+  },
+
+  getArtisansNeedingReverification: async (): Promise<UnverifiedArtisan[]> => {
+    const response = await apiClient.get('/verification/admin/reverification-needed');
+    return response.data;
+  },
+
+  getArtisanVerificationStatus: async (artisanId: string): Promise<VerificationStatus> => {
+    const response = await apiClient.get(`/verification/artisan/${artisanId}/status`);
+    return response.data;
+  },
+
+  reverifyArtisan: async (artisanId: string): Promise<VerificationStatus> => {
+    const response = await apiClient.post(`/verification/artisan/${artisanId}/reverify`);
+    return response.data;
+  },
+
+  getKycStatus: async (userId: string): Promise<KycStatus> => {
+    const response = await apiClient.get(`/compliance/kyc/status/${userId}`);
     return response.data;
   },
 };

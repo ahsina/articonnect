@@ -121,9 +121,7 @@ export default function AdminDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
               <p className="text-3xl font-bold text-gray-900">{value}</p>
-              {subtitle && (
-                <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-              )}
+              {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
             </div>
             <div
               className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${colorClasses[color]}`}
@@ -141,12 +139,8 @@ export default function AdminDashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {t('admin', 'dashboard')}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {t('admin', 'platformOverviewArtiConnect')}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('admin', 'dashboard')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin', 'platformOverviewArtiConnect')}</p>
         </div>
 
         {/* Stats Grid */}
@@ -335,6 +329,38 @@ export default function AdminDashboardPage() {
           >
             <span className="text-2xl block mb-2">⚙️</span>
             <span className="font-medium text-gray-700">CRON Jobs</span>
+          </button>
+        </div>
+
+        {/* Additional Quick Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <button
+            onClick={() => router.push('/admin/verifications')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">✅</span>
+            <span className="font-medium text-gray-700">KYC & Verification</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/disputes')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">⚠️</span>
+            <span className="font-medium text-gray-700">Disputes</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/audit-logs')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">📜</span>
+            <span className="font-medium text-gray-700">Audit Logs</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/moderation')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🔍</span>
+            <span className="font-medium text-gray-700">Moderation</span>
           </button>
         </div>
       </div>
