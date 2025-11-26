@@ -41,6 +41,7 @@ import { MigrationModule } from './common/migrations/migration.module';
 import { SentryModule } from './common/sentry/sentry.module';
 import { TracingModule } from './common/tracing/tracing.module';
 import { CacheModule } from './common/cache/cache.module';
+import { FeatureFlagsModule } from './common/feature-flags/feature-flags.module';
 import { LoggerService } from './common/logger/logger.service';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -70,6 +71,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     ]),
     SentryModule.forRootAsync(),
     TracingModule.forRootAsync(),
+    FeatureFlagsModule.forRoot(),
     PrismaModule,
     RedisModule,
     CacheModule,
