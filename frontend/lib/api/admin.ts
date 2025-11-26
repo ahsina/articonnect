@@ -419,6 +419,135 @@ export interface KycStatus {
   }>;
 }
 
+// No-Show Types
+export enum NoShowStatus {
+  PENDING = 'PENDING',
+  VALIDATED = 'VALIDATED',
+  REJECTED = 'REJECTED',
+}
+
+export interface NoShowEvent {
+  id: string;
+  missionId: string;
+  artisanId: string;
+  clientId: string;
+  status: NoShowStatus;
+  reportedAt: string;
+  validatedAt?: string;
+  validatedBy?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
+  rejectionReason?: string;
+  evidence: {
+    waitTime: number; // minutes waited
+    contactAttempts: number;
+    gpsVerified: boolean;
+    photos?: string[];
+    notes?: string;
+  };
+  compensation?: {
+    artisanAmount: number;
+    clientPenalty: number;
+  };
+  mission?: {
+    id: string;
+    title: string;
+    scheduledDate?: string;
+    address?: {
+      street: string;
+      city: string;
+      postalCode: string;
+    };
+  };
+  artisan?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  client?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+// Certification Types
+export interface Certification {
+  id: string;
+  artisanUserId: string;
+  name: string;
+  issuingOrganization: string;
+  issueDate: string;
+  expiryDate?: string;
+  certificateNumber?: string;
+  documentUrl?: string;
+  verified: boolean;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  artisan?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+// Specialty Types
+export interface Specialty {
+  id: string;
+  name: string;
+  category: string;
+  description?: string;
+  icon?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    artisans: number;
+  };
+}
+
+export interface CreateSpecialtyDto {
+  name: string;
+  category: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface UpdateSpecialtyDto {
+  name?: string;
+  category?: string;
+  description?: string;
+  icon?: string;
+  isActive?: boolean;
+}
+
+// Reputation Types
+export interface UserReputation {
+  userId: string;
+  score: number;
+  level: string;
+  totalMissions: number;
+  completedMissions: number;
+  cancelledMissions: number;
+  noShowCount: number;
+  averageRating: number;
+  reviewCount: number;
+  lastUpdated: string;
+}
+
+export interface ReputationAdjustment {
+  userId: string;
+  adjustment: number;
+  reason: string;
+  adjustedBy?: string;
+  adjustedAt?: string;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalClients: number;
@@ -806,6 +935,96 @@ export const adminApi = {
 
   getKycStatus: async (userId: string): Promise<KycStatus> => {
     const response = await apiClient.get(`/compliance/kyc/status/${userId}`);
+    return response.data;
+  },
+
+  // No-Show Management
+  getPendingNoShows: async (): Promise<NoShowEvent[]> => {
+    const response = await apiClient.get('/payments/no-show/pending');
+    return response.data;
+  },
+
+  validateNoShow: async (noShowEventId: string): Promise<NoShowEvent> => {
+    const response = await apiClient.post('/payments/no-show/validate', { noShowEventId });
+    return response.data;
+  },
+
+  rejectNoShow: async (noShowEventId: string, reason: string): Promise<NoShowEvent> => {
+    const response = await apiClient.post('/payments/no-show/reject', { noShowEventId, reason });
+    return response.data;
+  },
+
+  getNoShowsByMission: async (missionId: string): Promise<NoShowEvent[]> => {
+    const response = await apiClient.get(`/payments/no-show/mission/${missionId}`);
+    return response.data;
+  },
+
+  // Certification Management
+  getCertifications: async (artisanUserId?: string): Promise<Certification[]> => {
+    const response = await apiClient.get('/certifications', {
+      params: artisanUserId ? { artisanUserId } : undefined,
+    });
+    return response.data;
+  },
+
+  getCertification: async (id: string): Promise<Certification> => {
+    const response = await apiClient.get(`/certifications/${id}`);
+    return response.data;
+  },
+
+  verifyCertification: async (id: string): Promise<Certification> => {
+    const response = await apiClient.post(`/certifications/${id}/verify`);
+    return response.data;
+  },
+
+  unverifyCertification: async (id: string): Promise<Certification> => {
+    const response = await apiClient.post(`/certifications/${id}/unverify`);
+    return response.data;
+  },
+
+  // Specialty Management
+  getSpecialties: async (category?: string): Promise<Specialty[]> => {
+    const response = await apiClient.get('/specialties', {
+      params: category ? { category } : undefined,
+    });
+    return response.data;
+  },
+
+  getSpecialtyCategories: async (): Promise<string[]> => {
+    const response = await apiClient.get('/specialties/categories');
+    return response.data;
+  },
+
+  createSpecialty: async (dto: CreateSpecialtyDto): Promise<Specialty> => {
+    const response = await apiClient.post('/specialties', dto);
+    return response.data;
+  },
+
+  updateSpecialty: async (id: string, dto: UpdateSpecialtyDto): Promise<Specialty> => {
+    const response = await apiClient.put(`/specialties/${id}`, dto);
+    return response.data;
+  },
+
+  deleteSpecialty: async (id: string): Promise<void> => {
+    await apiClient.delete(`/specialties/${id}`);
+  },
+
+  // Reputation Management
+  getUserReputation: async (userId: string): Promise<UserReputation> => {
+    const response = await apiClient.get(`/reputation/${userId}`);
+    return response.data;
+  },
+
+  adjustReputation: async (
+    userId: string,
+    adjustment: number,
+    reason: string,
+  ): Promise<UserReputation> => {
+    const response = await apiClient.post('/reputation/adjust', {
+      userId,
+      adjustment,
+      reason,
+    });
     return response.data;
   },
 };

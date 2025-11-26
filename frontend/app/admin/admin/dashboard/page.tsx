@@ -363,6 +363,38 @@ export default function AdminDashboardPage() {
             <span className="font-medium text-gray-700">Moderation</span>
           </button>
         </div>
+
+        {/* More Quick Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <button
+            onClick={() => router.push('/admin/no-shows')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🚫</span>
+            <span className="font-medium text-gray-700">No-Shows</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/certifications')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">📜</span>
+            <span className="font-medium text-gray-700">Certifications</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/specialties')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🛠️</span>
+            <span className="font-medium text-gray-700">Specialties</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/reputation')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">⭐</span>
+            <span className="font-medium text-gray-700">Reputation</span>
+          </button>
+        </div>
       </div>
     </div>
   );
