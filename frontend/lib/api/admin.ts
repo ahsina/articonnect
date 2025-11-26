@@ -305,6 +305,38 @@ export interface MissionStats {
   byUrgency: Record<string, number>;
 }
 
+// Audit Log Types
+export interface AuditLog {
+  id: string;
+  userId?: string;
+  action: string;
+  resource: string;
+  details: Record<string, unknown>;
+  ipAddress: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+export interface AuditLogFilters {
+  userId?: string;
+  action?: string;
+  resource?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AuditLogResponse {
+  data: AuditLog[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalClients: number;
@@ -643,6 +675,17 @@ export const adminApi = {
 
   disableFeatureFlag: async (key: string): Promise<FeatureFlag> => {
     const response = await apiClient.post(`/admin/feature-flags/${key}/disable`);
+    return response.data;
+  },
+
+  // Audit Logs
+  getAuditLogs: async (filters?: AuditLogFilters): Promise<AuditLogResponse> => {
+    const response = await apiClient.get('/admin/audit-logs', { params: filters });
+    return response.data;
+  },
+
+  getAuditLog: async (id: string): Promise<AuditLog> => {
+    const response = await apiClient.get(`/admin/audit-logs/${id}`);
     return response.data;
   },
 };

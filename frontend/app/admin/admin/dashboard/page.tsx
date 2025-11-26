@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminApi, DashboardStats } from '@/lib/api/admin';
+import { adminApi, DashboardStats, AuditLog } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -10,16 +10,21 @@ export default function AdminDashboardPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
+    loadData();
   }, []);
 
-  const loadStats = async () => {
+  const loadData = async () => {
     try {
-      const data = await adminApi.getDashboardStats();
-      setStats(data);
+      const [statsData, activityData] = await Promise.all([
+        adminApi.getDashboardStats(),
+        adminApi.getAuditLogs({ limit: 10 }),
+      ]);
+      setStats(statsData);
+      setRecentActivity(activityData.data);
     } catch (error: any) {
       console.error('Error loading stats:', error);
       if (error.response?.status === 403) {
@@ -28,6 +33,48 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getActionColor = (action: string) => {
+    const actionLower = action.toLowerCase();
+    if (actionLower.includes('create') || actionLower.includes('register')) {
+      return 'bg-green-100 text-green-700';
+    }
+    if (actionLower.includes('delete') || actionLower.includes('remove')) {
+      return 'bg-red-100 text-red-700';
+    }
+    if (actionLower.includes('update') || actionLower.includes('edit')) {
+      return 'bg-blue-100 text-blue-700';
+    }
+    if (actionLower.includes('login') || actionLower.includes('auth')) {
+      return 'bg-purple-100 text-purple-700';
+    }
+    return 'bg-gray-100 text-gray-700';
+  };
+
+  const getResourceIcon = (resource: string) => {
+    const resourceLower = resource.toLowerCase();
+    if (resourceLower.includes('user')) return '👤';
+    if (resourceLower.includes('mission')) return '📋';
+    if (resourceLower.includes('payment')) return '💳';
+    if (resourceLower.includes('review')) return '⭐';
+    if (resourceLower.includes('auth') || resourceLower.includes('session')) return '🔐';
+    return '📄';
+  };
+
+  const getTimeAgo = (date: string) => {
+    const now = new Date();
+    const then = new Date(date);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString('fr-FR');
   };
 
   if (loading) {
@@ -212,18 +259,84 @@ export default function AdminDashboardPage() {
 
         {/* Recent Activity */}
         <Card className="mt-8">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
+            <button
+              onClick={() => router.push('/admin/audit-logs')}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              View All →
+            </button>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-gray-500">
-              <p>{t('admin', 'featureInDevelopment')}</p>
-              <p className="text-sm mt-2">
-                {t('admin', 'willShowLatestActions')}
-              </p>
-            </div>
+            {recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl">{getResourceIcon(activity.resource)}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-0.5 text-xs font-medium rounded ${getActionColor(activity.action)}`}
+                          >
+                            {activity.action}
+                          </span>
+                          <span className="text-gray-700">{activity.resource}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {activity.userId ? `User: ${activity.userId.slice(0, 8)}...` : 'System'} •{' '}
+                          {activity.ipAddress}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-400">{getTimeAgo(activity.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <span className="text-4xl block mb-2">📋</span>
+                <p>No recent activity</p>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Quick Links Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+          <button
+            onClick={() => router.push('/admin/fraud-settings')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🛡️</span>
+            <span className="font-medium text-gray-700">Fraud Settings</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/monitoring')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">📊</span>
+            <span className="font-medium text-gray-700">Monitoring</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/feature-flags')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🏳️</span>
+            <span className="font-medium text-gray-700">Feature Flags</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/cron')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">⚙️</span>
+            <span className="font-medium text-gray-700">CRON Jobs</span>
+          </button>
+        </div>
       </div>
     </div>
   );
