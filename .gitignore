@@ -43,6 +43,7 @@ yarn-error.log*
 *.tgz
 .npm
 .eslintcache
+*.tsbuildinfo
 
 # Docker
 *.pid
