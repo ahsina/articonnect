@@ -1,79 +1,91 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StripeService } from './stripe.service';
 
-// Mock Stripe with proper default export
-const mockStripeInstance = {
-  paymentIntents: {
-    create: jest.fn(),
-    capture: jest.fn(),
-    confirm: jest.fn(),
-  },
-  refunds: {
-    create: jest.fn(),
-  },
-  transfers: {
-    create: jest.fn(),
-  },
-  setupIntents: {
-    create: jest.fn(),
-  },
-  mandates: {
-    retrieve: jest.fn(),
-  },
-  paymentMethods: {
-    list: jest.fn(),
-    detach: jest.fn(),
-  },
-  accounts: {
-    create: jest.fn(),
-    retrieve: jest.fn(),
-  },
-  accountLinks: {
-    create: jest.fn(),
-  },
-  webhooks: {
-    constructEvent: jest.fn(),
-  },
-  applePayDomains: {
-    create: jest.fn(),
-    list: jest.fn(),
-    del: jest.fn(),
-  },
-  charges: {
-    retrieve: jest.fn(),
-  },
-  reviews: {
-    list: jest.fn(),
-    approve: jest.fn(),
-  },
-  customers: {
-    update: jest.fn(),
-  },
-  disputes: {
-    list: jest.fn(),
-  },
-};
-
+// Mock Stripe - create mockStripeInstance inside factory and store on globalThis
 jest.mock('stripe', () => {
+  const mockInstance = {
+    paymentIntents: {
+      create: jest.fn(),
+      capture: jest.fn(),
+      confirm: jest.fn(),
+    },
+    refunds: {
+      create: jest.fn(),
+    },
+    transfers: {
+      create: jest.fn(),
+    },
+    setupIntents: {
+      create: jest.fn(),
+    },
+    mandates: {
+      retrieve: jest.fn(),
+    },
+    paymentMethods: {
+      list: jest.fn(),
+      detach: jest.fn(),
+    },
+    accounts: {
+      create: jest.fn(),
+      retrieve: jest.fn(),
+    },
+    accountLinks: {
+      create: jest.fn(),
+    },
+    webhooks: {
+      constructEvent: jest.fn(),
+    },
+    applePayDomains: {
+      create: jest.fn(),
+      list: jest.fn(),
+      del: jest.fn(),
+    },
+    charges: {
+      retrieve: jest.fn(),
+    },
+    reviews: {
+      list: jest.fn(),
+      approve: jest.fn(),
+    },
+    customers: {
+      update: jest.fn(),
+    },
+    disputes: {
+      list: jest.fn(),
+    },
+  };
+  // Store on globalThis for test access (globalThis exists before hoisting)
+  (globalThis as any).__stripeMockInstance = mockInstance;
   return {
     __esModule: true,
-    default: jest.fn(() => mockStripeInstance),
+    default: function MockStripe() {
+      return mockInstance;
+    },
   };
 });
 
+// Get reference to mock instance from globalThis
+const getMockStripeInstance = () => (globalThis as any).__stripeMockInstance;
+
 describe('StripeService', () => {
   let service: StripeService;
+  let mockStripeInstance: ReturnType<typeof getMockStripeInstance>;
 
   beforeEach(async () => {
-    // Reset all Stripe mock methods before each test
-    Object.keys(mockStripeInstance).forEach((key) => {
-      const group = mockStripeInstance[key as keyof typeof mockStripeInstance];
-      if (typeof group === 'object') {
-        Object.keys(group).forEach((method) => {
-          (group as any)[method].mockReset();
-        });
-      }
-    });
+    // Get the mock instance
+    mockStripeInstance = getMockStripeInstance();
+
+    // Clear call history (not implementations) for all Stripe mock methods
+    if (mockStripeInstance) {
+      Object.keys(mockStripeInstance).forEach((key) => {
+        const group = mockStripeInstance[key as keyof typeof mockStripeInstance];
+        if (typeof group === 'object') {
+          Object.keys(group).forEach((method) => {
+            (group as any)[method].mockClear();
+          });
+        }
+      });
+    }
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [StripeService],
@@ -82,9 +94,7 @@ describe('StripeService', () => {
     service = module.get<StripeService>(StripeService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  // Note: Do NOT use jest.clearAllMocks() as it clears mock implementations
 
   describe('createPaymentIntent', () => {
     it('should create a payment intent with automatic payment methods', async () => {

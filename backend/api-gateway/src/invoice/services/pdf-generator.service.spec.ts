@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PdfGeneratorService } from './pdf-generator.service';
 
-// Mock pdfkit
+// Mock pdfkit - define inline to avoid hoisting issues
 jest.mock('pdfkit', () => {
-  return jest.fn().mockImplementation(() => {
-    const mockDoc = {
-      on: jest.fn((event, callback) => {
+  const createMockDoc = () => {
+    const mockDoc: any = {
+      on: jest.fn((event: string, callback: (...args: any[]) => void) => {
         if (event === 'data') {
           // Simulate data event with mock buffer
           setTimeout(() => callback(Buffer.from('mock-pdf-data')), 0);
@@ -27,8 +27,16 @@ jest.mock('pdfkit', () => {
       y: 200,
     };
     return mockDoc;
-  });
+  };
+
+  const mockConstructor = jest.fn().mockImplementation(() => createMockDoc());
+  // Expose factory for error test scenario
+  mockConstructor.createMockDoc = createMockDoc;
+  return mockConstructor;
 });
+
+// Get reference to mock for use in tests
+const mockPDFDocument = jest.requireMock('pdfkit') as jest.Mock & { createMockDoc: () => any };
 
 describe('PdfGeneratorService', () => {
   let service: PdfGeneratorService;
@@ -78,6 +86,9 @@ describe('PdfGeneratorService', () => {
   };
 
   beforeEach(async () => {
+    // Restore mock implementation (in case clearAllMocks cleared it)
+    mockPDFDocument.mockImplementation(() => mockPDFDocument.createMockDoc());
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [PdfGeneratorService],
     }).compile();
@@ -213,26 +224,28 @@ describe('PdfGeneratorService', () => {
 
   describe('error handling', () => {
     it('should handle PDF generation errors', async () => {
-      // Mock error scenario
-      const PDFDocument = require('pdfkit');
-      PDFDocument.mockImplementationOnce(() => ({
-        on: jest.fn((event, callback) => {
-          if (event === 'error') {
-            setTimeout(() => callback(new Error('PDF generation failed')), 0);
-          }
-          return { on: jest.fn().mockReturnThis() };
-        }),
-        fontSize: jest.fn().mockReturnThis(),
-        font: jest.fn().mockReturnThis(),
-        text: jest.fn().mockReturnThis(),
-        moveDown: jest.fn().mockReturnThis(),
-        moveTo: jest.fn().mockReturnThis(),
-        lineTo: jest.fn().mockReturnThis(),
-        stroke: jest.fn().mockReturnThis(),
-        fillColor: jest.fn().mockReturnThis(),
-        end: jest.fn(),
-        y: 200,
-      }));
+      // Mock error scenario - temporarily override the mock
+      mockPDFDocument.mockImplementationOnce(() => {
+        const errorMockDoc: any = {
+          on: jest.fn((event: string, callback: (...args: any[]) => void) => {
+            if (event === 'error') {
+              setTimeout(() => callback(new Error('PDF generation failed')), 0);
+            }
+            return errorMockDoc;
+          }),
+          fontSize: jest.fn().mockReturnThis(),
+          font: jest.fn().mockReturnThis(),
+          text: jest.fn().mockReturnThis(),
+          moveDown: jest.fn().mockReturnThis(),
+          moveTo: jest.fn().mockReturnThis(),
+          lineTo: jest.fn().mockReturnThis(),
+          stroke: jest.fn().mockReturnThis(),
+          fillColor: jest.fn().mockReturnThis(),
+          end: jest.fn(),
+          y: 200,
+        };
+        return errorMockDoc;
+      });
 
       await expect(
         service.generateInvoicePDF(mockInvoiceData),

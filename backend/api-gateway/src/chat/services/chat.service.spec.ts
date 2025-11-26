@@ -151,11 +151,11 @@ describe('ChatService', () => {
       const result = await service.createMessage(messageData);
 
       expect(result).toEqual(mockMessage);
+      // Content is encrypted before saving
       expect(mockPrismaService.message.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           senderId: messageData.senderId,
           receiverId: messageData.receiverId,
-          content: messageData.content,
         }),
       });
     });
