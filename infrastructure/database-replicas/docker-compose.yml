@@ -1,0 +1,149 @@
+version: '3.8'
+
+# PostgreSQL Read Replicas Setup for Development/Testing
+# This configuration sets up a primary PostgreSQL instance with read replicas
+# using streaming replication.
+
+services:
+  # Primary PostgreSQL instance (read-write)
+  postgres-primary:
+    image: postgres:16-alpine
+    container_name: articonnect-postgres-primary
+    hostname: postgres-primary
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-articonnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-articonnect_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-articonnect}
+      # Replication settings
+      POSTGRES_REPLICATION_USER: ${REPLICATION_USER:-replicator}
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_secret}
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+      - ./init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh:ro
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-articonnect}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-db
+
+  # Read replica 1
+  postgres-replica1:
+    image: postgres:16-alpine
+    container_name: articonnect-postgres-replica1
+    hostname: postgres-replica1
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-articonnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-articonnect_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-articonnect}
+      PGUSER: ${REPLICATION_USER:-replicator}
+      PGPASSWORD: ${REPLICATION_PASSWORD:-replicator_secret}
+    volumes:
+      - postgres_replica1_data:/var/lib/postgresql/data
+      - ./init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh:ro
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-articonnect}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-db
+
+  # Read replica 2
+  postgres-replica2:
+    image: postgres:16-alpine
+    container_name: articonnect-postgres-replica2
+    hostname: postgres-replica2
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-articonnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-articonnect_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-articonnect}
+      PGUSER: ${REPLICATION_USER:-replicator}
+      PGPASSWORD: ${REPLICATION_PASSWORD:-replicator_secret}
+    volumes:
+      - postgres_replica2_data:/var/lib/postgresql/data
+      - ./init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh:ro
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-articonnect}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - articonnect-db
+
+  # HAProxy for load balancing read replicas
+  haproxy:
+    image: haproxy:2.9-alpine
+    container_name: articonnect-haproxy
+    ports:
+      - "5435:5432"  # Read-only endpoint (load balanced)
+      - "8404:8404"  # HAProxy stats
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - postgres-primary
+      - postgres-replica1
+      - postgres-replica2
+    networks:
+      - articonnect-db
+
+  # pgBouncer for connection pooling (primary)
+  pgbouncer-primary:
+    image: edoburu/pgbouncer:1.21.0
+    container_name: articonnect-pgbouncer-primary
+    ports:
+      - "6432:6432"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-articonnect}:${POSTGRES_PASSWORD:-articonnect_secret}@postgres-primary:5432/${POSTGRES_DB:-articonnect}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 50
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    networks:
+      - articonnect-db
+
+  # pgBouncer for connection pooling (replicas via HAProxy)
+  pgbouncer-replicas:
+    image: edoburu/pgbouncer:1.21.0
+    container_name: articonnect-pgbouncer-replicas
+    ports:
+      - "6433:6432"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-articonnect}:${POSTGRES_PASSWORD:-articonnect_secret}@haproxy:5432/${POSTGRES_DB:-articonnect}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 2000
+      DEFAULT_POOL_SIZE: 100
+    depends_on:
+      - haproxy
+    networks:
+      - articonnect-db
+
+volumes:
+  postgres_primary_data:
+  postgres_replica1_data:
+  postgres_replica2_data:
+
+networks:
+  articonnect-db:
+    driver: bridge
