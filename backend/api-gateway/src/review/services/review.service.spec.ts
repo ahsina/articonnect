@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewService } from './review.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { ReviewFraudDetectorService } from '../../fraud/services/review-fraud-detector.service';
+import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { ReviewType } from '@prisma/client';
 
 describe('ReviewService', () => {
   let service: ReviewService;
@@ -31,13 +32,31 @@ describe('ReviewService', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
     },
+    artisanProfile: {
+      updateMany: jest.fn(),
+    },
+  };
+
+  const mockReviewFraudDetectorService = {
+    detectFakeReview: jest.fn(),
+  };
+
+  const mockFeatureToggleService = {
+    isReviewFraudDetectionEnabled: jest.fn(),
+    isReviewAutoHideEnabled: jest.fn(),
+    getReviewFraudThreshold: jest.fn(),
   };
 
   beforeEach(async () => {
+    // Reset feature toggle to disabled by default for most tests
+    mockFeatureToggleService.isReviewFraudDetectionEnabled.mockResolvedValue(false);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ReviewFraudDetectorService, useValue: mockReviewFraudDetectorService },
+        { provide: FeatureToggleService, useValue: mockFeatureToggleService },
       ],
     }).compile();
 
@@ -50,14 +69,14 @@ describe('ReviewService', () => {
   });
 
   describe('create', () => {
-    const reviewData = {
+    const createDto = {
       missionId: 'mission-123',
       overallRating: 5,
       qualityRating: 5,
       communicationRating: 5,
-      timelinessRating: 5,
+      punctualityRating: 5,
+      valueRating: 5,
       comment: 'Excellent work!',
-      reviewType: ReviewType.CLIENT_TO_ARTISAN,
     };
 
     const mockMission = {
@@ -65,6 +84,7 @@ describe('ReviewService', () => {
       clientId: 'client-123',
       artisanId: 'artisan-123',
       status: 'COMPLETED',
+      artisan: { id: 'artisan-123' },
     };
 
     it('should create a review successfully', async () => {
@@ -72,90 +92,79 @@ describe('ReviewService', () => {
       mockPrismaService.review.findFirst.mockResolvedValue(null);
       mockPrismaService.review.create.mockResolvedValue({
         id: 'review-123',
-        ...reviewData,
+        ...createDto,
         reviewerId: 'client-123',
         reviewedId: 'artisan-123',
+        reviewType: 'CLIENT_TO_ARTISAN',
+        reviewer: { firstName: 'John', lastName: 'Client', avatar: null },
       });
       mockPrismaService.review.aggregate.mockResolvedValue({
         _avg: { overallRating: 5 },
+        _count: { overallRating: 1 },
       });
-      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.artisanProfile.updateMany.mockResolvedValue({});
 
-      const result = await service.create(reviewData, 'client-123');
+      const result = await service.create('client-123', createDto);
 
       expect(result).toHaveProperty('id');
       expect(mockPrismaService.review.create).toHaveBeenCalled();
     });
 
-    it('should throw error if mission not found', async () => {
+    it('should throw NotFoundException if mission not found', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(null);
 
-      await expect(service.create(reviewData, 'client-123')).rejects.toThrow(
+      await expect(service.create('client-123', createDto)).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw error if mission not completed', async () => {
+    it('should throw ForbiddenException if user is not the client', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
+
+      await expect(
+        service.create('different-user', createDto),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException if mission not completed', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue({
         ...mockMission,
+        clientId: 'client-123',
         status: 'IN_PROGRESS',
       });
 
-      await expect(service.create(reviewData, 'client-123')).rejects.toThrow(
+      await expect(service.create('client-123', createDto)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should throw error if review already exists', async () => {
+    it('should throw BadRequestException if review already exists', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
       mockPrismaService.review.findFirst.mockResolvedValue({
         id: 'existing-review',
       });
 
-      await expect(service.create(reviewData, 'client-123')).rejects.toThrow(
+      await expect(service.create('client-123', createDto)).rejects.toThrow(
         BadRequestException,
       );
     });
 
-    it('should throw error if user is not part of mission', async () => {
-      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
+    it('should throw BadRequestException if mission has no artisan', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue({
+        ...mockMission,
+        artisanId: null,
+      });
 
-      await expect(
-        service.create(reviewData, 'different-user'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.create('client-123', createDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
-  describe('findOne', () => {
-    const reviewId = 'review-123';
+  describe('findByArtisan', () => {
+    const artisanId = 'artisan-123';
 
-    it('should return review with relations', async () => {
-      const mockReview = {
-        id: reviewId,
-        overallRating: 5,
-        reviewer: { id: 'user-1', firstName: 'John' },
-        reviewed: { id: 'user-2', firstName: 'Jane' },
-        mission: { id: 'mission-123', title: 'Fix leak' },
-      };
-
-      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
-
-      const result = await service.findOne(reviewId);
-
-      expect(result).toEqual(mockReview);
-    });
-
-    it('should throw NotFoundException if review not found', async () => {
-      mockPrismaService.review.findUnique.mockResolvedValue(null);
-
-      await expect(service.findOne(reviewId)).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('findByUser', () => {
-    const userId = 'user-123';
-
-    it('should return reviews received by user', async () => {
+    it('should return reviews for an artisan', async () => {
       const mockReviews = [
         { id: 'review-1', overallRating: 5 },
         { id: 'review-2', overallRating: 4 },
@@ -163,201 +172,371 @@ describe('ReviewService', () => {
 
       mockPrismaService.review.findMany.mockResolvedValue(mockReviews);
 
-      const result = await service.findByUser(userId, 'received');
+      const result = await service.findByArtisan(artisanId);
 
       expect(result).toEqual(mockReviews);
       expect(mockPrismaService.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { reviewedId: userId },
+          where: { reviewedId: artisanId },
         }),
       );
     });
 
-    it('should return reviews given by user', async () => {
-      const mockReviews = [{ id: 'review-1', overallRating: 5 }];
+    it('should return empty array if no reviews', async () => {
+      mockPrismaService.review.findMany.mockResolvedValue([]);
+
+      const result = await service.findByArtisan(artisanId);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('findByMission', () => {
+    const missionId = 'mission-123';
+
+    it('should return review for a mission', async () => {
+      const mockReview = {
+        id: 'review-123',
+        missionId,
+        overallRating: 5,
+        reviewer: { firstName: 'John', lastName: 'Client', avatar: null },
+      };
+
+      mockPrismaService.review.findFirst.mockResolvedValue(mockReview);
+
+      const result = await service.findByMission(missionId);
+
+      expect(result).toEqual(mockReview);
+    });
+
+    it('should return null if no review exists', async () => {
+      mockPrismaService.review.findFirst.mockResolvedValue(null);
+
+      const result = await service.findByMission(missionId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('update', () => {
+    const reviewId = 'review-123';
+    const userId = 'client-123';
+    const updateDto = {
+      overallRating: 4,
+      comment: 'Updated comment',
+    };
+
+    it('should update a review successfully', async () => {
+      const mockReview = {
+        id: reviewId,
+        reviewerId: userId,
+        reviewedId: 'artisan-123',
+      };
+
+      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
+      mockPrismaService.review.update.mockResolvedValue({
+        ...mockReview,
+        ...updateDto,
+        reviewer: { firstName: 'John', lastName: 'Client', avatar: null },
+      });
+      mockPrismaService.review.aggregate.mockResolvedValue({
+        _avg: { overallRating: 4 },
+        _count: { overallRating: 1 },
+      });
+      mockPrismaService.artisanProfile.updateMany.mockResolvedValue({});
+
+      const result = await service.update(reviewId, userId, updateDto);
+
+      expect(result.overallRating).toBe(4);
+    });
+
+    it('should throw NotFoundException if review not found', async () => {
+      mockPrismaService.review.findUnique.mockResolvedValue(null);
+
+      await expect(service.update(reviewId, userId, updateDto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException if user is not the reviewer', async () => {
+      mockPrismaService.review.findUnique.mockResolvedValue({
+        id: reviewId,
+        reviewerId: 'different-user',
+      });
+
+      await expect(service.update(reviewId, userId, updateDto)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
+  describe('delete', () => {
+    const reviewId = 'review-123';
+    const userId = 'client-123';
+
+    it('should delete a review successfully', async () => {
+      const mockReview = {
+        id: reviewId,
+        reviewerId: userId,
+        reviewedId: 'artisan-123',
+      };
+
+      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
+      mockPrismaService.review.delete.mockResolvedValue(mockReview);
+      mockPrismaService.review.aggregate.mockResolvedValue({
+        _avg: { overallRating: null },
+        _count: { overallRating: 0 },
+      });
+      mockPrismaService.artisanProfile.updateMany.mockResolvedValue({});
+
+      const result = await service.delete(reviewId, userId);
+
+      expect(result.message).toContain('supprimé');
+    });
+
+    it('should throw NotFoundException if review not found', async () => {
+      mockPrismaService.review.findUnique.mockResolvedValue(null);
+
+      await expect(service.delete(reviewId, userId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ForbiddenException if user is not the reviewer', async () => {
+      mockPrismaService.review.findUnique.mockResolvedValue({
+        id: reviewId,
+        reviewerId: 'different-user',
+      });
+
+      await expect(service.delete(reviewId, userId)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+  });
+
+  describe('createArtisanReview', () => {
+    const createDto = {
+      missionId: 'mission-123',
+      overallRating: 4,
+      qualityRating: 4,
+      punctualityRating: 4,
+      communicationRating: 4,
+      valueRating: 4,
+      paymentPromptness: 5,
+      respectRating: 5,
+      safetyRating: 5,
+      comment: 'Good client!',
+    };
+
+    const mockMission = {
+      id: 'mission-123',
+      clientId: 'client-123',
+      artisanId: 'artisan-123',
+      status: 'COMPLETED',
+      client: { id: 'client-123' },
+    };
+
+    it('should create an artisan review successfully', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
+      mockPrismaService.review.findFirst.mockResolvedValue(null);
+      mockPrismaService.review.create.mockResolvedValue({
+        id: 'review-123',
+        ...createDto,
+        reviewerId: 'artisan-123',
+        reviewedId: 'client-123',
+        reviewType: 'ARTISAN_TO_CLIENT',
+        reviewer: { firstName: 'Pierre', lastName: 'Artisan', avatar: null },
+      });
+      mockPrismaService.review.aggregate.mockResolvedValue({
+        _avg: {
+          overallRating: 4,
+          paymentPromptness: 5,
+          respectRating: 5,
+          communicationRating: 4,
+          safetyRating: 5,
+        },
+        _count: { overallRating: 1 },
+      });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'client-123',
+        reputationScore: 100,
+      });
+      mockPrismaService.user.update.mockResolvedValue({});
+
+      const result = await service.createArtisanReview('artisan-123', createDto);
+
+      expect(result).toHaveProperty('id');
+      expect(result.reviewType).toBe('ARTISAN_TO_CLIENT');
+    });
+
+    it('should throw NotFoundException if mission not found', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.createArtisanReview('artisan-123', createDto),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if user is not the artisan', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
+
+      await expect(
+        service.createArtisanReview('different-user', createDto),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('findByClient', () => {
+    const clientId = 'client-123';
+
+    it('should return reviews for a client', async () => {
+      const mockReviews = [
+        { id: 'review-1', overallRating: 4, reviewType: 'ARTISAN_TO_CLIENT' },
+      ];
 
       mockPrismaService.review.findMany.mockResolvedValue(mockReviews);
 
-      const result = await service.findByUser(userId, 'given');
+      const result = await service.findByClient(clientId);
 
       expect(result).toEqual(mockReviews);
       expect(mockPrismaService.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { reviewerId: userId },
+          where: {
+            reviewedId: clientId,
+            reviewType: 'ARTISAN_TO_CLIENT',
+          },
         }),
       );
     });
   });
 
-  describe('getUserRating', () => {
-    const userId = 'user-123';
+  describe('getClientReputationStats', () => {
+    const clientId = 'client-123';
 
-    it('should return average rating and count', async () => {
-      mockPrismaService.review.aggregate.mockResolvedValue({
-        _avg: { overallRating: 4.5 },
-        _count: { id: 10 },
-      });
-
-      const result = await service.getUserRating(userId);
-
-      expect(result).toEqual({
-        averageRating: 4.5,
-        totalReviews: 10,
-      });
-    });
-
-    it('should return 0 for users with no reviews', async () => {
-      mockPrismaService.review.aggregate.mockResolvedValue({
-        _avg: { overallRating: null },
-        _count: { id: 0 },
-      });
-
-      const result = await service.getUserRating(userId);
-
-      expect(result).toEqual({
-        averageRating: 0,
-        totalReviews: 0,
-      });
-    });
-  });
-
-  describe('addResponse', () => {
-    const reviewId = 'review-123';
-    const userId = 'artisan-123';
-    const responseText = 'Thank you for your feedback!';
-
-    it('should add response to review', async () => {
-      const mockReview = {
-        id: reviewId,
-        reviewedId: userId,
-        response: null,
-      };
-
-      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
-      mockPrismaService.reviewResponse.create.mockResolvedValue({
-        id: 'response-123',
-        reviewId,
-        content: responseText,
-      });
-
-      const result = await service.addResponse(reviewId, userId, responseText);
-
-      expect(result).toHaveProperty('id');
-      expect(mockPrismaService.reviewResponse.create).toHaveBeenCalled();
-    });
-
-    it('should throw error if user is not the reviewed person', async () => {
-      const mockReview = {
-        id: reviewId,
-        reviewedId: 'different-user',
-      };
-
-      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
-
-      await expect(
-        service.addResponse(reviewId, userId, responseText),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('should throw error if review already has response', async () => {
-      const mockReview = {
-        id: reviewId,
-        reviewedId: userId,
-        response: { id: 'existing-response' },
-      };
-
-      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
-
-      await expect(
-        service.addResponse(reviewId, userId, responseText),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('reportReview', () => {
-    const reviewId = 'review-123';
-    const userId = 'user-123';
-    const reason = 'Inappropriate content';
-
-    it('should report a review for moderation', async () => {
-      const mockReview = {
-        id: reviewId,
-        hidden: false,
-      };
-
-      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
-      mockPrismaService.review.update.mockResolvedValue({
-        ...mockReview,
-        reported: true,
-        reportedBy: userId,
-        reportReason: reason,
-      });
-
-      const result = await service.reportReview(reviewId, userId, reason);
-
-      expect(result.reported).toBe(true);
-    });
-
-    it('should throw error if review not found', async () => {
-      mockPrismaService.review.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.reportReview(reviewId, userId, reason),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('hideReview (admin)', () => {
-    const reviewId = 'review-123';
-    const adminId = 'admin-123';
-    const reason = 'Violates community guidelines';
-
-    it('should hide a review', async () => {
-      const mockReview = {
-        id: reviewId,
-        hidden: false,
-      };
-
-      mockPrismaService.review.findUnique.mockResolvedValue(mockReview);
-      mockPrismaService.review.update.mockResolvedValue({
-        ...mockReview,
-        hidden: true,
-        hiddenReason: reason,
-        fraudReviewedBy: adminId,
-      });
-
-      const result = await service.hideReview(reviewId, adminId, reason);
-
-      expect(result.hidden).toBe(true);
-    });
-  });
-
-  describe('getReviewStats', () => {
-    const userId = 'user-123';
-
-    it('should return review statistics', async () => {
+    it('should return client reputation stats', async () => {
       mockPrismaService.review.aggregate.mockResolvedValue({
         _avg: {
           overallRating: 4.5,
-          qualityRating: 4.7,
+          paymentPromptness: 4.8,
+          respectRating: 4.7,
           communicationRating: 4.3,
-          timelinessRating: 4.6,
+          safetyRating: 4.9,
         },
-        _count: { id: 25 },
+        _count: { overallRating: 10 },
       });
 
-      mockPrismaService.review.count
-        .mockResolvedValueOnce(20) // 5 stars
-        .mockResolvedValueOnce(3)  // 4 stars
-        .mockResolvedValueOnce(1)  // 3 stars
-        .mockResolvedValueOnce(1)  // 2 stars
-        .mockResolvedValueOnce(0); // 1 star
+      const result = await service.getClientReputationStats(clientId);
 
-      const result = await service.getReviewStats(userId);
+      expect(result.averageRating).toBe(4.5);
+      expect(result.totalReviews).toBe(10);
+      expect(result.paymentPromptness).toBe(4.8);
+    });
 
-      expect(result).toHaveProperty('averageRating');
-      expect(result).toHaveProperty('totalReviews');
-      expect(result).toHaveProperty('ratingDistribution');
+    it('should return 0 for clients with no reviews', async () => {
+      mockPrismaService.review.aggregate.mockResolvedValue({
+        _avg: {
+          overallRating: null,
+          paymentPromptness: null,
+          respectRating: null,
+          communicationRating: null,
+          safetyRating: null,
+        },
+        _count: { overallRating: 0 },
+      });
+
+      const result = await service.getClientReputationStats(clientId);
+
+      expect(result.averageRating).toBe(0);
+      expect(result.totalReviews).toBe(0);
+    });
+  });
+
+  describe('canArtisanReviewClient', () => {
+    it('should return true if artisan can review client', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue({
+        id: 'mission-123',
+        artisanId: 'artisan-123',
+        status: 'COMPLETED',
+      });
+      mockPrismaService.review.findFirst.mockResolvedValue(null);
+
+      const result = await service.canArtisanReviewClient('artisan-123', 'mission-123');
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false if mission not found', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue(null);
+
+      const result = await service.canArtisanReviewClient('artisan-123', 'mission-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false if not the artisan for mission', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue({
+        id: 'mission-123',
+        artisanId: 'different-artisan',
+        status: 'COMPLETED',
+      });
+
+      const result = await service.canArtisanReviewClient('artisan-123', 'mission-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false if mission not completed', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue({
+        id: 'mission-123',
+        artisanId: 'artisan-123',
+        status: 'IN_PROGRESS',
+      });
+
+      const result = await service.canArtisanReviewClient('artisan-123', 'mission-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false if review already exists', async () => {
+      mockPrismaService.mission.findUnique.mockResolvedValue({
+        id: 'mission-123',
+        artisanId: 'artisan-123',
+        status: 'COMPLETED',
+      });
+      mockPrismaService.review.findFirst.mockResolvedValue({
+        id: 'existing-review',
+      });
+
+      const result = await service.canArtisanReviewClient('artisan-123', 'mission-123');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('findAllByMission', () => {
+    const missionId = 'mission-123';
+
+    it('should return all reviews for a mission', async () => {
+      const mockReviews = [
+        { id: 'review-1', reviewType: 'CLIENT_TO_ARTISAN' },
+        { id: 'review-2', reviewType: 'ARTISAN_TO_CLIENT' },
+      ];
+
+      mockPrismaService.review.findMany.mockResolvedValue(mockReviews);
+
+      const result = await service.findAllByMission(missionId);
+
+      expect(result.clientToArtisan).toEqual(mockReviews[0]);
+      expect(result.artisanToClient).toEqual(mockReviews[1]);
+    });
+
+    it('should return undefined for missing review types', async () => {
+      mockPrismaService.review.findMany.mockResolvedValue([]);
+
+      const result = await service.findAllByMission(missionId);
+
+      expect(result.clientToArtisan).toBeUndefined();
+      expect(result.artisanToClient).toBeUndefined();
     });
   });
 });
