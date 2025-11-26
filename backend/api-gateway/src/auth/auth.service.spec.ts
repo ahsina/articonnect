@@ -33,6 +33,16 @@ describe('AuthService', () => {
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    emailVerificationToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
+    passwordResetToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 
   const mockRedisService = {
@@ -49,6 +59,7 @@ describe('AuthService', () => {
 
   const mockEmailService = {
     sendVerificationEmail: jest.fn(),
+    sendEmailVerification: jest.fn(),
     sendPasswordResetEmail: jest.fn(),
     sendWelcomeEmail: jest.fn(),
   };

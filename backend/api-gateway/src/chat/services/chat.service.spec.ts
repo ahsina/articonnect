@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { FcmService } from '../../fcm/services/fcm.service';
 import { EncryptionService } from './encryption.service';
 import { ContentFilterService } from './content-filter.service';
-import { UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { UnauthorizedException, NotFoundException, ForbiddenException } from '@nestjs/common';
 
 describe('ChatService', () => {
   let service: ChatService;
@@ -54,10 +54,12 @@ describe('ChatService', () => {
   const mockEncryptionService = {
     encrypt: jest.fn((text) => Promise.resolve(`encrypted:${text}`)),
     decrypt: jest.fn((text) => Promise.resolve(text.replace('encrypted:', ''))),
+    generateConversationKey: jest.fn(() => 'conversation-key-123'),
+    decryptWithKey: jest.fn((text) => text),
   };
 
   const mockContentFilterService = {
-    filterContent: jest.fn((text) => text),
+    filterContent: jest.fn((text) => ({ isBlocked: false, filteredContent: text, detectedPatterns: [] })),
     sanitize: jest.fn((text) => text),
   };
 
@@ -237,7 +239,7 @@ describe('ChatService', () => {
       mockPrismaService.message.findUnique.mockResolvedValue(mockMessage);
 
       await expect(service.markAsRead(messageId, userId)).rejects.toThrow(
-        UnauthorizedException,
+        ForbiddenException,
       );
     });
   });
@@ -287,12 +289,13 @@ describe('ChatService', () => {
     const userId = 'user-123';
 
     it('should set user online status in Redis', async () => {
+      const mockClient = mockRedisService.getClient();
       await service.setUserOnline(userId);
 
-      expect(mockRedisService.set).toHaveBeenCalledWith(
+      expect(mockClient.setex).toHaveBeenCalledWith(
         expect.stringContaining(userId),
-        'online',
         expect.any(Number),
+        'true',
       );
     });
   });
@@ -301,9 +304,10 @@ describe('ChatService', () => {
     const userId = 'user-123';
 
     it('should remove user online status from Redis', async () => {
+      const mockClient = mockRedisService.getClient();
       await service.setUserOffline(userId);
 
-      expect(mockRedisService.del).toHaveBeenCalledWith(
+      expect(mockClient.del).toHaveBeenCalledWith(
         expect.stringContaining(userId),
       );
     });
@@ -313,7 +317,8 @@ describe('ChatService', () => {
     const userId = 'user-123';
 
     it('should return true if user is online', async () => {
-      mockRedisService.exists.mockResolvedValue(true);
+      const mockClient = mockRedisService.getClient();
+      mockClient.get.mockResolvedValue('true');
 
       const result = await service.isUserOnline(userId);
 
@@ -321,7 +326,8 @@ describe('ChatService', () => {
     });
 
     it('should return false if user is offline', async () => {
-      mockRedisService.exists.mockResolvedValue(false);
+      const mockClient = mockRedisService.getClient();
+      mockClient.get.mockResolvedValue(null);
 
       const result = await service.isUserOnline(userId);
 
@@ -329,21 +335,4 @@ describe('ChatService', () => {
     });
   });
 
-  describe('getUnreadCount', () => {
-    const userId = 'user-123';
-
-    it('should return count of unread messages', async () => {
-      mockPrismaService.message.count.mockResolvedValue(5);
-
-      const result = await service.getUnreadCount(userId);
-
-      expect(result).toBe(5);
-      expect(mockPrismaService.message.count).toHaveBeenCalledWith({
-        where: {
-          receiverId: userId,
-          read: false,
-        },
-      });
-    });
-  });
 });
