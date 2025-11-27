@@ -14,15 +14,6 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CountryService } from '../services/country.service';
-import {
-  CreateCountryConfigDto,
-  UpdateCountryConfigDto,
-  CreateComplianceRequirementDto,
-  UpdateComplianceRequirementDto,
-  SubmitComplianceRecordDto,
-  UpdateComplianceRecordDto,
-  VerifyComplianceRecordDto,
-} from '../dto/country.dto';
 
 @Controller('countries')
 export class CountryController {
@@ -41,53 +32,29 @@ export class CountryController {
   }
 
   @Get(':code/compliance')
-  async getComplianceRequirements(
-    @Param('code') code: string,
-    @Query('trade') trade?: string,
-  ) {
-    return this.countryService.getComplianceRequirements(code, trade);
+  async getComplianceRequirements(@Param('code') code: string) {
+    return this.countryService.getComplianceRequirements(code);
   }
 
   // ============ ADMIN COUNTRY CONFIG ENDPOINTS ============
 
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  async createCountryConfig(@Body() dto: CreateCountryConfigDto) {
-    return this.countryService.createCountryConfig(dto);
-  }
-
   @Put(':code')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async updateCountryConfig(
-    @Param('code') code: string,
-    @Body() dto: UpdateCountryConfigDto,
-  ) {
-    return this.countryService.updateCountryConfig(code, dto);
-  }
-
-  @Delete(':code')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  async deleteCountryConfig(@Param('code') code: string) {
-    return this.countryService.deleteCountryConfig(code);
-  }
-
-  @Post('seed')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  async seedDefaults() {
-    return this.countryService.seedDefaultCountries();
+  async updateCountryConfig(@Param('code') code: string, @Body() data: any) {
+    return this.countryService.updateCountryConfig(code, data);
   }
 
   // ============ ADMIN COMPLIANCE REQUIREMENT ENDPOINTS ============
 
-  @Post('compliance/requirements')
+  @Post(':code/compliance')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async createComplianceRequirement(@Body() dto: CreateComplianceRequirementDto) {
-    return this.countryService.createComplianceRequirement(dto);
+  async createComplianceRequirement(
+    @Param('code') code: string,
+    @Body() data: any,
+  ) {
+    return this.countryService.createComplianceRequirement(code, data);
   }
 
   @Get('compliance/requirements/:id')
@@ -102,9 +69,9 @@ export class CountryController {
   @Roles('ADMIN')
   async updateComplianceRequirement(
     @Param('id') id: string,
-    @Body() dto: UpdateComplianceRequirementDto,
+    @Body() data: any,
   ) {
-    return this.countryService.updateComplianceRequirement(id, dto);
+    return this.countryService.updateComplianceRequirement(id, data);
   }
 
   @Delete('compliance/requirements/:id')
@@ -129,9 +96,14 @@ export class CountryController {
   async verifyComplianceRecord(
     @Request() req,
     @Param('id') id: string,
-    @Body() dto: VerifyComplianceRecordDto,
+    @Body() body: { status: string; rejectionReason?: string },
   ) {
-    return this.countryService.verifyComplianceRecord(req.user.id, id, dto);
+    return this.countryService.verifyComplianceRecord(
+      req.user.id,
+      id,
+      body.status,
+      body.rejectionReason,
+    );
   }
 }
 
@@ -161,17 +133,18 @@ export class ArtisanComplianceController {
   @Post()
   async submitComplianceRecord(
     @Request() req,
-    @Body() dto: SubmitComplianceRecordDto,
+    @Body() body: { requirementId: string; [key: string]: any },
   ) {
-    return this.countryService.submitComplianceRecord(req.user.id, dto);
+    const { requirementId, ...data } = body;
+    return this.countryService.submitComplianceRecord(req.user.id, requirementId, data);
   }
 
   @Put(':id')
   async updateComplianceRecord(
     @Request() req,
     @Param('id') id: string,
-    @Body() dto: UpdateComplianceRecordDto,
+    @Body() data: any,
   ) {
-    return this.countryService.updateComplianceRecord(req.user.id, id, dto);
+    return this.countryService.updateComplianceRecord(req.user.id, id, data);
   }
 }

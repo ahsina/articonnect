@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 import {
   CreatePortfolioDto,
   CreatePortfolioProjectDto,
@@ -26,7 +26,11 @@ export class PortfolioService {
     if (!portfolio) {
       portfolio = await this.prisma.portfolio.create({
         data: { artisanId },
-        include: { projects: true },
+        include: {
+          projects: {
+            include: { photos: { orderBy: { displayOrder: 'asc' } } },
+          },
+        },
       });
     }
 

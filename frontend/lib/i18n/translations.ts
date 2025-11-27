@@ -1725,3 +1725,12 @@ export const translations = {
 
 export type Language = 'fr' | 'en' | 'de' | 'es' | 'it' | 'nl' | 'pt';
 export type TranslationKey = keyof typeof translations.fr;
+
+// Add new languages using English as fallback (needs proper translations)
+export const allTranslations: Record<Language, typeof translations.fr> = {
+  ...translations,
+  es: { ...translations.en },
+  it: { ...translations.en },
+  nl: { ...translations.en },
+  pt: { ...translations.en },
+};

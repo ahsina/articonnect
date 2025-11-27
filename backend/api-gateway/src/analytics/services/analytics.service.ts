@@ -540,10 +540,10 @@ export class AnalyticsService {
     return this.prisma.revenueGoal.create({
       data: {
         artisanId,
-        period: dto.period,
-        targetAmount: dto.targetAmount,
-        startDate: dto.startDate,
-        endDate: dto.endDate,
+        periodType: dto.period,
+        targetRevenue: dto.targetAmount,
+        periodStart: dto.startDate,
+        periodEnd: dto.endDate,
         notes: dto.notes,
       },
     });
@@ -555,12 +555,12 @@ export class AnalyticsService {
   async getRevenueGoals(artisanId: string, activeOnly = true) {
     const where: any = { artisanId };
     if (activeOnly) {
-      where.endDate = { gte: new Date() };
+      where.periodEnd = { gte: new Date() };
     }
 
     const goals = await this.prisma.revenueGoal.findMany({
       where,
-      orderBy: { startDate: 'desc' },
+      orderBy: { periodStart: 'desc' },
     });
 
     // Calculate current progress for each goal
@@ -571,23 +571,24 @@ export class AnalyticsService {
             artisanId,
             status: 'COMPLETED',
             completedAt: {
-              gte: goal.startDate,
-              lte: goal.endDate,
+              gte: goal.periodStart,
+              lte: goal.periodEnd,
             },
           },
           _sum: { finalPrice: true },
         });
 
         const currentAmount = revenue._sum.finalPrice || 0;
-        const progress = goal.targetAmount > 0
-          ? Math.round((Number(currentAmount) / Number(goal.targetAmount)) * 100 * 100) / 100
+        const targetAmount = Number(goal.targetRevenue);
+        const progress = targetAmount > 0
+          ? Math.round((Number(currentAmount) / targetAmount) * 100 * 100) / 100
           : 0;
 
         return {
           ...goal,
           currentAmount,
           progress,
-          isAchieved: Number(currentAmount) >= Number(goal.targetAmount),
+          isAchieved: Number(currentAmount) >= targetAmount,
         };
       }),
     );
@@ -994,9 +995,9 @@ export class AnalyticsService {
         where: {
           artisanId,
           status: 'ACCEPTED',
-          scheduledDate: { gte: now },
+          scheduledFor: { gte: now },
         },
-        orderBy: { scheduledDate: 'asc' },
+        orderBy: { scheduledFor: 'asc' },
         take: 5,
         include: {
           client: { select: { firstName: true, lastName: true } },
@@ -1010,18 +1011,19 @@ export class AnalyticsService {
    */
   async createSnapshot(artisanId: string) {
     const analytics = await this.getArtisanAnalytics(artisanId);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     return this.prisma.analyticsSnapshot.create({
       data: {
         artisanId,
-        snapshotDate: new Date(),
-        totalRevenue: analytics.revenue.total,
+        periodType: 'MONTHLY',
+        periodStart: startOfMonth,
+        periodEnd: endOfMonth,
         totalMissions: analytics.missions.total,
         completedMissions: analytics.missions.completed,
-        averageRating: analytics.rating.average,
-        reviewCount: analytics.rating.reviewCount,
-        conversionRate: 0, // Calculate if needed
-        data: analytics as any,
+        grossRevenue: analytics.revenue.total,
       },
     });
   }
@@ -1032,7 +1034,7 @@ export class AnalyticsService {
   async getSnapshots(artisanId: string, limit = 12) {
     return this.prisma.analyticsSnapshot.findMany({
       where: { artisanId },
-      orderBy: { snapshotDate: 'desc' },
+      orderBy: { periodStart: 'desc' },
       take: limit,
     });
   }

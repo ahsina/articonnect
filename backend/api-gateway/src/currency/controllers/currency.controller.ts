@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-  Request,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -19,7 +18,6 @@ import {
   UpdateCurrencyDto,
   UpdateExchangeRateDto,
   ConvertCurrencyDto,
-  SetUserCurrencyDto,
 } from '../dto/currency.dto';
 
 @Controller('currencies')
@@ -111,19 +109,5 @@ export class CurrencyController {
   @Roles('ADMIN')
   async seedDefaults() {
     return this.currencyService.seedDefaultCurrencies();
-  }
-
-  // ============ USER PREFERENCE ENDPOINTS ============
-
-  @Get('user/preference')
-  @UseGuards(JwtAuthGuard)
-  async getUserCurrency(@Request() req) {
-    return this.currencyService.getUserCurrency(req.user.id);
-  }
-
-  @Put('user/preference')
-  @UseGuards(JwtAuthGuard)
-  async setUserCurrency(@Request() req, @Body() dto: SetUserCurrencyDto) {
-    return this.currencyService.setUserCurrency(req.user.id, dto.currencyCode);
   }
 }

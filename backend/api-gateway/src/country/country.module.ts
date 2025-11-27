@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CountryController, ArtisanComplianceController } from './controllers/country.controller';
 import { CountryService } from './services/country.service';
-import { PrismaModule } from '../prisma/prisma.module';
+import { PrismaModule } from '../common/prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],

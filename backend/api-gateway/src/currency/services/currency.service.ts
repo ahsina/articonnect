@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 import {
   CreateCurrencyDto,
   UpdateCurrencyDto,
@@ -28,9 +28,10 @@ export class CurrencyService {
         name: dto.name,
         symbol: dto.symbol,
         decimalPlaces: dto.decimalPlaces,
-        symbolPosition: dto.symbolPosition || 'before',
-        thousandsSeparator: dto.thousandsSeparator || ',',
-        decimalSeparator: dto.decimalSeparator || '.',
+        symbolPosition: dto.symbolPosition || 'BEFORE',
+        thousandsSep: dto.thousandsSeparator || ',',
+        decimalSep: dto.decimalSeparator || '.',
+        exchangeRate: 1, // Default exchange rate
         isActive: dto.isActive ?? true,
       },
     });
@@ -59,9 +60,18 @@ export class CurrencyService {
   async update(code: string, dto: UpdateCurrencyDto) {
     const currency = await this.findOne(code);
 
+    const updateData: any = {};
+    if (dto.name) updateData.name = dto.name;
+    if (dto.symbol) updateData.symbol = dto.symbol;
+    if (dto.decimalPlaces !== undefined) updateData.decimalPlaces = dto.decimalPlaces;
+    if (dto.symbolPosition) updateData.symbolPosition = dto.symbolPosition;
+    if (dto.thousandsSeparator) updateData.thousandsSep = dto.thousandsSeparator;
+    if (dto.decimalSeparator) updateData.decimalSep = dto.decimalSeparator;
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+
     return this.prisma.currency.update({
       where: { code: currency.code },
-      data: dto,
+      data: updateData,
     });
   }
 
@@ -84,12 +94,15 @@ export class CurrencyService {
     const toCurrency = await this.findOne(dto.toCurrency);
 
     // Update current rate on currency
-    await this.prisma.currency.update({
-      where: { code: fromCurrency.code },
-      data: {
-        exchangeRateToEur: dto.toCurrency === 'EUR' ? dto.rate : undefined,
-      },
-    });
+    if (dto.toCurrency === 'EUR') {
+      await this.prisma.currency.update({
+        where: { code: fromCurrency.code },
+        data: {
+          exchangeRate: dto.rate,
+          lastUpdated: new Date(),
+        },
+      });
+    }
 
     // Store in history
     return this.prisma.exchangeRateHistory.create({
@@ -110,7 +123,7 @@ export class CurrencyService {
       return { rate: 1, fromCurrency: from, toCurrency: to };
     }
 
-    // Try direct rate
+    // Try direct rate from history
     const directRate = await this.prisma.exchangeRateHistory.findFirst({
       where: { fromCurrency: from, toCurrency: to },
       orderBy: { recordedAt: 'desc' },
@@ -118,27 +131,27 @@ export class CurrencyService {
 
     if (directRate) {
       return {
-        rate: directRate.rate,
+        rate: Number(directRate.rate),
         fromCurrency: from,
         toCurrency: to,
         recordedAt: directRate.recordedAt,
       };
     }
 
-    // Try via EUR as intermediary
-    const fromToEur = await this.prisma.currency.findUnique({
+    // Try via EUR as intermediary using stored exchange rates
+    const fromCurrencyData = await this.prisma.currency.findUnique({
       where: { code: from },
-      select: { exchangeRateToEur: true },
+      select: { exchangeRate: true },
     });
 
-    const toToEur = await this.prisma.currency.findUnique({
+    const toCurrencyData = await this.prisma.currency.findUnique({
       where: { code: to },
-      select: { exchangeRateToEur: true },
+      select: { exchangeRate: true },
     });
 
-    if (fromToEur?.exchangeRateToEur && toToEur?.exchangeRateToEur) {
+    if (fromCurrencyData?.exchangeRate && toCurrencyData?.exchangeRate) {
       // Convert via EUR
-      const rate = fromToEur.exchangeRateToEur / toToEur.exchangeRateToEur;
+      const rate = Number(fromCurrencyData.exchangeRate) / Number(toCurrencyData.exchangeRate);
       return { rate, fromCurrency: from, toCurrency: to, viaEur: true };
     }
 
@@ -192,42 +205,16 @@ export class CurrencyService {
     // Add thousands separator
     const withThousands = intPart.replace(
       /\B(?=(\d{3})+(?!\d))/g,
-      currency.thousandsSeparator,
+      currency.thousandsSep,
     );
 
     const number = decPart
-      ? `${withThousands}${currency.decimalSeparator}${decPart}`
+      ? `${withThousands}${currency.decimalSep}${decPart}`
       : withThousands;
 
-    return currency.symbolPosition === 'before'
+    return currency.symbolPosition === 'BEFORE'
       ? `${currency.symbol}${number}`
       : `${number}${currency.symbol}`;
-  }
-
-  // ============ USER PREFERENCES ============
-
-  async setUserCurrency(userId: string, currencyCode: string) {
-    const currency = await this.findOne(currencyCode);
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { preferredCurrency: currency.code },
-    });
-
-    return { success: true, currency: currency.code };
-  }
-
-  async getUserCurrency(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { preferredCurrency: true },
-    });
-
-    if (!user?.preferredCurrency) {
-      return this.findOne('EUR'); // Default to EUR
-    }
-
-    return this.findOne(user.preferredCurrency);
   }
 
   // ============ SEED DEFAULT CURRENCIES ============
@@ -239,40 +226,40 @@ export class CurrencyService {
         name: 'Euro',
         symbol: '€',
         decimalPlaces: 2,
-        symbolPosition: 'after',
-        thousandsSeparator: ' ',
-        decimalSeparator: ',',
-        exchangeRateToEur: 1,
+        symbolPosition: 'AFTER',
+        thousandsSep: ' ',
+        decimalSep: ',',
+        exchangeRate: 1,
       },
       {
         code: 'GBP',
         name: 'British Pound',
         symbol: '£',
         decimalPlaces: 2,
-        symbolPosition: 'before',
-        thousandsSeparator: ',',
-        decimalSeparator: '.',
-        exchangeRateToEur: 1.17,
+        symbolPosition: 'BEFORE',
+        thousandsSep: ',',
+        decimalSep: '.',
+        exchangeRate: 1.17,
       },
       {
         code: 'CHF',
         name: 'Swiss Franc',
         symbol: 'CHF',
         decimalPlaces: 2,
-        symbolPosition: 'before',
-        thousandsSeparator: "'",
-        decimalSeparator: '.',
-        exchangeRateToEur: 1.06,
+        symbolPosition: 'BEFORE',
+        thousandsSep: "'",
+        decimalSep: '.',
+        exchangeRate: 1.06,
       },
       {
         code: 'USD',
         name: 'US Dollar',
         symbol: '$',
         decimalPlaces: 2,
-        symbolPosition: 'before',
-        thousandsSeparator: ',',
-        decimalSeparator: '.',
-        exchangeRateToEur: 0.92,
+        symbolPosition: 'BEFORE',
+        thousandsSep: ',',
+        decimalSep: '.',
+        exchangeRate: 0.92,
       },
     ];
 
