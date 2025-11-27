@@ -1723,5 +1723,5 @@ export const translations = {
   },
 };
 
-export type Language = 'fr' | 'en' | 'de';
+export type Language = 'fr' | 'en' | 'de' | 'es' | 'it' | 'nl' | 'pt';
 export type TranslationKey = keyof typeof translations.fr;
