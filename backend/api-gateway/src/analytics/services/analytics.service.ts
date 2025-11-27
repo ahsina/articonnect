@@ -1,6 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { MatchingQueryDto, ArtisanRecommendation } from '../dto/analytics.dto';
+import {
+  MatchingQueryDto,
+  ArtisanRecommendation,
+  CreateRevenueGoalDto,
+  UpdateRevenueGoalDto,
+  TrendAnalysisDto,
+  ForecastDto,
+  ProfitabilityQueryDto,
+  AnalyticsMetricType,
+} from '../dto/analytics.dto';
 
 @Injectable()
 export class AnalyticsService {
@@ -518,5 +527,513 @@ export class AnalyticsService {
     return Object.entries(breakdown)
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
+  }
+
+  // ================================
+  // ADVANCED ANALYTICS METHODS
+  // ================================
+
+  /**
+   * Create a revenue goal for an artisan
+   */
+  async createRevenueGoal(artisanId: string, dto: CreateRevenueGoalDto) {
+    return this.prisma.revenueGoal.create({
+      data: {
+        artisanId,
+        period: dto.period,
+        targetAmount: dto.targetAmount,
+        startDate: dto.startDate,
+        endDate: dto.endDate,
+        notes: dto.notes,
+      },
+    });
+  }
+
+  /**
+   * Get revenue goals for an artisan
+   */
+  async getRevenueGoals(artisanId: string, activeOnly = true) {
+    const where: any = { artisanId };
+    if (activeOnly) {
+      where.endDate = { gte: new Date() };
+    }
+
+    const goals = await this.prisma.revenueGoal.findMany({
+      where,
+      orderBy: { startDate: 'desc' },
+    });
+
+    // Calculate current progress for each goal
+    const goalsWithProgress = await Promise.all(
+      goals.map(async (goal) => {
+        const revenue = await this.prisma.mission.aggregate({
+          where: {
+            artisanId,
+            status: 'COMPLETED',
+            completedAt: {
+              gte: goal.startDate,
+              lte: goal.endDate,
+            },
+          },
+          _sum: { finalPrice: true },
+        });
+
+        const currentAmount = revenue._sum.finalPrice || 0;
+        const progress = goal.targetAmount > 0
+          ? Math.round((Number(currentAmount) / Number(goal.targetAmount)) * 100 * 100) / 100
+          : 0;
+
+        return {
+          ...goal,
+          currentAmount,
+          progress,
+          isAchieved: Number(currentAmount) >= Number(goal.targetAmount),
+        };
+      }),
+    );
+
+    return goalsWithProgress;
+  }
+
+  /**
+   * Update a revenue goal
+   */
+  async updateRevenueGoal(id: string, artisanId: string, dto: UpdateRevenueGoalDto) {
+    const goal = await this.prisma.revenueGoal.findUnique({ where: { id } });
+    if (!goal || goal.artisanId !== artisanId) {
+      throw new NotFoundException('Revenue goal not found');
+    }
+
+    return this.prisma.revenueGoal.update({
+      where: { id },
+      data: dto,
+    });
+  }
+
+  /**
+   * Delete a revenue goal
+   */
+  async deleteRevenueGoal(id: string, artisanId: string) {
+    const goal = await this.prisma.revenueGoal.findUnique({ where: { id } });
+    if (!goal || goal.artisanId !== artisanId) {
+      throw new NotFoundException('Revenue goal not found');
+    }
+
+    await this.prisma.revenueGoal.delete({ where: { id } });
+    return { success: true };
+  }
+
+  /**
+   * Get trend analysis for a metric
+   */
+  async getTrendAnalysis(artisanId: string, dto: TrendAnalysisDto) {
+    const { metric, startDate, endDate, groupBy = 'month' } = dto;
+
+    switch (metric) {
+      case AnalyticsMetricType.REVENUE:
+        return this.getRevenueTrend(artisanId, startDate, endDate, groupBy);
+      case AnalyticsMetricType.MISSIONS:
+        return this.getMissionsTrend(artisanId, startDate, endDate, groupBy);
+      case AnalyticsMetricType.QUOTES:
+        return this.getQuotesTrend(artisanId, startDate, endDate, groupBy);
+      case AnalyticsMetricType.CONVERSION:
+        return this.getConversionTrend(artisanId, startDate, endDate, groupBy);
+      default:
+        throw new Error('Invalid metric type');
+    }
+  }
+
+  private async getRevenueTrend(artisanId: string, startDate: Date, endDate: Date, groupBy: string) {
+    const missions = await this.prisma.mission.findMany({
+      where: {
+        artisanId,
+        status: 'COMPLETED',
+        completedAt: { gte: startDate, lte: endDate },
+      },
+      select: { completedAt: true, finalPrice: true },
+    });
+
+    return this.aggregateByPeriod(missions, 'completedAt', 'finalPrice', groupBy);
+  }
+
+  private async getMissionsTrend(artisanId: string, startDate: Date, endDate: Date, groupBy: string) {
+    const missions = await this.prisma.mission.findMany({
+      where: {
+        artisanId,
+        createdAt: { gte: startDate, lte: endDate },
+      },
+      select: { createdAt: true, status: true },
+    });
+
+    return this.aggregateByPeriod(missions, 'createdAt', null, groupBy);
+  }
+
+  private async getQuotesTrend(artisanId: string, startDate: Date, endDate: Date, groupBy: string) {
+    const quotes = await this.prisma.quote.findMany({
+      where: {
+        artisanId,
+        createdAt: { gte: startDate, lte: endDate },
+      },
+      select: { createdAt: true, status: true, totalAmount: true },
+    });
+
+    return this.aggregateByPeriod(quotes, 'createdAt', 'totalAmount', groupBy);
+  }
+
+  private async getConversionTrend(artisanId: string, startDate: Date, endDate: Date, groupBy: string) {
+    const quotes = await this.prisma.quote.findMany({
+      where: {
+        artisanId,
+        createdAt: { gte: startDate, lte: endDate },
+      },
+      select: { createdAt: true, status: true },
+    });
+
+    const grouped = this.groupByPeriod(quotes, 'createdAt', groupBy);
+
+    return Object.entries(grouped).map(([period, items]: [string, any[]]) => {
+      const total = items.length;
+      const accepted = items.filter((q) => q.status === 'ACCEPTED').length;
+      const rate = total > 0 ? Math.round((accepted / total) * 100 * 100) / 100 : 0;
+      return { period, total, accepted, conversionRate: rate };
+    });
+  }
+
+  private aggregateByPeriod(items: any[], dateField: string, valueField: string | null, groupBy: string) {
+    const grouped = this.groupByPeriod(items, dateField, groupBy);
+
+    return Object.entries(grouped).map(([period, periodItems]: [string, any[]]) => {
+      const count = periodItems.length;
+      const value = valueField
+        ? periodItems.reduce((sum, item) => sum + (Number(item[valueField]) || 0), 0)
+        : null;
+
+      return { period, count, ...(value !== null && { value }) };
+    }).sort((a, b) => a.period.localeCompare(b.period));
+  }
+
+  private groupByPeriod(items: any[], dateField: string, groupBy: string): Record<string, any[]> {
+    const grouped: Record<string, any[]> = {};
+
+    items.forEach((item) => {
+      const date = new Date(item[dateField]);
+      let period: string;
+
+      switch (groupBy) {
+        case 'day':
+          period = date.toISOString().substring(0, 10);
+          break;
+        case 'week':
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - date.getDay());
+          period = weekStart.toISOString().substring(0, 10);
+          break;
+        case 'month':
+        default:
+          period = date.toISOString().substring(0, 7);
+      }
+
+      if (!grouped[period]) grouped[period] = [];
+      grouped[period].push(item);
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Get revenue forecast using simple linear regression
+   */
+  async getForecast(artisanId: string, dto: ForecastDto) {
+    const { metric, monthsAhead } = dto;
+
+    // Get last 12 months of data
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 12);
+
+    let historicalData: { period: string; value: number }[];
+
+    switch (metric) {
+      case AnalyticsMetricType.REVENUE:
+        const revenueTrend = await this.getRevenueTrend(artisanId, startDate, new Date(), 'month');
+        historicalData = revenueTrend.map((d) => ({ period: d.period, value: d.value || 0 }));
+        break;
+      case AnalyticsMetricType.MISSIONS:
+        const missionTrend = await this.getMissionsTrend(artisanId, startDate, new Date(), 'month');
+        historicalData = missionTrend.map((d) => ({ period: d.period, value: d.count }));
+        break;
+      default:
+        throw new Error('Forecasting not supported for this metric');
+    }
+
+    if (historicalData.length < 3) {
+      return { error: 'Not enough historical data for forecasting', forecast: [] };
+    }
+
+    // Simple linear regression
+    const n = historicalData.length;
+    const x = Array.from({ length: n }, (_, i) => i);
+    const y = historicalData.map((d) => d.value);
+
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    // Generate forecast
+    const forecast = [];
+    const lastDate = new Date();
+    for (let i = 1; i <= monthsAhead; i++) {
+      const forecastDate = new Date(lastDate);
+      forecastDate.setMonth(forecastDate.getMonth() + i);
+      const forecastValue = Math.max(0, intercept + slope * (n + i - 1));
+
+      forecast.push({
+        period: forecastDate.toISOString().substring(0, 7),
+        predictedValue: Math.round(forecastValue * 100) / 100,
+        confidence: Math.max(0, 100 - (i * 10)), // Decreasing confidence over time
+      });
+    }
+
+    return {
+      historicalData,
+      forecast,
+      trend: slope > 0 ? 'growing' : slope < 0 ? 'declining' : 'stable',
+      avgGrowthRate: n > 1 ? ((y[n - 1] - y[0]) / y[0] / (n - 1)) * 100 : 0,
+    };
+  }
+
+  /**
+   * Get profitability analysis
+   */
+  async getProfitabilityAnalysis(artisanId: string, dto: ProfitabilityQueryDto) {
+    const startDate = dto.startDate || new Date(new Date().setMonth(new Date().getMonth() - 12));
+    const endDate = dto.endDate || new Date();
+
+    const missions = await this.prisma.mission.findMany({
+      where: {
+        artisanId,
+        status: 'COMPLETED',
+        completedAt: { gte: startDate, lte: endDate },
+      },
+      include: {
+        client: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+
+    // Overall stats
+    const totalRevenue = missions.reduce((sum, m) => sum + (Number(m.finalPrice) || 0), 0);
+    const avgMissionValue = missions.length > 0 ? totalRevenue / missions.length : 0;
+
+    // By category
+    const byCategory = this.groupProfitability(missions, 'category');
+
+    // By client (top 10)
+    const byClient = Object.entries(
+      missions.reduce((acc: any, m) => {
+        const clientKey = m.clientId;
+        if (!acc[clientKey]) {
+          acc[clientKey] = {
+            client: m.client,
+            missions: 0,
+            revenue: 0,
+          };
+        }
+        acc[clientKey].missions += 1;
+        acc[clientKey].revenue += Number(m.finalPrice) || 0;
+        return acc;
+      }, {}),
+    )
+      .map(([_, data]: [string, any]) => data)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+
+    // Monthly breakdown
+    const byMonth = this.groupByPeriod(missions, 'completedAt', 'month');
+    const monthlyData = Object.entries(byMonth)
+      .map(([month, monthMissions]: [string, any[]]) => ({
+        month,
+        missions: monthMissions.length,
+        revenue: monthMissions.reduce((sum, m) => sum + (Number(m.finalPrice) || 0), 0),
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    return {
+      summary: {
+        totalMissions: missions.length,
+        totalRevenue,
+        avgMissionValue: Math.round(avgMissionValue * 100) / 100,
+        period: { startDate, endDate },
+      },
+      byCategory,
+      topClients: byClient,
+      monthlyBreakdown: monthlyData,
+    };
+  }
+
+  private groupProfitability(missions: any[], groupField: string) {
+    const grouped: Record<string, { count: number; revenue: number }> = {};
+
+    missions.forEach((m) => {
+      const key = m[groupField];
+      if (!grouped[key]) {
+        grouped[key] = { count: 0, revenue: 0 };
+      }
+      grouped[key].count += 1;
+      grouped[key].revenue += Number(m.finalPrice) || 0;
+    });
+
+    return Object.entries(grouped)
+      .map(([name, data]) => ({
+        name,
+        missions: data.count,
+        revenue: data.revenue,
+        avgValue: Math.round((data.revenue / data.count) * 100) / 100,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }
+
+  /**
+   * Get dashboard summary with KPIs
+   */
+  async getDashboardSummary(artisanId: string) {
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(thisMonth.getTime() - 1);
+
+    // Current month stats
+    const [currentRevenue, currentMissions, pendingQuotes] = await Promise.all([
+      this.prisma.mission.aggregate({
+        where: {
+          artisanId,
+          status: 'COMPLETED',
+          completedAt: { gte: thisMonth },
+        },
+        _sum: { finalPrice: true },
+      }),
+      this.prisma.mission.count({
+        where: {
+          artisanId,
+          createdAt: { gte: thisMonth },
+        },
+      }),
+      this.prisma.quote.count({
+        where: {
+          artisanId,
+          status: 'SENT',
+        },
+      }),
+    ]);
+
+    // Last month stats for comparison
+    const [lastMonthRevenue, lastMonthMissions] = await Promise.all([
+      this.prisma.mission.aggregate({
+        where: {
+          artisanId,
+          status: 'COMPLETED',
+          completedAt: { gte: lastMonth, lt: thisMonth },
+        },
+        _sum: { finalPrice: true },
+      }),
+      this.prisma.mission.count({
+        where: {
+          artisanId,
+          createdAt: { gte: lastMonth, lt: thisMonth },
+        },
+      }),
+    ]);
+
+    // Calculate changes
+    const currentRevenueAmount = Number(currentRevenue._sum.finalPrice) || 0;
+    const lastRevenueAmount = Number(lastMonthRevenue._sum.finalPrice) || 0;
+    const revenueChange = lastRevenueAmount > 0
+      ? ((currentRevenueAmount - lastRevenueAmount) / lastRevenueAmount) * 100
+      : 0;
+
+    const missionChange = lastMonthMissions > 0
+      ? ((currentMissions - lastMonthMissions) / lastMonthMissions) * 100
+      : 0;
+
+    // Active goals
+    const activeGoals = await this.getRevenueGoals(artisanId, true);
+
+    // Quote conversion this month
+    const quotesThisMonth = await this.prisma.quote.findMany({
+      where: {
+        artisanId,
+        createdAt: { gte: thisMonth },
+      },
+      select: { status: true },
+    });
+    const quoteConversion = quotesThisMonth.length > 0
+      ? (quotesThisMonth.filter((q) => q.status === 'ACCEPTED').length / quotesThisMonth.length) * 100
+      : 0;
+
+    return {
+      revenue: {
+        current: currentRevenueAmount,
+        change: Math.round(revenueChange * 100) / 100,
+        trend: revenueChange > 0 ? 'up' : revenueChange < 0 ? 'down' : 'stable',
+      },
+      missions: {
+        current: currentMissions,
+        change: Math.round(missionChange * 100) / 100,
+        pending: await this.prisma.mission.count({
+          where: { artisanId, status: { in: ['PENDING', 'ACCEPTED'] } },
+        }),
+      },
+      quotes: {
+        pending: pendingQuotes,
+        conversionRate: Math.round(quoteConversion * 100) / 100,
+      },
+      goals: activeGoals.slice(0, 3), // Top 3 active goals
+      upcomingMissions: await this.prisma.mission.findMany({
+        where: {
+          artisanId,
+          status: 'ACCEPTED',
+          scheduledDate: { gte: now },
+        },
+        orderBy: { scheduledDate: 'asc' },
+        take: 5,
+        include: {
+          client: { select: { firstName: true, lastName: true } },
+        },
+      }),
+    };
+  }
+
+  /**
+   * Create analytics snapshot (for historical tracking)
+   */
+  async createSnapshot(artisanId: string) {
+    const analytics = await this.getArtisanAnalytics(artisanId);
+
+    return this.prisma.analyticsSnapshot.create({
+      data: {
+        artisanId,
+        snapshotDate: new Date(),
+        totalRevenue: analytics.revenue.total,
+        totalMissions: analytics.missions.total,
+        completedMissions: analytics.missions.completed,
+        averageRating: analytics.rating.average,
+        reviewCount: analytics.rating.reviewCount,
+        conversionRate: 0, // Calculate if needed
+        data: analytics as any,
+      },
+    });
+  }
+
+  /**
+   * Get historical snapshots
+   */
+  async getSnapshots(artisanId: string, limit = 12) {
+    return this.prisma.analyticsSnapshot.findMany({
+      where: { artisanId },
+      orderBy: { snapshotDate: 'desc' },
+      take: limit,
+    });
   }
 }
