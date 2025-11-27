@@ -114,6 +114,9 @@ describe('ModerationService', () => {
         productId: 'product-123',
       };
 
+      // Mock the review to exist so we get past validation to the "exactly one entity" check
+      mockPrismaService.review.findUnique.mockResolvedValue({ id: 'review-123' });
+
       await expect(
         service.createReport('reporter-123', invalidDto),
       ).rejects.toThrow(BadRequestException);

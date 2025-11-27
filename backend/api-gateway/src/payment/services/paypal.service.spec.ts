@@ -9,9 +9,10 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('PaypalService', () => {
   let service: PaypalService;
+  let mockAxiosInstance: any;
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
+    get: jest.fn().mockImplementation((key: string) => {
       const config: Record<string, string> = {
         PAYPAL_CLIENT_ID: 'test-client-id',
         PAYPAL_CLIENT_SECRET: 'test-client-secret',
@@ -52,11 +53,26 @@ describe('PaypalService', () => {
   };
 
   beforeEach(async () => {
-    // Mock axios.create to return a mock instance
-    mockedAxios.create.mockReturnValue({
+    // Reset mock implementation for ConfigService
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        PAYPAL_CLIENT_ID: 'test-client-id',
+        PAYPAL_CLIENT_SECRET: 'test-client-secret',
+        PAYPAL_WEBHOOK_ID: 'webhook-123',
+        PAYPAL_MODE: 'sandbox',
+        PAYPAL_API_URL_SANDBOX: 'https://api-m.sandbox.paypal.com',
+        PAYPAL_API_URL_LIVE: 'https://api-m.paypal.com',
+        API_BASE_URL: 'http://localhost:4000',
+      };
+      return config[key];
+    });
+
+    // Mock axios.create to return a mock instance - save reference for tests
+    mockAxiosInstance = {
       post: jest.fn(),
       get: jest.fn(),
-    } as any);
+    };
+    mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -127,8 +143,7 @@ describe('PaypalService', () => {
     });
 
     it('should create PayPal order', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({ data: mockOrder });
+      mockAxiosInstance.post.mockResolvedValue({ data: mockOrder });
 
       const result = await service.createOrder({
         amount: 10000, // 100.00 EUR in cents
@@ -164,8 +179,7 @@ describe('PaypalService', () => {
     });
 
     it('should throw BadRequestException on API error', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockRejectedValue({
+      mockAxiosInstance.post.mockRejectedValue({
         response: { data: { message: 'API Error' } },
       });
 
@@ -186,8 +200,7 @@ describe('PaypalService', () => {
     });
 
     it('should capture PayPal order', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: mockCaptureResponse,
       });
 
@@ -217,8 +230,7 @@ describe('PaypalService', () => {
     });
 
     it('should throw BadRequestException on capture failure', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockRejectedValue({
+      mockAxiosInstance.post.mockRejectedValue({
         response: { data: { message: 'Capture failed' } },
       });
 
@@ -236,8 +248,7 @@ describe('PaypalService', () => {
     });
 
     it('should get order details', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.get as jest.Mock).mockResolvedValue({ data: mockOrder });
+      mockAxiosInstance.get.mockResolvedValue({ data: mockOrder });
 
       const result = await service.getOrder('order-123');
 
@@ -264,8 +275,7 @@ describe('PaypalService', () => {
     });
 
     it('should throw BadRequestException on API error', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.get as jest.Mock).mockRejectedValue(new Error('Not found'));
+      mockAxiosInstance.get.mockRejectedValue(new Error('Not found'));
 
       await expect(service.getOrder('nonexistent')).rejects.toThrow(
         BadRequestException,
@@ -281,8 +291,7 @@ describe('PaypalService', () => {
     });
 
     it('should refund full capture amount', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { id: 'refund-123', status: 'COMPLETED' },
       });
 
@@ -292,8 +301,7 @@ describe('PaypalService', () => {
     });
 
     it('should refund partial amount', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { id: 'refund-123', status: 'COMPLETED' },
       });
 
@@ -322,8 +330,7 @@ describe('PaypalService', () => {
     });
 
     it('should throw BadRequestException on refund failure', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockRejectedValue({
+      mockAxiosInstance.post.mockRejectedValue({
         response: { data: { message: 'Refund failed' } },
       });
 
@@ -349,8 +356,7 @@ describe('PaypalService', () => {
     });
 
     it('should return true for valid signature', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'SUCCESS' },
       });
 
@@ -364,8 +370,7 @@ describe('PaypalService', () => {
     });
 
     it('should return false for invalid signature', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'FAILURE' },
       });
 
@@ -402,8 +407,7 @@ describe('PaypalService', () => {
     });
 
     it('should return false on verification error', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockRejectedValue(new Error('Error'));
+      mockAxiosInstance.post.mockRejectedValue(new Error('Error'));
 
       const result = await service.verifyWebhookSignature(
         'webhook-123',
@@ -431,8 +435,7 @@ describe('PaypalService', () => {
     });
 
     it('should handle CHECKOUT.ORDER.APPROVED event', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'SUCCESS' },
       });
 
@@ -445,8 +448,7 @@ describe('PaypalService', () => {
     });
 
     it('should handle PAYMENT.CAPTURE.COMPLETED event', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'SUCCESS' },
       });
 
@@ -459,8 +461,7 @@ describe('PaypalService', () => {
     });
 
     it('should handle PAYMENT.CAPTURE.DENIED event', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'SUCCESS' },
       });
 
@@ -473,8 +474,7 @@ describe('PaypalService', () => {
     });
 
     it('should handle PAYMENT.CAPTURE.REFUNDED event', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'SUCCESS' },
       });
 
@@ -487,8 +487,7 @@ describe('PaypalService', () => {
     });
 
     it('should throw BadRequestException for invalid signature', async () => {
-      const axiosInstance = mockedAxios.create();
-      (axiosInstance.post as jest.Mock).mockResolvedValue({
+      mockAxiosInstance.post.mockResolvedValue({
         data: { verification_status: 'FAILURE' },
       });
 

@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { StripeService } from './stripe.service';
 import { NotificationService } from '../../notification/services/notification.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('BankTransferService', () => {
@@ -26,7 +27,7 @@ describe('BankTransferService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
+    get: jest.fn().mockImplementation((key: string) => {
       const config: Record<string, string> = {
         BANK_TRANSFER_IBAN: 'LU12 3456 7890 1234 5678',
         BANK_TRANSFER_BIC: 'BGLLLULL',
@@ -44,6 +45,13 @@ describe('BankTransferService', () => {
 
   const mockNotificationService = {
     createNotification: jest.fn(),
+  };
+
+  const mockPlatformConfigService = {
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
   };
 
   const mockMission = {
@@ -73,6 +81,24 @@ describe('BankTransferService', () => {
   };
 
   beforeEach(async () => {
+    // Reset mock implementation for ConfigService
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        BANK_TRANSFER_IBAN: 'LU12 3456 7890 1234 5678',
+        BANK_TRANSFER_BIC: 'BGLLLULL',
+        BANK_TRANSFER_ACCOUNT_HOLDER: 'ArtiConnect SAS',
+        BANK_TRANSFER_BANK_NAME: 'BGL BNP Paribas',
+        BANK_TRANSFER_EXPIRY_DAYS: '7',
+      };
+      return config[key];
+    });
+
+    // Reset mock implementations
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BankTransferService,
@@ -80,6 +106,7 @@ describe('BankTransferService', () => {
         { provide: ConfigService, useValue: mockConfigService },
         { provide: StripeService, useValue: mockStripeService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -355,9 +382,7 @@ describe('BankTransferService', () => {
     it('should throw NotFoundException if transaction not found', async () => {
       mockPrismaService.transaction.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getBankTransferStatus('nonexistent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getBankTransferStatus('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should not return instructions for completed transactions', async () => {
@@ -393,10 +418,11 @@ describe('BankTransferService', () => {
 
   describe('getStatistics', () => {
     it('should return bank transfer statistics', async () => {
+      // Service uses Number(t.amount) so mock should return plain numbers
       mockPrismaService.transaction.findMany.mockResolvedValue([
-        { ...mockTransaction, status: 'PENDING', amount: { toNumber: () => 100 } },
-        { ...mockTransaction, status: 'COMPLETED', amount: { toNumber: () => 200 } },
-        { ...mockTransaction, status: 'COMPLETED', amount: { toNumber: () => 150 } },
+        { ...mockTransaction, status: 'PENDING', amount: 100 },
+        { ...mockTransaction, status: 'COMPLETED', amount: 200 },
+        { ...mockTransaction, status: 'COMPLETED', amount: 150 },
       ]);
 
       const result = await service.getStatistics(30);

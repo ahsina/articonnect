@@ -5,6 +5,7 @@ import { StripeService } from './stripe.service';
 import { MissionType, Mission, NoShowEvent, NotificationType } from '@prisma/client';
 import type { NoShowEventWithMission } from '../types/payment.types';
 import { NotificationService } from '../../notification/services/notification.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 /**
  * ================================================================
@@ -59,6 +60,7 @@ export class NoShowService {
     private reputationService: ReputationService,
     private stripeService: StripeService,
     private notificationService: NotificationService,
+    private platformConfig: PlatformConfigService,
   ) {}
 
   /**
@@ -96,10 +98,10 @@ export class NoShowService {
     }
 
     // Valider les preuves minimales
-    this.validateNoShowProofs(data, mission);
+    await this.validateNoShowProofs(data, mission);
 
     // Calculer les frais de no-show
-    const feeAmount = this.calculateNoShowFee(mission.type);
+    const feeAmount = await this.calculateNoShowFee(mission.type);
 
     // Créer l'événement no-show
     const noShowEvent = await this.prisma.noShowEvent.create({
@@ -117,7 +119,7 @@ export class NoShowService {
     });
 
     // Vérifier si validation automatique possible
-    const canAutoValidate = this.canAutoValidate(data, mission);
+    const canAutoValidate = await this.canAutoValidate(data, mission);
 
     if (canAutoValidate) {
       // Auto-validation
@@ -267,6 +269,12 @@ export class NoShowService {
   private async applyNoShowConsequences(noShowEvent: NoShowEventWithMission): Promise<void> {
     const { mission } = noShowEvent;
 
+    // Get configurable values
+    const reputationRules = await this.platformConfig.getReputationRules();
+    const noShowPenalty = reputationRules.noShowPenalty ?? -10;
+    const minScore = reputationRules.minScore ?? 0;
+    const maxScore = reputationRules.maxScore ?? 200;
+
     // Atomic transaction for all database operations
     await this.prisma.$transaction(async (tx) => {
       // 1. Pénaliser le client (inline to include in transaction)
@@ -277,7 +285,7 @@ export class NoShowService {
       if (user) {
         // Apply no-show penalty
         const previousScore = user.reputationScore;
-        const newScore = Math.max(0, Math.min(200, previousScore - 10));
+        const newScore = Math.max(minScore, Math.min(maxScore, previousScore + noShowPenalty));
 
         await tx.user.update({
           where: { id: mission.clientId },
@@ -291,7 +299,7 @@ export class NoShowService {
           data: {
             userId: mission.clientId,
             action: 'NO_SHOW',
-            pointsChange: -10,
+            pointsChange: noShowPenalty,
             previousScore,
             newScore,
             reason: 'No-show confirmé par admin',
@@ -363,21 +371,26 @@ export class NoShowService {
   /**
    * Valide que les preuves minimales sont fournies
    */
-  private validateNoShowProofs(
+  private async validateNoShowProofs(
     data: ReportNoShowDto,
     mission: Mission,
-  ): void {
-    // 1. Vérifier l'attente minimum (15 minutes)
-    if (data.waitDurationMinutes < 15) {
+  ): Promise<void> {
+    const noShowConfig = await this.platformConfig.getNoShowConfig();
+    const minWaitTime = noShowConfig.minimumWaitTimeMinutes ?? 15;
+    const minContactAttempts = noShowConfig.minContactAttempts ?? 2;
+    const maxGpsDistance = noShowConfig.gpsRadiusMeters ?? 100;
+
+    // 1. Vérifier l'attente minimum
+    if (data.waitDurationMinutes < minWaitTime) {
       throw new BadRequestException(
-        'Attente minimum de 15 minutes requise avant de signaler un no-show',
+        `Attente minimum de ${minWaitTime} minutes requise avant de signaler un no-show`,
       );
     }
 
-    // 2. Vérifier les tentatives de contact (minimum 2)
-    if (data.contactAttempts.length < 2) {
+    // 2. Vérifier les tentatives de contact
+    if (data.contactAttempts.length < minContactAttempts) {
       throw new BadRequestException(
-        'Minimum 2 tentatives de contact requises',
+        `Minimum ${minContactAttempts} tentatives de contact requises`,
       );
     }
 
@@ -399,10 +412,10 @@ export class NoShowService {
       mission.longitude,
     );
 
-    // Distance max: 100 mètres
-    if (distance > 100) {
+    // Distance max configurable
+    if (distance > maxGpsDistance) {
       throw new BadRequestException(
-        'Position GPS trop éloignée de l\'adresse de la mission (max 100m)',
+        `Position GPS trop éloignée de l'adresse de la mission (max ${maxGpsDistance}m)`,
       );
     }
   }
@@ -410,28 +423,35 @@ export class NoShowService {
   /**
    * Détermine si le no-show peut être auto-validé
    */
-  private canAutoValidate(data: ReportNoShowDto, mission: Mission): boolean {
+  private async canAutoValidate(data: ReportNoShowDto, mission: Mission): Promise<boolean> {
+    const noShowConfig = await this.platformConfig.getNoShowConfig();
+    const autoValidateWaitTime = noShowConfig.autoValidationRequirements?.minWaitTime ?? 20;
+    const autoValidateContactAttempts = noShowConfig.autoValidationRequirements?.minContactAttempts ?? 3;
+    const autoValidateMinPhotos = 2; // Default: 2 photos minimum for auto-validation
+    const autoValidateGpsAccuracy = 20; // Default: 20m GPS accuracy for auto-validation
+    const autoValidateMaxDistance = noShowConfig.gpsRadiusMeters ? noShowConfig.gpsRadiusMeters / 2 : 50;
+
     // Critères d'auto-validation:
-    // 1. Attente >= 20 minutes (plus que le minimum)
-    if (data.waitDurationMinutes < 20) return false;
+    // 1. Attente >= configured minutes (plus que le minimum)
+    if (data.waitDurationMinutes < autoValidateWaitTime) return false;
 
-    // 2. Au moins 3 tentatives de contact
-    if (data.contactAttempts.length < 3) return false;
+    // 2. Au moins configured tentatives de contact
+    if (data.contactAttempts.length < autoValidateContactAttempts) return false;
 
-    // 3. Au moins 2 photos
-    if (data.proofPhotos.length < 2) return false;
+    // 3. Au moins configured photos
+    if (data.proofPhotos.length < autoValidateMinPhotos) return false;
 
-    // 4. GPS précis (accuracy < 20m)
-    if (data.gpsCoords.accuracy > 20) return false;
+    // 4. GPS précis (accuracy < configured meters)
+    if (data.gpsCoords.accuracy > autoValidateGpsAccuracy) return false;
 
-    // 5. Distance au point de mission < 50m
+    // 5. Distance au point de mission < configured meters
     const distance = this.calculateDistance(
       data.gpsCoords.latitude,
       data.gpsCoords.longitude,
       mission.latitude,
       mission.longitude,
     );
-    if (distance > 50) return false;
+    if (distance > autoValidateMaxDistance) return false;
 
     // Toutes les conditions sont remplies
     return true;
@@ -440,15 +460,20 @@ export class NoShowService {
   /**
    * Calcule les frais de no-show selon le type de mission
    */
-  private calculateNoShowFee(missionType: MissionType): number {
+  private async calculateNoShowFee(missionType: MissionType): Promise<number> {
+    const noShowConfig = await this.platformConfig.getNoShowConfig();
+    // compensationMinimum is in cents, convert to euros
+    const baseFee = (noShowConfig.compensationMinimum ?? 3000) / 100; // Default 30€
+
     switch (missionType) {
       case 'EMERGENCY':
-        return 50; // 50€ pour urgence
+        // Emergency missions have higher no-show fee (approx 1.67x base)
+        return Math.round(baseFee * 1.67); // ~50€ default
       case 'SCHEDULED':
       case 'QUOTE':
-        return 30; // 30€ pour planifié/devis
+        return baseFee; // 30€ default
       default:
-        return 30;
+        return baseFee;
     }
   }
 

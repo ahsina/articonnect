@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { useSocket } from '@/lib/hooks/useSocket';
 import apiClient from '@/lib/api/client';
+import { Skeleton } from '../ui/skeleton';
 
 interface ChatBoxProps {
   otherUser: {
@@ -84,7 +85,46 @@ export function ChatBox({ otherUser, missionId }: ChatBoxProps) {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96">Chargement...</div>;
+    return (
+      <div className="flex flex-col h-[600px] bg-white rounded-lg shadow" role="status" aria-label="Chargement de la conversation">
+        {/* Header skeleton */}
+        <div className="flex items-center gap-3 p-4 border-b">
+          <Skeleton className="w-10 h-10 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+        </div>
+        {/* Messages skeleton */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Received message */}
+          <div className="flex justify-start">
+            <div className="max-w-[70%] space-y-2">
+              <Skeleton className="h-12 w-48 rounded-lg" />
+            </div>
+          </div>
+          {/* Sent message */}
+          <div className="flex justify-end">
+            <div className="max-w-[70%] space-y-2">
+              <Skeleton className="h-16 w-56 rounded-lg" />
+            </div>
+          </div>
+          {/* Received message */}
+          <div className="flex justify-start">
+            <div className="max-w-[70%] space-y-2">
+              <Skeleton className="h-10 w-40 rounded-lg" />
+            </div>
+          </div>
+        </div>
+        {/* Input skeleton */}
+        <div className="p-4 border-t">
+          <div className="flex gap-2">
+            <Skeleton className="flex-1 h-10" />
+            <Skeleton className="h-10 w-20" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

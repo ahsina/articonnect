@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import axios from 'axios';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -11,11 +12,7 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 // Mock Microsoft Graph client
 jest.mock('@microsoft/microsoft-graph-client', () => ({
   Client: {
-    init: jest.fn().mockReturnValue({
-      api: jest.fn().mockReturnValue({
-        post: jest.fn().mockResolvedValue({ id: 'outlook-event-123' }),
-      }),
-    }),
+    init: jest.fn(),
   },
 }));
 
@@ -73,6 +70,24 @@ describe('OutlookCalendarService', () => {
   };
 
   beforeEach(async () => {
+    // Reset ConfigService mock before each test
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        OUTLOOK_CALENDAR_CLIENT_ID: 'test-client-id',
+        OUTLOOK_CALENDAR_CLIENT_SECRET: 'test-client-secret',
+        OUTLOOK_CALENDAR_REDIRECT_URI: 'http://localhost:4000/calendar/outlook/callback',
+        OUTLOOK_CALENDAR_TENANT_ID: 'common',
+      };
+      return config[key];
+    });
+
+    // Reset Microsoft Graph client mock
+    (Client.init as jest.Mock).mockReturnValue({
+      api: jest.fn().mockReturnValue({
+        post: jest.fn().mockResolvedValue({ id: 'outlook-event-123' }),
+      }),
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OutlookCalendarService,

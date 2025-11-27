@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
+import { ProductGridSkeleton, Skeleton } from '@/components/ui/skeleton';
 import { marketplaceApi, PaginatedResponse, Product } from '@/lib/api/marketplace';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCartStore } from '@/lib/stores/cartStore';
@@ -137,8 +138,37 @@ export default function MarketplacePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Chargement...</div>
+      <div className="min-h-screen bg-gray-50 py-8" role="status" aria-label="Chargement du marketplace">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header skeleton */}
+          <div className="mb-8">
+            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+
+          {/* Filters skeleton */}
+          <div className="mb-8 space-y-4">
+            <div className="flex gap-4">
+              <Skeleton className="flex-1 h-10" />
+              <Skeleton className="h-10 w-36" />
+              <Skeleton className="h-10 w-40" />
+            </div>
+            <div className="flex gap-2">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-24 rounded-full" />
+              ))}
+            </div>
+          </div>
+
+          {/* Results info skeleton */}
+          <div className="mb-4 flex items-center justify-between">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+
+          {/* Products grid skeleton */}
+          <ProductGridSkeleton count={12} />
+        </div>
       </div>
     );
   }

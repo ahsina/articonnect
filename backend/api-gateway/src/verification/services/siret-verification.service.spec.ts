@@ -45,6 +45,15 @@ describe('SiretVerificationService', () => {
   };
 
   beforeEach(async () => {
+    // Reset ConfigService mock before each test
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        INSEE_API_URL: 'https://api.insee.fr/entreprises/sirene/V3',
+        INSEE_API_TOKEN: 'test-token',
+      };
+      return config[key];
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SiretVerificationService,

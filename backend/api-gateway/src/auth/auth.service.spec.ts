@@ -7,6 +7,7 @@ import { RedisService } from '../common/redis/redis.service';
 import { EmailService } from '../email/services/email.service';
 import { TwoFactorService } from './services/two-factor.service';
 import { MultiAccountDetectorService } from '../fraud/services/multi-account-detector.service';
+import { FeatureToggleService } from '../fraud/services/feature-toggle.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -32,6 +33,16 @@ describe('AuthService', () => {
       update: jest.fn(),
       updateMany: jest.fn(),
     },
+    emailVerificationToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
+    passwordResetToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 
   const mockRedisService = {
@@ -48,6 +59,7 @@ describe('AuthService', () => {
 
   const mockEmailService = {
     sendVerificationEmail: jest.fn(),
+    sendEmailVerification: jest.fn(),
     sendPasswordResetEmail: jest.fn(),
     sendWelcomeEmail: jest.fn(),
   };
@@ -64,7 +76,21 @@ describe('AuthService', () => {
     analyzeRegistration: jest.fn(),
   };
 
+  const mockFeatureToggleService = {
+    isMultiAccountDetectionEnabled: jest.fn(),
+    getMultiAccountRiskThreshold: jest.fn(),
+    isReviewFraudDetectionEnabled: jest.fn(),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations before each test
+    mockJwtService.sign.mockReturnValue('test-token');
+    mockJwtService.verify.mockReturnValue({ sub: 'user-id' });
+    mockMultiAccountDetectorService.checkForDuplicates.mockResolvedValue({ isDuplicate: false });
+    mockMultiAccountDetectorService.analyzeRegistration.mockResolvedValue({ riskScore: 0, signals: [] });
+    mockFeatureToggleService.isMultiAccountDetectionEnabled.mockResolvedValue(false);
+    mockFeatureToggleService.getMultiAccountRiskThreshold.mockResolvedValue(70);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -74,6 +100,7 @@ describe('AuthService', () => {
         { provide: EmailService, useValue: mockEmailService },
         { provide: TwoFactorService, useValue: mockTwoFactorService },
         { provide: MultiAccountDetectorService, useValue: mockMultiAccountDetectorService },
+        { provide: FeatureToggleService, useValue: mockFeatureToggleService },
       ],
     }).compile();
 

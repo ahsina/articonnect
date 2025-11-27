@@ -2,15 +2,23 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { OrderItemDto } from '../dto/order.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 @Injectable()
 export class OrderService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private platformConfig: PlatformConfigService,
+  ) {}
 
   async create(clientId: string, items: OrderItemDto[], shippingAddress: string) {
+    // Get configurable tax settings
+    const taxSettings = await this.platformConfig.getTaxSettings();
+    const vatRate = (taxSettings.defaultVatRate ?? 17) / 100; // Default 17% Luxembourg VAT
+    const flatShippingCost = 5.99; // Flat shipping cost
+
     // Validate and calculate totals
     let subtotal = 0;
-    const VAT_RATE = 0.17; // Luxembourg VAT 17%
 
     // Prepare order items with prices
     const orderItems: Array<{
@@ -47,8 +55,8 @@ export class OrderService {
       });
     }
 
-    const vat = subtotal * VAT_RATE;
-    const shippingCost = 5.99; // Flat shipping cost
+    const vat = subtotal * vatRate;
+    const shippingCost = flatShippingCost;
     const total = subtotal + vat + shippingCost;
 
     // Create order with transaction

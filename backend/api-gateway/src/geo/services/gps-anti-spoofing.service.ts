@@ -312,7 +312,8 @@ export class GpsAntiSpoofingService {
       // Don't fail validation if IP check fails
     }
 
-    return { valid: true, warnings, score };
+    // Return valid: false if there are any warnings so they get added to result
+    return { valid: warnings.length === 0, warnings, score };
   }
 
   /**
@@ -380,7 +381,8 @@ export class GpsAntiSpoofingService {
       score += 5;
     }
 
-    return { valid: true, warnings, score };
+    // Return valid: false if there are any warnings so they get added to result
+    return { valid: warnings.length === 0, warnings, score };
   }
 
   /**
@@ -433,7 +435,12 @@ export class GpsAntiSpoofingService {
       return null;
     }
 
-    return JSON.parse(locations[0]);
+    const parsed = JSON.parse(locations[0]);
+    // Convert timestamp string back to Date object (JSON.parse converts Date to string)
+    if (parsed.timestamp && typeof parsed.timestamp === 'string') {
+      parsed.timestamp = new Date(parsed.timestamp);
+    }
+    return parsed;
   }
 
   /**

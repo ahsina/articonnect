@@ -4,19 +4,33 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { LoggerService } from '../logger/logger.service';
 import { ErrorCodes, StandardErrorResponse } from '../interfaces/error-response.interface';
+import { SentryService } from '../sentry/sentry.service';
+
+interface RequestWithUser extends Request {
+  user?: {
+    id: string;
+    email?: string;
+    role?: string;
+  };
+}
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly logger: LoggerService) {}
+  constructor(
+    private readonly logger: LoggerService,
+    @Optional() @Inject(SentryService) private readonly sentryService?: SentryService,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const request = ctx.getRequest<RequestWithUser>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
@@ -47,6 +61,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       code = ErrorCodes.INTERNAL_ERROR;
     }
 
+    // Report to Sentry for server errors (5xx) and significant errors
+    if (this.shouldReportToSentry(status, exception)) {
+      this.reportToSentry(exception, request, status, code);
+    }
+
     // Log error (sanitize for production)
     const logMessage = Array.isArray(message) ? message.join(', ') : message;
     this.logger.error(
@@ -75,6 +94,52 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // Send response
     response.status(status).json(errorResponse);
+  }
+
+  /**
+   * Determine if an error should be reported to Sentry
+   */
+  private shouldReportToSentry(status: number, exception: unknown): boolean {
+    // Always report server errors (5xx)
+    if (status >= 500) {
+      return true;
+    }
+
+    // Report rate limiting violations (might indicate abuse)
+    if (status === 429) {
+      return true;
+    }
+
+    // Don't report normal client errors (4xx)
+    return false;
+  }
+
+  /**
+   * Report error to Sentry with context
+   */
+  private reportToSentry(
+    exception: unknown,
+    request: RequestWithUser,
+    status: number,
+    code?: string,
+  ) {
+    if (!this.sentryService || !(exception instanceof Error)) {
+      return;
+    }
+
+    const user = request.user;
+    const extra = {
+      method: request.method,
+      url: request.url,
+      statusCode: status,
+      errorCode: code,
+      query: request.query,
+      params: request.params,
+      ip: request.ip,
+      userAgent: request.get('user-agent'),
+    };
+
+    this.sentryService.captureExceptionWithUser(exception, user, extra);
   }
 
   /**

@@ -7,6 +7,7 @@ import { ReputationService } from './reputation.service';
 import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { KycService } from '../../compliance/services/kyc.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 describe('PaymentService', () => {
   let service: PaymentService;
@@ -38,18 +39,32 @@ describe('PaymentService', () => {
     reputationHistory: {
       create: jest.fn(),
     },
+    compensationLog: {
+      create: jest.fn(),
+    },
+    dispute: {
+      create: jest.fn(),
+    },
+    $transaction: jest.fn((callback) => callback(mockPrismaService)),
   };
 
   const mockStripeService = {
     createPaymentIntent: jest.fn(),
     capturePaymentIntent: jest.fn(),
+    capturePayment: jest.fn(),
     createRefund: jest.fn(),
+    refundPayment: jest.fn(),
     constructEvent: jest.fn(),
+    constructWebhookEvent: jest.fn(),
+    createTransfer: jest.fn(),
   };
 
   const mockReputationService = {
     calculateDepositPercentage: jest.fn(),
+    calculateDepositAmount: jest.fn(),
     updateReputation: jest.fn(),
+    applyDisputeLostPenalty: jest.fn(),
+    applyMissionCompletedReward: jest.fn(),
   };
 
   const mockPayoutFraudDetectorService = {
@@ -70,7 +85,30 @@ describe('PaymentService', () => {
     isVerificationRequired: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
+    getReputationRules: jest.fn().mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+    mockPlatformConfigService.getReputationRules.mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentService,
@@ -80,6 +118,7 @@ describe('PaymentService', () => {
         { provide: PayoutFraudDetectorService, useValue: mockPayoutFraudDetectorService },
         { provide: FeatureToggleService, useValue: mockFeatureToggleService },
         { provide: KycService, useValue: mockKycService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -222,7 +261,7 @@ describe('PaymentService', () => {
 
     it('should create deposit payment based on reputation', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
-      mockReputationService.calculateDepositPercentage.mockResolvedValue(30);
+      mockReputationService.calculateDepositAmount.mockReturnValue(30);
       mockStripeService.createPaymentIntent.mockResolvedValue({
         id: 'pi_123',
         client_secret: 'secret_123',
@@ -239,7 +278,8 @@ describe('PaymentService', () => {
       const result = await service.createDepositPayment(missionId, userId);
 
       expect(result).toBeDefined();
-      expect(mockReputationService.calculateDepositPercentage).toHaveBeenCalled();
+      // Service uses pre-set depositPercentage from mission, calculates amount from it
+      expect(mockStripeService.createPaymentIntent).toHaveBeenCalled();
     });
 
     it('should throw error if deposit not required', async () => {
@@ -259,19 +299,26 @@ describe('PaymentService', () => {
       const signature = 'sig_123';
       const mockEvent = { id: 'evt_123', type: 'payment_intent.succeeded' };
 
-      mockStripeService.constructEvent.mockReturnValue(mockEvent);
+      // Set STRIPE_WEBHOOK_SECRET env var for test
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+      mockStripeService.constructWebhookEvent.mockReturnValue(mockEvent);
 
       const result = await service.verifyWebhookSignature(payload, signature);
 
       expect(result).toEqual(mockEvent);
-      expect(mockStripeService.constructEvent).toHaveBeenCalledWith(payload, signature);
+      expect(mockStripeService.constructWebhookEvent).toHaveBeenCalledWith(
+        payload,
+        signature,
+        'whsec_test',
+      );
     });
 
     it('should throw error for invalid signature', async () => {
       const payload = 'raw-body';
       const signature = 'invalid_sig';
 
-      mockStripeService.constructEvent.mockImplementation(() => {
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+      mockStripeService.constructWebhookEvent.mockImplementation(() => {
         throw new Error('Invalid signature');
       });
 
@@ -284,6 +331,14 @@ describe('PaymentService', () => {
     const userId = 'user-123';
     const reason = 'CHANGED_MIND';
 
+    const mockPayment = {
+      id: 'payment-123',
+      missionId,
+      amount: 100,
+      stripePaymentIntentId: 'pi_123',
+      type: 'FULL_PAYMENT',
+    };
+
     const mockMission = {
       id: missionId,
       clientId: userId,
@@ -295,56 +350,92 @@ describe('PaymentService', () => {
       },
       artisan: {
         id: 'artisan-123',
+        artisanProfile: {
+          stripeAccountId: 'acct_123',
+          stripeOnboarded: true,
+        },
       },
-    };
-
-    const mockPayment = {
-      id: 'payment-123',
-      missionId,
-      amount: 100,
-      stripePaymentIntentId: 'pi_123',
-      type: 'FULL_PAYMENT',
+      payments: [mockPayment],
+      transaction: null,
     };
 
     it('should process refund for valid mission', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
-      mockPrismaService.payment.findFirst.mockResolvedValue(mockPayment);
-      mockStripeService.createRefund.mockResolvedValue({
+      mockStripeService.refundPayment.mockResolvedValue({
         id: 're_123',
         amount: 10000,
       });
-      mockPrismaService.payment.update.mockResolvedValue({
+      mockPrismaService.payment.create.mockResolvedValue({
         ...mockPayment,
+        type: 'REFUND',
         refundedAmount: 100,
       });
+      // Handle both client and artisan lookups
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === userId) {
+          return Promise.resolve({ id: userId, reputationScore: 100 });
+        }
+        // Artisan lookup
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
+      });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
+      mockPrismaService.mission.update.mockResolvedValue({
+        ...mockMission,
+        status: 'CANCELLED',
+      });
+      mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
 
       const result = await service.processRefund(missionId, reason, undefined, userId);
 
       expect(result).toBeDefined();
-      expect(mockStripeService.createRefund).toHaveBeenCalled();
+      expect(mockStripeService.refundPayment).toHaveBeenCalled();
     });
 
     it('should throw error if no payment found', async () => {
-      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
-      mockPrismaService.payment.findFirst.mockResolvedValue(null);
+      mockPrismaService.mission.findUnique.mockResolvedValue({
+        ...mockMission,
+        payments: [],
+      });
 
-      await expect(
-        service.processRefund(missionId, reason, undefined, userId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.processRefund(missionId, reason, undefined, userId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should compensate artisan for client-fault refunds', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
-      mockPrismaService.payment.findFirst.mockResolvedValue(mockPayment);
-      mockStripeService.createRefund.mockResolvedValue({
+      mockStripeService.refundPayment.mockResolvedValue({
         id: 're_123',
         amount: 10000,
       });
-      mockPrismaService.payment.update.mockResolvedValue({
+      mockPrismaService.payment.create.mockResolvedValue({
         ...mockPayment,
+        type: 'REFUND',
         refundedAmount: 100,
         artisanCompensated: true,
       });
+      // Handle both client and artisan lookups
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === userId) {
+          return Promise.resolve({ id: userId, reputationScore: 100 });
+        }
+        // Artisan lookup
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
+      });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
+      mockPrismaService.mission.update.mockResolvedValue({
+        ...mockMission,
+        status: 'CANCELLED',
+      });
+      mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
 
       const result = await service.processRefund(missionId, 'CHANGED_MIND', undefined, userId);
 
@@ -356,24 +447,29 @@ describe('PaymentService', () => {
     const missionId = 'mission-123';
     const userId = 'user-123';
 
-    const mockMission = {
-      id: missionId,
-      clientId: userId,
-      status: 'IN_PROGRESS',
-      agreedPrice: 100,
-    };
-
     const mockTransaction = {
       id: 'tx-123',
       missionId,
       status: 'HELD',
       stripePaymentIntentId: 'pi_123',
+      artisanAmount: 88,
+      mission: {
+        id: missionId,
+        clientId: userId,
+        status: 'IN_PROGRESS',
+        agreedPrice: 100,
+        artisan: {
+          id: 'artisan-123',
+          artisanProfile: {
+            stripeAccountId: 'acct_123',
+          },
+        },
+      },
     };
 
     it('should capture payment for completed mission', async () => {
-      mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
       mockPrismaService.transaction.findUnique.mockResolvedValue(mockTransaction);
-      mockStripeService.capturePaymentIntent.mockResolvedValue({
+      mockStripeService.capturePayment.mockResolvedValue({
         id: 'pi_123',
         status: 'succeeded',
       });
@@ -381,17 +477,19 @@ describe('PaymentService', () => {
         ...mockTransaction,
         status: 'COMPLETED',
       });
+      mockFeatureToggleService.isPayoutFraudScreeningEnabled.mockResolvedValue(false);
+      mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
 
-      const result = await service.captureMissionPayment(missionId, userId);
+      const result = await service.captureMissionPayment(missionId);
 
       expect(result).toBeDefined();
-      expect(mockStripeService.capturePaymentIntent).toHaveBeenCalled();
+      expect(mockStripeService.capturePayment).toHaveBeenCalled();
     });
 
-    it('should throw error if mission not found', async () => {
-      mockPrismaService.mission.findUnique.mockResolvedValue(null);
+    it('should throw error if transaction not found', async () => {
+      mockPrismaService.transaction.findUnique.mockResolvedValue(null);
 
-      await expect(service.captureMissionPayment(missionId, userId)).rejects.toThrow();
+      await expect(service.captureMissionPayment(missionId)).rejects.toThrow();
     });
   });
 });

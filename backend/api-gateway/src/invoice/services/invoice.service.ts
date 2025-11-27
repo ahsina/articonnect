@@ -5,6 +5,7 @@ import { UpdateInvoiceDto } from '../dto/update-invoice.dto';
 import { PdfGeneratorService } from './pdf-generator.service';
 import { S3Service } from '../../upload/services/s3.service';
 import { Prisma, InvoiceType } from '@prisma/client';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 @Injectable()
 export class InvoiceService {
@@ -12,6 +13,7 @@ export class InvoiceService {
     private prisma: PrismaService,
     private pdfGenerator: PdfGeneratorService,
     private s3Service: S3Service,
+    private platformConfig: PlatformConfigService,
   ) {}
 
   /**
@@ -61,8 +63,9 @@ export class InvoiceService {
 
   /**
    * Calculate tax amount and total
+   * @param platformCommissionRate - Commission rate from PlatformConfigService (defaults to 12 if not provided)
    */
-  private calculateAmounts(subtotal: number, taxRate: number, platformCommissionRate: number = 12) {
+  private calculateAmounts(subtotal: number, taxRate: number, platformCommissionRate: number) {
     const taxAmount = (subtotal * taxRate) / 100;
     const totalAmount = subtotal + taxAmount;
     const platformCommission = (subtotal * platformCommissionRate) / 100;
@@ -83,10 +86,15 @@ export class InvoiceService {
     // Generate invoice number
     const { invoiceNumber, year, sequenceNumber } = await this.generateInvoiceNumber();
 
-    // Calculate amounts
+    // Get configurable commission rate
+    const feeSettings = await this.platformConfig.getFeeSettings();
+    const platformCommissionRate = feeSettings.platformCommissionRate; // Default 12%
+
+    // Calculate amounts with configurable commission rate
     const amounts = this.calculateAmounts(
       createInvoiceDto.subtotal,
       createInvoiceDto.taxRate,
+      platformCommissionRate,
     );
 
     // Create invoice
@@ -105,7 +113,7 @@ export class InvoiceService {
         taxRate: createInvoiceDto.taxRate,
         taxAmount: amounts.taxAmount,
         totalAmount: amounts.totalAmount,
-        platformCommissionRate: 12, // Default commission rate
+        platformCommissionRate: platformCommissionRate,
         platformCommission: amounts.platformCommission,
         artisanNetAmount: amounts.artisanNetAmount,
         lineItems: createInvoiceDto.lineItems as any,
@@ -391,7 +399,9 @@ export class InvoiceService {
     if (updateInvoiceDto.subtotal !== undefined || updateInvoiceDto.taxRate !== undefined) {
       const subtotal = updateInvoiceDto.subtotal ?? parseFloat(invoice.subtotal.toString());
       const taxRate = updateInvoiceDto.taxRate ?? parseFloat(invoice.taxRate.toString());
-      const amounts = this.calculateAmounts(subtotal, taxRate);
+      // Use existing invoice's commission rate when recalculating
+      const commissionRate = parseFloat(invoice.platformCommissionRate.toString());
+      const amounts = this.calculateAmounts(subtotal, taxRate, commissionRate);
 
       updateData = {
         ...updateData,

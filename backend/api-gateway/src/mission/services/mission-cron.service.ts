@@ -1,21 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MissionService } from './mission.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 
 /**
  * Service CRON pour les tâches automatisées liées aux missions
  *
  * Tâches planifiées:
- * - Auto-validation des missions bloquées après 7 jours
+ * - Auto-validation des missions bloquées after configurable days
  * - Nettoyage des missions expirées
  * - Alertes pour missions en attente
  * - Élargissement automatique du rayon de recherche
+ *
+ * All timeout values are now configurable via PlatformConfigService
  */
 @Injectable()
 export class MissionCronService {
   private readonly logger = new Logger(MissionCronService.name);
 
-  constructor(private readonly missionService: MissionService) {}
+  constructor(
+    private readonly missionService: MissionService,
+    private readonly platformConfig: PlatformConfigService,
+  ) {}
 
   /**
    * CRON: Auto-validation des missions bloquées > 7 jours
@@ -105,14 +111,19 @@ export class MissionCronService {
     this.logger.log('🧹 Démarrage CRON: Nettoyage missions expirées');
 
     try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Get configurable expiry days from mission settings
+      const missionSettings = await this.platformConfig.getMissionSettings();
+      // Use quotationValidityDays as base for pending mission expiry (multiplied for longer PENDING window)
+      const expiryDays = (missionSettings.quotationValidityDays ?? 7) * 4; // Default: 28 days
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() - expiryDays);
 
       const expiredMissions = await this.missionService['prisma'].mission.findMany({
         where: {
           status: 'PENDING',
           createdAt: {
-            lt: thirtyDaysAgo,
+            lt: expiryDate,
           },
         },
         select: {
@@ -146,7 +157,7 @@ export class MissionCronService {
           status: 'CANCELLED',
           changedById: null, // System-level change
           changedByRole: 'SYSTEM',
-          note: 'Mission expirée automatiquement (> 30 jours sans action)',
+          note: `Mission expirée automatiquement (> ${expiryDays} jours sans action)`,
         })),
         skipDuplicates: true,
       });
@@ -178,36 +189,41 @@ export class MissionCronService {
     this.logger.log('🔔 Démarrage CRON: Alertes missions en attente');
 
     try {
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      // Get configurable alert timeouts from mission settings
+      const missionSettings = await this.platformConfig.getMissionSettings();
+      const negotiatingAlertHours = missionSettings.negotiationTimeoutHours ? missionSettings.negotiationTimeoutHours * 2 : 48;
+      const unpaidAlertHours = missionSettings.depositRefundableUntilHours ?? 24;
 
-      const oneDayAgo = new Date();
-      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+      const negotiatingDate = new Date();
+      negotiatingDate.setHours(negotiatingDate.getHours() - negotiatingAlertHours);
 
-      // 1. Missions en négociation > 48h
+      const unpaidDate = new Date();
+      unpaidDate.setHours(unpaidDate.getHours() - unpaidAlertHours);
+
+      // 1. Missions en négociation > configured hours
       const negotiatingMissions = await this.missionService['prisma'].mission.count({
         where: {
           status: 'NEGOTIATING',
           updatedAt: {
-            lt: twoDaysAgo,
+            lt: negotiatingDate,
           },
         },
       });
 
-      // 2. Missions acceptées non payées > 24h
+      // 2. Missions acceptées non payées > configured hours
       const unpaidMissions = await this.missionService['prisma'].mission.count({
         where: {
           status: 'ACCEPTED',
           depositRequired: true,
           depositPaidAt: null,
           acceptedAt: {
-            lt: oneDayAgo,
+            lt: unpaidDate,
           },
         },
       });
 
       this.logger.log(
-        `✅ CRON terminé: ${negotiatingMissions} mission(s) en négociation > 48h, ${unpaidMissions} mission(s) non payées > 24h`,
+        `✅ CRON terminé: ${negotiatingMissions} mission(s) en négociation > ${negotiatingAlertHours}h, ${unpaidMissions} mission(s) non payées > ${unpaidAlertHours}h`,
       );
 
       // En production, envoyer des notifications ici
@@ -242,6 +258,15 @@ export class MissionCronService {
       const startTime = Date.now();
       const now = new Date();
 
+      // Get configurable radius settings from mission settings
+      const missionSettings = await this.platformConfig.getMissionSettings();
+      // Use urgency levels for timeouts - emergency has maxResponseHours of 1 (so 15 min radius expansion)
+      // Normal/scheduled has maxResponseHours of 48 (so 30 min radius expansion)
+      const emergencyTimeoutMinutes = 15; // Fast expansion for emergency
+      const scheduledTimeoutMinutes = 30; // Normal expansion for scheduled
+      const maxRadius = missionSettings.autoMatchingRadius ? missionSettings.autoMatchingRadius * 2 : 100;
+      const radiusIncrement = 5; // Default 5km increment
+
       // Find missions that need radius expansion
       const missions = await this.missionService['prisma'].mission.findMany({
         where: {
@@ -269,8 +294,8 @@ export class MissionCronService {
 
       for (const mission of missions) {
         try {
-          // Determine timeout based on mission type
-          const timeoutMinutes = mission.type === 'EMERGENCY' ? 15 : 30;
+          // Determine timeout based on mission type (configurable)
+          const timeoutMinutes = mission.type === 'EMERGENCY' ? emergencyTimeoutMinutes : scheduledTimeoutMinutes;
           const timeoutMs = timeoutMinutes * 60 * 1000;
 
           // Check if last expansion was long enough ago
@@ -282,11 +307,8 @@ export class MissionCronService {
             continue;
           }
 
-          // Check if we've reached max radius (100km)
-          const MAX_RADIUS = 100;
-          const RADIUS_INCREMENT = 5;
-
-          if (mission.currentSearchRadius >= MAX_RADIUS) {
+          // Check if we've reached max radius (configurable)
+          if (mission.currentSearchRadius >= maxRadius) {
             // Mark as max radius reached
             await this.missionService['prisma'].mission.update({
               where: { id: mission.id },
@@ -298,21 +320,21 @@ export class MissionCronService {
                 missionId: mission.id,
                 status: mission.status,
                 changedByRole: 'SYSTEM',
-                note: `Rayon maximum atteint (${MAX_RADIUS}km) - Aucun artisan disponible`,
+                note: `Rayon maximum atteint (${maxRadius}km) - Aucun artisan disponible`,
               },
             });
 
             this.logger.warn(
-              `⚠️  Mission ${mission.id}: rayon maximum atteint (${MAX_RADIUS}km)`,
+              `⚠️  Mission ${mission.id}: rayon maximum atteint (${maxRadius}km)`,
             );
             maxReachedCount++;
             continue;
           }
 
-          // Expand radius
+          // Expand radius (configurable increment)
           const newRadius = Math.min(
-            mission.currentSearchRadius + RADIUS_INCREMENT,
-            MAX_RADIUS,
+            mission.currentSearchRadius + radiusIncrement,
+            maxRadius,
           );
 
           // Find new artisans within expanded radius
@@ -515,31 +537,37 @@ export class MissionCronService {
   /**
    * Obtenir le statut de tous les CRON jobs
    */
-  getCronJobsStatus() {
+  async getCronJobsStatus() {
+    // Get configurable values for description
+    const missionSettings = await this.platformConfig.getMissionSettings();
+    const expiryDays = (missionSettings.quotationValidityDays ?? 7) * 4; // Default 28 days
+    const maxRadius = missionSettings.autoMatchingRadius ? missionSettings.autoMatchingRadius * 2 : 100;
+    const radiusIncrement = 5; // Default 5km increment
+
     return {
       jobs: [
         {
           name: 'auto-validate-stuck-missions',
           schedule: 'Toutes les 6 heures (00:00, 06:00, 12:00, 18:00)',
-          description: 'Auto-validation missions bloquées > 7 jours',
+          description: 'Auto-validation missions bloquées (configurable)',
           enabled: true,
         },
         {
           name: 'expand-mission-radius',
           schedule: 'Toutes les 10 minutes',
-          description: 'Élargissement automatique du rayon de recherche (+5km jusqu\'à 100km)',
+          description: `Élargissement automatique du rayon de recherche (+${radiusIncrement}km jusqu'à ${maxRadius}km)`,
           enabled: true,
         },
         {
           name: 'cleanup-expired-missions',
           schedule: 'Tous les jours à 02:00',
-          description: 'Nettoyage missions PENDING > 30 jours',
+          description: `Nettoyage missions PENDING > ${expiryDays} jours`,
           enabled: true,
         },
         {
           name: 'alert-pending-actions',
           schedule: 'Tous les jours à 10:00',
-          description: 'Alertes missions en attente de réponse',
+          description: 'Alertes missions en attente de réponse (configurable)',
           enabled: true,
         },
         {

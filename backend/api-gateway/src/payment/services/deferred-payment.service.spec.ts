@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeferredPaymentService } from './deferred-payment.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 
 describe('DeferredPaymentService', () => {
@@ -23,11 +24,37 @@ describe('DeferredPaymentService', () => {
     },
   };
 
+  const mockPlatformConfigService = {
+    getReputationRules: jest.fn().mockResolvedValue({
+      trustedThreshold: 150,
+      warningThreshold: 50,
+      minScore: 0,
+      maxScore: 200,
+    }),
+    getFeeSettings: jest.fn().mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getReputationRules.mockResolvedValue({
+      trustedThreshold: 150,
+      warningThreshold: 50,
+      minScore: 0,
+      maxScore: 200,
+    });
+    mockPlatformConfigService.getFeeSettings.mockResolvedValue({
+      platformCommissionRate: 12,
+      artisanPayoutPercentage: 88,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DeferredPaymentService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -78,9 +105,7 @@ describe('DeferredPaymentService', () => {
     it('should throw if client not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.enableDeferredPayment(params)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.enableDeferredPayment(params)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw if user is not a client', async () => {
@@ -89,9 +114,7 @@ describe('DeferredPaymentService', () => {
         role: 'ARTISAN',
       });
 
-      await expect(service.enableDeferredPayment(params)).rejects.toThrow(
-        'Client introuvable',
-      );
+      await expect(service.enableDeferredPayment(params)).rejects.toThrow('Client introuvable');
     });
 
     it('should throw if client not eligible', async () => {
@@ -107,9 +130,7 @@ describe('DeferredPaymentService', () => {
         clientProfile: {},
       });
 
-      await expect(service.enableDeferredPayment(params)).rejects.toThrow(
-        'Client non éligible',
-      );
+      await expect(service.enableDeferredPayment(params)).rejects.toThrow('Client non éligible');
     });
   });
 
@@ -140,9 +161,9 @@ describe('DeferredPaymentService', () => {
         deferredPaymentEnabled: false,
       });
 
-      await expect(
-        service.disableDeferredPayment('client-123'),
-      ).rejects.toThrow('Paiement différé non activé');
+      await expect(service.disableDeferredPayment('client-123')).rejects.toThrow(
+        'Paiement différé non activé',
+      );
     });
 
     it('should throw if there is outstanding balance', async () => {
@@ -152,9 +173,9 @@ describe('DeferredPaymentService', () => {
         currentOutstanding: 500,
       });
 
-      await expect(
-        service.disableDeferredPayment('client-123'),
-      ).rejects.toThrow('500€ en attente de paiement');
+      await expect(service.disableDeferredPayment('client-123')).rejects.toThrow(
+        '500€ en attente de paiement',
+      );
     });
   });
 
@@ -318,9 +339,7 @@ describe('DeferredPaymentService', () => {
         deferredPaymentEnabled: false,
       });
 
-      await expect(service.createDeferredPayment(params)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.createDeferredPayment(params)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw if exceeds credit limit', async () => {
@@ -365,9 +384,7 @@ describe('DeferredPaymentService', () => {
     it('should throw if invoice not found', async () => {
       mockPrismaService.invoice.findUnique.mockResolvedValue(null);
 
-      await expect(service.markPaid('invalid-id')).rejects.toThrow(
-        'Facture introuvable',
-      );
+      await expect(service.markPaid('invalid-id')).rejects.toThrow('Facture introuvable');
     });
 
     it('should return message if already paid', async () => {

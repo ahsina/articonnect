@@ -4,18 +4,16 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../common/redis/redis.service';
 import { BadRequestException } from '@nestjs/common';
+import { Twilio } from 'twilio';
 
-// Mock Twilio
+// Mock Twilio - will be reset in beforeEach
+const mockTwilioMessages = {
+  create: jest.fn(),
+};
+
 jest.mock('twilio', () => {
   return {
-    Twilio: jest.fn().mockImplementation(() => ({
-      messages: {
-        create: jest.fn().mockResolvedValue({
-          sid: 'SM123456',
-          price: '0.05',
-        }),
-      },
-    })),
+    Twilio: jest.fn(),
   };
 });
 
@@ -26,16 +24,7 @@ describe('TwilioSmsService', () => {
   const mockPrismaService = {};
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
-      const config: Record<string, string> = {
-        TWILIO_ACCOUNT_SID: 'AC123456',
-        TWILIO_AUTH_TOKEN: 'auth-token',
-        TWILIO_PHONE_NUMBER: '+352123456789',
-        TWILIO_ENABLED: 'true',
-        API_BASE_URL: 'http://localhost:4000',
-      };
-      return config[key];
-    }),
+    get: jest.fn(),
   };
 
   const mockRedisService = {
@@ -47,6 +36,27 @@ describe('TwilioSmsService', () => {
   };
 
   beforeEach(async () => {
+    // Reset mock implementations before each test
+    mockConfigService.get.mockImplementation((key: string) => {
+      const config: Record<string, string> = {
+        TWILIO_ACCOUNT_SID: 'AC123456',
+        TWILIO_AUTH_TOKEN: 'auth-token',
+        TWILIO_PHONE_NUMBER: '+352123456789',
+        TWILIO_ENABLED: 'true',
+        API_BASE_URL: 'http://localhost:4000',
+      };
+      return config[key];
+    });
+
+    // Reset Twilio mock - must be done before module creation
+    mockTwilioMessages.create.mockResolvedValue({
+      sid: 'SM123456',
+      price: '0.05',
+    });
+    (Twilio as jest.Mock).mockImplementation(() => ({
+      messages: mockTwilioMessages,
+    }));
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TwilioSmsService,

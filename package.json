@@ -23,10 +23,31 @@
     "prisma:studio": "cd backend/shared && npx prisma studio",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend/api-gateway && npm run test",
-    "test:frontend": "cd frontend && npm run test"
+    "test:frontend": "cd frontend && npm run test",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend/api-gateway && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "engines": {
     "node": ">=20.0.0",

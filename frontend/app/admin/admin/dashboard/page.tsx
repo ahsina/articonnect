@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminApi, DashboardStats } from '@/lib/api/admin';
+import { adminApi, DashboardStats, AuditLog } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -10,16 +10,21 @@ export default function AdminDashboardPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
+    loadData();
   }, []);
 
-  const loadStats = async () => {
+  const loadData = async () => {
     try {
-      const data = await adminApi.getDashboardStats();
-      setStats(data);
+      const [statsData, activityData] = await Promise.all([
+        adminApi.getDashboardStats(),
+        adminApi.getAuditLogs({ limit: 10 }),
+      ]);
+      setStats(statsData);
+      setRecentActivity(activityData.data);
     } catch (error: any) {
       console.error('Error loading stats:', error);
       if (error.response?.status === 403) {
@@ -28,6 +33,48 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getActionColor = (action: string) => {
+    const actionLower = action.toLowerCase();
+    if (actionLower.includes('create') || actionLower.includes('register')) {
+      return 'bg-green-100 text-green-700';
+    }
+    if (actionLower.includes('delete') || actionLower.includes('remove')) {
+      return 'bg-red-100 text-red-700';
+    }
+    if (actionLower.includes('update') || actionLower.includes('edit')) {
+      return 'bg-blue-100 text-blue-700';
+    }
+    if (actionLower.includes('login') || actionLower.includes('auth')) {
+      return 'bg-purple-100 text-purple-700';
+    }
+    return 'bg-gray-100 text-gray-700';
+  };
+
+  const getResourceIcon = (resource: string) => {
+    const resourceLower = resource.toLowerCase();
+    if (resourceLower.includes('user')) return '👤';
+    if (resourceLower.includes('mission')) return '📋';
+    if (resourceLower.includes('payment')) return '💳';
+    if (resourceLower.includes('review')) return '⭐';
+    if (resourceLower.includes('auth') || resourceLower.includes('session')) return '🔐';
+    return '📄';
+  };
+
+  const getTimeAgo = (date: string) => {
+    const now = new Date();
+    const then = new Date(date);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString('fr-FR');
   };
 
   if (loading) {
@@ -74,9 +121,7 @@ export default function AdminDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
               <p className="text-3xl font-bold text-gray-900">{value}</p>
-              {subtitle && (
-                <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-              )}
+              {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
             </div>
             <div
               className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${colorClasses[color]}`}
@@ -94,12 +139,8 @@ export default function AdminDashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {t('admin', 'dashboard')}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {t('admin', 'platformOverviewArtiConnect')}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('admin', 'dashboard')}</h1>
+          <p className="text-gray-600 mt-2">{t('admin', 'platformOverviewArtiConnect')}</p>
         </div>
 
         {/* Stats Grid */}
@@ -212,18 +253,167 @@ export default function AdminDashboardPage() {
 
         {/* Recent Activity */}
         <Card className="mt-8">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
+            <button
+              onClick={() => router.push('/admin/audit-logs')}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              View All →
+            </button>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-gray-500">
-              <p>{t('admin', 'featureInDevelopment')}</p>
-              <p className="text-sm mt-2">
-                {t('admin', 'willShowLatestActions')}
-              </p>
-            </div>
+            {recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl">{getResourceIcon(activity.resource)}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-0.5 text-xs font-medium rounded ${getActionColor(activity.action)}`}
+                          >
+                            {activity.action}
+                          </span>
+                          <span className="text-gray-700">{activity.resource}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {activity.userId ? `User: ${activity.userId.slice(0, 8)}...` : 'System'} •{' '}
+                          {activity.ipAddress}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-400">{getTimeAgo(activity.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <span className="text-4xl block mb-2">📋</span>
+                <p>No recent activity</p>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Quick Links Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+          <button
+            onClick={() => router.push('/admin/fraud-settings')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🛡️</span>
+            <span className="font-medium text-gray-700">Fraud Settings</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/monitoring')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">📊</span>
+            <span className="font-medium text-gray-700">Monitoring</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/feature-flags')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🏳️</span>
+            <span className="font-medium text-gray-700">Feature Flags</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/cron')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">⚙️</span>
+            <span className="font-medium text-gray-700">CRON Jobs</span>
+          </button>
+        </div>
+
+        {/* Additional Quick Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <button
+            onClick={() => router.push('/admin/verifications')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">✅</span>
+            <span className="font-medium text-gray-700">KYC & Verification</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/disputes')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">⚠️</span>
+            <span className="font-medium text-gray-700">Disputes</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/audit-logs')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">📜</span>
+            <span className="font-medium text-gray-700">Audit Logs</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/moderation')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🔍</span>
+            <span className="font-medium text-gray-700">Moderation</span>
+          </button>
+        </div>
+
+        {/* More Quick Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <button
+            onClick={() => router.push('/admin/no-shows')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🚫</span>
+            <span className="font-medium text-gray-700">No-Shows</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/certifications')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">📜</span>
+            <span className="font-medium text-gray-700">Certifications</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/specialties')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">🛠️</span>
+            <span className="font-medium text-gray-700">Specialties</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/reputation')}
+            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+          >
+            <span className="text-2xl block mb-2">⭐</span>
+            <span className="font-medium text-gray-700">Reputation</span>
+          </button>
+        </div>
+
+        {/* Platform Settings - Prominent Link */}
+        <div className="mt-8">
+          <button
+            onClick={() => router.push('/admin/settings')}
+            className="w-full p-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl text-left"
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-4xl">⚙️</span>
+              <div>
+                <span className="text-xl font-semibold text-white block">Platform Settings</span>
+                <span className="text-blue-100 text-sm">
+                  Configure fees, payments, limits, notifications, integrations, and more
+                </span>
+              </div>
+              <span className="ml-auto text-white text-2xl">→</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );

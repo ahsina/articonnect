@@ -4,6 +4,7 @@ import { CronController } from './controllers/cron.controller';
 import { MonitoringController } from './controllers/monitoring.controller';
 import { AnalyticsController } from './controllers/analytics.controller';
 import { FraudSettingsController } from './controllers/fraud-settings.controller';
+import { PlatformConfigController } from './controllers/platform-config.controller';
 import { AdminService } from './services/admin.service';
 import { MonitoringService } from './services/monitoring.service';
 import { AnalyticsService } from './services/analytics.service';
@@ -14,10 +15,25 @@ import { RedisModule } from '../common/redis/redis.module';
 import { EmailModule } from '../email/email.module';
 import { FraudModule } from '../fraud/fraud.module';
 
+// Note: PlatformConfigService is now provided by the global ConfigModule
+
 @Module({
   imports: [MissionModule, RedisModule, EmailModule, FraudModule],
-  controllers: [AdminController, CronController, MonitoringController, AnalyticsController, FraudSettingsController],
-  providers: [AdminService, MonitoringService, AnalyticsService, EmailCronService, AuditLogService],
+  controllers: [
+    AdminController,
+    CronController,
+    MonitoringController,
+    AnalyticsController,
+    FraudSettingsController,
+    PlatformConfigController,
+  ],
+  providers: [
+    AdminService,
+    MonitoringService,
+    AnalyticsService,
+    EmailCronService,
+    AuditLogService,
+  ],
   exports: [AnalyticsService, EmailCronService],
 })
 export class AdminModule {}

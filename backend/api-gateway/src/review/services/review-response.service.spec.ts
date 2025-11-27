@@ -321,6 +321,7 @@ describe('ReviewResponseService', () => {
 
     it('should return empty array if no reviews about user', async () => {
       mockPrismaService.review.findMany.mockResolvedValue([]);
+      mockPrismaService.reviewResponse.findMany.mockResolvedValue([]);
 
       const result = await service.getReviewsNeedingResponse('user-123');
 

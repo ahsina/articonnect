@@ -6,10 +6,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const defaultRole = searchParams.get('role') === 'artisan' ? 'ARTISAN' : 'CLIENT';
 
   const [formData, setFormData] = useState<{
@@ -38,12 +40,12 @@ function RegisterForm() {
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t('register.passwordMismatch'));
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+      setError(t('register.passwordTooShort'));
       return;
     }
 
@@ -61,7 +63,7 @@ function RegisterForm() {
         router.push('/client/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'inscription');
+      setError(err.response?.data?.message || t('register.registrationError'));
       setLoading(false);
     }
   };
@@ -71,12 +73,12 @@ function RegisterForm() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Créer un compte ArtiConnect
+            {t('register.title')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Déjà inscrit?{' '}
+            {t('register.alreadyRegistered')}{' '}
             <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Se connecter
+              {t('register.loginLink')}
             </Link>
           </p>
         </div>
@@ -87,14 +89,14 @@ function RegisterForm() {
             variant={formData.role === 'CLIENT' ? 'default' : 'outline'}
             onClick={() => setFormData({ ...formData, role: 'CLIENT' })}
           >
-            Je cherche un artisan
+            {t('register.findArtisan')}
           </Button>
           <Button
             type="button"
             variant={formData.role === 'ARTISAN' ? 'default' : 'outline'}
             onClick={() => setFormData({ ...formData, role: 'ARTISAN' })}
           >
-            Je suis artisan
+            {t('register.iAmArtisan')}
           </Button>
         </div>
 
@@ -109,14 +111,14 @@ function RegisterForm() {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="text"
-                placeholder="Prénom"
+                placeholder={t('register.firstName')}
                 required
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               />
               <Input
                 type="text"
-                placeholder="Nom"
+                placeholder={t('register.lastName')}
                 required
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -125,7 +127,7 @@ function RegisterForm() {
 
             <Input
               type="email"
-              placeholder="Adresse email"
+              placeholder={t('register.email')}
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -133,14 +135,14 @@ function RegisterForm() {
 
             <Input
               type="tel"
-              placeholder="Téléphone (optionnel)"
+              placeholder={t('register.phone')}
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
 
             <Input
               type="password"
-              placeholder="Mot de passe (min. 8 caractères)"
+              placeholder={t('register.password')}
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -148,7 +150,7 @@ function RegisterForm() {
 
             <Input
               type="password"
-              placeholder="Confirmer le mot de passe"
+              placeholder={t('register.confirmPassword')}
               required
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -164,19 +166,19 @@ function RegisterForm() {
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              J'accepte les{' '}
+              {t('register.acceptTerms')}{' '}
               <Link href="/terms" className="text-blue-600 hover:text-blue-500">
-                conditions d'utilisation
+                {t('register.termsOfService')}
               </Link>{' '}
-              et la{' '}
+              {t('register.and')}{' '}
               <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
-                politique de confidentialité
+                {t('register.privacyPolicy')}
               </Link>
             </label>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Création...' : 'Créer mon compte'}
+            {loading ? t('register.creating') : t('register.createAccount')}
           </Button>
         </form>
       </div>
@@ -186,10 +188,12 @@ function RegisterForm() {
 
 
 export default function RegisterPage() {
+  const { t } = useLanguage();
+
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Chargement...</div>
+        <div className="text-gray-500">{t('register.loading')}</div>
       </div>
     }>
       <RegisterForm />

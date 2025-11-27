@@ -1,0 +1,291 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { artisanApi, WorkingHours } from '@/lib/api/artisan';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+
+const DAYS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+];
+
+interface WorkingHoursForm {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isEnabled: boolean;
+}
+
+export default function WorkingHoursPage() {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [workingHours, setWorkingHours] = useState<WorkingHoursForm[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadWorkingHours();
+  }, []);
+
+  const loadWorkingHours = async () => {
+    try {
+      const data = await artisanApi.getWorkingHours();
+
+      // Map existing data or create defaults
+      const hoursMap = new Map(data.map((h) => [h.dayOfWeek, h]));
+      const formData = DAYS.map((day) => {
+        const existing = hoursMap.get(day.value);
+        return {
+          dayOfWeek: day.value,
+          startTime: existing?.startTime || '09:00',
+          endTime: existing?.endTime || '17:00',
+          isEnabled: existing?.isEnabled ?? (day.value >= 1 && day.value <= 5), // Mon-Fri default
+        };
+      });
+
+      setWorkingHours(formData);
+    } catch (error) {
+      console.error('Error loading working hours:', error);
+      // Set defaults if no data
+      setWorkingHours(
+        DAYS.map((day) => ({
+          dayOfWeek: day.value,
+          startTime: '09:00',
+          endTime: '17:00',
+          isEnabled: day.value >= 1 && day.value <= 5,
+        })),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleDay = (dayOfWeek: number) => {
+    setWorkingHours((hours) =>
+      hours.map((h) => (h.dayOfWeek === dayOfWeek ? { ...h, isEnabled: !h.isEnabled } : h)),
+    );
+  };
+
+  const handleTimeChange = (dayOfWeek: number, field: 'startTime' | 'endTime', value: string) => {
+    setWorkingHours((hours) =>
+      hours.map((h) => (h.dayOfWeek === dayOfWeek ? { ...h, [field]: value } : h)),
+    );
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await artisanApi.setWorkingHours(workingHours);
+      toast({
+        title: t('common', 'success') || 'Success',
+        description: t('artisan', 'workingHoursSaved') || 'Working hours saved successfully',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Error saving working hours:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('artisan', 'workingHoursError') || 'Failed to save working hours',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleApplyToAll = (startTime: string, endTime: string) => {
+    setWorkingHours((hours) => hours.map((h) => (h.isEnabled ? { ...h, startTime, endTime } : h)));
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t('artisan', 'workingHours') || 'Working Hours'}
+        </h1>
+        <p className="text-gray-600">
+          {t('artisan', 'workingHoursDesc') ||
+            'Set your regular working hours for each day of the week'}
+        </p>
+      </div>
+
+      {/* Quick Actions */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {t('artisan', 'quickActions') || 'Quick Actions'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setWorkingHours((hours) =>
+                  hours.map((h) => ({
+                    ...h,
+                    isEnabled: h.dayOfWeek >= 1 && h.dayOfWeek <= 5,
+                    startTime: '09:00',
+                    endTime: '17:00',
+                  })),
+                );
+              }}
+            >
+              {t('artisan', 'standardWeek') || 'Standard Week (Mon-Fri 9-17)'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setWorkingHours((hours) =>
+                  hours.map((h) => ({
+                    ...h,
+                    isEnabled: h.dayOfWeek >= 1 && h.dayOfWeek <= 6,
+                    startTime: '08:00',
+                    endTime: '18:00',
+                  })),
+                );
+              }}
+            >
+              {t('artisan', 'extendedWeek') || 'Extended Week (Mon-Sat 8-18)'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setWorkingHours((hours) =>
+                  hours.map((h) => ({
+                    ...h,
+                    isEnabled: true,
+                    startTime: '00:00',
+                    endTime: '23:59',
+                  })),
+                );
+              }}
+            >
+              {t('artisan', 'availableAlways') || 'Available 24/7'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Working Hours Grid */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('artisan', 'weeklySchedule') || 'Weekly Schedule'}</CardTitle>
+          <CardDescription>
+            {t('artisan', 'scheduleDesc') || 'Toggle days and set your available hours'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {DAYS.map((day) => {
+              const hours = workingHours.find((h) => h.dayOfWeek === day.value);
+              if (!hours) return null;
+
+              return (
+                <div
+                  key={day.value}
+                  className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
+                    hours.isEnabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100'
+                  }`}
+                >
+                  {/* Toggle */}
+                  <button
+                    onClick={() => handleToggleDay(day.value)}
+                    className={`w-12 h-6 rounded-full transition-colors ${
+                      hours.isEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${
+                        hours.isEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+
+                  {/* Day Name */}
+                  <div className="w-24 font-medium text-gray-900">{day.label}</div>
+
+                  {/* Time Inputs */}
+                  {hours.isEnabled ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <Input
+                        type="time"
+                        value={hours.startTime}
+                        onChange={(e) => handleTimeChange(day.value, 'startTime', e.target.value)}
+                        className="w-32"
+                      />
+                      <span className="text-gray-500">to</span>
+                      <Input
+                        type="time"
+                        value={hours.endTime}
+                        onChange={(e) => handleTimeChange(day.value, 'endTime', e.target.value)}
+                        className="w-32"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleApplyToAll(hours.startTime, hours.endTime)}
+                        title={t('artisan', 'applyToAll') || 'Apply to all enabled days'}
+                      >
+                        📋
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex-1 text-gray-400">
+                      {t('artisan', 'notWorking') || 'Not working'}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving
+                ? t('common', 'saving') || 'Saving...'
+                : t('common', 'saveChanges') || 'Save Changes'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Info Card */}
+      <Card className="mt-6">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <h4 className="font-medium text-gray-900">{t('artisan', 'tip') || 'Tip'}</h4>
+              <p className="text-sm text-gray-600">
+                {t('artisan', 'workingHoursTip') ||
+                  'Setting accurate working hours helps clients book appointments at convenient times and improves your visibility in search results.'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

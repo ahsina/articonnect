@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ReputationService } from './reputation.service';
 import { StripeService } from './stripe.service';
 import { NotificationService } from '../../notification/services/notification.service';
+import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('NoShowService', () => {
@@ -53,7 +54,38 @@ describe('NoShowService', () => {
     createNotification: jest.fn(),
   };
 
+  const mockPlatformConfigService = {
+    getNoShowConfig: jest.fn().mockResolvedValue({
+      emergencyFee: 50,
+      scheduledFee: 30,
+      minimumWaitTimeMinutes: 15,
+      minimumContactAttempts: 2,
+      maxDistanceMeters: 500,
+      autoValidationThreshold: 80,
+    }),
+    getReputationRules: jest.fn().mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    }),
+  };
+
   beforeEach(async () => {
+    // Reset mock implementations
+    mockPlatformConfigService.getNoShowConfig.mockResolvedValue({
+      emergencyFee: 50,
+      scheduledFee: 30,
+      minimumWaitTimeMinutes: 15,
+      minimumContactAttempts: 2,
+      maxDistanceMeters: 500,
+      autoValidationThreshold: 80,
+    });
+    mockPlatformConfigService.getReputationRules.mockResolvedValue({
+      goldThreshold: 150,
+      trustedThreshold: 100,
+      warningThreshold: 50,
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NoShowService,
@@ -61,6 +93,7 @@ describe('NoShowService', () => {
         { provide: ReputationService, useValue: mockReputationService },
         { provide: StripeService, useValue: mockStripeService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: PlatformConfigService, useValue: mockPlatformConfigService },
       ],
     }).compile();
 
@@ -106,7 +139,9 @@ describe('NoShowService', () => {
 
   describe('reportNoShow', () => {
     it('should create a no-show report successfully', async () => {
+      // Use waitDurationMinutes < 20 to trigger admin review path (not auto-validate)
       const dto = createValidNoShowDto();
+      dto.waitDurationMinutes = 18; // Less than 20 means it goes to admin review
       mockPrismaService.mission.findUnique.mockResolvedValue(mockMission);
       mockPrismaService.noShowEvent.create.mockResolvedValue({
         id: 'no-show-123',
@@ -130,9 +165,9 @@ describe('NoShowService', () => {
     it('should throw if mission not found', async () => {
       mockPrismaService.mission.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.reportNoShow('artisan-123', createValidNoShowDto()),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.reportNoShow('artisan-123', createValidNoShowDto())).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw if artisan does not own mission', async () => {
@@ -141,9 +176,9 @@ describe('NoShowService', () => {
         artisanId: 'different-artisan',
       });
 
-      await expect(
-        service.reportNoShow('artisan-123', createValidNoShowDto()),
-      ).rejects.toThrow('Cette mission ne vous appartient pas');
+      await expect(service.reportNoShow('artisan-123', createValidNoShowDto())).rejects.toThrow(
+        'Cette mission ne vous appartient pas',
+      );
     });
 
     it('should throw if mission status is not appropriate', async () => {
@@ -152,9 +187,9 @@ describe('NoShowService', () => {
         status: 'PENDING',
       });
 
-      await expect(
-        service.reportNoShow('artisan-123', createValidNoShowDto()),
-      ).rejects.toThrow('La mission doit être en cours');
+      await expect(service.reportNoShow('artisan-123', createValidNoShowDto())).rejects.toThrow(
+        'La mission doit être en cours',
+      );
     });
 
     it('should throw if wait duration is less than 15 minutes', async () => {
@@ -229,6 +264,7 @@ describe('NoShowService', () => {
         mission: {
           ...mockMission,
           artisan: {
+            id: 'artisan-123',
             artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
           },
         },
@@ -237,11 +273,24 @@ describe('NoShowService', () => {
         id: 'no-show-123',
         status: 'VALIDATED',
       });
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: 'client-123',
-        reputationScore: 100,
+      // Mock user.findUnique to return different values for client and artisan
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === 'client-123') {
+          return Promise.resolve({ id: 'client-123', reputationScore: 100 });
+        }
+        // For artisan lookup in transferToArtisan
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
       });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.payment.create.mockResolvedValue({});
+      mockPrismaService.compensationLog.create.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
       mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
+      mockReputationService.applyPenalty.mockResolvedValue({});
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       const result = await service.reportNoShow('artisan-123', dto);
 
@@ -250,7 +299,9 @@ describe('NoShowService', () => {
     });
 
     it('should calculate 50€ fee for emergency missions', async () => {
+      // Use waitDurationMinutes < 20 to trigger admin review path (not auto-validate)
       const dto = createValidNoShowDto();
+      dto.waitDurationMinutes = 18;
       mockPrismaService.mission.findUnique.mockResolvedValue({
         ...mockMission,
         type: 'EMERGENCY',
@@ -262,6 +313,7 @@ describe('NoShowService', () => {
       });
       mockPrismaService.noShowEvent.update.mockResolvedValue({});
       mockPrismaService.user.findMany.mockResolvedValue([]);
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       await service.reportNoShow('artisan-123', dto);
 
@@ -275,7 +327,9 @@ describe('NoShowService', () => {
     });
 
     it('should calculate 30€ fee for scheduled missions', async () => {
+      // Use waitDurationMinutes < 20 to trigger admin review path (not auto-validate)
       const dto = createValidNoShowDto();
+      dto.waitDurationMinutes = 18;
       mockPrismaService.mission.findUnique.mockResolvedValue({
         ...mockMission,
         type: 'SCHEDULED',
@@ -287,6 +341,7 @@ describe('NoShowService', () => {
       });
       mockPrismaService.noShowEvent.update.mockResolvedValue({});
       mockPrismaService.user.findMany.mockResolvedValue([]);
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       await service.reportNoShow('artisan-123', dto);
 
@@ -323,11 +378,24 @@ describe('NoShowService', () => {
         ...mockNoShowEvent,
         status: 'VALIDATED',
       });
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: 'client-123',
-        reputationScore: 100,
+      // Mock user.findUnique to return different values for client and artisan
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === 'client-123') {
+          return Promise.resolve({ id: 'client-123', reputationScore: 100 });
+        }
+        // For artisan lookup in transferToArtisan
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
       });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.payment.create.mockResolvedValue({});
+      mockPrismaService.compensationLog.create.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
       mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
+      mockReputationService.applyPenalty.mockResolvedValue({});
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       const result = await service.validateNoShow('no-show-123', 'admin-123');
 
@@ -341,11 +409,24 @@ describe('NoShowService', () => {
         ...mockNoShowEvent,
         status: 'VALIDATED',
       });
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: 'client-123',
-        reputationScore: 100,
+      // Mock user.findUnique to return different values for client and artisan
+      mockPrismaService.user.findUnique.mockImplementation(({ where }) => {
+        if (where.id === 'client-123') {
+          return Promise.resolve({ id: 'client-123', reputationScore: 100 });
+        }
+        // For artisan lookup in transferToArtisan
+        return Promise.resolve({
+          id: 'artisan-123',
+          artisanProfile: { stripeAccountId: 'acct_123', stripeOnboarded: true },
+        });
       });
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.payment.create.mockResolvedValue({});
+      mockPrismaService.compensationLog.create.mockResolvedValue({});
+      mockPrismaService.reputationHistory.create.mockResolvedValue({});
       mockStripeService.createTransfer.mockResolvedValue({ id: 'tr_123' });
+      mockReputationService.applyPenalty.mockResolvedValue({});
+      mockNotificationService.createNotification.mockResolvedValue({});
 
       const result = await service.validateNoShow('no-show-123', 'AUTO');
 
@@ -355,9 +436,9 @@ describe('NoShowService', () => {
     it('should throw if no-show event not found', async () => {
       mockPrismaService.noShowEvent.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.validateNoShow('invalid-id', 'admin-123'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.validateNoShow('invalid-id', 'admin-123')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -390,9 +471,9 @@ describe('NoShowService', () => {
     it('should throw if no-show not found', async () => {
       mockPrismaService.noShowEvent.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.rejectNoShow('invalid-id', 'admin-123', 'reason'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.rejectNoShow('invalid-id', 'admin-123', 'reason')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
