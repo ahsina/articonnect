@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { FcmService } from '../../fcm/services/fcm.service';
+import { NotificationGateway } from '../gateways/notification.gateway';
 
 @Injectable()
 export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fcmService: FcmService,
+    @Inject(forwardRef(() => NotificationGateway))
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async createNotification(
@@ -31,19 +34,38 @@ export class NotificationService {
       },
     });
 
-    // Send push notification via FCM
-    await this.fcmService.sendToUser(userId, {
-      title,
-      body: message,
-      data: {
+    // Send real-time notification via WebSocket
+    try {
+      await this.notificationGateway.sendNotification(userId, {
+        id: notification.id,
         type,
-        notificationId: notification.id,
-        ...(link && { link }),
-        ...(metadata && {
-          metadata: JSON.stringify(metadata),
-        }),
-      },
-    });
+        title,
+        message,
+        link,
+        data: metadata as Record<string, any>,
+        createdAt: notification.createdAt,
+      });
+    } catch (error) {
+      // WebSocket might not be available, continue with FCM
+      console.error('WebSocket notification failed:', error);
+    }
+
+    // Send push notification via FCM (for users not connected via WebSocket)
+    const isOnline = this.notificationGateway.isUserOnline(userId);
+    if (!isOnline) {
+      await this.fcmService.sendToUser(userId, {
+        title,
+        body: message,
+        data: {
+          type,
+          notificationId: notification.id,
+          ...(link && { link }),
+          ...(metadata && {
+            metadata: JSON.stringify(metadata),
+          }),
+        },
+      });
+    }
 
     return notification;
   }
