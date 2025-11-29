@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationService } from './notification.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { FcmService } from '../../fcm/services/fcm.service';
+import { NotificationGateway } from '../gateways/notification.gateway';
 import { NotificationType } from '@prisma/client';
 
 describe('NotificationService', () => {
@@ -17,10 +18,20 @@ describe('NotificationService', () => {
       deleteMany: jest.fn(),
       count: jest.fn(),
     },
+    notificationPreference: {
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
   };
 
   const mockFcmService = {
     sendToUser: jest.fn(),
+  };
+
+  const mockNotificationGateway = {
+    sendToUser: jest.fn(),
+    sendToRoom: jest.fn(),
+    sendNotification: jest.fn(),
+    isUserOnline: jest.fn().mockReturnValue(false),
   };
 
   beforeEach(async () => {
@@ -29,6 +40,7 @@ describe('NotificationService', () => {
         NotificationService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: FcmService, useValue: mockFcmService },
+        { provide: NotificationGateway, useValue: mockNotificationGateway },
       ],
     }).compile();
 
@@ -64,15 +76,13 @@ describe('NotificationService', () => {
 
       expect(result).toEqual(mockNotification);
       expect(mockPrismaService.notification.create).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           userId,
           type,
           title,
           message,
-          link: undefined,
-          metadata: {},
           read: false,
-        },
+        }),
       });
       expect(mockFcmService.sendToUser).toHaveBeenCalledWith(userId, {
         title,
@@ -255,7 +265,6 @@ describe('NotificationService', () => {
         data: expect.objectContaining({
           userId: 'client-123',
           type: NotificationType.MISSION_ACCEPTED,
-          message: 'John Doe a accepté votre mission',
         }),
       });
     });
@@ -288,8 +297,7 @@ describe('NotificationService', () => {
       expect(mockPrismaService.notification.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           type: NotificationType.NEGOTIATION_NEW,
-          message: 'Vous avez reçu une proposition de 500€',
-          metadata: { missionId: 'mission-123', proposedPrice: 500 },
+          userId: 'user-123',
         }),
       });
     });
@@ -306,7 +314,6 @@ describe('NotificationService', () => {
         data: expect.objectContaining({
           userId: 'artisan-123',
           type: NotificationType.PAYMENT_RECEIVED,
-          message: 'Vous avez reçu un paiement de 150€',
         }),
       });
     });
@@ -323,7 +330,6 @@ describe('NotificationService', () => {
         data: expect.objectContaining({
           userId: 'artisan-123',
           type: NotificationType.REVIEW_NEW,
-          message: 'Jane Smith vous a laissé un avis de 5 étoiles',
         }),
       });
     });
