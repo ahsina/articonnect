@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { EmailService } from '../../email/services/email.service';
 import { randomBytes } from 'crypto';
 import {
   CreateSubcontractorDto,
@@ -11,7 +12,12 @@ import {
 
 @Injectable()
 export class SubcontractorService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(SubcontractorService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async create(artisanId: string, dto: CreateSubcontractorDto) {
     if (!dto.subcontractorUserId && !dto.externalEmail) {
@@ -44,7 +50,44 @@ export class SubcontractorService {
       },
     });
 
-    // TODO: Send invitation email
+    // Send invitation email
+    const recipientEmail = dto.externalEmail || subcontractor.subcontractorUser?.email;
+    const recipientName = dto.externalName ||
+      (subcontractor.subcontractorUser ?
+        `${subcontractor.subcontractorUser.firstName} ${subcontractor.subcontractorUser.lastName}` :
+        'Cher partenaire');
+
+    if (recipientEmail) {
+      try {
+        // Get artisan info for the email
+        const artisan = await this.prisma.user.findUnique({
+          where: { id: artisanId },
+          select: {
+            firstName: true,
+            lastName: true,
+            artisanProfile: {
+              select: { companyName: true },
+            },
+          },
+        });
+
+        const artisanName = artisan ? `${artisan.firstName} ${artisan.lastName}` : 'Un artisan';
+        const artisanCompany = artisan?.artisanProfile?.companyName || 'ArtiConnect';
+
+        await this.emailService.sendSubcontractorInvitationEmail(
+          recipientEmail,
+          recipientName,
+          artisanName,
+          artisanCompany,
+          invitationToken,
+          dto.specialties || [],
+        );
+        this.logger.log(`Subcontractor invitation email sent to ${recipientEmail}`);
+      } catch (error) {
+        this.logger.error(`Failed to send subcontractor invitation email to ${recipientEmail}`, error);
+        // Don't throw - invitation is still valid, email just failed
+      }
+    }
 
     return subcontractor;
   }

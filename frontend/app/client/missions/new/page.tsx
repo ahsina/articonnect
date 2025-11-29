@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { missionsApi } from '@/lib/api/missions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 const CATEGORIES = [
   { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
@@ -22,6 +23,7 @@ const CATEGORIES = [
 export default function NewMissionPage() {
   const { t } = useLanguage();
   const router = useRouter();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,7 +67,11 @@ export default function NewMissionPage() {
       const mission = await missionsApi.create(missionData);
       router.push(`/client/missions/${mission.id}`);
     } catch (error: any) {
-      alert(error.response?.data?.message || t('missions', 'creationError'));
+      toast({
+        title: t('common', 'error'),
+        description: error.response?.data?.message || t('missions', 'creationError'),
+        variant: 'destructive',
+      });
       setLoading(false);
     }
   };

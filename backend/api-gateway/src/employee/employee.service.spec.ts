@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmployeeService } from './employee.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { EmailService } from '../email/services/email.service';
 import {
   NotFoundException,
   ForbiddenException,
@@ -34,6 +35,11 @@ describe('EmployeeService', () => {
     employeeEarnings: {
       aggregate: jest.fn(),
     },
+  };
+
+  const mockEmailService = {
+    sendEmployeeInvitationEmail: jest.fn().mockResolvedValue(undefined),
+    sendCompanyEmployeeJoinedEmail: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockCompany = {
@@ -78,6 +84,7 @@ describe('EmployeeService', () => {
       providers: [
         EmployeeService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: EmailService, useValue: mockEmailService },
       ],
     }).compile();
 
@@ -107,11 +114,7 @@ describe('EmployeeService', () => {
         invitationToken: 'token-123',
       });
 
-      const result = await service.inviteEmployee(
-        'company-123',
-        'owner-123',
-        inviteDto,
-      );
+      const result = await service.inviteEmployee('company-123', 'owner-123', inviteDto);
 
       expect(result).toHaveProperty('invitationUrl');
       expect(mockPrismaService.companyEmployee.create).toHaveBeenCalled();
@@ -120,9 +123,9 @@ describe('EmployeeService', () => {
     it('should throw NotFoundException if company not found', async () => {
       mockPrismaService.company.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.inviteEmployee('nonexistent', 'owner-123', inviteDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.inviteEmployee('nonexistent', 'owner-123', inviteDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException if inviter is not a member', async () => {
@@ -131,9 +134,9 @@ describe('EmployeeService', () => {
         employees: [],
       });
 
-      await expect(
-        service.inviteEmployee('company-123', 'outsider', inviteDto),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.inviteEmployee('company-123', 'outsider', inviteDto)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw ForbiddenException if inviter lacks permission', async () => {
@@ -142,9 +145,9 @@ describe('EmployeeService', () => {
         employees: [{ userId: 'user-123', permissions: JSON.stringify([]) }],
       });
 
-      await expect(
-        service.inviteEmployee('company-123', 'user-123', inviteDto),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.inviteEmployee('company-123', 'user-123', inviteDto)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw BadRequestException when inviting as OWNER', async () => {
@@ -162,9 +165,9 @@ describe('EmployeeService', () => {
       mockPrismaService.company.findUnique.mockResolvedValue(mockCompany);
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.inviteEmployee('company-123', 'owner-123', inviteDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.inviteEmployee('company-123', 'owner-123', inviteDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ConflictException if user already employed', async () => {
@@ -174,9 +177,9 @@ describe('EmployeeService', () => {
         status: EmployeeStatus.ACTIVE,
       });
 
-      await expect(
-        service.inviteEmployee('company-123', 'owner-123', inviteDto),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.inviteEmployee('company-123', 'owner-123', inviteDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -200,9 +203,9 @@ describe('EmployeeService', () => {
     it('should throw NotFoundException if invitation not found', async () => {
       mockPrismaService.companyEmployee.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.acceptInvitation('user-456', 'invalid-token'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.acceptInvitation('user-456', 'invalid-token')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException if invitation is for different user', async () => {
@@ -211,9 +214,9 @@ describe('EmployeeService', () => {
         status: EmployeeStatus.PENDING_INVITATION,
       });
 
-      await expect(
-        service.acceptInvitation('wrong-user', 'token'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.acceptInvitation('wrong-user', 'token')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw BadRequestException if invitation already accepted', async () => {
@@ -223,9 +226,9 @@ describe('EmployeeService', () => {
         status: EmployeeStatus.ACTIVE,
       });
 
-      await expect(
-        service.acceptInvitation('user-456', 'token'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.acceptInvitation('user-456', 'token')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -244,9 +247,9 @@ describe('EmployeeService', () => {
     it('should throw NotFoundException if employee not found', async () => {
       mockPrismaService.companyEmployee.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getEmployeeById('nonexistent', 'user-123'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getEmployeeById('nonexistent', 'user-123')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException if requester has no access', async () => {
@@ -256,9 +259,9 @@ describe('EmployeeService', () => {
       });
       mockPrismaService.companyEmployee.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getEmployeeById('employee-123', 'unauthorized'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.getEmployeeById('employee-123', 'unauthorized')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -324,11 +327,7 @@ describe('EmployeeService', () => {
         ...updateDto,
       });
 
-      const result = await service.updateEmployee(
-        'employee-123',
-        'owner-123',
-        updateDto,
-      );
+      const result = await service.updateEmployee('employee-123', 'owner-123', updateDto);
 
       expect(result.role).toBe(EmployeeRole.SUPERVISOR);
     });
@@ -389,9 +388,9 @@ describe('EmployeeService', () => {
         company: mockCompany,
       });
 
-      await expect(
-        service.removeEmployee('employee-123', 'owner-123'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.removeEmployee('employee-123', 'owner-123')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException with active missions', async () => {
@@ -409,9 +408,9 @@ describe('EmployeeService', () => {
         },
       });
 
-      await expect(
-        service.removeEmployee('employee-123', 'owner-123'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.removeEmployee('employee-123', 'owner-123')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

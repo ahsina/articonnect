@@ -7,6 +7,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { EmailService } from '../email/services/email.service';
 import { InviteEmployeeDto } from './dto/invite-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeQueryDto } from './dto/employee-query.dto';
@@ -17,7 +18,10 @@ import * as crypto from 'crypto';
 export class EmployeeService {
   private readonly logger = new Logger(EmployeeService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   private generateInvitationToken(): string {
     return crypto.randomBytes(32).toString('hex');
@@ -168,6 +172,30 @@ export class EmployeeService {
       `Employee invited: ${user.email} to company ${companyId} by ${inviterId}. Token: ${invitationToken}`
     );
 
+    // Get inviter information for the email
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterId },
+      select: { firstName: true, lastName: true },
+    });
+
+    const inviterName = inviter ? `${inviter.firstName} ${inviter.lastName}` : 'Un responsable';
+
+    // Send invitation email
+    try {
+      await this.emailService.sendEmployeeInvitationEmail(
+        user.email,
+        `${user.firstName} ${user.lastName}`,
+        employeeRecord.company.companyName,
+        inviterName,
+        inviteDto.role,
+        invitationToken,
+      );
+      this.logger.log(`Invitation email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send invitation email to ${user.email}`, error);
+      // Don't throw - invitation is still valid, email just failed
+    }
+
     return {
       ...employeeRecord,
       invitationUrl: `/api/employee/accept-invitation?token=${invitationToken}`,
@@ -223,6 +251,27 @@ export class EmployeeService {
     });
 
     this.logger.log(`Employee ${userId} accepted invitation to company ${employeeRecord.companyId}`);
+
+    // Notify company owner that a new employee joined
+    try {
+      const owner = await this.prisma.user.findUnique({
+        where: { id: employeeRecord.company.ownerId },
+        select: { email: true, firstName: true, lastName: true },
+      });
+
+      if (owner) {
+        await this.emailService.sendCompanyEmployeeJoinedEmail(
+          owner.email,
+          `${owner.firstName} ${owner.lastName}`,
+          updatedEmployee.company.companyName,
+          `${updatedEmployee.user.firstName} ${updatedEmployee.user.lastName}`,
+          updatedEmployee.role,
+        );
+        this.logger.log(`Employee joined notification sent to owner ${owner.email}`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send employee joined notification`, error);
+    }
 
     return updatedEmployee;
   }
@@ -535,6 +584,29 @@ export class EmployeeService {
     });
 
     this.logger.log(`Invitation resent for employee ${employeeId} by ${requesterId}`);
+
+    // Get requester info for the email
+    const requester = await this.prisma.user.findUnique({
+      where: { id: requesterId },
+      select: { firstName: true, lastName: true },
+    });
+
+    const requesterName = requester ? `${requester.firstName} ${requester.lastName}` : 'Un responsable';
+
+    // Send invitation email
+    try {
+      await this.emailService.sendEmployeeInvitationEmail(
+        updatedEmployee.user.email,
+        `${updatedEmployee.user.firstName} ${updatedEmployee.user.lastName}`,
+        employee.company.companyName,
+        requesterName,
+        employee.role,
+        newToken,
+      );
+      this.logger.log(`Invitation email resent to ${updatedEmployee.user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to resend invitation email to ${updatedEmployee.user.email}`, error);
+    }
 
     return {
       ...updatedEmployee,
