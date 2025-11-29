@@ -1726,10 +1726,12 @@ model Notification {
   metadata  Json?
   read      Boolean          @default(false)
   readAt    DateTime?
+  priority  String           @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
   @@index([createdAt])
+  @@index([priority])
 }
 
 model NotificationPreferences {
@@ -1750,6 +1752,109 @@ model NotificationPreferences {
   updatedAt          DateTime @updatedAt
 
   @@index([userId])
+}
+
+// Enhanced notification preference model
+model NotificationPreference {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  // Channel preferences
+  inApp Boolean @default(true)
+  push  Boolean @default(true)
+  email Boolean @default(true)
+  sms   Boolean @default(false)
+
+  // Quiet hours
+  quietHoursStart String? // HH:mm format
+  quietHoursEnd   String?
+
+  // Email digest frequency
+  emailDigest String @default("INSTANT") // INSTANT, DAILY, WEEKLY, NONE
+
+  // Disabled notification types
+  disabledTypes String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([emailDigest])
+}
+
+model ScheduledNotification {
+  id     String @id @default(uuid())
+  userId String
+
+  type    String
+  title   String
+  message String
+  link    String?
+  metadata Json?
+
+  scheduledFor DateTime
+  status       String   @default("PENDING") // PENDING, SENT, FAILED, CANCELLED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status, scheduledFor])
+}
+
+model EmailQueue {
+  id String @id @default(uuid())
+
+  to      String
+  subject String
+  template String
+  variables Json?
+
+  status    String   @default("PENDING") // PENDING, SENT, FAILED
+  attempts  Int      @default(0)
+  sentAt    DateTime?
+  error     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SmsQueue {
+  id String @id @default(uuid())
+
+  to             String
+  message        String
+  notificationId String?
+
+  status   String   @default("PENDING") // PENDING, SENT, FAILED
+  attempts Int      @default(0)
+  sentAt   DateTime?
+  error    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EmailDigestQueue {
+  id     String @id @default(uuid())
+  userId String
+
+  notificationId String
+  type           String
+  title          String
+  message        String
+  link           String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // ================================
