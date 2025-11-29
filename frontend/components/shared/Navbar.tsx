@@ -64,7 +64,9 @@ export function Navbar({ user }: NavbarProps) {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.clear();
+    // Clear only auth-related localStorage items, preserve user preferences
+    const authKeys = ['token', 'refreshToken', 'user', 'authState', 'sessionId'];
+    authKeys.forEach(key => localStorage.removeItem(key));
     router.push('/');
   };
 

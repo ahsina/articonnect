@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ModerationPage() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,20 +43,31 @@ export default function ModerationPage() {
 
   const handleResolve = async () => {
     if (!selectedReport || !action || !resolution) {
-      alert(t('admin', 'fillAllFields'));
+      toast({
+        title: t('common', 'error'),
+        description: t('admin', 'fillAllFields'),
+        variant: 'destructive',
+      });
       return;
     }
 
     try {
       await adminApi.resolveReport(selectedReport.id, action, resolution);
-      alert(t('admin', 'reportResolvedSuccess'));
+      toast({
+        title: t('common', 'success'),
+        description: t('admin', 'reportResolvedSuccess'),
+      });
       setSelectedReport(null);
       setResolution('');
       setAction('');
       loadReports();
     } catch (error) {
       console.error('Error resolving report:', error);
-      alert(t('admin', 'errorResolvingReport'));
+      toast({
+        title: t('common', 'error'),
+        description: t('admin', 'errorResolvingReport'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -65,11 +78,18 @@ export default function ModerationPage() {
 
     try {
       await adminApi.deleteReport(reportId);
-      alert(t('admin', 'reportDeleted'));
+      toast({
+        title: t('common', 'success'),
+        description: t('admin', 'reportDeleted'),
+      });
       loadReports();
     } catch (error) {
       console.error('Error deleting report:', error);
-      alert(t('admin', 'errorDeletingReport'));
+      toast({
+        title: t('common', 'error'),
+        description: t('admin', 'errorDeletingReport'),
+        variant: 'destructive',
+      });
     }
   };
 

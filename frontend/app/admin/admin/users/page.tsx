@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminUsersPage() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -44,10 +46,18 @@ export default function AdminUsersPage() {
       if (!reason) return;
 
       await adminApi.suspendUser(userId, reason);
+      toast({
+        title: t('common', 'success'),
+        description: t('admin', 'userSuspended'),
+      });
       loadUsers();
     } catch (error) {
       console.error('Error suspending user:', error);
-      alert(t('admin', 'suspensionError'));
+      toast({
+        title: t('common', 'error'),
+        description: t('admin', 'suspensionError'),
+        variant: 'destructive',
+      });
     }
   };
 
@@ -58,10 +68,18 @@ export default function AdminUsersPage() {
 
     try {
       await adminApi.unsuspendUser(userId);
+      toast({
+        title: t('common', 'success'),
+        description: t('admin', 'userReactivated'),
+      });
       loadUsers();
     } catch (error) {
       console.error('Error unsuspending user:', error);
-      alert(t('admin', 'reactivationError'));
+      toast({
+        title: t('common', 'error'),
+        description: t('admin', 'reactivationError'),
+        variant: 'destructive',
+      });
     }
   };
 

@@ -59,7 +59,7 @@ export const usePushNotifications = (onNotificationReceived?: (notification: any
     const setupListeners = async () => {
       const registrationListener = await PushNotifications.addListener(
         'registration',
-        (token: Token) => {
+        async (token: Token) => {
           console.log('Push registration success, token:', token.value);
           if (mounted) {
             setState((prev) => ({
@@ -69,8 +69,22 @@ export const usePushNotifications = (onNotificationReceived?: (notification: any
             }));
           }
 
-          // TODO: Send token to backend
-          // await sendTokenToBackend(token.value);
+          // Send token to backend for push notification delivery
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/push-token`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                token: token.value,
+                platform: 'mobile',
+              }),
+            });
+          } catch (error) {
+            console.error('Failed to send push token to backend:', error);
+          }
         }
       );
 

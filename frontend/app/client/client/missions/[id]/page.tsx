@@ -7,10 +7,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function MissionDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
+  const { t } = useLanguage();
   const missionId = params.id as string;
 
   const [mission, setMission] = useState<any>(null);
@@ -35,31 +39,47 @@ export default function MissionDetailsPage() {
   };
 
   const handleCancel = async () => {
-    if (!confirm('Êtes-vous sûr de vouloir annuler cette mission ?')) {
+    if (!confirm(t('missions', 'confirmCancel'))) {
       return;
     }
 
     try {
       await missionsApi.cancel(missionId);
+      toast({
+        title: t('common', 'success'),
+        description: t('missions', 'missionCancelled'),
+      });
       loadMission();
     } catch (error) {
       console.error('Error cancelling mission:', error);
-      alert('Erreur lors de l\'annulation');
+      toast({
+        title: t('common', 'error'),
+        description: t('missions', 'cancelError'),
+        variant: 'destructive',
+      });
     }
   };
 
   const handleComplete = async () => {
-    if (!confirm('Confirmer que la mission est terminée ?')) {
+    if (!confirm(t('missions', 'confirmComplete'))) {
       return;
     }
 
     try {
       await missionsApi.complete(missionId);
+      toast({
+        title: t('common', 'success'),
+        description: t('missions', 'missionCompleted'),
+      });
       loadMission();
       setShowReviewForm(true);
     } catch (error) {
       console.error('Error completing mission:', error);
-      alert('Erreur lors de la finalisation');
+      toast({
+        title: t('common', 'error'),
+        description: t('missions', 'completeError'),
+        variant: 'destructive',
+      });
     }
   };
 
