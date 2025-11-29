@@ -49,6 +49,9 @@ model User {
   outlookRefreshToken String? // OAuth refresh token
   outlookTokenExpiry  DateTime? // Token expiration timestamp
 
+  // Locale/i18n
+  preferredLocale String @default("fr") // fr, en, de, es, it, nl, pt, ar, tr, pl, ro, be, ch
+
   // Metadata
   emailVerified   Boolean   @default(false)
   emailVerifiedAt DateTime?
@@ -3536,4 +3539,84 @@ model ArtisanComplianceRecord {
   @@index([requirementId])
   @@index([status])
   @@index([expiryDate])
+}
+
+// ================================
+// INTERNATIONALIZATION (i18n)
+// ================================
+
+model Locale {
+  id   String @id @default(uuid())
+  code String @unique // fr, en, de, es, it, nl, pt, ar, tr, pl, ro, be, ch
+
+  name       String // Display name (English)
+  nativeName String // Native name
+
+  direction String @default("ltr") // ltr or rtl
+
+  // Regional settings
+  flag           String?
+  dateFormat     String?
+  timeFormat     String?
+  currencyCode   String?
+  currencySymbol String?
+  numberFormat   String?
+
+  // Status
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model Translation {
+  id String @id @default(uuid())
+
+  key       String // Translation key (e.g., "common.welcome")
+  namespace String // Namespace/category (e.g., "common", "auth", "dashboard")
+  locale    String // Locale code (e.g., "fr", "en")
+
+  value       String // Translation value
+  pluralValue String? // JSON for plural forms: {"zero": "", "one": "", "few": "", "many": "", "other": ""}
+
+  description String? // Developer notes
+  context     String? // Context for translators
+
+  status String @default("DRAFT") // DRAFT, PENDING_REVIEW, APPROVED, PUBLISHED, ARCHIVED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // History
+  history TranslationHistory[]
+
+  @@unique([key, locale, namespace])
+  @@index([key])
+  @@index([locale])
+  @@index([namespace])
+  @@index([status])
+  @@index([locale, namespace])
+}
+
+model TranslationHistory {
+  id String @id @default(uuid())
+
+  translationId String
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  oldValue String?
+  newValue String?
+  action   String // CREATE, UPDATE, DELETE, APPROVE, REJECT, PUBLISH
+
+  userId String? // User who made the change
+
+  createdAt DateTime @default(now())
+
+  @@index([translationId])
+  @@index([userId])
+  @@index([createdAt])
 }
