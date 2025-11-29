@@ -59,6 +59,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
     { href: '/artisan/dashboard', label: t('navigation', 'dashboard') || 'Dashboard', icon: '📊' },
     { href: '/artisan/missions', label: t('navigation', 'missions') || 'Missions', icon: '📋' },
     { href: '/artisan/earnings', label: t('navigation', 'earnings') || 'Earnings', icon: '💰' },
+    { href: '/artisan/analytics', label: t('navigation', 'analytics') || 'Analytics', icon: '📈' },
     {
       label: t('navigation', 'availability') || 'Availability',
       icon: '📅',

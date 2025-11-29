@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef, Optional } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from '../../payment/services/stripe.service';
+import { StripeIdentityService } from './stripe-identity.service';
 
 @Injectable()
 export class KycService {
@@ -11,6 +12,9 @@ export class KycService {
   constructor(
     private prisma: PrismaService,
     private stripeService: StripeService,
+    @Optional()
+    @Inject(forwardRef(() => StripeIdentityService))
+    private stripeIdentityService?: StripeIdentityService,
   ) {}
 
   /**
@@ -72,15 +76,21 @@ export class KycService {
    * Initiate KYC verification via Stripe Identity
    */
   async initiateKycVerification(userId: string) {
+    // Use Stripe Identity service for real verification when available
+    if (this.stripeIdentityService?.isEnabled()) {
+      this.logger.log(`Initiating Stripe Identity verification for user ${userId}`);
+      const session = await this.stripeIdentityService.createVerificationSession(userId);
+      return {
+        verificationUrl: session.url,
+        sessionId: session.sessionId,
+      };
+    }
+
+    // Fallback for development without Stripe Identity configured
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         email: true,
-        clientProfile: {
-          select: {
-            stripeCustomerId: true,
-          },
-        },
       },
     });
 
@@ -88,24 +98,36 @@ export class KycService {
       throw new Error('User not found');
     }
 
-    // In production, this would create a Stripe Identity VerificationSession
-    // For now, return mock URL
-    const verificationUrl = `https://stripe.com/identity/verify/${userId}`;
+    this.logger.warn(
+      `Stripe Identity not configured. Using mock verification for user ${userId}. ` +
+      'Configure STRIPE_SECRET_KEY for production KYC.',
+    );
 
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         kycStatus: 'PENDING',
-        kycProvider: 'STRIPE_IDENTITY',
+        kycProvider: 'MOCK',
       },
     });
 
-    this.logger.log(`KYC verification initiated for user ${userId}`);
+    // Development mock URL
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/artisan/settings?kyc=mock&userId=${userId}`;
 
     return {
       verificationUrl,
-      sessionId: `vs_${userId}_${Date.now()}`,
+      sessionId: `mock_${userId}_${Date.now()}`,
     };
+  }
+
+  /**
+   * Get verification status with Stripe Identity details when available
+   */
+  async getVerificationStatusDetailed(userId: string) {
+    if (this.stripeIdentityService?.isEnabled()) {
+      return this.stripeIdentityService.getVerificationStatus(userId);
+    }
+    return this.getKycStatus(userId);
   }
 
   /**
