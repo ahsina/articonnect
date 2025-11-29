@@ -3214,12 +3214,24 @@ model SupportTicket {
   satisfactionRating Int? // 1-5
 
   // SLA tracking
-  firstResponseAt DateTime?
+  firstResponseAt  DateTime?
   firstResponseSLA Int? // Minutes to first response
   resolutionSLA    Int? // Minutes to resolution
+  firstResponseDue DateTime? // Due date for first response
+  resolutionDue    DateTime? // Due date for resolution
+
+  // Escalation tracking
+  escalationCount Int @default(0)
+
+  // Customer satisfaction
+  satisfactionFeedback String?
+
+  // Assignment tracking
+  assignedAt DateTime?
 
   // Messages
-  messages TicketMessage[]
+  messages    TicketMessage[]
+  escalations TicketEscalation[]
 
   // Timestamps
   createdAt   DateTime @default(now())
@@ -3234,6 +3246,8 @@ model SupportTicket {
   @@index([priority])
   @@index([category])
   @@index([createdAt])
+  @@index([firstResponseDue])
+  @@index([resolutionDue])
 }
 
 model TicketMessage {
@@ -3265,6 +3279,62 @@ model TicketSequence {
   date         String   @unique // YYYYMMDD format
   lastSequence Int      @default(0)
   updatedAt    DateTime @updatedAt
+}
+
+model TicketEscalation {
+  id       String        @id @default(uuid())
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  reason       String // SLA_AT_RISK, SLA_BREACHED, CUSTOMER_ESCALATION, MANUAL
+  notes        String?
+  fromPriority String
+  toPriority   String
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model CannedResponse {
+  id String @id @default(uuid())
+
+  title    String
+  content  String
+  category String?
+  tags     String[]
+  shortcut String? // Keyboard shortcut
+
+  usageCount Int     @default(0)
+  isActive   Boolean @default(true)
+
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([usageCount])
+}
+
+model NpsResponse {
+  id String @id @default(uuid())
+
+  userId   String
+  ticketId String?
+
+  score    Int // 0-10
+  feedback String?
+  source   String // TICKET, EMAIL, IN_APP, GENERAL
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([ticketId])
+  @@index([createdAt])
+  @@index([score])
 }
 
 // Knowledge Base for self-service support
