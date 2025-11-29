@@ -549,4 +549,341 @@ export class EmailTemplateService {
       text: `Bonjour ${userName}, réinitialisez votre mot de passe ArtiConnect en cliquant ici : ${resetLink} (valide 1h). Si vous n'avez rien demandé, ignorez cet email.`,
     };
   }
+
+  employeeInvitation(
+    employeeName: string,
+    companyName: string,
+    inviterName: string,
+    role: string,
+    invitationToken: string,
+  ): EmailTemplate {
+    const invitationLink = `${process.env.FRONTEND_URL}/employee/accept-invitation?token=${invitationToken}`;
+
+    const roleLabels: Record<string, string> = {
+      MANAGER: 'Manager',
+      SUPERVISOR: 'Superviseur',
+      TECHNICIAN: 'Technicien',
+      CONTRACTOR: 'Sous-traitant',
+    };
+
+    const roleLabel = roleLabels[role] || role;
+
+    const body = `
+      <h2>Invitation à rejoindre ${companyName}</h2>
+      <p>Bonjour ${employeeName},</p>
+      <p><span class="highlight">${inviterName}</span> vous invite à rejoindre l'équipe de <span class="highlight">${companyName}</span> sur ArtiConnect.</p>
+
+      <div class="success">
+        <p><strong>Détails de l'invitation :</strong></p>
+        <p>Entreprise : <span class="highlight">${companyName}</span></p>
+        <p>Rôle proposé : <span class="highlight">${roleLabel}</span></p>
+        <p>Invité par : ${inviterName}</p>
+      </div>
+
+      <p><strong>En rejoignant cette équipe, vous pourrez :</strong></p>
+      <ul>
+        <li>Recevoir des missions assignées par votre entreprise</li>
+        <li>Suivre vos revenus et commissions</li>
+        <li>Accéder au planning de l'équipe</li>
+        <li>Collaborer avec vos collègues</li>
+      </ul>
+
+      <a href="${invitationLink}" class="button">Accepter l'invitation</a>
+
+      <div class="info-box">
+        <p><strong>Cette invitation expire dans 7 jours.</strong></p>
+        <p>Si vous n'avez pas demandé cette invitation ou si vous ne connaissez pas ${inviterName}, ignorez cet email.</p>
+      </div>
+
+      <p>Des questions ? Contactez directement ${inviterName} ou notre support.</p>
+    `;
+
+    return {
+      subject: `${inviterName} vous invite à rejoindre ${companyName}`,
+      html: this.wrapTemplate('Invitation employé', body),
+      text: `Bonjour ${employeeName}, ${inviterName} vous invite à rejoindre ${companyName} en tant que ${roleLabel}. Acceptez l'invitation ici : ${invitationLink}. Cette invitation expire dans 7 jours.`,
+    };
+  }
+
+  subcontractorInvitation(
+    subcontractorName: string,
+    artisanName: string,
+    artisanCompany: string,
+    invitationToken: string,
+    specialties: string[],
+  ): EmailTemplate {
+    const invitationLink = `${process.env.FRONTEND_URL}/subcontractor/accept-invitation?token=${invitationToken}`;
+
+    const specialtiesList = specialties.length > 0
+      ? specialties.map(s => `<li>${s}</li>`).join('')
+      : '<li>Toutes spécialités</li>';
+
+    const body = `
+      <h2>Invitation à devenir sous-traitant</h2>
+      <p>Bonjour ${subcontractorName},</p>
+      <p><span class="highlight">${artisanName}</span> de <span class="highlight">${artisanCompany}</span> souhaite vous ajouter comme sous-traitant sur ArtiConnect.</p>
+
+      <div class="success">
+        <p><strong>Détails de la collaboration :</strong></p>
+        <p>Artisan : <span class="highlight">${artisanName}</span></p>
+        <p>Entreprise : <span class="highlight">${artisanCompany}</span></p>
+      </div>
+
+      <p><strong>Spécialités recherchées :</strong></p>
+      <ul>
+        ${specialtiesList}
+      </ul>
+
+      <p><strong>Avantages de devenir sous-traitant :</strong></p>
+      <ul>
+        <li>Recevez des missions régulières</li>
+        <li>Paiements sécurisés via la plateforme</li>
+        <li>Développez votre réseau professionnel</li>
+        <li>Gérez facilement vos collaborations</li>
+      </ul>
+
+      <a href="${invitationLink}" class="button">Accepter l'invitation</a>
+
+      <div class="info-box">
+        <p><strong>Cette invitation expire dans 14 jours.</strong></p>
+        <p>Si vous ne connaissez pas ${artisanName}, ignorez cet email.</p>
+      </div>
+
+      <p>Vous pouvez discuter des conditions de collaboration directement avec ${artisanName} avant d'accepter.</p>
+    `;
+
+    return {
+      subject: `${artisanName} vous invite comme sous-traitant`,
+      html: this.wrapTemplate('Invitation sous-traitant', body),
+      text: `Bonjour ${subcontractorName}, ${artisanName} de ${artisanCompany} souhaite vous ajouter comme sous-traitant. Acceptez l'invitation ici : ${invitationLink}. Cette invitation expire dans 14 jours.`,
+    };
+  }
+
+  companyEmployeeJoined(
+    ownerName: string,
+    companyName: string,
+    employeeName: string,
+    employeeRole: string,
+  ): EmailTemplate {
+    const roleLabels: Record<string, string> = {
+      MANAGER: 'Manager',
+      SUPERVISOR: 'Superviseur',
+      TECHNICIAN: 'Technicien',
+      CONTRACTOR: 'Sous-traitant',
+    };
+
+    const roleLabel = roleLabels[employeeRole] || employeeRole;
+
+    const body = `
+      <h2>Nouvel employé dans votre équipe</h2>
+      <p>Bonjour ${ownerName},</p>
+      <p>Bonne nouvelle ! <span class="highlight">${employeeName}</span> a accepté votre invitation et rejoint <span class="highlight">${companyName}</span>.</p>
+
+      <div class="success">
+        <p><strong>Nouveau membre de l'équipe :</strong></p>
+        <p>Nom : <span class="highlight">${employeeName}</span></p>
+        <p>Rôle : <span class="highlight">${roleLabel}</span></p>
+        <p>Date d'arrivée : ${new Date().toLocaleDateString('fr-FR')}</p>
+      </div>
+
+      <p><strong>Prochaines étapes recommandées :</strong></p>
+      <ul>
+        <li>Assignez-lui sa première mission</li>
+        <li>Configurez ses permissions si nécessaire</li>
+        <li>Planifiez ses premiers shifts</li>
+        <li>Présentez-le à l'équipe existante</li>
+      </ul>
+
+      <a href="${process.env.FRONTEND_URL}/artisan/company/employees" class="button">Gérer mon équipe</a>
+
+      <p>Votre équipe s'agrandit, félicitations !</p>
+    `;
+
+    return {
+      subject: `${employeeName} a rejoint ${companyName}`,
+      html: this.wrapTemplate('Nouvel employé', body),
+      text: `Bonjour ${ownerName}, ${employeeName} a accepté votre invitation et rejoint ${companyName} en tant que ${roleLabel}. Gérez votre équipe sur ${process.env.FRONTEND_URL}/artisan/company/employees`,
+    };
+  }
+
+  companyMissionAssigned(
+    employeeName: string,
+    companyName: string,
+    missionTitle: string,
+    missionId: string,
+    scheduledDate: string,
+    clientName: string,
+    address: string,
+  ): EmailTemplate {
+    const body = `
+      <h2>Nouvelle mission assignée</h2>
+      <p>Bonjour ${employeeName},</p>
+      <p>Une nouvelle mission vous a été assignée par <span class="highlight">${companyName}</span>.</p>
+
+      <div class="mission-details">
+        <dl>
+          <dt>Mission :</dt>
+          <dd><strong>${missionTitle}</strong></dd>
+          <dt>Client :</dt>
+          <dd>${clientName}</dd>
+          <dt>Date prévue :</dt>
+          <dd><span class="highlight">${scheduledDate}</span></dd>
+          <dt>Adresse :</dt>
+          <dd>${address}</dd>
+        </dl>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Action requise :</strong> Consultez les détails de la mission et confirmez votre disponibilité.</p>
+      </div>
+
+      <a href="${process.env.FRONTEND_URL}/artisan/missions/${missionId}" class="button">Voir la mission</a>
+
+      <p>Préparez-vous bien et n'hésitez pas à contacter votre responsable si vous avez des questions.</p>
+    `;
+
+    return {
+      subject: `Mission assignée : ${missionTitle}`,
+      html: this.wrapTemplate('Mission assignée', body),
+      text: `Bonjour ${employeeName}, une mission "${missionTitle}" vous a été assignée pour le ${scheduledDate}. Client : ${clientName}. Voir : ${process.env.FRONTEND_URL}/artisan/missions/${missionId}`,
+    };
+  }
+
+  companyPayoutProcessed(
+    employeeName: string,
+    companyName: string,
+    amount: number,
+    period: string,
+    missionsCount: number,
+  ): EmailTemplate {
+    const body = `
+      <h2>Paiement traité</h2>
+      <p>Bonjour ${employeeName},</p>
+      <p>Votre paiement de <span class="highlight">${companyName}</span> a été traité avec succès.</p>
+
+      <div class="success">
+        <p><strong>Montant versé :</strong></p>
+        <p class="price">${amount.toFixed(2)}€</p>
+      </div>
+
+      <div class="mission-details">
+        <dl>
+          <dt>Période :</dt>
+          <dd>${period}</dd>
+          <dt>Missions complétées :</dt>
+          <dd><strong>${missionsCount}</strong></dd>
+          <dt>Statut :</dt>
+          <dd><span style="color: #28a745; font-weight: 600;">Versé</span></dd>
+        </dl>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Le virement sera effectué sous 2-3 jours ouvrés sur votre compte bancaire.</strong></p>
+      </div>
+
+      <a href="${process.env.FRONTEND_URL}/artisan/earnings" class="button">Voir mes revenus</a>
+
+      <p>Continuez votre excellent travail !</p>
+    `;
+
+    return {
+      subject: `Paiement traité : ${amount.toFixed(2)}€`,
+      html: this.wrapTemplate('Paiement traité', body),
+      text: `Bonjour ${employeeName}, votre paiement de ${amount.toFixed(2)}€ de ${companyName} a été traité. Période : ${period}. Missions : ${missionsCount}. Le virement sera effectué sous 2-3 jours.`,
+    };
+  }
+
+  companyShiftScheduled(
+    employeeName: string,
+    companyName: string,
+    shiftDate: string,
+    startTime: string,
+    endTime: string,
+    shiftType: string,
+  ): EmailTemplate {
+    const shiftTypeLabels: Record<string, string> = {
+      REGULAR: 'Horaire normal',
+      OVERTIME: 'Heures supplémentaires',
+      ONCALL: 'Astreinte',
+      BREAK: 'Pause',
+    };
+
+    const shiftLabel = shiftTypeLabels[shiftType] || shiftType;
+
+    const body = `
+      <h2>Nouveau shift planifié</h2>
+      <p>Bonjour ${employeeName},</p>
+      <p>Un nouveau shift a été planifié pour vous par <span class="highlight">${companyName}</span>.</p>
+
+      <div class="mission-details">
+        <dl>
+          <dt>Date :</dt>
+          <dd><strong>${shiftDate}</strong></dd>
+          <dt>Horaires :</dt>
+          <dd><span class="highlight">${startTime} - ${endTime}</span></dd>
+          <dt>Type :</dt>
+          <dd>${shiftLabel}</dd>
+        </dl>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Pensez à confirmer votre disponibilité dans l'application.</strong></p>
+      </div>
+
+      <a href="${process.env.FRONTEND_URL}/artisan/availability/calendar" class="button">Voir mon planning</a>
+
+      <p>En cas d'indisponibilité, contactez votre responsable au plus tôt.</p>
+    `;
+
+    return {
+      subject: `Shift planifié : ${shiftDate} (${startTime} - ${endTime})`,
+      html: this.wrapTemplate('Shift planifié', body),
+      text: `Bonjour ${employeeName}, un shift a été planifié pour le ${shiftDate} de ${startTime} à ${endTime} (${shiftLabel}). Voir : ${process.env.FRONTEND_URL}/artisan/availability/calendar`,
+    };
+  }
+
+  companyPerformanceReview(
+    employeeName: string,
+    companyName: string,
+    reviewerName: string,
+    overallRating: number,
+    reviewPeriod: string,
+  ): EmailTemplate {
+    const stars = '★'.repeat(Math.round(overallRating)) + '☆'.repeat(5 - Math.round(overallRating));
+
+    const body = `
+      <h2>Évaluation de performance disponible</h2>
+      <p>Bonjour ${employeeName},</p>
+      <p><span class="highlight">${reviewerName}</span> a soumis votre évaluation de performance pour <span class="highlight">${companyName}</span>.</p>
+
+      <div class="success">
+        <p><strong>Note globale :</strong></p>
+        <p><span style="color: #ffc107; font-size: 24px;">${stars}</span></p>
+        <p class="price">${overallRating.toFixed(1)}/5</p>
+      </div>
+
+      <div class="mission-details">
+        <dl>
+          <dt>Période évaluée :</dt>
+          <dd>${reviewPeriod}</dd>
+          <dt>Évaluateur :</dt>
+          <dd>${reviewerName}</dd>
+        </dl>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Action requise :</strong> Consultez votre évaluation complète et accusez réception.</p>
+      </div>
+
+      <a href="${process.env.FRONTEND_URL}/artisan/company/reviews" class="button">Voir mon évaluation</a>
+
+      <p>Votre feedback est important pour continuer à progresser.</p>
+    `;
+
+    return {
+      subject: `Évaluation de performance : ${overallRating.toFixed(1)}/5`,
+      html: this.wrapTemplate('Évaluation de performance', body),
+      text: `Bonjour ${employeeName}, ${reviewerName} a soumis votre évaluation de performance. Note : ${overallRating.toFixed(1)}/5. Période : ${reviewPeriod}. Voir : ${process.env.FRONTEND_URL}/artisan/company/reviews`,
+    };
+  }
 }

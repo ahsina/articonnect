@@ -302,4 +302,141 @@ export class EmailService {
     const template = this.emailTemplateService.passwordReset(userName, resetToken);
     return this.sendEmail(email, template.subject, template.html);
   }
+
+  // Employee invitation emails
+  async sendEmployeeInvitationEmail(
+    employeeEmail: string,
+    employeeName: string,
+    companyName: string,
+    inviterName: string,
+    role: string,
+    invitationToken: string,
+  ) {
+    const template = this.emailTemplateService.employeeInvitation(
+      employeeName,
+      companyName,
+      inviterName,
+      role,
+      invitationToken,
+    );
+    return this.sendEmail(employeeEmail, template.subject, template.html);
+  }
+
+  // Subcontractor invitation emails
+  async sendSubcontractorInvitationEmail(
+    subcontractorEmail: string,
+    subcontractorName: string,
+    artisanName: string,
+    artisanCompany: string,
+    invitationToken: string,
+    specialties: string[],
+  ) {
+    const template = this.emailTemplateService.subcontractorInvitation(
+      subcontractorName,
+      artisanName,
+      artisanCompany,
+      invitationToken,
+      specialties,
+    );
+    return this.sendEmail(subcontractorEmail, template.subject, template.html);
+  }
+
+  // Company employee joined notification
+  async sendCompanyEmployeeJoinedEmail(
+    ownerEmail: string,
+    ownerName: string,
+    companyName: string,
+    employeeName: string,
+    employeeRole: string,
+  ) {
+    const template = this.emailTemplateService.companyEmployeeJoined(
+      ownerName,
+      companyName,
+      employeeName,
+      employeeRole,
+    );
+    return this.sendEmail(ownerEmail, template.subject, template.html);
+  }
+
+  // Company mission assigned notification
+  async sendCompanyMissionAssignedEmail(
+    employeeEmail: string,
+    employeeName: string,
+    companyName: string,
+    missionTitle: string,
+    missionId: string,
+    scheduledDate: string,
+    clientName: string,
+    address: string,
+  ) {
+    const template = this.emailTemplateService.companyMissionAssigned(
+      employeeName,
+      companyName,
+      missionTitle,
+      missionId,
+      scheduledDate,
+      clientName,
+      address,
+    );
+    return this.sendEmail(employeeEmail, template.subject, template.html);
+  }
+
+  // Company payout processed notification
+  async sendCompanyPayoutProcessedEmail(
+    employeeEmail: string,
+    employeeName: string,
+    companyName: string,
+    amount: number,
+    period: string,
+    missionsCount: number,
+  ) {
+    const template = this.emailTemplateService.companyPayoutProcessed(
+      employeeName,
+      companyName,
+      amount,
+      period,
+      missionsCount,
+    );
+    return this.sendEmail(employeeEmail, template.subject, template.html);
+  }
+
+  // Company shift scheduled notification
+  async sendCompanyShiftScheduledEmail(
+    employeeEmail: string,
+    employeeName: string,
+    companyName: string,
+    shiftDate: string,
+    startTime: string,
+    endTime: string,
+    shiftType: string,
+  ) {
+    const template = this.emailTemplateService.companyShiftScheduled(
+      employeeName,
+      companyName,
+      shiftDate,
+      startTime,
+      endTime,
+      shiftType,
+    );
+    return this.sendEmail(employeeEmail, template.subject, template.html);
+  }
+
+  // Company performance review notification
+  async sendCompanyPerformanceReviewEmail(
+    employeeEmail: string,
+    employeeName: string,
+    companyName: string,
+    reviewerName: string,
+    overallRating: number,
+    reviewPeriod: string,
+  ) {
+    const template = this.emailTemplateService.companyPerformanceReview(
+      employeeName,
+      companyName,
+      reviewerName,
+      overallRating,
+      reviewPeriod,
+    );
+    return this.sendEmail(employeeEmail, template.subject, template.html);
+  }
 }
