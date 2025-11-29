@@ -1,7 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { translations, Language } from '@/lib/i18n/translations';
+import { allTranslations, Language } from '@/lib/i18n/translations';
+
+const SUPPORTED_LANGUAGES: Language[] = ['fr', 'en', 'de', 'es', 'it', 'nl', 'pt'];
 
 interface LanguageContextType {
   language: Language;
@@ -17,13 +19,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Load language from localStorage or browser
     const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && ['fr', 'en', 'de'].includes(savedLanguage)) {
+    if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
       setLanguageState(savedLanguage);
     } else {
       // Detect browser language
-      const browserLang = navigator.language.split('-')[0];
-      if (['fr', 'en', 'de'].includes(browserLang)) {
-        setLanguageState(browserLang as Language);
+      const browserLang = navigator.language.split('-')[0] as Language;
+      if (SUPPORTED_LANGUAGES.includes(browserLang)) {
+        setLanguageState(browserLang);
       }
     }
   }, []);
@@ -47,7 +49,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       keys = keyOrCategory.split('.');
     }
 
-    let result: any = translations[language];
+    let result: any = allTranslations[language];
 
     for (const k of keys) {
       if (result && typeof result === 'object' && k in result) {

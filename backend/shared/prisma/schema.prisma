@@ -49,6 +49,9 @@ model User {
   outlookRefreshToken String? // OAuth refresh token
   outlookTokenExpiry  DateTime? // Token expiration timestamp
 
+  // Locale/i18n
+  preferredLocale String @default("fr") // fr, en, de, es, it, nl, pt, ar, tr, pl, ro, be, ch
+
   // Metadata
   emailVerified   Boolean   @default(false)
   emailVerifiedAt DateTime?
@@ -172,6 +175,43 @@ model User {
   // Company & Employee Relationships
   ownedCompany Company?          @relation("CompanyOwner")
   employments  CompanyEmployee[] @relation("CompanyEmployees")
+
+  // Quote Builder
+  artisanQuotes      Quote[]              @relation("ArtisanQuotes")
+  clientQuotes       Quote[]              @relation("ClientQuotes")
+  quoteTemplates     QuoteTemplate[]      @relation("ArtisanQuoteTemplates")
+  materialCatalog    MaterialCatalogItem[] @relation("ArtisanMaterialCatalog")
+
+  // Portfolio
+  portfolio          Portfolio?           @relation("ArtisanPortfolio")
+
+  // Client CRM
+  artisanClientRelationships ClientRelationship[] @relation("ArtisanClientRelationships")
+  clientRelationships        ClientRelationship[] @relation("ClientRelationships")
+
+  // Recurring Services
+  artisanRecurringServices RecurringService[] @relation("ArtisanRecurringServices")
+  clientRecurringServices  RecurringService[] @relation("ClientRecurringServices")
+
+  // Subcontractor Management
+  subcontractors     Subcontractor[]      @relation("ArtisanSubcontractors")
+  subcontractorOf    Subcontractor[]      @relation("SubcontractorOf")
+
+  // Analytics
+  analyticsSnapshots AnalyticsSnapshot[]  @relation("ArtisanAnalytics")
+  revenueGoals       RevenueGoal[]        @relation("ArtisanRevenueGoals")
+
+  // Support Tickets
+  supportTickets     SupportTicket[]      @relation("UserTickets")
+  assignedTickets    SupportTicket[]      @relation("AssignedTickets")
+  ticketMessages     TicketMessage[]      @relation("TicketMessagesSent")
+  knowledgeBaseArticles KnowledgeBaseArticle[] @relation("KnowledgeBaseAuthor")
+
+  // Document Templates
+  documentTemplates  DocumentTemplate[]   @relation("ArtisanDocumentTemplates")
+
+  // Country Compliance
+  complianceRecords  ArtisanComplianceRecord[] @relation("ArtisanCompliance")
 
   @@index([email])
   @@index([role])
@@ -823,6 +863,14 @@ model Mission {
   availabilitySlots AvailabilitySlot[]
   employeeEarnings  EmployeeEarnings[]
   timeTracking      MissionTimeTracking[]
+
+  // New Feature Relations
+  quotes               Quote[]                   @relation("MissionQuotes")
+  portfolioProjects    PortfolioProject[]        @relation("PortfolioMissions")
+  recurringMission     RecurringServiceMission?  @relation("RecurringMissions")
+  subcontractorAssignments SubcontractorAssignment[] @relation("SubcontractorMissions")
+  supportTickets       SupportTicket[]           @relation("TicketMissions")
+  jobDocuments         JobDocument[]             @relation("MissionDocuments")
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -1678,10 +1726,12 @@ model Notification {
   metadata  Json?
   read      Boolean          @default(false)
   readAt    DateTime?
+  priority  String           @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
   @@index([createdAt])
+  @@index([priority])
 }
 
 model NotificationPreferences {
@@ -1702,6 +1752,109 @@ model NotificationPreferences {
   updatedAt          DateTime @updatedAt
 
   @@index([userId])
+}
+
+// Enhanced notification preference model
+model NotificationPreference {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  // Channel preferences
+  inApp Boolean @default(true)
+  push  Boolean @default(true)
+  email Boolean @default(true)
+  sms   Boolean @default(false)
+
+  // Quiet hours
+  quietHoursStart String? // HH:mm format
+  quietHoursEnd   String?
+
+  // Email digest frequency
+  emailDigest String @default("INSTANT") // INSTANT, DAILY, WEEKLY, NONE
+
+  // Disabled notification types
+  disabledTypes String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([emailDigest])
+}
+
+model ScheduledNotification {
+  id     String @id @default(uuid())
+  userId String
+
+  type    String
+  title   String
+  message String
+  link    String?
+  metadata Json?
+
+  scheduledFor DateTime
+  status       String   @default("PENDING") // PENDING, SENT, FAILED, CANCELLED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status, scheduledFor])
+}
+
+model EmailQueue {
+  id String @id @default(uuid())
+
+  to      String
+  subject String
+  template String
+  variables Json?
+
+  status    String   @default("PENDING") // PENDING, SENT, FAILED
+  attempts  Int      @default(0)
+  sentAt    DateTime?
+  error     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SmsQueue {
+  id String @id @default(uuid())
+
+  to             String
+  message        String
+  notificationId String?
+
+  status   String   @default("PENDING") // PENDING, SENT, FAILED
+  attempts Int      @default(0)
+  sentAt   DateTime?
+  error    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EmailDigestQueue {
+  id     String @id @default(uuid())
+  userId String
+
+  notificationId String
+  type           String
+  title          String
+  message        String
+  link           String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // ================================
@@ -2269,4 +2422,1376 @@ model MissionTemplate {
   @@index([isPublic])
   @@index([createdBy])
   @@index([usageCount])
+}
+
+// ================================
+// 1.3 ENHANCED QUOTE BUILDER
+// ================================
+
+enum QuoteStatus {
+  DRAFT // Being prepared
+  SENT // Sent to client
+  VIEWED // Client has viewed
+  ACCEPTED // Client accepted
+  REJECTED // Client rejected
+  EXPIRED // Quote expired
+  CONVERTED // Converted to mission
+}
+
+model Quote {
+  id        String @id @default(uuid())
+  quoteNumber String @unique // QUO-YYYY-XXXXX
+
+  // Parties
+  artisanId String
+  artisan   User   @relation("ArtisanQuotes", fields: [artisanId], references: [id])
+  clientId  String
+  client    User   @relation("ClientQuotes", fields: [clientId], references: [id])
+
+  // Related mission (optional - can be created from scratch or from mission request)
+  missionId String?
+  mission   Mission? @relation("MissionQuotes", fields: [missionId], references: [id], onDelete: SetNull)
+
+  // Quote details
+  title       String
+  description String?
+  category    String
+
+  // Location
+  address    String?
+  city       String?
+  postalCode String?
+  country    String?
+
+  // Line items
+  lineItems QuoteLineItem[]
+
+  // Pricing summary
+  subtotal      Decimal  @db.Decimal(10, 2)
+  laborTotal    Decimal  @db.Decimal(10, 2)
+  materialsTotal Decimal @db.Decimal(10, 2)
+  travelTotal   Decimal  @default(0) @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  discountPercent Decimal? @db.Decimal(5, 2)
+  taxRate       Decimal  @db.Decimal(5, 2)
+  taxAmount     Decimal  @db.Decimal(10, 2)
+  totalAmount   Decimal  @db.Decimal(10, 2)
+  currency      String   @default("EUR")
+
+  // Validity
+  validUntil DateTime
+  status     QuoteStatus @default(DRAFT)
+
+  // Template used (if any)
+  templateId String?
+  template   QuoteTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  // Client response
+  clientSignature  String? // Base64 signature image
+  clientSignedAt   DateTime?
+  rejectionReason  String?
+
+  // PDF
+  pdfUrl String?
+
+  // Notes
+  termsAndConditions String?
+  notes              String?
+  internalNotes      String? // Not visible to client
+
+  // Versioning
+  version       Int @default(1)
+  parentQuoteId String?
+  parentQuote   Quote?  @relation("QuoteVersions", fields: [parentQuoteId], references: [id])
+  childQuotes   Quote[] @relation("QuoteVersions")
+
+  // Timestamps
+  sentAt     DateTime?
+  viewedAt   DateTime?
+  respondedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([artisanId])
+  @@index([clientId])
+  @@index([missionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model QuoteLineItem {
+  id      String @id @default(uuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  // Item type
+  itemType String @default("LABOR") // LABOR, MATERIAL, TRAVEL, OTHER
+
+  // Details
+  description String
+  quantity    Decimal @db.Decimal(10, 2)
+  unit        String  @default("unit") // unit, hour, m2, ml, kg, etc.
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalPrice  Decimal @db.Decimal(10, 2)
+
+  // Material catalog reference (if applicable)
+  catalogItemId String?
+  catalogItem   MaterialCatalogItem? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  // Position for ordering
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([quoteId])
+  @@index([itemType])
+}
+
+model QuoteTemplate {
+  id        String @id @default(uuid())
+  artisanId String
+  artisan   User   @relation("ArtisanQuoteTemplates", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  category    String
+  trade       String? // Plumbing, Electrical, etc.
+
+  // Default line items (JSON array)
+  defaultLineItems Json // [{itemType, description, quantity, unit, unitPrice}]
+
+  // Default terms
+  defaultTerms       String?
+  defaultValidityDays Int @default(30)
+
+  // Usage tracking
+  usageCount Int @default(0)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  quotes Quote[]
+
+  @@index([artisanId])
+  @@index([category])
+  @@index([trade])
+  @@index([isActive])
+}
+
+model MaterialCatalogItem {
+  id        String @id @default(uuid())
+  artisanId String?
+  artisan   User?  @relation("ArtisanMaterialCatalog", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  // Item details
+  name        String
+  description String?
+  sku         String?
+  category    String
+  trade       String? // Plumbing, Electrical, etc.
+
+  // Pricing
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  unit        String   @default("unit")
+  currency    String   @default("EUR")
+  supplierPrice Decimal? @db.Decimal(10, 2) // Cost price for margin calculation
+
+  // Supplier info
+  supplierName String?
+  supplierRef  String?
+
+  // Stock tracking (optional)
+  trackStock    Boolean @default(false)
+  currentStock  Int?
+  minStockLevel Int?
+
+  // Global catalog items (artisanId = null means platform-wide)
+  isGlobal Boolean @default(false)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  quoteLineItems QuoteLineItem[]
+
+  @@unique([artisanId, sku])
+  @@index([artisanId])
+  @@index([category])
+  @@index([trade])
+  @@index([isGlobal])
+  @@index([isActive])
+}
+
+model QuoteSequence {
+  id           String   @id @default(uuid())
+  year         Int      @unique
+  lastSequence Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+// ================================
+// 2.1 DEDICATED PORTFOLIO
+// ================================
+
+model Portfolio {
+  id        String @id @default(uuid())
+  artisanId String @unique
+  artisan   User   @relation("ArtisanPortfolio", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  // Portfolio settings
+  title       String?
+  description String?
+  isPublic    Boolean @default(true)
+
+  // Projects
+  projects PortfolioProject[]
+
+  // Stats
+  totalViews Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublic])
+}
+
+model PortfolioProject {
+  id          String    @id @default(uuid())
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  // Project details
+  title       String
+  description String?
+  category    String
+  trade       String? // Plumbing, Electrical, etc.
+
+  // Location (anonymized)
+  city    String?
+  country String?
+
+  // Timeline
+  startDate     DateTime?
+  completionDate DateTime?
+  duration      String? // "2 days", "1 week", etc.
+
+  // Media
+  photos       PortfolioPhoto[]
+  beforePhotos String[] // URLs
+  afterPhotos  String[]  // URLs
+  videoUrl     String?
+
+  // Project scope
+  projectScope  String? // Brief, detailed description
+  challenges    String? // Challenges faced
+  solutions     String? // How challenges were solved
+
+  // Cost range (optional, anonymized)
+  budgetRange String? // "€500-€1000", "€1000-€5000", etc.
+
+  // Related mission (if public and client approved)
+  missionId String?
+  mission   Mission? @relation("PortfolioMissions", fields: [missionId], references: [id], onDelete: SetNull)
+
+  // Client testimonial (if approved)
+  clientTestimonial String?
+  clientApproved    Boolean @default(false)
+
+  // Visibility
+  isPublic    Boolean @default(true)
+  isFeatured  Boolean @default(false)
+  displayOrder Int    @default(0)
+
+  // Stats
+  viewCount Int @default(0)
+  likeCount Int @default(0)
+
+  // Tags for searchability
+  tags String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([portfolioId])
+  @@index([category])
+  @@index([trade])
+  @@index([isPublic])
+  @@index([isFeatured])
+}
+
+model PortfolioPhoto {
+  id        String           @id @default(uuid())
+  projectId String
+  project   PortfolioProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  url         String
+  caption     String?
+  isBefore    Boolean @default(false)
+  isAfter     Boolean @default(false)
+  isFeatured  Boolean @default(false)
+  displayOrder Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// ================================
+// 2.2 CLIENT CRM
+// ================================
+
+model ClientRelationship {
+  id        String @id @default(uuid())
+  artisanId String
+  artisan   User   @relation("ArtisanClientRelationships", fields: [artisanId], references: [id], onDelete: Cascade)
+  clientId  String
+  client    User   @relation("ClientRelationships", fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Relationship status
+  status String @default("ACTIVE") // ACTIVE, INACTIVE, VIP, BLOCKED
+
+  // Client classification
+  clientType String @default("REGULAR") // REGULAR, VIP, COMMERCIAL, ONE_TIME
+  tags       String[] // Custom tags
+
+  // Contact preferences
+  preferredContactMethod String? // EMAIL, PHONE, SMS, APP
+  preferredContactTime   String? // MORNING, AFTERNOON, EVENING, ANYTIME
+
+  // Notes (private to artisan)
+  notes String?
+
+  // Stats
+  totalMissions      Int     @default(0)
+  totalSpent         Decimal @default(0) @db.Decimal(12, 2)
+  averageMissionValue Decimal @default(0) @db.Decimal(10, 2)
+  lastMissionDate    DateTime?
+
+  // Acquisition
+  acquisitionSource String? // REFERRAL, SEARCH, SOCIAL, DIRECT, OTHER
+
+  // Important dates
+  firstContactDate DateTime @default(now())
+  lastContactDate  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Follow-ups
+  followUps ClientFollowUp[]
+
+  @@unique([artisanId, clientId])
+  @@index([artisanId])
+  @@index([clientId])
+  @@index([status])
+  @@index([clientType])
+}
+
+model ClientFollowUp {
+  id             String             @id @default(uuid())
+  relationshipId String
+  relationship   ClientRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+
+  // Follow-up details
+  title       String
+  description String?
+  type        String @default("GENERAL") // GENERAL, QUOTE_FOLLOW_UP, MAINTENANCE_REMINDER, THANK_YOU, CHECK_IN
+
+  // Scheduling
+  dueDate     DateTime
+  reminderAt  DateTime?
+
+  // Status
+  status      String    @default("PENDING") // PENDING, COMPLETED, SKIPPED, OVERDUE
+  completedAt DateTime?
+  outcome     String?
+
+  // Related entities
+  missionId String?
+  quoteId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([relationshipId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+// ================================
+// 2.3 RECURRING SERVICES
+// ================================
+
+enum RecurringServiceStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+  PENDING_RENEWAL
+}
+
+enum RecurringFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  BIANNUALLY
+  ANNUALLY
+}
+
+model RecurringService {
+  id        String @id @default(uuid())
+  artisanId String
+  artisan   User   @relation("ArtisanRecurringServices", fields: [artisanId], references: [id], onDelete: Cascade)
+  clientId  String
+  client    User   @relation("ClientRecurringServices", fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Contract details
+  name        String
+  description String?
+  category    String
+  trade       String?
+
+  // Service location
+  address    String
+  city       String
+  postalCode String
+  country    String
+  latitude   Float?
+  longitude  Float?
+
+  // Scheduling
+  frequency         RecurringFrequency
+  scheduledDayOfWeek Int? // 0-6 for weekly/biweekly
+  scheduledDayOfMonth Int? // 1-31 for monthly
+  scheduledMonth     Int? // 1-12 for annually/biannually
+  preferredTimeSlot  String? // MORNING, AFTERNOON, EVENING
+
+  // Contract period
+  startDate     DateTime
+  endDate       DateTime?
+  nextServiceDate DateTime?
+
+  // Pricing
+  servicePrice   Decimal  @db.Decimal(10, 2)
+  currency       String   @default("EUR")
+  discountPercent Decimal? @db.Decimal(5, 2) // Recurring discount
+
+  // Status
+  status RecurringServiceStatus @default(ACTIVE)
+
+  // Auto-renewal
+  autoRenew       Boolean @default(true)
+  renewalNotifyDays Int    @default(30) // Days before to notify
+
+  // Payment
+  autoCharge      Boolean @default(false)
+  paymentMethodId String? // Stored payment method
+
+  // Notes
+  serviceNotes    String? // What to do each visit
+  accessInstructions String? // How to access property
+  internalNotes   String?
+
+  // Stats
+  totalServices     Int     @default(0)
+  missedServices    Int     @default(0)
+  totalRevenue      Decimal @default(0) @db.Decimal(12, 2)
+  averageRating     Decimal? @db.Decimal(3, 2)
+
+  // Generated missions
+  missions RecurringServiceMission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([artisanId])
+  @@index([clientId])
+  @@index([status])
+  @@index([nextServiceDate])
+}
+
+model RecurringServiceMission {
+  id                 String           @id @default(uuid())
+  recurringServiceId String
+  recurringService   RecurringService @relation(fields: [recurringServiceId], references: [id], onDelete: Cascade)
+
+  // Generated mission
+  missionId String?  @unique
+  mission   Mission? @relation("RecurringMissions", fields: [missionId], references: [id], onDelete: SetNull)
+
+  // Scheduled date for this occurrence
+  scheduledDate DateTime
+  actualDate    DateTime?
+
+  // Status
+  status String @default("SCHEDULED") // SCHEDULED, COMPLETED, MISSED, CANCELLED, RESCHEDULED
+
+  // Notes
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recurringServiceId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+// ================================
+// 2.4 SUBCONTRACTOR MANAGEMENT
+// ================================
+
+enum SubcontractorStatus {
+  PENDING_INVITATION
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+model Subcontractor {
+  id        String @id @default(uuid())
+  artisanId String // Primary artisan who hired the subcontractor
+  artisan   User   @relation("ArtisanSubcontractors", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  // Subcontractor can be a platform user or external
+  subcontractorUserId String?
+  subcontractorUser   User?   @relation("SubcontractorOf", fields: [subcontractorUserId], references: [id], onDelete: SetNull)
+
+  // External subcontractor details (if not a platform user)
+  externalName    String?
+  externalEmail   String?
+  externalPhone   String?
+  externalCompany String?
+  externalSiret   String?
+
+  // Relationship
+  status SubcontractorStatus @default(PENDING_INVITATION)
+  invitationToken  String? @unique
+  invitedAt        DateTime?
+  acceptedAt       DateTime?
+
+  // Terms
+  defaultCommissionRate Decimal? @db.Decimal(5, 2) // Subcontractor's share
+  paymentTerms          String?  // NET_7, NET_15, NET_30, IMMEDIATE
+
+  // Specialties
+  specialties String[] // Areas of expertise
+
+  // Insurance & Certifications
+  insuranceVerified Boolean @default(false)
+  insuranceExpiryDate DateTime?
+  certifications    String[] // List of certifications
+
+  // Stats
+  totalMissions      Int     @default(0)
+  totalEarnings      Decimal @default(0) @db.Decimal(12, 2)
+  averageRating      Decimal? @db.Decimal(3, 2)
+
+  // Notes
+  notes String?
+
+  // Assignments
+  assignments SubcontractorAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([artisanId, subcontractorUserId])
+  @@unique([artisanId, externalEmail])
+  @@index([artisanId])
+  @@index([subcontractorUserId])
+  @@index([status])
+}
+
+model SubcontractorAssignment {
+  id              String       @id @default(uuid())
+  subcontractorId String
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+
+  // Mission assignment
+  missionId String
+  mission   Mission @relation("SubcontractorMissions", fields: [missionId], references: [id], onDelete: Cascade)
+
+  // Assignment details
+  role        String? // Lead, Assistant, Specialist, etc.
+  description String?
+
+  // Payment split
+  agreedAmount      Decimal  @db.Decimal(10, 2)
+  commissionRate    Decimal  @db.Decimal(5, 2) // Percentage of mission
+  paymentStatus     String   @default("PENDING") // PENDING, APPROVED, PAID, DISPUTED
+  paidAt            DateTime?
+  paymentReference  String?
+
+  // Performance
+  rating   Int? // 1-5
+  feedback String?
+
+  // Status
+  status String @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([subcontractorId, missionId])
+  @@index([subcontractorId])
+  @@index([missionId])
+  @@index([paymentStatus])
+  @@index([status])
+}
+
+// ================================
+// 3.2 ADVANCED ANALYTICS
+// ================================
+
+model AnalyticsSnapshot {
+  id        String @id @default(uuid())
+  artisanId String
+  artisan   User   @relation("ArtisanAnalytics", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  // Period
+  periodType String // DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Mission metrics
+  totalMissions      Int     @default(0)
+  completedMissions  Int     @default(0)
+  cancelledMissions  Int     @default(0)
+  completionRate     Decimal @default(0) @db.Decimal(5, 2)
+
+  // Revenue metrics
+  grossRevenue       Decimal @default(0) @db.Decimal(12, 2)
+  netRevenue         Decimal @default(0) @db.Decimal(12, 2)
+  platformFees       Decimal @default(0) @db.Decimal(12, 2)
+  averageMissionValue Decimal @default(0) @db.Decimal(10, 2)
+  currency           String  @default("EUR")
+
+  // Profitability (if expense tracking enabled)
+  totalExpenses      Decimal @default(0) @db.Decimal(12, 2)
+  netProfit          Decimal @default(0) @db.Decimal(12, 2)
+  profitMargin       Decimal @default(0) @db.Decimal(5, 2)
+
+  // Customer metrics
+  newClients         Int @default(0)
+  repeatClients      Int @default(0)
+  repeatRate         Decimal @default(0) @db.Decimal(5, 2)
+
+  // Quote metrics
+  quotesCreated      Int @default(0)
+  quotesAccepted     Int @default(0)
+  conversionRate     Decimal @default(0) @db.Decimal(5, 2)
+  averageQuoteValue  Decimal @default(0) @db.Decimal(10, 2)
+
+  // Performance metrics
+  averageRating      Decimal? @db.Decimal(3, 2)
+  reviewCount        Int     @default(0)
+  responseTime       Int?    // Average minutes to respond
+  onTimeRate         Decimal @default(0) @db.Decimal(5, 2) // Percentage of on-time arrivals
+
+  // Breakdown by category
+  revenueByCategory  Json? // {plumbing: 5000, electrical: 3000}
+  missionsByCategory Json? // {plumbing: 10, electrical: 5}
+
+  // Breakdown by service type
+  revenueByType      Json? // {emergency: 2000, scheduled: 6000}
+  missionsByType     Json? // {emergency: 5, scheduled: 10}
+
+  // Comparison to previous period
+  revenueChange      Decimal? @db.Decimal(5, 2) // Percentage change
+  missionsChange     Decimal? @db.Decimal(5, 2)
+  ratingChange       Decimal? @db.Decimal(3, 2)
+
+  createdAt DateTime @default(now())
+
+  @@unique([artisanId, periodType, periodStart])
+  @@index([artisanId])
+  @@index([periodType])
+  @@index([periodStart])
+}
+
+model RevenueGoal {
+  id        String @id @default(uuid())
+  artisanId String
+  artisan   User   @relation("ArtisanRevenueGoals", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  // Goal period
+  periodType String // MONTHLY, QUARTERLY, YEARLY
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Target
+  targetRevenue Decimal @db.Decimal(12, 2)
+  currency      String  @default("EUR")
+
+  // Progress
+  currentRevenue Decimal @default(0) @db.Decimal(12, 2)
+  progressPercent Decimal @default(0) @db.Decimal(5, 2)
+
+  // Status
+  status String @default("IN_PROGRESS") // IN_PROGRESS, ACHIEVED, MISSED
+
+  // Notes
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([artisanId, periodType, periodStart])
+  @@index([artisanId])
+  @@index([status])
+}
+
+// ================================
+// 3.3 SUPPORT TICKET SYSTEM
+// ================================
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  WAITING_FOR_SUPPORT
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  TECHNICAL_ISSUE
+  PAYMENT_ISSUE
+  ACCOUNT_ISSUE
+  MISSION_ISSUE
+  DISPUTE
+  FEATURE_REQUEST
+  FEEDBACK
+  OTHER
+}
+
+model SupportTicket {
+  id           String @id @default(uuid())
+  ticketNumber String @unique // TKT-YYYYMMDD-XXXX
+
+  // Reporter
+  userId String
+  user   User   @relation("UserTickets", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Assignment
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Ticket details
+  subject     String
+  description String
+  category    TicketCategory
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+
+  // Related entities
+  missionId String?
+  mission   Mission? @relation("TicketMissions", fields: [missionId], references: [id], onDelete: SetNull)
+  orderId   String?
+  quoteId   String?
+
+  // Attachments
+  attachments String[]
+
+  // Tags
+  tags String[]
+
+  // Resolution
+  resolution     String?
+  resolvedAt     DateTime?
+  satisfactionRating Int? // 1-5
+
+  // SLA tracking
+  firstResponseAt  DateTime?
+  firstResponseSLA Int? // Minutes to first response
+  resolutionSLA    Int? // Minutes to resolution
+  firstResponseDue DateTime? // Due date for first response
+  resolutionDue    DateTime? // Due date for resolution
+
+  // Escalation tracking
+  escalationCount Int @default(0)
+
+  // Customer satisfaction
+  satisfactionFeedback String?
+
+  // Assignment tracking
+  assignedAt DateTime?
+
+  // Messages
+  messages    TicketMessage[]
+  escalations TicketEscalation[]
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closedAt    DateTime?
+  reopenedAt  DateTime?
+  escalatedAt DateTime?
+
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([createdAt])
+  @@index([firstResponseDue])
+  @@index([resolutionDue])
+}
+
+model TicketMessage {
+  id       String        @id @default(uuid())
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  // Sender
+  senderId String
+  sender   User   @relation("TicketMessagesSent", fields: [senderId], references: [id])
+
+  // Message
+  content     String
+  isInternal  Boolean  @default(false) // Internal notes not visible to customer
+  attachments String[]
+
+  // Auto-response tracking
+  isAutoResponse Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model TicketSequence {
+  id           String   @id @default(uuid())
+  date         String   @unique // YYYYMMDD format
+  lastSequence Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model TicketEscalation {
+  id       String        @id @default(uuid())
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  reason       String // SLA_AT_RISK, SLA_BREACHED, CUSTOMER_ESCALATION, MANUAL
+  notes        String?
+  fromPriority String
+  toPriority   String
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model CannedResponse {
+  id String @id @default(uuid())
+
+  title    String
+  content  String
+  category String?
+  tags     String[]
+  shortcut String? // Keyboard shortcut
+
+  usageCount Int     @default(0)
+  isActive   Boolean @default(true)
+
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([usageCount])
+}
+
+model NpsResponse {
+  id String @id @default(uuid())
+
+  userId   String
+  ticketId String?
+
+  score    Int // 0-10
+  feedback String?
+  source   String // TICKET, EMAIL, IN_APP, GENERAL
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([ticketId])
+  @@index([createdAt])
+  @@index([score])
+}
+
+// Knowledge Base for self-service support
+model KnowledgeBaseArticle {
+  id String @id @default(uuid())
+
+  // Article details
+  title    String
+  slug     String @unique
+  content  String // Markdown content
+  excerpt  String?
+
+  // Categorization
+  category    String
+  subcategory String?
+  tags        String[]
+
+  // Audience
+  targetAudience String @default("ALL") // ALL, CLIENT, ARTISAN, ADMIN
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Status
+  status String @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+
+  // Stats
+  viewCount    Int @default(0)
+  helpfulCount Int @default(0)
+  notHelpfulCount Int @default(0)
+
+  // Author
+  authorId String
+  author   User   @relation("KnowledgeBaseAuthor", fields: [authorId], references: [id])
+
+  // Translations
+  locale       String @default("en")
+  translations Json?  // {fr: {title, content}, de: {title, content}}
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@index([category])
+  @@index([status])
+  @@index([locale])
+  @@index([targetAudience])
+}
+
+// ================================
+// 3.4 JOB DOCUMENTATION TEMPLATES
+// ================================
+
+enum DocumentTemplateType {
+  CHECKLIST
+  SAFETY_FORM
+  COMPLIANCE_FORM
+  INSPECTION_REPORT
+  WORK_COMPLETION
+  WARRANTY_CERTIFICATE
+  HANDOVER_DOCUMENT
+  CUSTOM
+}
+
+model DocumentTemplate {
+  id        String @id @default(uuid())
+  artisanId String?
+  artisan   User?  @relation("ArtisanDocumentTemplates", fields: [artisanId], references: [id], onDelete: Cascade)
+
+  // Template details
+  name        String
+  description String?
+  type        DocumentTemplateType
+  category    String? // Plumbing, Electrical, General
+  trade       String?
+
+  // Template content
+  sections DocumentTemplateSection[]
+
+  // Settings
+  requiresSignature     Boolean @default(false)
+  requiresPhotos        Boolean @default(false)
+  requiresClientApproval Boolean @default(false)
+
+  // Global template (artisanId = null means platform-provided)
+  isGlobal    Boolean @default(false)
+  isActive    Boolean @default(true)
+
+  // Usage tracking
+  usageCount Int @default(0)
+
+  // Translations
+  locale       String @default("en")
+  translations Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Generated documents
+  documents JobDocument[]
+
+  @@index([artisanId])
+  @@index([type])
+  @@index([category])
+  @@index([isGlobal])
+  @@index([isActive])
+}
+
+model DocumentTemplateSection {
+  id         String           @id @default(uuid())
+  templateId String
+  template   DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  // Section details
+  title       String
+  description String?
+  position    Int @default(0)
+
+  // Fields in this section
+  fields DocumentTemplateField[]
+
+  createdAt DateTime @default(now())
+
+  @@index([templateId])
+}
+
+model DocumentTemplateField {
+  id        String                  @id @default(uuid())
+  sectionId String
+  section   DocumentTemplateSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  // Field details
+  label       String
+  fieldType   String // TEXT, TEXTAREA, NUMBER, CHECKBOX, RADIO, SELECT, DATE, TIME, PHOTO, SIGNATURE
+  placeholder String?
+  helpText    String?
+
+  // Options for SELECT, RADIO, CHECKBOX
+  options Json? // [{value, label}]
+
+  // Validation
+  isRequired  Boolean @default(false)
+  minValue    Int?
+  maxValue    Int?
+  minLength   Int?
+  maxLength   Int?
+  pattern     String? // Regex pattern
+
+  // Position
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([sectionId])
+}
+
+model JobDocument {
+  id        String @id @default(uuid())
+  missionId String
+  mission   Mission @relation("MissionDocuments", fields: [missionId], references: [id], onDelete: Cascade)
+
+  // Template used
+  templateId String?
+  template   DocumentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  // Document details
+  name   String
+  type   DocumentTemplateType
+  status String @default("DRAFT") // DRAFT, COMPLETED, SIGNED, ARCHIVED
+
+  // Filled data
+  data Json // {sectionId: {fieldId: value}}
+
+  // Signatures
+  artisanSignature String? // Base64
+  artisanSignedAt  DateTime?
+  clientSignature  String?  // Base64
+  clientSignedAt   DateTime?
+
+  // Photos attached
+  photos String[]
+
+  // PDF export
+  pdfUrl String?
+
+  // Notes
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([missionId])
+  @@index([templateId])
+  @@index([type])
+  @@index([status])
+}
+
+// ================================
+// 4.1 MULTI-CURRENCY SUPPORT
+// ================================
+
+model Currency {
+  id     String @id @default(uuid())
+  code   String @unique // EUR, GBP, CHF, USD
+  name   String
+  symbol String // €, £, CHF, $
+
+  // Exchange rates (relative to EUR)
+  exchangeRate    Decimal  @db.Decimal(10, 6)
+  lastUpdated     DateTime @default(now())
+
+  // Formatting
+  decimalPlaces   Int    @default(2)
+  thousandsSep    String @default(",")
+  decimalSep      String @default(".")
+  symbolPosition  String @default("BEFORE") // BEFORE, AFTER
+
+  // Availability
+  isActive        Boolean @default(true)
+  supportedCountries String[] // Country codes where this currency is used
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model ExchangeRateHistory {
+  id           String   @id @default(uuid())
+  fromCurrency String
+  toCurrency   String
+  rate         Decimal  @db.Decimal(10, 6)
+  source       String   @default("ECB") // ECB, MANUAL
+  recordedAt   DateTime @default(now())
+
+  @@index([fromCurrency, toCurrency])
+  @@index([recordedAt])
+}
+
+// ================================
+// 4.3 & 4.4 COUNTRY CONFIGURATIONS & COMPLIANCE
+// ================================
+
+model CountryConfig {
+  id          String @id @default(uuid())
+  countryCode String @unique // GB, CH, ES, IT, FR, LU, BE, DE, NL, PT
+
+  // Basic info
+  name        String
+  nativeName  String?
+  defaultLocale String // en, de, fr, es, it, nl, pt
+  defaultCurrency String @default("EUR")
+  timezone    String // Europe/London, Europe/Zurich, etc.
+
+  // Business registration
+  businessRegistrationType     String // COMPANIES_HOUSE, UID, NIF, PARTITA_IVA, SIRET, KBO, etc.
+  businessRegistrationLabel    String // "Company Number", "UID", "NIF", etc.
+  businessRegistrationFormat   String? // Regex pattern for validation
+  businessRegistrationRequired Boolean @default(true)
+
+  // VAT/Tax
+  vatNumberFormat String? // Regex for VAT number validation
+  vatLabel        String  @default("VAT")
+  standardVatRate Decimal @db.Decimal(5, 2)
+  reducedVatRates Json?   // [{rate: 5.5, description: "Renovation"}, ...]
+
+  // Compliance requirements
+  complianceRequirements CountryComplianceRequirement[]
+
+  // Platform availability
+  isActive     Boolean @default(false)
+  launchDate   DateTime?
+  betaAccess   Boolean @default(false)
+
+  // Payment
+  supportedPaymentMethods String[] // STRIPE, PAYPAL, SEPA, etc.
+  stripeSupportedCurrency String?
+
+  // Legal
+  termsUrl     String?
+  privacyUrl   String?
+  legalNotices Json? // Country-specific legal requirements
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([defaultCurrency])
+}
+
+model CountryComplianceRequirement {
+  id              String        @id @default(uuid())
+  countryConfigId String
+  countryConfig   CountryConfig @relation(fields: [countryConfigId], references: [id], onDelete: Cascade)
+
+  // Requirement details
+  name        String
+  description String?
+  category    String // INSURANCE, LICENSE, CERTIFICATION, REGISTRATION
+
+  // Applicability
+  trades        String[] // Which trades this applies to (empty = all)
+  serviceTypes  String[] // Which service types (EMERGENCY, SCHEDULED, etc.)
+
+  // Requirement type
+  isRequired    Boolean @default(true)
+  isMandatory   Boolean @default(false) // If true, cannot operate without it
+
+  // Document requirements
+  requiresDocument Boolean @default(true)
+  documentTypes    String[] // PDF, IMAGE, etc.
+  validityPeriod   Int? // Days until expiry requires renewal
+
+  // Verification
+  verificationMethod String @default("MANUAL") // MANUAL, AUTOMATIC, THIRD_PARTY
+  verificationUrl    String? // URL for external verification service
+
+  // Display
+  displayOrder Int @default(0)
+  helpUrl      String?
+  helpText     String?
+
+  // Translations
+  translations Json? // {fr: {name, description}, de: {name, description}}
+
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Artisan compliance records
+  artisanCompliance ArtisanComplianceRecord[]
+
+  @@unique([countryConfigId, name])
+  @@index([countryConfigId])
+  @@index([category])
+  @@index([isRequired])
+  @@index([isActive])
+}
+
+model ArtisanComplianceRecord {
+  id            String                       @id @default(uuid())
+  artisanId     String
+  artisan       User                         @relation("ArtisanCompliance", fields: [artisanId], references: [id], onDelete: Cascade)
+  requirementId String
+  requirement   CountryComplianceRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  // Compliance status
+  status String @default("PENDING") // PENDING, SUBMITTED, VERIFIED, REJECTED, EXPIRED
+
+  // Document
+  documentUrl   String?
+  documentName  String?
+  documentType  String?
+
+  // Dates
+  issueDate     DateTime?
+  expiryDate    DateTime?
+  submittedAt   DateTime?
+  verifiedAt    DateTime?
+
+  // Verification
+  verifiedBy    String?
+  verificationNotes String?
+  rejectionReason String?
+
+  // Reminders
+  expiryReminderSent Boolean   @default(false)
+  reminderSentAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([artisanId, requirementId])
+  @@index([artisanId])
+  @@index([requirementId])
+  @@index([status])
+  @@index([expiryDate])
+}
+
+// ================================
+// INTERNATIONALIZATION (i18n)
+// ================================
+
+model Locale {
+  id   String @id @default(uuid())
+  code String @unique // fr, en, de, es, it, nl, pt, ar, tr, pl, ro, be, ch
+
+  name       String // Display name (English)
+  nativeName String // Native name
+
+  direction String @default("ltr") // ltr or rtl
+
+  // Regional settings
+  flag           String?
+  dateFormat     String?
+  timeFormat     String?
+  currencyCode   String?
+  currencySymbol String?
+  numberFormat   String?
+
+  // Status
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model Translation {
+  id String @id @default(uuid())
+
+  key       String // Translation key (e.g., "common.welcome")
+  namespace String // Namespace/category (e.g., "common", "auth", "dashboard")
+  locale    String // Locale code (e.g., "fr", "en")
+
+  value       String // Translation value
+  pluralValue String? // JSON for plural forms: {"zero": "", "one": "", "few": "", "many": "", "other": ""}
+
+  description String? // Developer notes
+  context     String? // Context for translators
+
+  status String @default("DRAFT") // DRAFT, PENDING_REVIEW, APPROVED, PUBLISHED, ARCHIVED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // History
+  history TranslationHistory[]
+
+  @@unique([key, locale, namespace])
+  @@index([key])
+  @@index([locale])
+  @@index([namespace])
+  @@index([status])
+  @@index([locale, namespace])
+}
+
+model TranslationHistory {
+  id String @id @default(uuid())
+
+  translationId String
+  translation   Translation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  oldValue String?
+  newValue String?
+  action   String // CREATE, UPDATE, DELETE, APPROVE, REJECT, PUBLISH
+
+  userId String? // User who made the change
+
+  createdAt DateTime @default(now())
+
+  @@index([translationId])
+  @@index([userId])
+  @@index([createdAt])
 }

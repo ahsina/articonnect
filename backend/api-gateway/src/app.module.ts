@@ -35,6 +35,18 @@ import { ExportModule } from './export/export.module';
 import { CompanyModule } from './company/company.module';
 import { EmployeeModule } from './employee/employee.module';
 import { ReportsModule } from './reports/reports.module';
+import { QuoteModule } from './quote/quote.module';
+import { PortfolioModule } from './portfolio/portfolio.module';
+import { CrmModule } from './crm/crm.module';
+import { RecurringModule } from './recurring/recurring.module';
+import { SubcontractorModule } from './subcontractor/subcontractor.module';
+import { SupportModule } from './support/support.module';
+import { DocumentsModule } from './documents/documents.module';
+import { CurrencyModule } from './currency/currency.module';
+import { CountryModule } from './country/country.module';
+import { ChecklistModule } from './checklist/checklist.module';
+import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
+import { I18nModule } from './i18n/i18n.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
@@ -108,6 +120,18 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     AnalyticsModule,
     ExportModule,
     ReportsModule,
+    QuoteModule,
+    PortfolioModule,
+    CrmModule,
+    RecurringModule,
+    SubcontractorModule,
+    SupportModule,
+    DocumentsModule,
+    CurrencyModule,
+    CountryModule,
+    ChecklistModule,
+    KnowledgeBaseModule,
+    I18nModule,
   ],
   providers: [
     LoggerService,
