@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NotificationType } from '@prisma/client';
 
@@ -16,6 +16,8 @@ export interface UpdateProgressDto {
 
 @Injectable()
 export class SubcontractorPortalService {
+  private readonly logger = new Logger(SubcontractorPortalService.name);
+
   constructor(private prisma: PrismaService) {}
 
   // ============ SUBCONTRACTOR DASHBOARD ============
@@ -375,7 +377,7 @@ export class SubcontractorPortalService {
         },
       });
     } catch (error) {
-      console.error('Failed to create notification:', error);
+      this.logger.error('Failed to create notification', error);
     }
   }
 }

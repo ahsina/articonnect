@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { UserRole } from '@prisma/client';
@@ -28,7 +28,9 @@ export interface ProximityFilter {
 
 @Injectable()
 export class AdvancedGeoService {
-  private readonly CACHE_TTL = 600;
+  private readonly logger = new Logger(AdvancedGeoService.name);
+  private readonly CACHE_TTL = 600; // 10 minutes
+  private readonly SHORT_CACHE_TTL = 60; // 1 minute for real-time locations
   private readonly EARTH_RADIUS_KM = 6371;
 
   constructor(
@@ -360,6 +362,118 @@ export class AdvancedGeoService {
   async clearLocationCache(artisanId?: string): Promise<void> {
     if (artisanId) {
       await this.redis.del(`geo:artisan:${artisanId}:location`);
+    }
+  }
+
+  /**
+   * Batch update artisan locations in Redis GEO index
+   * More efficient for bulk operations
+   */
+  async batchUpdateArtisanLocations(
+    locations: Array<{ artisanId: string; latitude: number; longitude: number }>,
+  ): Promise<{ success: number; failed: number }> {
+    let success = 0;
+    let failed = 0;
+
+    const client = this.redis.getClient();
+
+    // Use pipeline for batch operations
+    const pipeline = client.pipeline();
+
+    for (const loc of locations) {
+      try {
+        // Add to Redis GEO index
+        pipeline.geoadd('artisans:geo:index', loc.longitude, loc.latitude, loc.artisanId);
+        // Cache individual location
+        const geohash = this.generateGeohash({ latitude: loc.latitude, longitude: loc.longitude }, 6);
+        pipeline.setex(
+          `geo:artisan:${loc.artisanId}:location`,
+          this.SHORT_CACHE_TTL,
+          JSON.stringify({ latitude: loc.latitude, longitude: loc.longitude, geohash }),
+        );
+        success++;
+      } catch (error) {
+        this.logger.error(`Failed to update location for artisan ${loc.artisanId}`, error);
+        failed++;
+      }
+    }
+
+    await pipeline.exec();
+
+    this.logger.log(`Batch location update: ${success} success, ${failed} failed`);
+    return { success, failed };
+  }
+
+  /**
+   * Fast proximity search using Redis GEORADIUS
+   * Falls back to database query if Redis is unavailable
+   */
+  async findNearbyArtisansFast(
+    center: GeoLocation,
+    radiusKm: number,
+    limit: number = 50,
+  ): Promise<Array<{ artisanId: string; distance: number }>> {
+    try {
+      const client = this.redis.getClient();
+      const results = await client.georadius(
+        'artisans:geo:index',
+        center.longitude,
+        center.latitude,
+        radiusKm,
+        'km',
+        'WITHDIST',
+        'ASC',
+        'COUNT',
+        limit,
+      );
+
+      return results.map((result: [string, string]) => ({
+        artisanId: result[0],
+        distance: parseFloat(result[1]),
+      }));
+    } catch (error) {
+      this.logger.warn('Redis GEORADIUS failed, falling back to database query', error);
+      // Fallback to database bounding box query
+      const bbox = this.getBoundingBox(center, radiusKm);
+      const artisans = await this.prisma.artisanProfile.findMany({
+        where: {
+          available: true,
+          latitude: { gte: bbox.minLat, lte: bbox.maxLat },
+          longitude: { gte: bbox.minLon, lte: bbox.maxLon },
+        },
+        select: { userId: true, latitude: true, longitude: true },
+        take: limit * 2, // Fetch more to filter by actual distance
+      });
+
+      return artisans
+        .map((a) => ({
+          artisanId: a.userId,
+          distance: this.calculateDistance(center, { latitude: a.latitude, longitude: a.longitude }),
+        }))
+        .filter((a) => a.distance <= radiusKm)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, limit);
+    }
+  }
+
+  /**
+   * Get geo stats for monitoring
+   */
+  async getGeoStats(): Promise<{
+    indexedArtisans: number;
+    cacheHitRate: number;
+  }> {
+    try {
+      const client = this.redis.getClient();
+      const indexedArtisans = await client.zcard('artisans:geo:index');
+
+      return {
+        indexedArtisans,
+        cacheHitRate: 0, // Would need to track hits/misses for accurate rate
+      };
+    } catch (error) {
+      this.logger.error('Failed to get geo stats', error);
+      return { indexedArtisans: 0, cacheHitRate: 0 };
     }
   }
 }

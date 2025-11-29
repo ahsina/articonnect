@@ -39,6 +39,10 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   private readonly logger = new Logger(NotificationGateway.name);
   private userSockets: Map<string, Set<string>> = new Map();
+  private lastHeartbeat: Map<string, number> = new Map();
+  private heartbeatInterval: NodeJS.Timeout;
+  private readonly HEARTBEAT_INTERVAL = 30000; // 30 seconds
+  private readonly HEARTBEAT_TIMEOUT = 60000; // 60 seconds
 
   constructor(
     private readonly jwtService: JwtService,
@@ -47,6 +51,39 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   afterInit() {
     this.logger.log('Notification WebSocket Gateway initialized');
+
+    // Start heartbeat monitoring
+    this.heartbeatInterval = setInterval(() => {
+      this.checkHeartbeats();
+    }, this.HEARTBEAT_INTERVAL);
+  }
+
+  /**
+   * Check and disconnect stale connections
+   */
+  private checkHeartbeats() {
+    const now = Date.now();
+    const staleConnections: string[] = [];
+
+    this.lastHeartbeat.forEach((timestamp, socketId) => {
+      if (now - timestamp > this.HEARTBEAT_TIMEOUT) {
+        staleConnections.push(socketId);
+      }
+    });
+
+    // Disconnect stale connections
+    staleConnections.forEach((socketId) => {
+      const socket = this.server.sockets.get(socketId);
+      if (socket) {
+        this.logger.warn(`Disconnecting stale connection: ${socketId}`);
+        socket.disconnect(true);
+      }
+      this.lastHeartbeat.delete(socketId);
+    });
+
+    if (staleConnections.length > 0) {
+      this.logger.log(`Cleaned up ${staleConnections.length} stale connections`);
+    }
   }
 
   async handleConnection(client: Socket) {
@@ -78,6 +115,9 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
       }
       this.userSockets.get(userId)!.add(client.id);
 
+      // Initialize heartbeat tracking
+      this.lastHeartbeat.set(client.id, Date.now());
+
       // Send unread count on connect
       const unreadCount = await this.getUnreadCount(userId);
       client.emit('unread_count', { count: unreadCount });
@@ -101,6 +141,9 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         this.userSockets.delete(userId);
       }
     }
+
+    // Clean up heartbeat tracking
+    this.lastHeartbeat.delete(client.id);
   }
 
   // ============ PUBLIC METHODS FOR SENDING NOTIFICATIONS ============
@@ -214,6 +257,21 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     } catch (error) {
       this.logger.error('Error deleting notification:', error);
     }
+  }
+
+  @SubscribeMessage('heartbeat')
+  handleHeartbeat(@ConnectedSocket() client: Socket) {
+    // Update last heartbeat timestamp
+    this.lastHeartbeat.set(client.id, Date.now());
+    // Acknowledge heartbeat
+    client.emit('heartbeat_ack', { timestamp: Date.now() });
+  }
+
+  @SubscribeMessage('ping')
+  handlePing(@ConnectedSocket() client: Socket) {
+    // Simple ping/pong for keep-alive
+    this.lastHeartbeat.set(client.id, Date.now());
+    client.emit('pong', { timestamp: Date.now() });
   }
 
   // ============ HELPER METHODS ============

@@ -7,15 +7,19 @@ import helmet from 'helmet';
 import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
 
+// Create logger instance for process-level error handling
+const processLogger = new LoggerService();
+processLogger.setContext('Process');
+
 // Global unhandled rejection handler
 process.on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  processLogger.error(`Unhandled Rejection at: ${promise}`, reason?.stack || reason);
   // Log the error but don't exit - let NestJS handle cleanup
 });
 
 // Global uncaught exception handler
 process.on('uncaughtException', (error: Error) => {
-  console.error('Uncaught Exception:', error);
+  processLogger.error('Uncaught Exception', error.stack);
   // For uncaught exceptions, we should exit after logging
   // The process manager (PM2, Docker, etc.) should restart the app
   process.exit(1);
