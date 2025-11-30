@@ -18,7 +18,7 @@ import { createHash, randomBytes } from 'crypto';
  * - IP and timestamp recording
  */
 
-interface SignatureData {
+export interface SignatureData {
   quoteId: string;
   signerId: string;
   signerRole: 'CLIENT' | 'ARTISAN';
@@ -28,7 +28,7 @@ interface SignatureData {
   userAgent: string;
 }
 
-interface SignatureVerification {
+export interface SignatureVerification {
   isValid: boolean;
   signedAt: Date;
   signedBy: string;

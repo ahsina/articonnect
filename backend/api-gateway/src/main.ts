@@ -9,7 +9,6 @@ import * as cookieParser from 'cookie-parser';
 
 // Create logger instance for process-level error handling
 const processLogger = new LoggerService();
-processLogger.setContext('Process');
 
 // Global unhandled rejection handler
 process.on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {

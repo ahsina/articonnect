@@ -110,7 +110,7 @@ export function usePushNotifications(): UsePushNotificationsResult {
       // Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
       });
 
       // Send subscription to server
@@ -210,9 +210,8 @@ export function useLocalNotification() {
           await registration.showNotification(title, {
             icon: '/icons/icon-192x192.png',
             badge: '/icons/badge-72x72.png',
-            vibrate: [100, 50, 100],
             ...options,
-          });
+          } as NotificationOptions);
         } else {
           // Fallback to regular notification
           new Notification(title, options);

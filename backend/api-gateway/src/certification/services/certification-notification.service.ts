@@ -158,7 +158,7 @@ export class CertificationNotificationService {
       where: {
         userId: user.id,
         type: 'CERTIFICATION_EXPIRING',
-        data: {
+        metadata: {
           path: ['certificationId'],
           equals: cert.id,
         },
@@ -173,18 +173,19 @@ export class CertificationNotificationService {
     }
 
     // Create in-app notification
-    await this.notificationService.create(user.id, {
-      type: 'CERTIFICATION_EXPIRING',
-      title: this.getExpirationTitle(daysUntilExpiry),
-      message: this.getExpirationMessage(cert.name, daysUntilExpiry),
-      data: {
+    await this.notificationService.createNotification(
+      user.id,
+      'CERTIFICATION_EXPIRING',
+      this.getExpirationTitle(daysUntilExpiry),
+      this.getExpirationMessage(cert.name, daysUntilExpiry),
+      '/artisan/certifications',
+      {
         certificationId: cert.id,
         certificationName: cert.name,
         daysUntilExpiry,
         notificationType,
       },
-      link: '/artisan/certifications',
-    });
+    );
 
     // Send email notification
     try {
@@ -206,16 +207,17 @@ export class CertificationNotificationService {
     const { user } = artisan;
 
     // Create in-app notification
-    await this.notificationService.create(user.id, {
-      type: 'CERTIFICATION_EXPIRED',
-      title: 'Certification expirée',
-      message: `Votre certification "${cert.name}" a expiré. Veuillez la renouveler pour maintenir votre statut vérifié.`,
-      data: {
+    await this.notificationService.createNotification(
+      user.id,
+      'CERTIFICATION_EXPIRED',
+      'Certification expirée',
+      `Votre certification "${cert.name}" a expiré. Veuillez la renouveler pour maintenir votre statut vérifié.`,
+      '/artisan/certifications',
+      {
         certificationId: cert.id,
         certificationName: cert.name,
       },
-      link: '/artisan/certifications',
-    });
+    );
 
     // Send email notification
     try {

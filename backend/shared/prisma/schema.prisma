@@ -152,6 +152,7 @@ model User {
   kycStatus     String    @default("PENDING") // PENDING, VERIFIED, REJECTED, REQUIRED
   kycProvider   String? // STRIPE_IDENTITY, ONFIDO, etc.
   kycSessionId  String?
+  stripeIdentitySessionId String? // Current Stripe Identity verification session
 
   // Refund Abuse Tracking
   refundCount      Int     @default(0)
@@ -448,6 +449,7 @@ model Company {
   missions        Mission[]
   settings        CompanySettings?
   chatRooms       ChatRoom[]
+  timeEntries     TimeEntry[]
 
   // Timestamps
   createdAt DateTime  @default(now())
@@ -508,6 +510,7 @@ model CompanyEmployee {
   // Scheduling & Time Tracking
   shifts       EmployeeShift[]
   timeTracking MissionTimeTracking[]
+  timeEntries  TimeEntry[]
 
   // Performance Reviews
   reviewsReceived  PerformanceReview[] @relation("EmployeeReviews")
@@ -688,7 +691,9 @@ model TimeEntry {
 
   // Employee & Company
   employeeId String
+  employee   CompanyEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   companyId  String
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Entry Details
   type      TimeEntryType
@@ -1790,6 +1795,12 @@ enum NotificationType {
   REVIEW_NEW
   MESSAGE_NEW
   SYSTEM
+  CHAT_MESSAGE
+  CHAT_MENTION
+  CERTIFICATION_EXPIRING
+  CERTIFICATION_EXPIRED
+  KYC_VERIFIED
+  KYC_REQUIRES_INPUT
 }
 
 model Notification {
@@ -2507,6 +2518,7 @@ model MissionTemplate {
 
 enum QuoteStatus {
   DRAFT // Being prepared
+  PENDING // Awaiting signature
   SENT // Sent to client
   VIEWED // Client has viewed
   ACCEPTED // Client accepted

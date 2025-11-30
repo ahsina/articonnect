@@ -39,7 +39,7 @@ interface ClockInData {
   missionId?: string;
 }
 
-interface TimeEntry {
+export interface TimeEntry {
   id: string;
   employeeId: string;
   companyId: string;
@@ -51,7 +51,7 @@ interface TimeEntry {
   status: string;
 }
 
-interface DailySummary {
+export interface DailySummary {
   date: string;
   clockIn: Date | null;
   clockOut: Date | null;

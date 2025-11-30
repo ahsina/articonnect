@@ -73,7 +73,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
     // Disconnect stale connections
     staleConnections.forEach((socketId) => {
-      const socket = this.server.sockets.get(socketId);
+      const socket = this.server.sockets.sockets.get(socketId);
       if (socket) {
         this.logger.warn(`Disconnecting stale connection: ${socketId}`);
         socket.disconnect(true);

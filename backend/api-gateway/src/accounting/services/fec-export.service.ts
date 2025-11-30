@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { createObjectCsvStringifier } from 'csv-writer';
 
 /**
  * FEC (Fichier des Ecritures Comptables) Export Service
@@ -108,7 +107,7 @@ export class FecExportService {
           gte: startDate,
           lte: endDate,
         },
-        status: { in: ['SENT', 'PAID', 'PARTIALLY_PAID'] },
+        status: { in: ['ISSUED', 'PAID', 'OVERDUE'] },
       },
       include: {
         client: true,
@@ -131,7 +130,7 @@ export class FecExportService {
           gte: startDate,
           lte: endDate,
         },
-        status: 'COMPLETED',
+        type: { in: ['FULL_PAYMENT', 'DEPOSIT'] },
       },
       include: {
         mission: {
@@ -385,14 +384,14 @@ export class FecExportService {
         where: {
           issuerId: userId,
           issueDate: { gte: startDate, lte: endDate },
-          status: { in: ['SENT', 'PAID', 'PARTIALLY_PAID'] },
+          status: { in: ['ISSUED', 'PAID', 'OVERDUE'] },
         },
       }),
       this.prisma.payment.findMany({
         where: {
           userId,
           createdAt: { gte: startDate, lte: endDate },
-          status: 'COMPLETED',
+          type: { in: ['FULL_PAYMENT', 'DEPOSIT'] },
         },
       }),
     ]);

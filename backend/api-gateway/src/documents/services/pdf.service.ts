@@ -597,7 +597,6 @@ export class PdfService {
 
       doc.text(`Montant: ${this.formatCurrency(Number(payment.amount))}`, 50);
       doc.text(`Type: ${payment.type}`, 50);
-      doc.text(`Statut: ${payment.status}`, 50);
 
       if (payment.mission) {
         doc.moveDown();
@@ -703,10 +702,10 @@ export class PdfService {
       doc.fontSize(12).font('Helvetica-Bold').text('MONTANTS', 50);
       doc.moveDown(0.5);
       doc.fontSize(10).font('Helvetica')
-        .text(`Montant total: ${this.formatCurrency(Number(mission.price))}`, 50);
+        .text(`Montant total: ${this.formatCurrency(Number(mission.finalPrice || mission.agreedPrice || mission.totalAmount || 0))}`, 50);
 
       const totalPaid = mission.payments
-        .filter(p => p.status === 'COMPLETED')
+        .filter(p => !p.refundedAt) // Exclude refunded payments
         .reduce((sum, p) => sum + Number(p.amount), 0);
 
       doc.text(`Total payé: ${this.formatCurrency(totalPaid)}`, 50);

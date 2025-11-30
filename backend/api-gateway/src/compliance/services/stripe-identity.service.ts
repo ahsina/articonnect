@@ -196,7 +196,7 @@ export class StripeIdentityService {
         verified: session.status === 'verified',
         status,
         lastCheck: new Date(),
-        documentType: session.last_verification_report?.document?.type,
+        documentType: typeof session.last_verification_report === 'object' ? session.last_verification_report?.document?.type : undefined,
         details: session.verified_outputs
           ? {
               firstName: session.verified_outputs.first_name || undefined,
@@ -276,12 +276,13 @@ export class StripeIdentityService {
     });
 
     // Send notification
-    await this.notificationService.create(userId, {
-      type: 'KYC_VERIFIED',
-      title: '✅ Identité vérifiée !',
-      message: 'Votre vérification d\'identité a été approuvée. Vous pouvez maintenant recevoir des paiements sans limite.',
-      link: '/artisan/settings',
-    });
+    await this.notificationService.createNotification(
+      userId,
+      'KYC_VERIFIED',
+      '✅ Identité vérifiée !',
+      'Votre vérification d\'identité a été approuvée. Vous pouvez maintenant recevoir des paiements sans limite.',
+      '/artisan/settings',
+    );
 
     // Send email
     try {
@@ -313,12 +314,13 @@ export class StripeIdentityService {
     });
 
     // Notify user
-    await this.notificationService.create(userId, {
-      type: 'KYC_REQUIRES_INPUT',
-      title: '📋 Action requise pour la vérification',
-      message: 'Nous avons besoin d\'informations supplémentaires pour compléter votre vérification d\'identité.',
-      link: session.url || '/artisan/settings',
-    });
+    await this.notificationService.createNotification(
+      userId,
+      'KYC_REQUIRES_INPUT',
+      '📋 Action requise pour la vérification',
+      'Nous avons besoin d\'informations supplémentaires pour compléter votre vérification d\'identité.',
+      session.url || '/artisan/settings',
+    );
 
     this.logger.log(`User ${userId} verification requires additional input`);
   }
