@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Map } from '@/components/map/Map';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 import { userApi } from '@/lib/api/user';
+import { artisanApi } from '@/lib/api/artisan';
 
 interface ArtisanProfile {
   id: string;
@@ -95,13 +97,56 @@ export default function ArtisanDetailsPage() {
     return dayMap[day] || day;
   };
 
+  const { toast } = useToast();
   const [artisan, setArtisan] = useState<ArtisanProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     loadArtisan();
+    checkFavoriteStatus();
   }, [artisanId]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const result = await artisanApi.checkFavorite(artisanId);
+      setIsFavorite(result.isFavorite);
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    setFavoriteLoading(true);
+    try {
+      if (isFavorite) {
+        await artisanApi.removeFavorite(artisanId);
+        setIsFavorite(false);
+        toast({
+          title: t('common', 'success'),
+          description: t('favorites', 'removed'),
+        });
+      } else {
+        await artisanApi.addFavorite(artisanId);
+        setIsFavorite(true);
+        toast({
+          title: t('common', 'success'),
+          description: t('favorites', 'added'),
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('common', 'error'),
+        variant: 'destructive',
+      });
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   const loadArtisan = async () => {
     try {
@@ -326,9 +371,19 @@ export default function ArtisanDetailsPage() {
                 <Button className="w-full mb-4" size="lg" onClick={handleContactArtisan}>
                   {t('artisans', 'createMission')}
                 </Button>
-                <Button variant="outline" className="w-full mb-4">
-                  💬 {t('artisans', 'sendMessage')}
-                </Button>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <Button variant="outline">
+                    💬 {t('artisans', 'sendMessage')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleToggleFavorite}
+                    disabled={favoriteLoading}
+                    className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-50' : ''}
+                  >
+                    {favoriteLoading ? '...' : isFavorite ? '❤️' : '🤍'} {t('favorites', isFavorite ? 'saved' : 'save')}
+                  </Button>
+                </div>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
                     <span>📍</span>

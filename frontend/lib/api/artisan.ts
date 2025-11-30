@@ -421,4 +421,25 @@ export const artisanApi = {
     const response = await apiClient.put('/artisan/notification-preferences', data);
     return response.data;
   },
+
+  // Favorites (for clients)
+  getFavorites: async (): Promise<any[]> => {
+    const response = await apiClient.get('/favorites/artisans');
+    return response.data;
+  },
+
+  addFavorite: async (artisanId: string): Promise<{ success: boolean }> => {
+    const response = await apiClient.post(`/favorites/artisans/${artisanId}`);
+    return response.data;
+  },
+
+  removeFavorite: async (artisanId: string): Promise<{ success: boolean }> => {
+    const response = await apiClient.delete(`/favorites/artisans/${artisanId}`);
+    return response.data;
+  },
+
+  checkFavorite: async (artisanId: string): Promise<{ isFavorite: boolean }> => {
+    const response = await apiClient.get(`/favorites/artisans/${artisanId}/check`);
+    return response.data;
+  },
 };

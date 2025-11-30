@@ -233,6 +233,13 @@ model ClientProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Client Type (B2C vs B2B)
+  clientType  String  @default("INDIVIDUAL") // INDIVIDUAL, PROFESSIONAL
+  companyName String? // For professional clients
+  siret       String? // SIRET/Business registration number
+  vatNumber   String? // VAT/TVA number
+  industry    String? // Industry/sector
+
   // Addresses
   addresses Address[]
 
@@ -253,6 +260,9 @@ model ClientProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([clientType])
+  @@index([siret])
 }
 
 model ArtisanProfile {
