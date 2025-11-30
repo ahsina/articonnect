@@ -10,6 +10,7 @@ import {
   LineItemType,
 } from '../dto/quote.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { QuoteTotals } from '../../common/types/json-fields.types';
 
 @Injectable()
 export class QuoteService {
@@ -27,7 +28,7 @@ export class QuoteService {
     return `QUO-${year}-${String(sequence.lastSequence).padStart(5, '0')}`;
   }
 
-  private calculateTotals(lineItems: any[], discountPercent?: number, taxRate?: number) {
+  private calculateTotals(lineItems: Array<{ itemType: string; quantity: number; unitPrice: number }>, discountPercent?: number, taxRate?: number): QuoteTotals {
     let laborTotal = 0;
     let materialsTotal = 0;
     let travelTotal = 0;
@@ -214,7 +215,7 @@ export class QuoteService {
       throw new BadRequestException('Can only edit draft quotes');
     }
 
-    let totals = {};
+    let totals: QuoteTotals | null = null;
     if (dto.lineItems) {
       totals = this.calculateTotals(dto.lineItems, dto.discountPercent ?? Number(quote.discountPercent), dto.taxRate ?? Number(quote.taxRate));
 
@@ -232,14 +233,14 @@ export class QuoteService {
         city: dto.city,
         postalCode: dto.postalCode,
         country: dto.country,
-        ...(dto.lineItems && {
-          subtotal: (totals as any).subtotal,
-          laborTotal: (totals as any).laborTotal,
-          materialsTotal: (totals as any).materialsTotal,
-          travelTotal: (totals as any).travelTotal,
-          discountAmount: (totals as any).discountAmount,
-          taxAmount: (totals as any).taxAmount,
-          totalAmount: (totals as any).totalAmount,
+        ...(totals && {
+          subtotal: totals.subtotal,
+          laborTotal: totals.laborTotal,
+          materialsTotal: totals.materialsTotal,
+          travelTotal: totals.travelTotal,
+          discountAmount: totals.discountAmount,
+          taxAmount: totals.taxAmount,
+          totalAmount: totals.totalAmount,
         }),
         discountPercent: dto.discountPercent,
         taxRate: dto.taxRate,

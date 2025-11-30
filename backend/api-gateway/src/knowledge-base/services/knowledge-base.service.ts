@@ -19,6 +19,7 @@ import {
   ArticleStatus,
   TargetAudience,
 } from '../dto/knowledge-base.dto';
+import { KBTranslations, safeJsonCast } from '../../common/types/json-fields.types';
 
 @Injectable()
 export class KnowledgeBaseService {
@@ -330,7 +331,7 @@ export class KnowledgeBaseService {
       throw new NotFoundException('Article not found');
     }
 
-    const translations = (article.translations as any) || {};
+    const translations = safeJsonCast<Record<string, unknown>>(article.translations, {});
     translations[dto.locale] = {
       title: dto.title,
       content: dto.content,
@@ -362,7 +363,7 @@ export class KnowledgeBaseService {
       throw new NotFoundException('Article not found');
     }
 
-    const translations = (article.translations as any) || {};
+    const translations = safeJsonCast<Record<string, unknown>>(article.translations, {});
     delete translations[locale];
 
     await this.prisma.knowledgeBaseArticle.update({
