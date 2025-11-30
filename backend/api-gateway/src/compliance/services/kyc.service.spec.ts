@@ -172,7 +172,7 @@ describe('KycService', () => {
       mockPrismaService.user.update.mockResolvedValue({
         ...mockUser,
         kycStatus: 'PENDING',
-        kycProvider: 'STRIPE_IDENTITY',
+        kycProvider: 'MOCK',
       });
 
       const result = await service.initiateKycVerification('user-123');
@@ -192,7 +192,7 @@ describe('KycService', () => {
         where: { id: 'user-123' },
         data: {
           kycStatus: 'PENDING',
-          kycProvider: 'STRIPE_IDENTITY',
+          kycProvider: 'MOCK', // Falls back to MOCK when Stripe Identity is not configured
         },
       });
     });

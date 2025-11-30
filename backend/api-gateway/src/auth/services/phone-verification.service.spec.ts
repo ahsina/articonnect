@@ -13,6 +13,7 @@ describe('PhoneVerificationService', () => {
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      count: jest.fn(),
     },
     user: {
       findFirst: jest.fn(),
@@ -41,6 +42,7 @@ describe('PhoneVerificationService', () => {
     const userId = 'user-123';
 
     it('should send verification code successfully', async () => {
+      mockPrismaService.phoneVerificationToken.count.mockResolvedValue(0);
       mockPrismaService.phoneVerificationToken.updateMany.mockResolvedValue({ count: 0 });
       mockPrismaService.phoneVerificationToken.create.mockResolvedValue({
         id: 'token-123',
@@ -57,32 +59,34 @@ describe('PhoneVerificationService', () => {
 
     it('should normalize phone number', async () => {
       const phoneWithFormatting = '+33 6 12 34 56 78';
+      mockPrismaService.phoneVerificationToken.count.mockResolvedValue(0);
       mockPrismaService.phoneVerificationToken.updateMany.mockResolvedValue({ count: 0 });
       mockPrismaService.phoneVerificationToken.create.mockResolvedValue({
         id: 'token-123',
         code: '123456',
-        phone: '33612345678',
+        phone: '+33612345678',
       });
 
       await service.sendVerificationCode(phoneWithFormatting);
 
       const createCall = mockPrismaService.phoneVerificationToken.create.mock.calls[0][0];
-      expect(createCall.data.phone).toBe('33612345678');
+      expect(createCall.data.phone).toBe('+33612345678'); // normalized includes '+'
     });
 
     it('should invalidate existing tokens for the phone', async () => {
+      mockPrismaService.phoneVerificationToken.count.mockResolvedValue(0);
       mockPrismaService.phoneVerificationToken.updateMany.mockResolvedValue({ count: 1 });
       mockPrismaService.phoneVerificationToken.create.mockResolvedValue({
         id: 'token-123',
         code: '123456',
-        phone: '33612345678',
+        phone: '+33612345678',
       });
 
       await service.sendVerificationCode(phone);
 
       expect(mockPrismaService.phoneVerificationToken.updateMany).toHaveBeenCalledWith({
         where: {
-          phone: '33612345678',
+          phone: '+33612345678', // normalized includes '+'
           used: false,
         },
         data: {
@@ -121,7 +125,7 @@ describe('PhoneVerificationService', () => {
 
       expect(result).toEqual({
         verified: true,
-        phone: '33612345678',
+        phone: '+33612345678', // normalizedPhone includes '+'
       });
     });
 
@@ -191,7 +195,10 @@ describe('PhoneVerificationService', () => {
 
       expect(mockPrismaService.user.update).toHaveBeenCalledWith({
         where: { id: mockToken.userId },
-        data: { phoneVerified: true },
+        data: {
+          phone: '+33612345678', // normalizedPhone
+          phoneVerified: true,
+        },
       });
     });
   });
@@ -225,6 +232,7 @@ describe('PhoneVerificationService', () => {
 
       await service.isPhoneVerified(phoneWithFormatting);
 
+      // isPhoneVerified uses a different normalization (removes all non-digits)
       expect(mockPrismaService.user.findFirst).toHaveBeenCalledWith({
         where: {
           phone: '33612345678',
