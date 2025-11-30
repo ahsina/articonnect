@@ -15,9 +15,10 @@ import { MissionCronService } from './services/mission-cron.service';
 import { PaymentModule } from '../payment/payment.module';
 import { NotificationModule } from '../notification/notification.module';
 import { FraudModule } from '../fraud/fraud.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PaymentModule, NotificationModule, FraudModule],
+  imports: [PaymentModule, NotificationModule, FraudModule, AuthModule],
   controllers: [
     MissionController,
     MissionSearchController,

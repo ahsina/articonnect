@@ -17,6 +17,7 @@ import { AppleStrategy } from './strategies/apple.strategy';
 import { OAuthController } from './controllers/oauth.controller';
 import { CaptchaModule } from '../captcha/captcha.module';
 import { FraudModule } from '../fraud/fraud.module';
+import { PhoneVerifiedGuard } from './guards/phone-verified.guard';
 
 @Module({
   imports: [
@@ -46,7 +47,14 @@ import { FraudModule } from '../fraud/fraud.module';
     AppleStrategy,
     TwoFactorService,
     PhoneVerificationService,
+    PhoneVerifiedGuard,
   ],
-  exports: [AuthService, SessionService, LoginSecurityService, PhoneVerificationService],
+  exports: [
+    AuthService,
+    SessionService,
+    LoginSecurityService,
+    PhoneVerificationService,
+    PhoneVerifiedGuard,
+  ],
 })
 export class AuthModule {}

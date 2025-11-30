@@ -181,6 +181,7 @@ model User {
   clientQuotes       Quote[]              @relation("ClientQuotes")
   quoteTemplates     QuoteTemplate[]      @relation("ArtisanQuoteTemplates")
   materialCatalog    MaterialCatalogItem[] @relation("ArtisanMaterialCatalog")
+  quoteSignatures    QuoteSignature[]     // Electronic signatures made by user
 
   // Portfolio
   portfolio          Portfolio?           @relation("ArtisanPortfolio")
@@ -212,6 +213,11 @@ model User {
 
   // Country Compliance
   complianceRecords  ArtisanComplianceRecord[] @relation("ArtisanCompliance")
+
+  // Internal Chat
+  chatMemberships    ChatMember[]
+  chatMessages       ChatMessage[]
+  chatReadReceipts   ChatReadReceipt[]
 
   @@index([email])
   @@index([role])
@@ -441,6 +447,7 @@ model Company {
   artisanProfiles ArtisanProfile[]  @relation("CompanyArtisans")
   missions        Mission[]
   settings        CompanySettings?
+  chatRooms       ChatRoom[]
 
   // Timestamps
   createdAt DateTime  @default(now())
@@ -659,6 +666,75 @@ model MissionTimeTracking {
   @@index([status])
 }
 
+// ================================
+// TIME TRACKING (Pointeuse)
+// ================================
+
+enum TimeEntryType {
+  CLOCK_IN
+  CLOCK_OUT
+  BREAK_START
+  BREAK_END
+}
+
+enum TimeEntryStatus {
+  ACTIVE
+  COMPLETED
+  INVALID
+}
+
+model TimeEntry {
+  id String @id @default(uuid())
+
+  // Employee & Company
+  employeeId String
+  companyId  String
+
+  // Entry Details
+  type      TimeEntryType
+  timestamp DateTime
+  location  Json?          // { lat: number, lng: number }
+  notes     String?
+  missionId String?        // Optional: link to specific mission
+
+  // Status & Validation
+  status    TimeEntryStatus @default(ACTIVE)
+  corrected Boolean         @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Corrections
+  corrections TimeEntryCorrection[]
+
+  @@index([employeeId])
+  @@index([companyId])
+  @@index([timestamp])
+  @@index([type])
+  @@index([status])
+}
+
+model TimeEntryCorrection {
+  id String @id @default(uuid())
+
+  // Time Entry Reference
+  timeEntryId String
+  timeEntry   TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  // Correction Details
+  correctedBy       String   // User ID who made correction
+  originalTimestamp DateTime
+  newTimestamp      DateTime
+  reason            String
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([timeEntryId])
+  @@index([correctedBy])
+}
+
 model PerformanceReview {
   id String @id @default(uuid())
 
@@ -871,6 +947,7 @@ model Mission {
   subcontractorAssignments SubcontractorAssignment[] @relation("SubcontractorMissions")
   supportTickets       SupportTicket[]           @relation("TicketMissions")
   jobDocuments         JobDocument[]             @relation("MissionDocuments")
+  chatRooms            ChatRoom[]                // Mission-specific chat rooms
 
   // Timestamps
   createdAt       DateTime  @default(now())
@@ -2505,6 +2582,11 @@ model Quote {
   parentQuote   Quote?  @relation("QuoteVersions", fields: [parentQuoteId], references: [id])
   childQuotes   Quote[] @relation("QuoteVersions")
 
+  // Electronic Signatures
+  signatures        QuoteSignature[]
+  signatureRequests QuoteSignatureRequest[]
+  acceptedAt        DateTime?
+
   // Timestamps
   sentAt     DateTime?
   viewedAt   DateTime?
@@ -2578,6 +2660,80 @@ model QuoteTemplate {
   @@index([category])
   @@index([trade])
   @@index([isActive])
+}
+
+// ================================
+// ELECTRONIC SIGNATURES
+// ================================
+
+enum SignatureStatus {
+  VALID
+  INVALIDATED
+  EXPIRED
+}
+
+model QuoteSignature {
+  id      String @id @default(uuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  // Signer info
+  signerId   String
+  signer     User   @relation(fields: [signerId], references: [id], onDelete: Restrict)
+  signerRole String // CLIENT, ARTISAN
+
+  // Signature data
+  signatureImage String? // Base64 encoded signature drawing
+  signatureType  String  // DRAWN, TYPED, CHECKBOX
+  signatureToken String  @unique // Unique verification token
+
+  // Document integrity
+  documentHash String // SHA-256 hash of document at signing time
+
+  // Legal audit trail
+  ipAddress    String
+  userAgent    String
+  legalText    String // Consent text shown to signer
+  consentGiven Boolean @default(true)
+
+  // Status
+  status     SignatureStatus @default(VALID)
+  signedAt   DateTime
+
+  // Invalidation (if applicable)
+  invalidatedAt     DateTime?
+  invalidatedBy     String?
+  invalidationReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([quoteId])
+  @@index([signerId])
+  @@index([status])
+  @@index([signedAt])
+}
+
+model QuoteSignatureRequest {
+  id      String @id @default(uuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  // Secure token for signature link
+  token     String   @unique
+  expiresAt DateTime
+
+  // Optional message from artisan
+  message String?
+
+  // Usage tracking
+  usedAt     DateTime?
+  signerIp   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([quoteId])
+  @@index([token])
+  @@index([expiresAt])
 }
 
 model MaterialCatalogItem {
@@ -3794,4 +3950,175 @@ model TranslationHistory {
   @@index([translationId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ================================
+// INTERNAL COMPANY CHAT
+// ================================
+
+enum ChatRoomType {
+  DIRECT           // 1-to-1 chat
+  GROUP            // Group chat
+  TEAM             // Team-wide channel
+  MISSION          // Mission-specific chat
+  ANNOUNCEMENT     // Company announcements (read-only for most)
+}
+
+enum ChatMessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM           // System messages (user joined, etc.)
+  VOICE_NOTE
+}
+
+enum ChatMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER           // Can only view, not post
+}
+
+model ChatRoom {
+  id          String       @id @default(uuid())
+  name        String?      // Optional for DIRECT chats
+  description String?
+  type        ChatRoomType @default(GROUP)
+  avatar      String?      // Room avatar URL
+
+  // Company context
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Mission context (for MISSION type)
+  missionId String?
+  mission   Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
+
+  // Settings
+  isArchived Boolean @default(false)
+  isPinned   Boolean @default(false)
+  settings   Json?   // Room-specific settings
+
+  // Metadata
+  lastMessageAt DateTime?
+  lastMessageId String?
+
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members  ChatMember[]
+  messages ChatMessage[]
+
+  @@index([companyId])
+  @@index([missionId])
+  @@index([type])
+  @@index([lastMessageAt])
+  @@index([isArchived])
+}
+
+model ChatMember {
+  id     String @id @default(uuid())
+  roomId String
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role ChatMemberRole @default(MEMBER)
+
+  // User preferences for this room
+  nickname      String?
+  isMuted       Boolean   @default(false)
+  isPinned      Boolean   @default(false)
+  lastReadAt    DateTime? // Last message read timestamp
+  lastReadMsgId String?   // Last read message ID
+
+  // Notifications
+  notificationsEnabled Boolean @default(true)
+
+  joinedAt DateTime @default(now())
+  leftAt   DateTime?
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+  @@index([leftAt])
+}
+
+model ChatMessage {
+  id     String @id @default(uuid())
+  roomId String
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  type    ChatMessageType @default(TEXT)
+  content String          @db.Text
+
+  // For replies
+  replyToId String?
+  replyTo   ChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   ChatMessage[] @relation("MessageReplies")
+
+  // Attachments
+  attachments ChatAttachment[]
+
+  // Metadata
+  isEdited    Boolean   @default(false)
+  editedAt    DateTime?
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+  isPinned    Boolean   @default(false)
+  pinnedAt    DateTime?
+  pinnedBy    String?
+
+  // Mentions (JSON array of user IDs)
+  mentions String[] @default([])
+
+  // Reactions (stored as JSON: { "👍": ["userId1", "userId2"], "❤️": ["userId3"] })
+  reactions Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Read receipts
+  readReceipts ChatReadReceipt[]
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([type])
+  @@index([isPinned])
+}
+
+model ChatAttachment {
+  id        String      @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  fileName    String
+  fileType    String   // MIME type
+  fileSize    Int      // Size in bytes
+  fileUrl     String
+  thumbnailUrl String? // For images/videos
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+}
+
+model ChatReadReceipt {
+  id        String      @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  readAt DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
 }

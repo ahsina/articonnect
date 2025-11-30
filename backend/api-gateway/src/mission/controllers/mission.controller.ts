@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
+import { PhoneVerifiedGuard } from '../../auth/guards/phone-verified.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { MissionService } from '../services/mission.service';
 import { NegotiationService } from '../services/negotiation.service';
@@ -102,9 +103,13 @@ export class MissionController {
   }
 
   @Post(':id/accept')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Accept mission (artisan)' })
+  @ApiOperation({ summary: 'Accept mission (artisan) - Requires verified phone' })
+  @ApiResponse({
+    status: 403,
+    description: 'Phone verification required (PHONE_REQUIRED or PHONE_NOT_VERIFIED)',
+  })
   async acceptMission(@Request() req, @Param('id') id: string) {
     return this.missionService.acceptMission(id, req.user.userId);
   }
@@ -131,9 +136,13 @@ export class MissionController {
   }
 
   @Put('negotiations/:negotiationId/accept')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Accept/reject negotiation' })
+  @ApiOperation({ summary: 'Accept/reject negotiation - Requires verified phone' })
+  @ApiResponse({
+    status: 403,
+    description: 'Phone verification required (PHONE_REQUIRED or PHONE_NOT_VERIFIED)',
+  })
   async acceptNegotiation(
     @Request() req,
     @Param('negotiationId') negotiationId: string,

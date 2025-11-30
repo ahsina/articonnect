@@ -163,4 +163,28 @@ export class DocumentsController {
     });
     res.status(HttpStatus.OK).send(pdfBuffer);
   }
+
+  @Get('pdf/receipt/:paymentId')
+  @Roles('ARTISAN', 'CLIENT')
+  async getReceiptPdf(@Param('paymentId') paymentId: string, @Res() res: Response) {
+    const pdfBuffer = await this.pdfService.generateReceiptPdf(paymentId);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="recu-${paymentId}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.status(HttpStatus.OK).send(pdfBuffer);
+  }
+
+  @Get('pdf/work-report/:missionId')
+  @Roles('ARTISAN')
+  async getWorkReportPdf(@Param('missionId') missionId: string, @Res() res: Response) {
+    const pdfBuffer = await this.pdfService.generateWorkReportPdf(missionId);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="attestation-travaux-${missionId}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.status(HttpStatus.OK).send(pdfBuffer);
+  }
 }

@@ -1,10 +1,13 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { randomInt, timingSafeEqual } from 'crypto';
 
 @Injectable()
 export class PhoneVerificationService {
   private readonly logger = new Logger(PhoneVerificationService.name);
+
+  // Rate limiting: max 3 SMS per phone per hour
+  private readonly MAX_SMS_PER_HOUR = 3;
 
   constructor(private prisma: PrismaService) {}
 
@@ -13,7 +16,25 @@ export class PhoneVerificationService {
    */
   async sendVerificationCode(phone: string, userId?: string): Promise<{ message: string; expiresIn: number }> {
     // Normalize phone number (remove spaces, dashes, etc.)
-    const normalizedPhone = phone.replace(/\D/g, '');
+    const normalizedPhone = this.normalizePhone(phone);
+
+    // Check rate limit
+    await this.checkRateLimit(normalizedPhone);
+
+    // Check if phone is already used by another verified user
+    if (userId) {
+      const existingUser = await this.prisma.user.findFirst({
+        where: {
+          phone: normalizedPhone,
+          phoneVerified: true,
+          id: { not: userId },
+        },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('Ce numéro de téléphone est déjà utilisé par un autre compte');
+      }
+    }
 
     // Generate cryptographically secure 6-digit code
     const code = randomInt(100000, 999999).toString();
@@ -53,16 +74,55 @@ export class PhoneVerificationService {
   }
 
   /**
+   * Check rate limit for SMS sending
+   */
+  private async checkRateLimit(phone: string): Promise<void> {
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+    const recentTokens = await this.prisma.phoneVerificationToken.count({
+      where: {
+        phone,
+        createdAt: { gte: oneHourAgo },
+      },
+    });
+
+    if (recentTokens >= this.MAX_SMS_PER_HOUR) {
+      throw new BadRequestException(
+        'Trop de tentatives. Veuillez attendre une heure avant de réessayer.'
+      );
+    }
+  }
+
+  /**
+   * Normalize phone number to international format
+   */
+  private normalizePhone(phone: string): string {
+    // Remove all non-digit characters except leading +
+    let normalized = phone.replace(/[^\d+]/g, '');
+
+    // If no country code, assume France (+33)
+    if (!normalized.startsWith('+')) {
+      if (normalized.startsWith('0')) {
+        normalized = '+33' + normalized.slice(1);
+      } else {
+        normalized = '+' + normalized;
+      }
+    }
+
+    return normalized;
+  }
+
+  /**
    * Verify the code sent to phone number
    */
   async verifyCode(phone: string, code: string): Promise<{ verified: boolean; phone: string }> {
-    const normalizedPhone = phone.replace(/\D/g, '');
+    const normalizedPhone = this.normalizePhone(phone);
 
-    // Find the token
+    // Find the token - search with normalized phone
     const token = await this.prisma.phoneVerificationToken.findFirst({
       where: {
         phone: normalizedPhone,
-        code,
         used: false,
       },
       orderBy: { createdAt: 'desc' },
@@ -103,11 +163,14 @@ export class PhoneVerificationService {
       data: { used: true },
     });
 
-    // Update user's phone verification status if userId is associated
+    // Update user's phone and verification status if userId is associated
     if (token.userId) {
       await this.prisma.user.update({
         where: { id: token.userId },
-        data: { phoneVerified: true },
+        data: {
+          phone: normalizedPhone,
+          phoneVerified: true,
+        },
       });
     }
 
@@ -115,6 +178,113 @@ export class PhoneVerificationService {
       verified: true,
       phone: normalizedPhone,
     };
+  }
+
+  /**
+   * Verify code for authenticated user and update their phone
+   */
+  async verifyCodeForUser(
+    userId: string,
+    phone: string,
+    code: string,
+  ): Promise<{ verified: boolean; phone: string }> {
+    const normalizedPhone = this.normalizePhone(phone);
+
+    // Find the token for this user and phone
+    const token = await this.prisma.phoneVerificationToken.findFirst({
+      where: {
+        phone: normalizedPhone,
+        userId,
+        used: false,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!token) {
+      throw new BadRequestException('Code de vérification invalide ou expiré');
+    }
+
+    // Check if expired
+    if (new Date() > token.expiresAt) {
+      throw new BadRequestException('Code de vérification expiré');
+    }
+
+    // Check attempts
+    if (token.attempts >= 5) {
+      throw new BadRequestException('Nombre maximal de tentatives dépassé');
+    }
+
+    // Verify the code
+    const codeBuffer = Buffer.from(token.code.padEnd(6, '0'));
+    const inputBuffer = Buffer.from(code.padEnd(6, '0'));
+    const isCodeValid = codeBuffer.length === inputBuffer.length &&
+      timingSafeEqual(codeBuffer, inputBuffer);
+
+    if (!isCodeValid) {
+      await this.prisma.phoneVerificationToken.update({
+        where: { id: token.id },
+        data: { attempts: token.attempts + 1 },
+      });
+      throw new BadRequestException('Code de vérification incorrect');
+    }
+
+    // Mark as used
+    await this.prisma.phoneVerificationToken.update({
+      where: { id: token.id },
+      data: { used: true },
+    });
+
+    // Update user's phone number and set as verified
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        phone: normalizedPhone,
+        phoneVerified: true,
+      },
+    });
+
+    this.logger.log(`Phone verified for user ${userId}: ${normalizedPhone}`);
+
+    return {
+      verified: true,
+      phone: normalizedPhone,
+    };
+  }
+
+  /**
+   * Get phone verification status for a user
+   */
+  async getPhoneStatus(userId: string): Promise<{
+    hasPhone: boolean;
+    phone: string | null;
+    verified: boolean;
+    maskedPhone: string | null;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { phone: true, phoneVerified: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Utilisateur introuvable');
+    }
+
+    return {
+      hasPhone: !!user.phone,
+      phone: user.phone,
+      verified: user.phoneVerified,
+      maskedPhone: user.phone ? this.maskPhone(user.phone) : null,
+    };
+  }
+
+  /**
+   * Mask phone number for privacy
+   */
+  private maskPhone(phone: string): string {
+    if (phone.length < 8) return phone;
+    const start = phone.slice(0, 4);
+    const end = phone.slice(-2);
+    return `${start}****${end}`;
   }
 
   /**

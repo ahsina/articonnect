@@ -286,6 +286,30 @@ export class AuthController {
     );
   }
 
+  @Post('phone/verify-code-authenticated')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify phone and update user profile (authenticated)' })
+  async verifyPhoneCodeAuthenticated(
+    @Request() req,
+    @Body() verifyPhoneCodeDto: VerifyPhoneCodeDto,
+  ) {
+    return this.phoneVerificationService.verifyCodeForUser(
+      req.user.userId,
+      verifyPhoneCodeDto.phone,
+      verifyPhoneCodeDto.code,
+    );
+  }
+
+  @Get('phone/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get phone verification status' })
+  async getPhoneStatus(@Request() req) {
+    return this.phoneVerificationService.getPhoneStatus(req.user.userId);
+  }
+
   @Post('2fa/backup-codes/regenerate')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

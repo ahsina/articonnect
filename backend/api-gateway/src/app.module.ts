@@ -47,6 +47,7 @@ import { CountryModule } from './country/country.module';
 import { ChecklistModule } from './checklist/checklist.module';
 import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
 import { I18nModule } from './i18n/i18n.module';
+import { AccountingModule } from './accounting/accounting.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RedisModule } from './common/redis/redis.module';
 import { MigrationModule } from './common/migrations/migration.module';
@@ -111,6 +112,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     NotificationModule,
     FcmModule,
     InvoiceModule,
+    AccountingModule,
     VatModule,
     ModerationModule,
     VerificationModule,

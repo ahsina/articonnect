@@ -9,6 +9,8 @@ import {
   Query,
   UseGuards,
   Request,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -16,6 +18,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { QuoteService } from '../services/quote.service';
 import { QuoteTemplateService } from '../services/quote-template.service';
 import { MaterialCatalogService } from '../services/material-catalog.service';
+import { SignatureService } from '../services/signature.service';
 import {
   CreateQuoteDto,
   UpdateQuoteDto,
@@ -26,6 +29,16 @@ import {
   CreateMaterialCatalogItemDto,
 } from '../dto/quote.dto';
 
+interface SignQuoteDto {
+  signatureImage?: string;
+  signatureType: 'DRAWN' | 'TYPED' | 'CHECKBOX';
+  signerRole: 'CLIENT' | 'ARTISAN';
+}
+
+interface RequestSignatureDto {
+  message?: string;
+}
+
 @Controller('quotes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class QuoteController {
@@ -33,6 +46,7 @@ export class QuoteController {
     private readonly quoteService: QuoteService,
     private readonly templateService: QuoteTemplateService,
     private readonly catalogService: MaterialCatalogService,
+    private readonly signatureService: SignatureService,
   ) {}
 
   // ============ QUOTES ============
@@ -94,6 +108,47 @@ export class QuoteController {
   @Roles('ARTISAN')
   async delete(@Request() req, @Param('id') id: string) {
     return this.quoteService.delete(id, req.user.id);
+  }
+
+  // ============ ELECTRONIC SIGNATURES ============
+
+  @Post(':id/sign')
+  async signQuote(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: SignQuoteDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ) {
+    return this.signatureService.signQuote({
+      quoteId: id,
+      signerId: req.user.id,
+      signerRole: dto.signerRole,
+      signatureImage: dto.signatureImage,
+      signatureType: dto.signatureType,
+      ipAddress: ip,
+      userAgent: userAgent || 'Unknown',
+    });
+  }
+
+  @Get(':id/signatures')
+  async getSignatures(@Request() req, @Param('id') id: string) {
+    return this.signatureService.getQuoteSignatures(id);
+  }
+
+  @Get(':id/signatures/:signatureId/verify')
+  async verifySignature(@Param('signatureId') signatureId: string) {
+    return this.signatureService.verifySignature(signatureId);
+  }
+
+  @Post(':id/request-signature')
+  @Roles('ARTISAN')
+  async requestSignature(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: RequestSignatureDto,
+  ) {
+    return this.signatureService.requestClientSignature(id, req.user.id, dto.message);
   }
 
   // ============ TEMPLATES ============

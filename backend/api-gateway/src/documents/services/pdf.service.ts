@@ -508,15 +508,222 @@ export class PdfService {
 
   private drawFooter(doc: PDFKit.PDFDocument, company: CompanyInfo): void {
     const pageHeight = doc.page.height;
-    const footerY = pageHeight - 50;
+    const footerY = pageHeight - 80;
 
     doc.fontSize(8)
       .fillColor('#999')
       .text(
-        `${company.name}${company.siret ? ` - SIRET: ${company.siret}` : ''}`,
+        `${company.name}${company.siret ? ` - SIRET: ${company.siret}` : ''}${company.vatNumber ? ` - TVA: ${company.vatNumber}` : ''}`,
         50,
         footerY,
         { align: 'center', width: 495 }
       );
+
+    // French legal mentions (obligatory for invoices)
+    doc.fontSize(7)
+      .fillColor('#666')
+      .text(
+        'En cas de retard de paiement, une pénalité égale à 3 fois le taux d\'intérêt légal sera exigible (Article L.441-6 du Code de commerce).',
+        50,
+        footerY + 15,
+        { align: 'center', width: 495 }
+      )
+      .text(
+        'Indemnité forfaitaire pour frais de recouvrement en cas de retard de paiement: 40€ (Art. D.441-5 du Code de commerce).',
+        50,
+        footerY + 27,
+        { align: 'center', width: 495 }
+      );
+  }
+
+  /**
+   * Generate a professional receipt PDF
+   */
+  async generateReceiptPdf(paymentId: string): Promise<Buffer> {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        user: {
+          include: { artisanProfile: true },
+        },
+        mission: {
+          include: {
+            client: true,
+            artisan: { include: { artisanProfile: true } },
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const artisanProfile = payment.mission?.artisan?.artisanProfile;
+      const companyInfo: CompanyInfo = {
+        name: artisanProfile?.companyName || `${payment.mission?.artisan?.firstName || ''} ${payment.mission?.artisan?.lastName || ''}`.trim() || 'ArtiConnect',
+        phone: payment.mission?.artisan?.phone || undefined,
+        email: payment.mission?.artisan?.email || '',
+        siret: artisanProfile?.siret || undefined,
+        vatNumber: artisanProfile?.vatNumber || undefined,
+      };
+
+      // Header
+      this.drawHeader(doc, companyInfo, 'RECU DE PAIEMENT');
+
+      // Receipt details
+      doc.moveDown(2);
+      const infoY = doc.y;
+
+      doc.fontSize(10)
+        .fillColor('#333')
+        .text(`Reçu N°: REC-${paymentId.slice(0, 8).toUpperCase()}`, 50, infoY)
+        .text(`Date: ${this.formatDate(payment.createdAt)}`, 50);
+
+      doc.moveDown(2);
+
+      // Payment details
+      doc.fontSize(12).font('Helvetica-Bold').text('Détails du paiement', 50);
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica');
+
+      doc.text(`Montant: ${this.formatCurrency(Number(payment.amount))}`, 50);
+      doc.text(`Type: ${payment.type}`, 50);
+      doc.text(`Statut: ${payment.status}`, 50);
+
+      if (payment.mission) {
+        doc.moveDown();
+        doc.text(`Mission: ${payment.mission.title}`, 50);
+        doc.text(`Client: ${payment.mission.client.firstName} ${payment.mission.client.lastName}`, 50);
+      }
+
+      doc.moveDown(3);
+
+      // Certification
+      doc.fontSize(10)
+        .text('Ce reçu certifie le paiement effectué via la plateforme ArtiConnect.', 50, doc.y, { align: 'center', width: 495 });
+
+      this.drawFooter(doc, companyInfo);
+
+      doc.end();
+    });
+  }
+
+  /**
+   * Generate a detailed work report PDF (attestation de travaux)
+   */
+  async generateWorkReportPdf(missionId: string): Promise<Buffer> {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      include: {
+        artisan: { include: { artisanProfile: true } },
+        client: true,
+        payments: true,
+      },
+    });
+
+    if (!mission) {
+      throw new NotFoundException('Mission not found');
+    }
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const artisanProfile = mission.artisan.artisanProfile;
+      const companyInfo: CompanyInfo = {
+        name: artisanProfile?.companyName || `${mission.artisan.firstName} ${mission.artisan.lastName}`,
+        phone: mission.artisan.phone || undefined,
+        email: mission.artisan.email,
+        siret: artisanProfile?.siret || undefined,
+        vatNumber: artisanProfile?.vatNumber || undefined,
+      };
+
+      // Header
+      this.drawHeader(doc, companyInfo, 'ATTESTATION DE TRAVAUX');
+
+      doc.moveDown(2);
+
+      // Document info
+      doc.fontSize(10)
+        .fillColor('#333')
+        .text(`Référence: ATT-${missionId.slice(0, 8).toUpperCase()}`, 50)
+        .text(`Date d'émission: ${this.formatDate(new Date())}`, 50);
+
+      doc.moveDown(2);
+
+      // Client info
+      doc.fontSize(12).font('Helvetica-Bold').text('CLIENT', 50);
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica')
+        .text(`${mission.client.firstName} ${mission.client.lastName}`, 50)
+        .text(`Email: ${mission.client.email}`, 50);
+
+      if (mission.address) {
+        doc.text(`Adresse des travaux: ${mission.address}, ${mission.postalCode} ${mission.city}`, 50);
+      }
+
+      doc.moveDown(2);
+
+      // Work description
+      doc.fontSize(12).font('Helvetica-Bold').text('DESCRIPTION DES TRAVAUX', 50);
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica')
+        .text(`Intitulé: ${mission.title}`, 50);
+
+      if (mission.description) {
+        doc.text(`Description: ${mission.description}`, 50, doc.y, { width: 495 });
+      }
+
+      doc.moveDown();
+      doc.text(`Catégorie: ${mission.category}`, 50);
+
+      if (mission.startedAt) {
+        doc.text(`Date de début: ${this.formatDate(mission.startedAt)}`, 50);
+      }
+      if (mission.completedAt) {
+        doc.text(`Date de fin: ${this.formatDate(mission.completedAt)}`, 50);
+      }
+
+      doc.moveDown(2);
+
+      // Financial summary
+      doc.fontSize(12).font('Helvetica-Bold').text('MONTANTS', 50);
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica')
+        .text(`Montant total: ${this.formatCurrency(Number(mission.price))}`, 50);
+
+      const totalPaid = mission.payments
+        .filter(p => p.status === 'COMPLETED')
+        .reduce((sum, p) => sum + Number(p.amount), 0);
+
+      doc.text(`Total payé: ${this.formatCurrency(totalPaid)}`, 50);
+
+      doc.moveDown(3);
+
+      // Certification
+      doc.fontSize(10)
+        .text('Je soussigné, certifie que les travaux décrits ci-dessus ont été réalisés conformément aux règles de l\'art.', 50)
+        .moveDown(2)
+        .text('Fait à _________________, le ___/___/______', 50)
+        .moveDown(2)
+        .text('Signature du prestataire:', 50);
+
+      this.drawFooter(doc, companyInfo);
+
+      doc.end();
+    });
   }
 }
