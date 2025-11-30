@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import {
   CreateArticleDto,
   UpdateArticleDto,
@@ -19,7 +20,7 @@ import {
   ArticleStatus,
   TargetAudience,
 } from '../dto/knowledge-base.dto';
-import { KBTranslations, safeJsonCast } from '../../common/types/json-fields.types';
+import { safeJsonCast } from '../../common/types/json-fields.types';
 
 @Injectable()
 export class KnowledgeBaseService {
@@ -343,7 +344,7 @@ export class KnowledgeBaseService {
 
     const updated = await this.prisma.knowledgeBaseArticle.update({
       where: { id: articleId },
-      data: { translations },
+      data: { translations: translations as Prisma.InputJsonValue },
     });
 
     return updated;
@@ -368,7 +369,7 @@ export class KnowledgeBaseService {
 
     await this.prisma.knowledgeBaseArticle.update({
       where: { id: articleId },
-      data: { translations },
+      data: { translations: translations as Prisma.InputJsonValue },
     });
 
     return { success: true, message: `Translation for ${locale} removed` };

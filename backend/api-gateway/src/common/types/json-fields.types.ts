@@ -120,22 +120,6 @@ export interface DefaultLineItem {
 // Notification preferences disabled types
 export type DisabledNotificationTypes = string[];
 
-// Type guard helpers
-export function isAddressInfo(value: Prisma.JsonValue): value is AddressInfo {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  return true;
-}
-
-export function isLineItemArray(value: Prisma.JsonValue): value is InvoiceLineItem[] {
-  return Array.isArray(value);
-}
-
-export function isQuoteTotals(value: unknown): value is QuoteTotals {
-  if (!value || typeof value !== 'object') return false;
-  const obj = value as Record<string, unknown>;
-  return typeof obj.subtotal === 'number' && typeof obj.totalAmount === 'number';
-}
-
 // Safe cast helper that preserves type safety
 export function safeJsonCast<T>(value: Prisma.JsonValue, defaultValue: T): T {
   if (value === null || value === undefined) {

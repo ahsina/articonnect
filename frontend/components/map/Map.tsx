@@ -2,13 +2,38 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Define Google Maps types inline to avoid dependency on @types/google.maps
+interface GoogleMapOptions {
+  center: { lat: number; lng: number };
+  zoom: number;
+  styles?: Array<{
+    featureType?: string;
+    elementType?: string;
+    stylers?: Array<{ visibility?: string }>;
+  }>;
+}
+
+interface GoogleMap {
+  addListener: (event: string, handler: (e: { latLng?: { lat: () => number; lng: () => number } }) => void) => void;
+}
+
+interface GoogleMarker {
+  addListener: (event: string, handler: () => void) => void;
+}
+
+interface GoogleMarkerOptions {
+  position: { lat: number; lng: number };
+  map: GoogleMap;
+  title?: string;
+}
+
 // Extend Window interface for Google Maps
 declare global {
   interface Window {
     google?: {
       maps: {
-        Map: new (element: HTMLElement, options: google.maps.MapOptions) => google.maps.Map;
-        Marker: new (options: google.maps.MarkerOptions) => google.maps.Marker;
+        Map: new (element: HTMLElement, options: GoogleMapOptions) => GoogleMap;
+        Marker: new (options: GoogleMarkerOptions) => GoogleMarker;
       };
     };
   }
@@ -76,7 +101,7 @@ export function Map({
 
     // Add click listener for location selection
     if (onLocationSelect) {
-      map.addListener('click', (event: google.maps.MapMouseEvent) => {
+      map.addListener('click', (event) => {
         if (event.latLng) {
           const lat = event.latLng.lat();
           const lng = event.latLng.lng();
