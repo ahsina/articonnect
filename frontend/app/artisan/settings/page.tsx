@@ -49,8 +49,8 @@ export default function ArtisanSettingsPage() {
   useEffect(() => {
     loadPreferences();
     if (user) {
-      setPhoneNumber((user as any).phone || '');
-      setPhoneVerified((user as any).phoneVerified || false);
+      setPhoneNumber(user.phone || '');
+      setPhoneVerified(user.phoneVerified || false);
     }
   }, [user]);
 

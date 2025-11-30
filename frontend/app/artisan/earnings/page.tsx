@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { artisanApi, ArtisanEarning, EarningsSummary } from '@/lib/api/artisan';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { translatePaymentStatus } from '@/lib/utils/enum-translations';
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -337,7 +338,9 @@ export default function ArtisanEarningsPage() {
                         {formatCurrency(earning.netAmount)}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Badge className={STATUS_COLORS[earning.status]}>{earning.status}</Badge>
+                        <Badge className={STATUS_COLORS[earning.status]}>
+                          {translatePaymentStatus(earning.status, t)}
+                        </Badge>
                       </td>
                     </tr>
                   ))}

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { artisanApi } from '@/lib/api/artisan';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { translateQuotationStatus } from '@/lib/utils/enum-translations';
 
 interface Quotation {
   id: string;
@@ -354,7 +355,7 @@ export default function QuotationsPage() {
                           {quotation.mission?.title || `Quotation #${quotation.id.slice(0, 8)}`}
                         </h4>
                         <Badge className={STATUS_COLORS[quotation.status]}>
-                          {quotation.status}
+                          {translateQuotationStatus(quotation.status, t)}
                         </Badge>
                         {quotation.status === 'PENDING' && isExpiringSoon(quotation.validUntil) && (
                           <Badge className="bg-orange-100 text-orange-800">

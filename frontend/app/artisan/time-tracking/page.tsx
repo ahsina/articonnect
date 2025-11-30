@@ -15,6 +15,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { artisanApi } from '@/lib/api/artisan';
 import { useToast } from '@/hooks/use-toast';
+import { translateTimeEntryStatus } from '@/lib/utils/enum-translations';
 
 interface TimeEntry {
   id: string;
@@ -398,7 +399,7 @@ export default function ArtisanTimeTrackingPage() {
                               : 'bg-yellow-100 text-yellow-800'
                           }
                         >
-                          {entry.status}
+                          {translateTimeEntryStatus(entry.status, t)}
                         </Badge>
                       </td>
                     </tr>

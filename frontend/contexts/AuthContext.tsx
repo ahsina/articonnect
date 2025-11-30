@@ -12,6 +12,7 @@ interface User {
   role: 'CLIENT' | 'ARTISAN' | 'ADMIN';
   avatar?: string;
   phone?: string;
+  phoneVerified?: boolean;
 }
 
 interface AuthContextType {

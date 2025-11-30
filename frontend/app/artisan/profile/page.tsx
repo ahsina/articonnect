@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { artisanApi, ArtisanProfile, UpdateArtisanProfileDto, Specialty } from '@/lib/api/artisan';
 import { userApi } from '@/lib/api/user';
 import { useToast } from '@/hooks/use-toast';
+import { translateBadgeType } from '@/lib/utils/enum-translations';
 
 function ArtisanProfileContent() {
   const { t } = useLanguage();
@@ -740,7 +741,7 @@ function ArtisanProfileContent() {
                         {new Date(badge.earnedAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
                       </div>
                       <Badge className="mt-2 text-xs" variant="secondary">
-                        {badge.type}
+                        {translateBadgeType(badge.type, t)}
                       </Badge>
                     </div>
                   ))}
