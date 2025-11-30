@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { artisanApi } from '@/lib/api/artisan';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NotificationPreferences {
   emailNotifications: boolean;
@@ -21,6 +24,7 @@ interface NotificationPreferences {
 export default function ArtisanSettingsPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     emailNotifications: true,
     pushNotifications: true,
@@ -34,9 +38,21 @@ export default function ArtisanSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Phone verification state
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [showVerificationInput, setShowVerificationInput] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+
   useEffect(() => {
     loadPreferences();
-  }, []);
+    if (user) {
+      setPhoneNumber((user as any).phone || '');
+      setPhoneVerified((user as any).phoneVerified || false);
+    }
+  }, [user]);
 
   const loadPreferences = async () => {
     try {
@@ -46,6 +62,82 @@ export default function ArtisanSettingsPage() {
       console.error('Error loading preferences:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendVerificationCode = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('settings', 'invalidPhone') || 'Please enter a valid phone number',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSendingCode(true);
+    try {
+      await fetch('/api/auth/phone/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber }),
+      });
+      setShowVerificationInput(true);
+      toast({
+        title: t('settings', 'codeSent') || 'Code Sent',
+        description: t('settings', 'codeSentDesc') || 'Verification code sent to your phone',
+      });
+    } catch (error) {
+      console.error('Error sending code:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('settings', 'sendCodeError') || 'Failed to send verification code',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length < 6) {
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('settings', 'invalidCode') || 'Please enter a valid code',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const response = await fetch('/api/auth/phone/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber, code: verificationCode }),
+      });
+
+      if (response.ok) {
+        setPhoneVerified(true);
+        setShowVerificationInput(false);
+        setVerificationCode('');
+        toast({
+          title: t('settings', 'phoneVerified') || 'Phone Verified',
+          description: t('settings', 'phoneVerifiedDesc') || 'Your phone number has been verified',
+          variant: 'success',
+        });
+      } else {
+        throw new Error('Verification failed');
+      }
+    } catch (error) {
+      console.error('Error verifying code:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('settings', 'verifyCodeError') || 'Invalid verification code',
+        variant: 'destructive',
+      });
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -160,6 +252,76 @@ export default function ArtisanSettingsPage() {
                 className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${preferences.smsNotifications ? 'translate-x-6' : 'translate-x-0.5'}`}
               />
             </button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Phone Verification */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {t('settings', 'phoneVerification') || 'Phone Verification'}
+            {phoneVerified && (
+              <Badge className="bg-green-100 text-green-800">
+                {t('settings', 'verified') || 'Verified'}
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            {t('settings', 'phoneVerificationDesc') ||
+              'Verify your phone number to receive SMS notifications and improve account security'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <Input
+                type="tel"
+                placeholder="+352 123 456 789"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                disabled={phoneVerified}
+                className="flex-1"
+              />
+              {!phoneVerified && (
+                <Button
+                  onClick={handleSendVerificationCode}
+                  disabled={sendingCode || !phoneNumber}
+                  variant={showVerificationInput ? 'outline' : 'default'}
+                >
+                  {sendingCode
+                    ? t('settings', 'sending') || 'Sending...'
+                    : showVerificationInput
+                    ? t('settings', 'resendCode') || 'Resend Code'
+                    : t('settings', 'sendCode') || 'Send Code'}
+                </Button>
+              )}
+            </div>
+
+            {showVerificationInput && !phoneVerified && (
+              <div className="flex gap-3">
+                <Input
+                  type="text"
+                  placeholder="123456"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="flex-1"
+                />
+                <Button onClick={handleVerifyCode} disabled={verifying || verificationCode.length < 6}>
+                  {verifying ? t('settings', 'verifying') || 'Verifying...' : t('settings', 'verify') || 'Verify'}
+                </Button>
+              </div>
+            )}
+
+            {phoneVerified && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                <span className="text-green-600 text-lg">✓</span>
+                <span className="text-green-800 text-sm">
+                  {t('settings', 'phoneVerifiedMessage') || 'Your phone number is verified'}
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -79,11 +79,21 @@ export default function ArtisanAnalyticsPage() {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      // In production, this would call the real API
-      // const response = await artisanApi.getAnalytics(period);
-      // setData(response);
+      // Try to load real data from API
+      try {
+        const response = await fetch(`/api/artisan/analytics?period=${period}`);
+        if (response.ok) {
+          const apiData = await response.json();
+          if (apiData && apiData.earnings) {
+            setData(apiData);
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.log('Analytics API not available, using demo data');
+      }
 
-      // Mock data for demonstration
+      // Fallback to mock data for demonstration
       setData({
         earnings: {
           total: 45780,

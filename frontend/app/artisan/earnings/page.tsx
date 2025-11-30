@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { artisanApi, ArtisanEarning, EarningsSummary } from '@/lib/api/artisan';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -17,9 +18,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ArtisanEarningsPage() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [earnings, setEarnings] = useState<ArtisanEarning[]>([]);
   const [summary, setSummary] = useState<EarningsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exportingFec, setExportingFec] = useState(false);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'PAID'>('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [page, setPage] = useState(1);
@@ -56,6 +59,52 @@ export default function ArtisanEarningsPage() {
     }
   };
 
+  const handleExportFec = async () => {
+    setExportingFec(true);
+    try {
+      // Determine fiscal year - default to current year
+      const fiscalYear = new Date().getFullYear();
+
+      // Call FEC export API
+      const response = await fetch(`/api/accounting/fec/export?fiscalYear=${fiscalYear}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/csv',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FEC_${fiscalYear}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: t('earnings', 'fecExportSuccess') || 'Export FEC Success',
+        description: t('earnings', 'fecExportSuccessDesc') || 'Your FEC file has been downloaded',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('FEC export error:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('earnings', 'fecExportError') || 'Failed to export FEC file',
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingFec(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -82,13 +131,26 @@ export default function ArtisanEarningsPage() {
   return (
     <div className="p-6">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {t('artisan', 'earnings') || 'Earnings'}
-        </h1>
-        <p className="text-gray-600">
-          {t('artisan', 'trackEarnings') || 'Track your earnings and payouts'}
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t('artisan', 'earnings') || 'Earnings'}
+          </h1>
+          <p className="text-gray-600">
+            {t('artisan', 'trackEarnings') || 'Track your earnings and payouts'}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleExportFec}
+          disabled={exportingFec}
+          className="flex items-center gap-2"
+        >
+          <span>📊</span>
+          {exportingFec
+            ? t('earnings', 'exporting') || 'Exporting...'
+            : t('earnings', 'exportFec') || 'Export FEC'}
+        </Button>
       </div>
 
       {/* Summary Cards */}
