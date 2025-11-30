@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { missionsApi } from '@/lib/api/missions';
+import { userApi } from '@/lib/api/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CATEGORIES = [
   { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
@@ -20,12 +22,22 @@ const CATEGORIES = [
   { id: 'autre', name: 'Autre', icon: '🛠️' },
 ];
 
+interface ClientProfile {
+  clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
+  companyName?: string;
+  siret?: string;
+  vatNumber?: string;
+}
+
 export default function NewMissionPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
+  const [useDifferentBilling, setUseDifferentBilling] = useState(false);
   const [formData, setFormData] = useState({
     type: 'SCHEDULED',
     category: '',
@@ -39,7 +51,36 @@ export default function NewMissionPage() {
     longitude: 0,
     scheduledFor: '',
     clientBudget: '',
+    // B2B fields
+    purchaseOrderNumber: '',
+    internalReference: '',
+    billingCompanyName: '',
+    billingAddress: '',
+    billingVatNumber: '',
   });
+
+  useEffect(() => {
+    loadClientProfile();
+  }, []);
+
+  const loadClientProfile = async () => {
+    try {
+      const profile = await userApi.getClientProfile();
+      setClientProfile(profile);
+      // Pre-fill billing info from profile
+      if (profile.clientType === 'PROFESSIONAL') {
+        setFormData((prev) => ({
+          ...prev,
+          billingCompanyName: profile.companyName || '',
+          billingVatNumber: profile.vatNumber || '',
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading client profile:', error);
+    }
+  };
+
+  const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
 
   const handleCategorySelect = (category: string) => {
     setFormData({ ...formData, category });
@@ -56,20 +97,49 @@ export default function NewMissionPage() {
         `${formData.address}, ${formData.city}, ${formData.postalCode}`,
       );
 
-      const missionData = {
-        ...formData,
+      const missionData: Record<string, unknown> = {
+        type: formData.type,
+        category: formData.category,
+        title: formData.title,
+        description: formData.description,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
         latitude: coords.lat,
         longitude: coords.lng,
         clientBudget: formData.clientBudget ? parseFloat(formData.clientBudget) : undefined,
         scheduledFor: formData.scheduledFor ? new Date(formData.scheduledFor) : undefined,
       };
 
+      // Add B2B fields only for professional clients
+      if (isProfessional) {
+        if (formData.purchaseOrderNumber) {
+          missionData.purchaseOrderNumber = formData.purchaseOrderNumber;
+        }
+        if (formData.internalReference) {
+          missionData.internalReference = formData.internalReference;
+        }
+        if (useDifferentBilling) {
+          if (formData.billingCompanyName) {
+            missionData.billingCompanyName = formData.billingCompanyName;
+          }
+          if (formData.billingAddress) {
+            missionData.billingAddress = formData.billingAddress;
+          }
+          if (formData.billingVatNumber) {
+            missionData.billingVatNumber = formData.billingVatNumber;
+          }
+        }
+      }
+
       const mission = await missionsApi.create(missionData);
       router.push(`/client/missions/${mission.id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       toast({
         title: t('common', 'error'),
-        description: error.response?.data?.message || t('missions', 'creationError'),
+        description: err.response?.data?.message || t('missions', 'creationError'),
         variant: 'destructive',
       });
       setLoading(false);
@@ -319,6 +389,107 @@ export default function NewMissionPage() {
                   </p>
                 </div>
 
+                {/* B2B Section - Only for professional clients */}
+                {isProfessional && (
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg">🏢</span>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {t('missions', 'professionalInfo') || 'Informations professionnelles'}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Purchase Order Number */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('missions', 'purchaseOrderNumber') || 'N° Bon de commande'}
+                        </label>
+                        <Input
+                          placeholder="BC-2024-001"
+                          value={formData.purchaseOrderNumber}
+                          onChange={(e) =>
+                            setFormData({ ...formData, purchaseOrderNumber: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      {/* Internal Reference */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('missions', 'internalReference') || 'Référence interne'}
+                        </label>
+                        <Input
+                          placeholder="REF-MAINT-2024"
+                          value={formData.internalReference}
+                          onChange={(e) =>
+                            setFormData({ ...formData, internalReference: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      {/* Different Billing Address Toggle */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="differentBilling"
+                          checked={useDifferentBilling}
+                          onChange={(e) => setUseDifferentBilling(e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <label htmlFor="differentBilling" className="text-sm text-gray-700">
+                          {t('missions', 'differentBillingAddress') ||
+                            'Utiliser une adresse de facturation différente'}
+                        </label>
+                      </div>
+
+                      {/* Billing Info (conditional) */}
+                      {useDifferentBilling && (
+                        <div className="space-y-4 pl-4 border-l-2 border-blue-200">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {t('missions', 'billingCompanyName') || 'Raison sociale facturation'}
+                            </label>
+                            <Input
+                              placeholder={clientProfile?.companyName || 'Nom de la société'}
+                              value={formData.billingCompanyName}
+                              onChange={(e) =>
+                                setFormData({ ...formData, billingCompanyName: e.target.value })
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {t('missions', 'billingAddress') || 'Adresse de facturation'}
+                            </label>
+                            <Input
+                              placeholder="123 Rue du Commerce, 1234 Luxembourg"
+                              value={formData.billingAddress}
+                              onChange={(e) =>
+                                setFormData({ ...formData, billingAddress: e.target.value })
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {t('missions', 'billingVatNumber') || 'N° TVA facturation'}
+                            </label>
+                            <Input
+                              placeholder={clientProfile?.vatNumber || 'LU12345678'}
+                              value={formData.billingVatNumber}
+                              onChange={(e) =>
+                                setFormData({ ...formData, billingVatNumber: e.target.value })
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-4">
                   <Button type="button" variant="outline" onClick={() => setStep(1)}>
                     {t('common', 'back')}
@@ -362,6 +533,47 @@ export default function NewMissionPage() {
                   <div>
                     <span className="text-sm text-gray-600">{t('missions', 'indicativeBudget')}:</span>
                     <p className="font-semibold">{formData.clientBudget}€</p>
+                  </div>
+                )}
+
+                {/* B2B Info Summary */}
+                {isProfessional && (formData.purchaseOrderNumber || formData.internalReference) && (
+                  <div className="border-t pt-3 mt-3">
+                    <p className="text-sm font-medium text-blue-600 mb-2">
+                      🏢 {t('missions', 'professionalInfo') || 'Informations professionnelles'}
+                    </p>
+                    {formData.purchaseOrderNumber && (
+                      <div>
+                        <span className="text-sm text-gray-600">
+                          {t('missions', 'purchaseOrderNumber') || 'N° Bon de commande'}:
+                        </span>
+                        <p className="font-semibold">{formData.purchaseOrderNumber}</p>
+                      </div>
+                    )}
+                    {formData.internalReference && (
+                      <div>
+                        <span className="text-sm text-gray-600">
+                          {t('missions', 'internalReference') || 'Référence interne'}:
+                        </span>
+                        <p className="font-semibold">{formData.internalReference}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Billing Info Summary */}
+                {useDifferentBilling && formData.billingCompanyName && (
+                  <div className="border-t pt-3 mt-3">
+                    <p className="text-sm font-medium text-gray-600 mb-2">
+                      📄 {t('missions', 'billingInfo') || 'Informations de facturation'}
+                    </p>
+                    <p className="font-semibold">{formData.billingCompanyName}</p>
+                    {formData.billingAddress && (
+                      <p className="text-gray-600 text-sm">{formData.billingAddress}</p>
+                    )}
+                    {formData.billingVatNumber && (
+                      <p className="text-gray-600 text-sm">TVA: {formData.billingVatNumber}</p>
+                    )}
                   </div>
                 )}
               </div>

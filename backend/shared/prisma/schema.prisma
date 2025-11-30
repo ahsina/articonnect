@@ -934,6 +934,13 @@ model Mission {
   // Media
   photos String[]
 
+  // B2B Billing (for professional clients)
+  purchaseOrderNumber String? // Numéro de bon de commande
+  internalReference   String? // Référence interne client
+  billingCompanyName  String? // Nom entreprise facturation (si différent)
+  billingAddress      String? // Adresse de facturation (si différente)
+  billingVatNumber    String? // Numéro TVA facturation
+
   // Radius Expansion (automatic search expansion when no artisan responds)
   initialSearchRadius Int       @default(20) // Initial search radius in km
   currentSearchRadius Int       @default(20) // Current search radius in km

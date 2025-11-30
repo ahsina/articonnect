@@ -70,6 +70,32 @@ export class CreateMissionDto {
   @IsOptional()
   @IsArray()
   photos?: string[];
+
+  // B2B Billing fields
+  @ApiProperty({ required: false, description: 'Purchase order number for B2B clients' })
+  @IsOptional()
+  @IsString()
+  purchaseOrderNumber?: string;
+
+  @ApiProperty({ required: false, description: 'Internal reference for B2B clients' })
+  @IsOptional()
+  @IsString()
+  internalReference?: string;
+
+  @ApiProperty({ required: false, description: 'Billing company name if different from client' })
+  @IsOptional()
+  @IsString()
+  billingCompanyName?: string;
+
+  @ApiProperty({ required: false, description: 'Billing address if different from mission address' })
+  @IsOptional()
+  @IsString()
+  billingAddress?: string;
+
+  @ApiProperty({ required: false, description: 'Billing VAT number' })
+  @IsOptional()
+  @IsString()
+  billingVatNumber?: string;
 }
 
 export class UpdateMissionStatusDto {

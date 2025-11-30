@@ -4,10 +4,20 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { missionsApi } from '@/lib/api/missions';
+import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mission, MissionStatus } from '@/types/mission';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+interface ClientProfile {
+  clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
+  companyName?: string;
+  siret?: string;
+  vatNumber?: string;
+  industry?: string;
+}
 
 const STATUS_BADGES: Record<MissionStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -23,6 +33,7 @@ export default function ClientDashboard() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,14 +42,20 @@ export default function ClientDashboard() {
 
   const loadDashboard = async () => {
     try {
-      const data = await missionsApi.getAll();
-      setMissions(data);
+      const [missionsData, profileData] = await Promise.all([
+        missionsApi.getAll(),
+        userApi.getClientProfile().catch(() => null),
+      ]);
+      setMissions(missionsData);
+      setClientProfile(profileData);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
 
   const getStatusBadge = (status: MissionStatus): string => {
     return STATUS_BADGES[status] || 'bg-gray-100 text-gray-800';
@@ -93,12 +110,38 @@ export default function ClientDashboard() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Welcome Section */}
         <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {t('missions', 'welcomeClient')}, {user?.firstName || 'Client'} !
-          </h1>
-          <p className="text-gray-600">
-            {t('missions', 'manageRequests')}
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {t('missions', 'welcomeClient')}, {user?.firstName || 'Client'} !
+                </h1>
+                {isProfessional && (
+                  <Badge variant="default" className="bg-blue-600">
+                    🏢 {t('client', 'professional') || 'Professionnel'}
+                  </Badge>
+                )}
+              </div>
+              {isProfessional && clientProfile?.companyName && (
+                <div className="mb-2">
+                  <p className="text-lg font-semibold text-blue-600">
+                    {clientProfile.companyName}
+                  </p>
+                  {clientProfile.industry && (
+                    <p className="text-sm text-gray-500">{clientProfile.industry}</p>
+                  )}
+                </div>
+              )}
+              <p className="text-gray-600">{t('missions', 'manageRequests')}</p>
+            </div>
+            {isProfessional && (
+              <Link href="/client/settings">
+                <Button variant="outline" size="sm">
+                  {t('client', 'companySettings') || 'Paramètres entreprise'}
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Quick Actions */}

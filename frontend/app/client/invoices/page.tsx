@@ -6,8 +6,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import apiClient from '@/lib/api/client';
+import { userApi } from '@/lib/api/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+
+interface ClientProfile {
+  clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
+  companyName?: string;
+  siret?: string;
+  vatNumber?: string;
+  industry?: string;
+}
 
 interface Invoice {
   id: string;
@@ -15,6 +24,10 @@ interface Invoice {
   missionId?: string;
   mission?: {
     title: string;
+    purchaseOrderNumber?: string;
+    internalReference?: string;
+    billingCompanyName?: string;
+    billingVatNumber?: string;
     artisan?: {
       firstName: string;
       lastName: string;
@@ -53,24 +66,31 @@ export default function ClientInvoicesPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
-    loadInvoices();
+    loadData();
   }, []);
 
-  const loadInvoices = async () => {
+  const loadData = async () => {
     try {
-      const response = await apiClient.get('/invoices');
-      setInvoices(response.data);
+      const [invoicesResponse, profileData] = await Promise.all([
+        apiClient.get('/invoices'),
+        userApi.getClientProfile().catch(() => null),
+      ]);
+      setInvoices(invoicesResponse.data);
+      setClientProfile(profileData);
     } catch (error) {
-      console.error('Error loading invoices:', error);
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
 
   const handleDownloadPDF = async (invoiceId: string) => {
     setDownloading(invoiceId);
@@ -146,8 +166,24 @@ export default function ClientInvoicesPage() {
         </Button>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">{t('invoices', 'title')}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900">{t('invoices', 'title')}</h1>
+            {isProfessional && (
+              <Badge variant="default" className="bg-blue-600">
+                🏢 {t('client', 'professional') || 'Professionnel'}
+              </Badge>
+            )}
+          </div>
           <p className="text-gray-600 mt-1">{t('invoices', 'subtitle')}</p>
+          {isProfessional && clientProfile?.companyName && (
+            <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+              <p className="font-semibold text-blue-900">{clientProfile.companyName}</p>
+              <div className="text-sm text-blue-700 flex flex-wrap gap-3">
+                {clientProfile.siret && <span>SIRET: {clientProfile.siret}</span>}
+                {clientProfile.vatNumber && <span>TVA: {clientProfile.vatNumber}</span>}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -226,16 +262,45 @@ export default function ClientInvoicesPage() {
                       </div>
 
                       {invoice.mission && (
-                        <p className="text-gray-600 mb-1">
-                          Mission: {invoice.mission.title}
-                          {invoice.mission.artisan && (
-                            <span className="text-gray-500">
-                              {' '}
-                              - {invoice.mission.artisan.firstName}{' '}
-                              {invoice.mission.artisan.lastName}
-                            </span>
+                        <div className="mb-2">
+                          <p className="text-gray-600">
+                            Mission: {invoice.mission.title}
+                            {invoice.mission.artisan && (
+                              <span className="text-gray-500">
+                                {' '}
+                                - {invoice.mission.artisan.firstName}{' '}
+                                {invoice.mission.artisan.lastName}
+                              </span>
+                            )}
+                          </p>
+
+                          {/* B2B Info */}
+                          {(invoice.mission.purchaseOrderNumber ||
+                            invoice.mission.internalReference) && (
+                            <div className="flex flex-wrap gap-3 text-sm mt-1">
+                              {invoice.mission.purchaseOrderNumber && (
+                                <span className="text-blue-600">
+                                  📋 BC: {invoice.mission.purchaseOrderNumber}
+                                </span>
+                              )}
+                              {invoice.mission.internalReference && (
+                                <span className="text-blue-600">
+                                  🏷️ Réf: {invoice.mission.internalReference}
+                                </span>
+                              )}
+                            </div>
                           )}
-                        </p>
+
+                          {/* Billing Company Info (if different) */}
+                          {invoice.mission.billingCompanyName && (
+                            <div className="text-sm text-gray-500 mt-1">
+                              Facturation: {invoice.mission.billingCompanyName}
+                              {invoice.mission.billingVatNumber && (
+                                <span> (TVA: {invoice.mission.billingVatNumber})</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
