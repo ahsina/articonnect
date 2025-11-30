@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api/client';
+import { translateMissionStatus, translatePriority, translateQuotationStatus, translateEventType } from '@/lib/utils/enum-translations';
 
 interface Mission {
   id: string;
@@ -311,8 +312,8 @@ export default function MissionDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={getPriorityBadge(mission.priority)}>{mission.priority}</Badge>
-          <Badge className={getStatusBadge(mission.status)}>{mission.status}</Badge>
+          <Badge className={getPriorityBadge(mission.priority)}>{translatePriority(mission.priority, t)}</Badge>
+          <Badge className={getStatusBadge(mission.status)}>{translateMissionStatus(mission.status, t)}</Badge>
         </div>
       </div>
 
@@ -595,7 +596,7 @@ export default function MissionDetailPage() {
                       <div className="absolute left-2 w-4 h-4 rounded-full bg-blue-600 border-2 border-white" />
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-gray-900">{event.type}</span>
+                          <span className="font-medium text-gray-900">{translateEventType(event.type, t)}</span>
                           <span className="text-sm text-gray-500">
                             {new Date(event.createdAt).toLocaleString()}
                           </span>
@@ -643,7 +644,7 @@ export default function MissionDetailPage() {
                           : 'bg-gray-100 text-gray-800'
                   }
                 >
-                  {mission.quotation.status}
+                  {translateQuotationStatus(mission.quotation.status, t)}
                 </Badge>
               </div>
               <div className="flex items-center justify-between py-3">

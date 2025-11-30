@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { companyApi, Company, CompanyStats } from '@/lib/api/company';
 import { employeeApi } from '@/lib/api/employee';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { translateEmployeeRole } from '@/lib/utils/enum-translations';
 
 export default function CompanyDashboardPage() {
   const { t } = useLanguage();
@@ -266,7 +267,7 @@ export default function CompanyDashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{employee.role}</Badge>
+                    <Badge variant="outline">{translateEmployeeRole(employee.role, t)}</Badge>
                     <Badge
                       className={
                         employee.status === 'ACTIVE'
@@ -274,7 +275,7 @@ export default function CompanyDashboardPage() {
                           : 'bg-yellow-100 text-yellow-800'
                       }
                     >
-                      {employee.status}
+                      {employee.status === 'ACTIVE' ? t('status', 'active') || 'Actif' : t('status', 'inactive') || 'Inactif'}
                     </Badge>
                   </div>
                 </div>

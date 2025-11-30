@@ -142,3 +142,136 @@ export const translateCertificationStatus = (
   };
   return translations[status] || status;
 };
+
+// Priority translations
+export const translatePriority = (
+  priority: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    LOW: t('priority', 'low') || 'Basse',
+    MEDIUM: t('priority', 'medium') || 'Moyenne',
+    HIGH: t('priority', 'high') || 'Haute',
+    URGENT: t('priority', 'urgent') || 'Urgente',
+  };
+  return translations[priority] || priority;
+};
+
+// Employee role translations
+export const translateEmployeeRole = (
+  role: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    OWNER: t('roles', 'owner') || 'Propriétaire',
+    MANAGER: t('roles', 'manager') || 'Manager',
+    TECHNICIAN: t('roles', 'technician') || 'Technicien',
+    APPRENTICE: t('roles', 'apprentice') || 'Apprenti',
+    ADMIN: t('roles', 'admin') || 'Administrateur',
+  };
+  return translations[role] || role;
+};
+
+// Document type translations
+export const translateDocumentType = (
+  type: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    ID_CARD: t('documents', 'idCard') || "Carte d'identité",
+    PASSPORT: t('documents', 'passport') || 'Passeport',
+    DRIVING_LICENSE: t('documents', 'drivingLicense') || 'Permis de conduire',
+    PROOF_OF_ADDRESS: t('documents', 'proofOfAddress') || 'Justificatif de domicile',
+    INSURANCE: t('documents', 'insurance') || 'Assurance',
+    CERTIFICATION: t('documents', 'certification') || 'Certification',
+    OTHER: t('documents', 'other') || 'Autre',
+  };
+  return translations[type] || type;
+};
+
+// Dispute status translations
+export const translateDisputeStatus = (
+  status: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    OPEN: t('status', 'open') || 'Ouvert',
+    UNDER_REVIEW: t('status', 'underReview') || 'En cours de révision',
+    RESOLVED: t('status', 'resolved') || 'Résolu',
+    ESCALATED: t('status', 'escalated') || 'Escaladé',
+    CLOSED: t('status', 'closed') || 'Fermé',
+  };
+  return translations[status] || status;
+};
+
+// No-show status translations
+export const translateNoShowStatus = (
+  status: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    PENDING_VERIFICATION: t('status', 'pendingVerification') || 'En attente de vérification',
+    CONFIRMED: t('status', 'confirmed') || 'Confirmé',
+    DISPUTED: t('status', 'disputed') || 'Contesté',
+    RESOLVED: t('status', 'resolved') || 'Résolu',
+    PENALTY_APPLIED: t('status', 'penaltyApplied') || 'Pénalité appliquée',
+  };
+  return translations[status] || status;
+};
+
+// Verification status translations
+export const translateVerificationStatus = (
+  status: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    PENDING: t('status', 'pending') || 'En attente',
+    VERIFIED: t('status', 'verified') || 'Vérifié',
+    REJECTED: t('status', 'rejected') || 'Refusé',
+    EXPIRED: t('status', 'expired') || 'Expiré',
+    IN_REVIEW: t('status', 'inReview') || 'En révision',
+  };
+  return translations[status] || status;
+};
+
+// Feature flag status translations
+export const translateFeatureFlagStatus = (
+  status: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    ACTIVE: t('status', 'active') || 'Actif',
+    INACTIVE: t('status', 'inactive') || 'Inactif',
+    DEPRECATED: t('status', 'deprecated') || 'Déprécié',
+  };
+  return translations[status] || status;
+};
+
+// Feature flag type translations
+export const translateFeatureFlagType = (
+  type: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    BOOLEAN: t('types', 'boolean') || 'Booléen',
+    PERCENTAGE: t('types', 'percentage') || 'Pourcentage',
+    USER_LIST: t('types', 'userList') || 'Liste utilisateurs',
+    JSON: t('types', 'json') || 'JSON',
+  };
+  return translations[type] || type;
+};
+
+// Event type translations
+export const translateEventType = (
+  type: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    STATUS_CHANGE: t('events', 'statusChange') || 'Changement de statut',
+    MESSAGE: t('events', 'message') || 'Message',
+    PAYMENT: t('events', 'payment') || 'Paiement',
+    NOTE: t('events', 'note') || 'Note',
+    DOCUMENT: t('events', 'document') || 'Document',
+  };
+  return translations[type] || type;
+};

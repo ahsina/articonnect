@@ -9,6 +9,7 @@ import { employeeApi } from '@/lib/api/employee';
 import { missionsApi } from '@/lib/api/missions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { translateMissionStatus, translateEmployeeRole } from '@/lib/utils/enum-translations';
 
 interface Mission {
   id: string;
@@ -202,7 +203,7 @@ export default function MissionAssignmentsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium text-gray-900">{mission.title}</h4>
-                        <Badge className={STATUS_COLORS[mission.status]}>{mission.status}</Badge>
+                        <Badge className={STATUS_COLORS[mission.status]}>{translateMissionStatus(mission.status, t)}</Badge>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">{mission.description}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -275,7 +276,7 @@ export default function MissionAssignmentsPage() {
                           <div className="font-medium text-gray-900">
                             {employee.user?.firstName} {employee.user?.lastName}
                           </div>
-                          <div className="text-sm text-gray-500">{employee.role}</div>
+                          <div className="text-sm text-gray-500">{translateEmployeeRole(employee.role, t)}</div>
                         </div>
                       </div>
                     </button>
