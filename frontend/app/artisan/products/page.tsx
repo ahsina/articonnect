@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { marketplaceApi, Product } from '@/lib/api/marketplace';
+import { marketplaceApi, Product, ProductStatus } from '@/lib/api/marketplace';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ArtisanProductsPage() {
@@ -47,8 +47,8 @@ export default function ArtisanProductsPage() {
       const product = products.find((p) => p.id === productId);
       if (!product) return;
 
-      const newStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await marketplaceApi.updateProduct(productId, { status: newStatus } as any);
+      const newStatus: ProductStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await marketplaceApi.updateProduct(productId, { status: newStatus });
 
       setProducts(
         products.map((p) =>

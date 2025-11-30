@@ -40,6 +40,10 @@ export interface CreateProductDto {
   variants?: Omit<ProductVariant, 'id'>[];
 }
 
+export interface UpdateProductDto extends Partial<CreateProductDto> {
+  status?: ProductStatus;
+}
+
 export interface Order {
   id: string;
   status: string;
@@ -95,7 +99,7 @@ export const marketplaceApi = {
     return response.data;
   },
 
-  updateProduct: async (id: string, data: Partial<CreateProductDto>) => {
+  updateProduct: async (id: string, data: UpdateProductDto) => {
     const response = await apiClient.patch(`/marketplace/products/${id}`, data);
     return response.data;
   },

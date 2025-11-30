@@ -13,6 +13,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCartStore } from '@/lib/stores/cartStore';
 import { useToast } from '@/hooks/use-toast';
 
+type MarketplaceSortOption = 'price-asc' | 'price-desc' | 'newest';
+
 export default function MarketplacePage() {
   const { t } = useLanguage();
   const router = useRouter();
@@ -204,7 +206,7 @@ export default function MarketplacePage() {
             </Button>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as MarketplaceSortOption)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="newest">Plus récents</option>

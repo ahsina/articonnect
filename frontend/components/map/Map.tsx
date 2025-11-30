@@ -2,6 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Extend Window interface for Google Maps
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        Map: new (element: HTMLElement, options: google.maps.MapOptions) => google.maps.Map;
+        Marker: new (options: google.maps.MarkerOptions) => google.maps.Marker;
+      };
+    };
+  }
+}
+
 interface MapProps {
   center?: { lat: number; lng: number };
   zoom?: number;
@@ -27,7 +39,7 @@ export function Map({
 
   useEffect(() => {
     // Check if google maps is loaded
-    if (typeof window !== 'undefined' && (window as any).google) {
+    if (typeof window !== 'undefined' && window.google) {
       initMap();
     } else {
       setError('Google Maps non chargé. Veuillez configurer GOOGLE_MAPS_API_KEY.');
@@ -35,9 +47,9 @@ export function Map({
   }, [center, zoom, markers]);
 
   const initMap = () => {
-    if (!mapRef.current || !(window as any).google) return;
+    if (!mapRef.current || !window.google) return;
 
-    const map = new (window as any).google.maps.Map(mapRef.current, {
+    const map = new window.google.maps.Map(mapRef.current, {
       center,
       zoom,
       styles: [
@@ -51,7 +63,7 @@ export function Map({
 
     // Add markers
     markers.forEach((marker) => {
-      const mapMarker = new (window as any).google.maps.Marker({
+      const mapMarker = new window.google!.maps.Marker({
         position: marker.position,
         map,
         title: marker.title,
@@ -64,10 +76,12 @@ export function Map({
 
     // Add click listener for location selection
     if (onLocationSelect) {
-      map.addListener('click', (event: any) => {
-        const lat = event.latLng.lat();
-        const lng = event.latLng.lng();
-        onLocationSelect({ lat, lng });
+      map.addListener('click', (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) {
+          const lat = event.latLng.lat();
+          const lng = event.latLng.lng();
+          onLocationSelect({ lat, lng });
+        }
       });
     }
   };

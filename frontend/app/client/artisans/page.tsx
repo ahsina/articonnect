@@ -28,6 +28,8 @@ interface Artisan {
   distance?: number;
 }
 
+type ArtisanSortOption = 'rating' | 'distance' | 'price';
+
 const SPECIALTIES = [
   { id: 'all', name: 'Tous', icon: '🔍' },
   { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
@@ -165,7 +167,7 @@ export default function ArtisansListPage() {
             </div>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as ArtisanSortOption)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="rating">{t('artisans', 'topRated')}</option>

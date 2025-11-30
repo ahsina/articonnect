@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as PDFDocument from 'pdfkit';
+import {
+  AddressInfo,
+  InvoiceLineItem,
+  safeJsonCast,
+} from '../../common/types/json-fields.types';
 
 interface CompanyInfo {
   name: string;
@@ -127,9 +132,9 @@ export class PdfService {
       throw new NotFoundException('Invoice not found');
     }
 
-    const issuerAddr = invoice.issuerAddress as any || {};
-    const clientAddr = invoice.clientAddress as any || {};
-    const lineItems = (invoice.lineItems as any[]) || [];
+    const issuerAddr = safeJsonCast<AddressInfo>(invoice.issuerAddress, {});
+    const clientAddr = safeJsonCast<AddressInfo>(invoice.clientAddress, {});
+    const lineItems = safeJsonCast<InvoiceLineItem[]>(invoice.lineItems, []);
 
     const companyInfo: CompanyInfo = {
       name: issuerAddr.name || `${invoice.issuer.firstName} ${invoice.issuer.lastName}`,
@@ -159,7 +164,7 @@ export class PdfService {
       dueDate: invoice.paymentDueDate,
       company: companyInfo,
       client: clientInfo,
-      lineItems: lineItems.map((item: any) => ({
+      lineItems: lineItems.map((item) => ({
         description: item.description,
         quantity: item.quantity || 1,
         unit: item.unit || 'unité',
