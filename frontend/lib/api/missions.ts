@@ -58,6 +58,14 @@ export const missionsApi = {
     return response.data;
   },
 
+  acceptNegotiation: async (negotiationId: string, accepted: boolean, rejectedReason?: string) => {
+    const response = await apiClient.put(`/missions/negotiations/${negotiationId}/accept`, {
+      accepted,
+      rejectedReason,
+    });
+    return response.data;
+  },
+
   // Photo Upload
   uploadPhoto: async (file: File): Promise<{ url: string }> => {
     const formData = new FormData();

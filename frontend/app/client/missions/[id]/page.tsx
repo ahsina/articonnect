@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { missionsApi } from '@/lib/api/missions';
 import { userApi } from '@/lib/api/user';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -59,6 +60,21 @@ interface ClientProfile {
   companyName?: string;
 }
 
+interface Negotiation {
+  id: string;
+  proposedPrice: number;
+  laborCost?: number;
+  materialCost?: number;
+  travelCost?: number;
+  message?: string;
+  senderId: string;
+  receiverId: string;
+  accepted?: boolean;
+  rejectedReason?: string;
+  expiresAt?: string;
+  createdAt: string;
+}
+
 export default function MissionDetailsPage() {
   const router = useRouter();
   const params = useParams();
@@ -68,8 +84,16 @@ export default function MissionDetailsPage() {
 
   const [mission, setMission] = useState<Mission | null>(null);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
+  const [negotiations, setNegotiations] = useState<Negotiation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showNegotiationForm, setShowNegotiationForm] = useState(false);
+  const [negotiationLoading, setNegotiationLoading] = useState(false);
+  const [negotiationForm, setNegotiationForm] = useState({
+    proposedPrice: '',
+    message: '',
+  });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (missionId) {
@@ -79,12 +103,18 @@ export default function MissionDetailsPage() {
 
   const loadData = async () => {
     try {
-      const [missionData, profileData] = await Promise.all([
+      const [missionData, profileData, negotiationsData, userData] = await Promise.all([
         missionsApi.getById(missionId),
         userApi.getClientProfile().catch(() => null),
+        missionsApi.getNegotiations(missionId).catch(() => []),
+        userApi.getProfile().catch(() => null),
       ]);
       setMission(missionData);
       setClientProfile(profileData);
+      setNegotiations(negotiationsData || []);
+      if (userData?.id) {
+        setCurrentUserId(userData.id);
+      }
     } catch (error) {
       console.error('Error loading mission:', error);
     } finally {
@@ -142,6 +172,104 @@ export default function MissionDetailsPage() {
       });
     }
   };
+
+  const handleSubmitNegotiation = async () => {
+    if (!negotiationForm.proposedPrice) {
+      toast({
+        title: t('common', 'error'),
+        description: t('negotiations', 'enterPrice') || 'Veuillez entrer un prix',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setNegotiationLoading(true);
+    try {
+      await missionsApi.createNegotiation(missionId, {
+        missionId,
+        proposedPrice: parseFloat(negotiationForm.proposedPrice),
+        message: negotiationForm.message || undefined,
+      });
+      toast({
+        title: t('common', 'success'),
+        description: t('negotiations', 'offerSent') || 'Offre envoyée',
+      });
+      setShowNegotiationForm(false);
+      setNegotiationForm({ proposedPrice: '', message: '' });
+      loadData();
+    } catch (error) {
+      console.error('Error creating negotiation:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('negotiations', 'sendError') || 'Erreur lors de l\'envoi',
+        variant: 'destructive',
+      });
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const handleAcceptNegotiation = async (negotiationId: string) => {
+    if (!confirm(t('negotiations', 'confirmAccept') || 'Accepter cette offre ?')) {
+      return;
+    }
+
+    setNegotiationLoading(true);
+    try {
+      await missionsApi.acceptNegotiation(negotiationId, true);
+      toast({
+        title: t('common', 'success'),
+        description: t('negotiations', 'offerAccepted') || 'Offre acceptée',
+      });
+      loadData();
+    } catch (error) {
+      console.error('Error accepting negotiation:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('negotiations', 'acceptError') || 'Erreur',
+        variant: 'destructive',
+      });
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const handleRejectNegotiation = async (negotiationId: string) => {
+    const reason = prompt(t('negotiations', 'rejectReason') || 'Raison du refus (optionnel):');
+
+    setNegotiationLoading(true);
+    try {
+      await missionsApi.acceptNegotiation(negotiationId, false, reason || undefined);
+      toast({
+        title: t('common', 'success'),
+        description: t('negotiations', 'offerRejected') || 'Offre refusée',
+      });
+      loadData();
+    } catch (error) {
+      console.error('Error rejecting negotiation:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('negotiations', 'rejectError') || 'Erreur',
+        variant: 'destructive',
+      });
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const isNegotiationExpired = (expiresAt?: string) => {
+    if (!expiresAt) return false;
+    return new Date() > new Date(expiresAt);
+  };
+
+  const getLastNegotiation = () => {
+    if (negotiations.length === 0) return null;
+    return negotiations[negotiations.length - 1];
+  };
+
+  const canNegotiate = mission &&
+    (mission.status === 'PENDING' || mission.status === 'NEGOTIATING') &&
+    negotiations.length < 5;
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -442,6 +570,221 @@ export default function MissionDetailsPage() {
                       {t('common', 'contact') || 'Contacter'}
                     </Button>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Negotiation Section */}
+            {(mission.status === 'PENDING' || mission.status === 'NEGOTIATING' || negotiations.length > 0) && (
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('negotiations', 'negotiationDesc') || 'Échangez avec l\'artisan pour convenir d\'un prix'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Current Budget */}
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        {t('missions', 'yourBudget') || 'Votre budget'}
+                      </span>
+                      <span className="font-semibold text-lg">
+                        {mission.clientBudget ? `${mission.clientBudget}€` : '-'}
+                      </span>
+                    </div>
+                    {mission.agreedPrice && (
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                        <span className="text-sm text-green-600 font-medium">
+                          {t('negotiations', 'agreedPrice') || 'Prix convenu'}
+                        </span>
+                        <span className="font-bold text-lg text-green-600">
+                          {mission.agreedPrice}€
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Negotiations List */}
+                  {negotiations.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-700">
+                        {t('negotiations', 'history') || 'Historique des offres'} ({negotiations.length}/5)
+                      </h4>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {negotiations.map((neg, index) => {
+                          const isFromMe = neg.senderId === currentUserId;
+                          const isExpired = isNegotiationExpired(neg.expiresAt);
+                          const isPending = neg.accepted === null || neg.accepted === undefined;
+                          const isLastAndPending = index === negotiations.length - 1 && isPending && !isExpired;
+
+                          return (
+                            <div
+                              key={neg.id}
+                              className={`p-3 rounded-lg border ${
+                                isFromMe
+                                  ? 'bg-blue-50 border-blue-200 ml-4'
+                                  : 'bg-orange-50 border-orange-200 mr-4'
+                              } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
+                                neg.accepted === false ? 'opacity-60' : ''
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <span className="text-xs text-gray-500">
+                                    {isFromMe
+                                      ? t('negotiations', 'yourOffer') || 'Votre offre'
+                                      : t('negotiations', 'artisanOffer') || "Offre de l'artisan"}
+                                  </span>
+                                  <div className="font-bold text-lg">{neg.proposedPrice}€</div>
+                                </div>
+                                <div className="text-right">
+                                  {neg.accepted === true && (
+                                    <Badge className="bg-green-100 text-green-800">
+                                      {t('negotiations', 'accepted') || 'Acceptée'}
+                                    </Badge>
+                                  )}
+                                  {neg.accepted === false && (
+                                    <Badge className="bg-red-100 text-red-800">
+                                      {t('negotiations', 'rejected') || 'Refusée'}
+                                    </Badge>
+                                  )}
+                                  {isPending && isExpired && (
+                                    <Badge className="bg-gray-100 text-gray-800">
+                                      {t('negotiations', 'expired') || 'Expirée'}
+                                    </Badge>
+                                  )}
+                                  {isPending && !isExpired && (
+                                    <Badge className="bg-yellow-100 text-yellow-800">
+                                      {t('negotiations', 'pending') || 'En attente'}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              {neg.message && (
+                                <p className="text-sm text-gray-600 mt-2 italic">"{neg.message}"</p>
+                              )}
+
+                              {neg.rejectedReason && (
+                                <p className="text-sm text-red-600 mt-2">
+                                  {t('negotiations', 'reason') || 'Raison'}: {neg.rejectedReason}
+                                </p>
+                              )}
+
+                              {neg.expiresAt && isPending && !isExpired && (
+                                <p className="text-xs text-gray-400 mt-2">
+                                  {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
+                                  {new Date(neg.expiresAt).toLocaleString('fr-FR')}
+                                </p>
+                              )}
+
+                              {/* Actions for pending offers from artisan */}
+                              {isLastAndPending && !isFromMe && (
+                                <div className="flex gap-2 mt-3 pt-3 border-t">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleAcceptNegotiation(neg.id)}
+                                    disabled={negotiationLoading}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                  >
+                                    {t('negotiations', 'accept') || 'Accepter'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleRejectNegotiation(neg.id)}
+                                    disabled={negotiationLoading}
+                                    className="flex-1"
+                                  >
+                                    {t('negotiations', 'reject') || 'Refuser'}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Counter-offer Form */}
+                  {canNegotiate && !showNegotiationForm && (
+                    <Button
+                      onClick={() => setShowNegotiationForm(true)}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {negotiations.length === 0
+                        ? t('negotiations', 'makeOffer') || 'Faire une offre'
+                        : t('negotiations', 'counterOffer') || 'Faire une contre-offre'}
+                    </Button>
+                  )}
+
+                  {showNegotiationForm && (
+                    <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'yourPrice') || 'Votre prix proposé'} (€) *
+                        </label>
+                        <Input
+                          type="number"
+                          value={negotiationForm.proposedPrice}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, proposedPrice: e.target.value })
+                          }
+                          placeholder={mission.clientBudget?.toString() || '0'}
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'message') || 'Message (optionnel)'}
+                        </label>
+                        <textarea
+                          value={negotiationForm.message}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, message: e.target.value })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          placeholder={
+                            t('negotiations', 'messagePlaceholder') ||
+                            'Expliquez votre proposition...'
+                          }
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSubmitNegotiation}
+                          disabled={negotiationLoading}
+                          className="flex-1"
+                        >
+                          {negotiationLoading
+                            ? t('common', 'loading') || 'Chargement...'
+                            : t('negotiations', 'sendOffer') || 'Envoyer l\'offre'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowNegotiationForm(false)}
+                          disabled={negotiationLoading}
+                        >
+                          {t('common', 'cancel') || 'Annuler'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {negotiations.length >= 5 && (
+                    <p className="text-sm text-orange-600 text-center">
+                      {t('negotiations', 'limitReached') ||
+                        'Limite de 5 négociations atteinte. Veuillez accepter une offre ou créer une nouvelle mission.'}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}

@@ -48,6 +48,8 @@ interface Mission {
     validUntil: string;
   };
   images?: string[];
+  beforePhotos?: string[];
+  afterPhotos?: string[];
   notes?: string;
   completionNotes?: string;
   createdAt: string;
@@ -65,6 +67,21 @@ interface TimelineEvent {
     firstName: string;
     lastName: string;
   };
+}
+
+interface Negotiation {
+  id: string;
+  proposedPrice: number;
+  laborCost?: number;
+  materialCost?: number;
+  travelCost?: number;
+  message?: string;
+  senderId: string;
+  receiverId: string;
+  accepted?: boolean;
+  rejectedReason?: string;
+  expiresAt?: string;
+  createdAt: string;
 }
 
 export default function MissionDetailPage() {
@@ -87,6 +104,19 @@ export default function MissionDetailPage() {
     items: [] as { description: string; quantity: number; unitPrice: number }[],
   });
   const [completionNotes, setCompletionNotes] = useState('');
+  const [afterPhotos, setAfterPhotos] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [negotiations, setNegotiations] = useState<Negotiation[]>([]);
+  const [showNegotiationForm, setShowNegotiationForm] = useState(false);
+  const [negotiationLoading, setNegotiationLoading] = useState(false);
+  const [negotiationForm, setNegotiationForm] = useState({
+    proposedPrice: '',
+    laborCost: '',
+    materialCost: '',
+    travelCost: '',
+    message: '',
+  });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (missionId) {
@@ -96,12 +126,18 @@ export default function MissionDetailPage() {
 
   const loadMission = async () => {
     try {
-      const [missionResponse, timelineResponse] = await Promise.all([
+      const [missionResponse, timelineResponse, negotiationsResponse, userResponse] = await Promise.all([
         apiClient.get(`/missions/${missionId}`),
         apiClient.get(`/missions/${missionId}/timeline`).catch(() => ({ data: [] })),
+        apiClient.get(`/missions/${missionId}/negotiations`).catch(() => ({ data: [] })),
+        apiClient.get('/users/profile').catch(() => ({ data: null })),
       ]);
       setMission(missionResponse.data);
       setTimeline(timelineResponse.data || []);
+      setNegotiations(negotiationsResponse.data || []);
+      if (userResponse.data?.id) {
+        setCurrentUserId(userResponse.data.id);
+      }
     } catch (error) {
       console.error('Error loading mission:', error);
       toast({
@@ -187,6 +223,10 @@ export default function MissionDetailPage() {
   const handleCompleteMission = async () => {
     setActionLoading(true);
     try {
+      // First upload after photos if any
+      if (afterPhotos.length > 0) {
+        await apiClient.post(`/missions/${missionId}/photos`, { afterPhotos });
+      }
       await apiClient.post(`/missions/${missionId}/complete`, { notes: completionNotes });
       toast({
         title: t('common', 'success') || 'Success',
@@ -205,6 +245,151 @@ export default function MissionDetailPage() {
       setActionLoading(false);
     }
   };
+
+  const handleAfterPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingPhoto(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.post('/uploads/mission-photo', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data.url;
+      });
+      const urls = await Promise.all(uploadPromises);
+      setAfterPhotos((prev) => [...prev, ...urls]);
+      toast({
+        title: t('common', 'success') || 'Success',
+        description: t('missions', 'photosUploaded') || 'Photos uploaded successfully',
+      });
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('missions', 'photoUploadError') || 'Error uploading photos',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const removeAfterPhoto = (index: number) => {
+    setAfterPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Negotiation Handlers
+  const handleSubmitNegotiation = async () => {
+    if (!negotiationForm.proposedPrice) {
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('negotiations', 'enterPrice') || 'Veuillez entrer un prix',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setNegotiationLoading(true);
+    try {
+      await apiClient.post(`/missions/${missionId}/negotiations`, {
+        missionId,
+        proposedPrice: parseFloat(negotiationForm.proposedPrice),
+        laborCost: negotiationForm.laborCost ? parseFloat(negotiationForm.laborCost) : undefined,
+        materialCost: negotiationForm.materialCost ? parseFloat(negotiationForm.materialCost) : undefined,
+        travelCost: negotiationForm.travelCost ? parseFloat(negotiationForm.travelCost) : undefined,
+        message: negotiationForm.message || undefined,
+      });
+      toast({
+        title: t('common', 'success') || 'Success',
+        description: t('negotiations', 'offerSent') || 'Offre envoyée',
+        variant: 'success',
+      });
+      setShowNegotiationForm(false);
+      setNegotiationForm({
+        proposedPrice: '',
+        laborCost: '',
+        materialCost: '',
+        travelCost: '',
+        message: '',
+      });
+      loadMission();
+    } catch (error) {
+      console.error('Error creating negotiation:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('negotiations', 'sendError') || 'Erreur lors de l\'envoi',
+        variant: 'destructive',
+      });
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const handleAcceptNegotiation = async (negotiationId: string) => {
+    if (!confirm(t('negotiations', 'confirmAccept') || 'Accepter cette offre ?')) {
+      return;
+    }
+
+    setNegotiationLoading(true);
+    try {
+      await apiClient.put(`/missions/negotiations/${negotiationId}/accept`, { accepted: true });
+      toast({
+        title: t('common', 'success') || 'Success',
+        description: t('negotiations', 'offerAccepted') || 'Offre acceptée',
+        variant: 'success',
+      });
+      loadMission();
+    } catch (error) {
+      console.error('Error accepting negotiation:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('negotiations', 'acceptError') || 'Erreur',
+        variant: 'destructive',
+      });
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const handleRejectNegotiation = async (negotiationId: string) => {
+    const reason = prompt(t('negotiations', 'rejectReason') || 'Raison du refus (optionnel):');
+
+    setNegotiationLoading(true);
+    try {
+      await apiClient.put(`/missions/negotiations/${negotiationId}/accept`, {
+        accepted: false,
+        rejectedReason: reason || undefined,
+      });
+      toast({
+        title: t('common', 'success') || 'Success',
+        description: t('negotiations', 'offerRejected') || 'Offre refusée',
+        variant: 'success',
+      });
+      loadMission();
+    } catch (error) {
+      console.error('Error rejecting negotiation:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('negotiations', 'rejectError') || 'Erreur',
+        variant: 'destructive',
+      });
+    } finally {
+      setNegotiationLoading(false);
+    }
+  };
+
+  const isNegotiationExpired = (expiresAt?: string) => {
+    if (!expiresAt) return false;
+    return new Date() > new Date(expiresAt);
+  };
+
+  const canNegotiate = mission &&
+    (mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING') &&
+    negotiations.length < 5;
 
   const handleSubmitQuotation = async () => {
     if (!quotationForm.amount || !quotationForm.description) {
@@ -527,8 +712,315 @@ export default function MissionDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Mission Images */}
-          {mission.images && mission.images.length > 0 && (
+          {/* Negotiation Section */}
+          {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
+            <Card className="md:col-span-2 border-orange-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
+                </CardTitle>
+                <CardDescription>
+                  {t('negotiations', 'artisanNegotiationDesc') || 'Proposez un prix au client pour cette mission'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Client Budget */}
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      {t('missions', 'clientBudget') || 'Budget client'}
+                    </span>
+                    <span className="font-semibold text-lg">
+                      {mission.budget ? `${mission.budget}€` : '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Negotiations List */}
+                {negotiations.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700">
+                      {t('negotiations', 'history') || 'Historique des offres'} ({negotiations.length}/5)
+                    </h4>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {negotiations.map((neg, index) => {
+                        const isFromMe = neg.senderId === currentUserId;
+                        const isExpired = isNegotiationExpired(neg.expiresAt);
+                        const isPending = neg.accepted === null || neg.accepted === undefined;
+                        const isLastAndPending = index === negotiations.length - 1 && isPending && !isExpired;
+
+                        return (
+                          <div
+                            key={neg.id}
+                            className={`p-3 rounded-lg border ${
+                              isFromMe
+                                ? 'bg-green-50 border-green-200 ml-4'
+                                : 'bg-blue-50 border-blue-200 mr-4'
+                            } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
+                              neg.accepted === false ? 'opacity-60' : ''
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <span className="text-xs text-gray-500">
+                                  {isFromMe
+                                    ? t('negotiations', 'yourOffer') || 'Votre offre'
+                                    : t('negotiations', 'clientOffer') || 'Offre du client'}
+                                </span>
+                                <div className="font-bold text-lg">{neg.proposedPrice}€</div>
+                                {/* Cost breakdown */}
+                                {(neg.laborCost || neg.materialCost || neg.travelCost) && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {neg.laborCost && <span>Main d'œuvre: {neg.laborCost}€</span>}
+                                    {neg.materialCost && <span className="ml-2">Matériel: {neg.materialCost}€</span>}
+                                    {neg.travelCost && <span className="ml-2">Déplacement: {neg.travelCost}€</span>}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {neg.accepted === true && (
+                                  <Badge className="bg-green-100 text-green-800">
+                                    {t('negotiations', 'accepted') || 'Acceptée'}
+                                  </Badge>
+                                )}
+                                {neg.accepted === false && (
+                                  <Badge className="bg-red-100 text-red-800">
+                                    {t('negotiations', 'rejected') || 'Refusée'}
+                                  </Badge>
+                                )}
+                                {isPending && isExpired && (
+                                  <Badge className="bg-gray-100 text-gray-800">
+                                    {t('negotiations', 'expired') || 'Expirée'}
+                                  </Badge>
+                                )}
+                                {isPending && !isExpired && (
+                                  <Badge className="bg-yellow-100 text-yellow-800">
+                                    {t('negotiations', 'pending') || 'En attente'}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            {neg.message && (
+                              <p className="text-sm text-gray-600 mt-2 italic">"{neg.message}"</p>
+                            )}
+
+                            {neg.rejectedReason && (
+                              <p className="text-sm text-red-600 mt-2">
+                                {t('negotiations', 'reason') || 'Raison'}: {neg.rejectedReason}
+                              </p>
+                            )}
+
+                            {neg.expiresAt && isPending && !isExpired && (
+                              <p className="text-xs text-gray-400 mt-2">
+                                {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
+                                {new Date(neg.expiresAt).toLocaleString('fr-FR')}
+                              </p>
+                            )}
+
+                            {/* Actions for pending offers from client */}
+                            {isLastAndPending && !isFromMe && (
+                              <div className="flex gap-2 mt-3 pt-3 border-t">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleAcceptNegotiation(neg.id)}
+                                  disabled={negotiationLoading}
+                                  className="flex-1 bg-green-600 hover:bg-green-700"
+                                >
+                                  {t('negotiations', 'accept') || 'Accepter'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRejectNegotiation(neg.id)}
+                                  disabled={negotiationLoading}
+                                  className="flex-1"
+                                >
+                                  {t('negotiations', 'reject') || 'Refuser'}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Make Offer Button */}
+                {canNegotiate && !showNegotiationForm && (
+                  <Button
+                    onClick={() => setShowNegotiationForm(true)}
+                    className="w-full"
+                  >
+                    {negotiations.length === 0
+                      ? t('negotiations', 'makeOffer') || 'Faire une offre'
+                      : t('negotiations', 'counterOffer') || 'Faire une contre-offre'}
+                  </Button>
+                )}
+
+                {/* Negotiation Form */}
+                {showNegotiationForm && (
+                  <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'totalPrice') || 'Prix total proposé'} (€) *
+                        </label>
+                        <Input
+                          type="number"
+                          value={negotiationForm.proposedPrice}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, proposedPrice: e.target.value })
+                          }
+                          placeholder={mission.budget?.toString() || '0'}
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'laborCost') || 'Main d\'œuvre'} (€)
+                        </label>
+                        <Input
+                          type="number"
+                          value={negotiationForm.laborCost}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, laborCost: e.target.value })
+                          }
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'materialCost') || 'Matériel'} (€)
+                        </label>
+                        <Input
+                          type="number"
+                          value={negotiationForm.materialCost}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, materialCost: e.target.value })
+                          }
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'travelCost') || 'Déplacement'} (€)
+                        </label>
+                        <Input
+                          type="number"
+                          value={negotiationForm.travelCost}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, travelCost: e.target.value })
+                          }
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('negotiations', 'message') || 'Message (optionnel)'}
+                        </label>
+                        <textarea
+                          value={negotiationForm.message}
+                          onChange={(e) =>
+                            setNegotiationForm({ ...negotiationForm, message: e.target.value })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          placeholder={
+                            t('negotiations', 'artisanMessagePlaceholder') ||
+                            'Expliquez le détail de votre offre...'
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSubmitNegotiation}
+                        disabled={negotiationLoading}
+                        className="flex-1"
+                      >
+                        {negotiationLoading
+                          ? t('common', 'loading') || 'Chargement...'
+                          : t('negotiations', 'sendOffer') || 'Envoyer l\'offre'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowNegotiationForm(false)}
+                        disabled={negotiationLoading}
+                      >
+                        {t('common', 'cancel') || 'Annuler'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {negotiations.length >= 5 && (
+                  <p className="text-sm text-orange-600 text-center">
+                    {t('negotiations', 'limitReached') ||
+                      'Limite de 5 négociations atteinte.'}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Before Photos (from client) */}
+          {mission.beforePhotos && mission.beforePhotos.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-orange-400"></span>
+                  {t('missions', 'beforePhotos') || 'Photos avant travaux'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  {mission.beforePhotos.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Avant ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                      onClick={() => window.open(image, '_blank')}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* After Photos (uploaded by artisan) */}
+          {(mission.afterPhotos && mission.afterPhotos.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                  {t('missions', 'afterPhotos') || 'Photos après travaux'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  {mission.afterPhotos.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Après ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                      onClick={() => window.open(image, '_blank')}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Legacy Mission Images */}
+          {mission.images && mission.images.length > 0 && !mission.beforePhotos?.length && (
             <Card>
               <CardHeader>
                 <CardTitle>{t('artisan', 'photos') || 'Photos'}</CardTitle>
@@ -549,27 +1041,111 @@ export default function MissionDetailPage() {
             </Card>
           )}
 
-          {/* Completion Notes (for IN_PROGRESS status) */}
+          {/* Completion Section (for IN_PROGRESS status) */}
           {mission.status === 'IN_PROGRESS' && (
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>{t('artisan', 'completionNotes') || 'Completion Notes'}</CardTitle>
+                <CardTitle>{t('artisan', 'completeWork') || 'Finaliser la mission'}</CardTitle>
                 <CardDescription>
-                  {t('artisan', 'completionNotesDesc') ||
-                    'Add notes about the work done before completing the mission'}
+                  {t('artisan', 'completeWorkDesc') ||
+                    'Ajoutez des photos après travaux et des notes avant de terminer la mission'}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <textarea
-                  value={completionNotes}
-                  onChange={(e) => setCompletionNotes(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={
-                    t('artisan', 'completionNotesPlaceholder') ||
-                    'Describe the work completed, any issues encountered, etc.'
-                  }
-                />
+              <CardContent className="space-y-6">
+                {/* After Photos Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                    {t('missions', 'afterPhotos') || 'Photos après travaux'}
+                  </label>
+                  <p className="text-sm text-gray-500 mb-3">
+                    {t('artisan', 'afterPhotosHelper') || 'Ajoutez des photos montrant le travail terminé'}
+                  </p>
+
+                  {/* Photo Upload Input */}
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleAfterPhotoUpload}
+                        className="hidden"
+                        disabled={uploadingPhoto}
+                      />
+                      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                        {uploadingPhoto ? (
+                          <>
+                            <span className="animate-spin">⏳</span>
+                            {t('common', 'uploading') || 'Téléchargement...'}
+                          </>
+                        ) : (
+                          <>
+                            <span>📷</span>
+                            {t('missions', 'addPhotos') || 'Ajouter des photos'}
+                          </>
+                        )}
+                      </div>
+                    </label>
+                    {afterPhotos.length > 0 && (
+                      <span className="text-sm text-gray-500">
+                        {afterPhotos.length} photo{afterPhotos.length > 1 ? 's' : ''} sélectionnée{afterPhotos.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Photo Previews */}
+                  {afterPhotos.length > 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-4">
+                      {afterPhotos.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`After photo ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border-2 border-green-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeAfterPhoto(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Completion Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('artisan', 'completionNotes') || 'Notes de complétion'}
+                  </label>
+                  <textarea
+                    value={completionNotes}
+                    onChange={(e) => setCompletionNotes(e.target.value)}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={
+                      t('artisan', 'completionNotesPlaceholder') ||
+                      'Décrivez le travail effectué, les problèmes rencontrés, etc.'
+                    }
+                  />
+                </div>
+
+                {/* Completion Button */}
+                <div className="flex justify-end pt-4 border-t">
+                  <Button
+                    onClick={handleCompleteMission}
+                    disabled={actionLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {actionLoading
+                      ? t('common', 'loading') || 'Chargement...'
+                      : t('artisan', 'completeMission') || 'Terminer la mission'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
