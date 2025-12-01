@@ -303,16 +303,83 @@ export default function NewMissionPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('missions', 'requestType')}
                   </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  >
-                    <option value="EMERGENCY">{t('missions', 'emergency')}</option>
-                    <option value="SCHEDULED">{t('missions', 'scheduled')}</option>
-                    <option value="QUOTE">{t('missions', 'quote')}</option>
-                  </select>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, type: 'EMERGENCY' })}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        formData.type === 'EMERGENCY'
+                          ? 'border-red-500 bg-red-50'
+                          : 'border-gray-200 hover:border-red-300'
+                      }`}
+                    >
+                      <span className="text-2xl">🚨</span>
+                      <p className={`font-medium ${formData.type === 'EMERGENCY' ? 'text-red-700' : 'text-gray-900'}`}>
+                        {t('missions', 'emergency') || 'Urgence'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t('emergency', 'immediate') || 'Intervention immédiate'}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, type: 'SCHEDULED' })}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        formData.type === 'SCHEDULED'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      <span className="text-2xl">📅</span>
+                      <p className={`font-medium ${formData.type === 'SCHEDULED' ? 'text-blue-700' : 'text-gray-900'}`}>
+                        {t('missions', 'scheduled') || 'Planifiée'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t('emergency', 'chooseDate') || 'Choisir une date'}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, type: 'QUOTE' })}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        formData.type === 'QUOTE'
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-green-300'
+                      }`}
+                    >
+                      <span className="text-2xl">📝</span>
+                      <p className={`font-medium ${formData.type === 'QUOTE' ? 'text-green-700' : 'text-gray-900'}`}>
+                        {t('missions', 'quote') || 'Devis'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t('emergency', 'getQuote') || 'Demander un devis'}
+                      </p>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Emergency Alert */}
+                {formData.type === 'EMERGENCY' && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-red-500 text-xl">⚡</span>
+                      <div>
+                        <h4 className="font-semibold text-red-800">
+                          {t('emergency', 'urgentRequest') || 'Demande Urgente'}
+                        </h4>
+                        <p className="text-sm text-red-700 mt-1">
+                          {t('emergency', 'urgentDesc') ||
+                            'Votre demande sera envoyée immédiatement aux artisans disponibles à proximité. Des frais supplémentaires peuvent s\'appliquer pour les interventions en urgence.'}
+                        </p>
+                        <ul className="text-sm text-red-600 mt-2 space-y-1">
+                          <li>• {t('emergency', 'notifyNearby') || 'Notification aux artisans proches'}</li>
+                          <li>• {t('emergency', 'fasterResponse') || 'Réponse prioritaire'}</li>
+                          <li>• {t('emergency', 'extraFees') || 'Tarif urgence applicable'}</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Title */}
                 <div>
