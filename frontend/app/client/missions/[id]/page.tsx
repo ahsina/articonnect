@@ -30,6 +30,8 @@ interface Mission {
   createdAt: string;
   acceptedAt?: string;
   completedAt?: string;
+  validatedAt?: string;
+  autoValidatedAt?: string;
   // Photos
   beforePhotos?: string[];
   afterPhotos?: string[];
@@ -172,6 +174,55 @@ export default function MissionDetailsPage() {
       });
     }
   };
+
+  const handleValidate = async () => {
+    if (!confirm(t('validation', 'confirmValidate') || 'Confirmer que le travail est satisfaisant ?')) {
+      return;
+    }
+
+    try {
+      await missionsApi.validate(missionId);
+      toast({
+        title: t('common', 'success'),
+        description: t('validation', 'workValidated') || 'Travail validé avec succès',
+      });
+      loadData();
+      setShowReviewForm(true);
+    } catch (error) {
+      console.error('Error validating mission:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('validation', 'validateError') || 'Erreur lors de la validation',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDispute = async () => {
+    const reason = prompt(t('validation', 'disputeReason') || 'Décrivez le problème:');
+    if (!reason) return;
+
+    try {
+      await missionsApi.dispute(missionId, reason);
+      toast({
+        title: t('common', 'success'),
+        description: t('validation', 'disputeCreated') || 'Réclamation enregistrée',
+      });
+      loadData();
+    } catch (error) {
+      console.error('Error creating dispute:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('validation', 'disputeError') || 'Erreur',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const needsValidation = mission &&
+    mission.status === 'COMPLETED' &&
+    !mission.validatedAt &&
+    !mission.autoValidatedAt;
 
   const handleSubmitNegotiation = async () => {
     if (!negotiationForm.proposedPrice) {
@@ -792,6 +843,64 @@ export default function MissionDetailsPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Validation Section - shown when mission is completed but not validated */}
+            {needsValidation && (
+              <Card className="border-green-200 bg-green-50/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-800">
+                    ✅ {t('validation', 'workCompleted') || 'Travail terminé'}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('validation', 'validateDesc') || 'L\'artisan a terminé le travail. Vérifiez et validez.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* After Photos Preview */}
+                  {mission.afterPhotos && mission.afterPhotos.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        {t('missions', 'afterPhotos') || 'Photos après travaux'}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {mission.afterPhotos.slice(0, 3).map((url, index) => (
+                          <img
+                            key={index}
+                            src={url}
+                            alt={`After ${index + 1}`}
+                            className="w-full h-20 object-cover rounded-lg border cursor-pointer"
+                            onClick={() => window.open(url, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      {t('validation', 'autoValidateWarning') ||
+                        'Si vous ne validez pas dans les 7 jours, la mission sera automatiquement validée.'}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleValidate}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      {t('validation', 'validateWork') || 'Valider le travail'}
+                    </Button>
+                    <Button
+                      onClick={handleDispute}
+                      variant="outline"
+                      className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      {t('validation', 'reportProblem') || 'Signaler un problème'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Actions */}
             <Card>
               <CardHeader>
@@ -820,13 +929,13 @@ export default function MissionDetailsPage() {
                   </>
                 )}
 
-                {mission.status === 'COMPLETED' && !mission.review && (
+                {mission.status === 'COMPLETED' && mission.validatedAt && !mission.review && (
                   <Button className="w-full" onClick={() => setShowReviewForm(true)}>
                     {t('reviews', 'leaveReview') || 'Laisser un avis'}
                   </Button>
                 )}
 
-                {mission.status === 'COMPLETED' && (
+                {mission.status === 'COMPLETED' && mission.validatedAt && (
                   <Button
                     className="w-full"
                     variant="outline"

@@ -31,6 +31,16 @@ export const missionsApi = {
     return response.data;
   },
 
+  validate: async (id: string, rating?: number) => {
+    const response = await apiClient.post(`/missions/${id}/validate`, { rating });
+    return response.data;
+  },
+
+  dispute: async (id: string, reason: string) => {
+    const response = await apiClient.post(`/missions/${id}/dispute`, { reason });
+    return response.data;
+  },
+
   getNearby: async (lat: number, lng: number, radius?: number) => {
     const response = await apiClient.get('/missions/nearby', {
       params: { lat, lng, radius },
