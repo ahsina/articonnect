@@ -57,4 +57,28 @@ export const missionsApi = {
     const response = await apiClient.get(`/missions/${missionId}/negotiations`);
     return response.data;
   },
+
+  // Photo Upload
+  uploadPhoto: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/uploads/mission-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  addBeforePhotos: async (missionId: string, photoUrls: string[]) => {
+    const response = await apiClient.post(`/missions/${missionId}/photos`, {
+      beforePhotos: photoUrls,
+    });
+    return response.data;
+  },
+
+  addAfterPhotos: async (missionId: string, photoUrls: string[]) => {
+    const response = await apiClient.post(`/missions/${missionId}/photos`, {
+      afterPhotos: photoUrls,
+    });
+    return response.data;
+  },
 };

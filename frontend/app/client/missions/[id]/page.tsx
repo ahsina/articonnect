@@ -29,6 +29,9 @@ interface Mission {
   createdAt: string;
   acceptedAt?: string;
   completedAt?: string;
+  // Photos
+  beforePhotos?: string[];
+  afterPhotos?: string[];
   // B2B fields
   purchaseOrderNumber?: string;
   internalReference?: string;
@@ -238,6 +241,69 @@ export default function MissionDetailsPage() {
                 <p className="text-gray-700 whitespace-pre-wrap">{mission.description}</p>
               </CardContent>
             </Card>
+
+            {/* Photos Avant/Après - Before/After Photos */}
+            {((mission.beforePhotos && mission.beforePhotos.length > 0) ||
+              (mission.afterPhotos && mission.afterPhotos.length > 0)) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    📷 {t('missions', 'photos') || 'Photos'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Before Photos */}
+                  {mission.beforePhotos && mission.beforePhotos.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-orange-400"></span>
+                        {t('missions', 'beforePhotos') || 'Avant travaux'}
+                      </h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {mission.beforePhotos.map((url, index) => (
+                          <img
+                            key={index}
+                            src={url}
+                            alt={`Avant ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => window.open(url, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* After Photos */}
+                  {mission.afterPhotos && mission.afterPhotos.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                        {t('missions', 'afterPhotos') || 'Après travaux'}
+                      </h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {mission.afterPhotos.map((url, index) => (
+                          <img
+                            key={index}
+                            src={url}
+                            alt={`Après ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => window.open(url, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Comparison hint */}
+                  {mission.beforePhotos && mission.beforePhotos.length > 0 &&
+                    mission.afterPhotos && mission.afterPhotos.length > 0 && (
+                    <p className="text-sm text-gray-500 text-center italic">
+                      {t('missions', 'comparePhotosHint') || 'Cliquez sur une photo pour l\'agrandir'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* B2B Info Card - Only shown if B2B data exists */}
             {hasB2BInfo && (

@@ -931,8 +931,10 @@ model Mission {
   priceReviewedAt     DateTime? // When price was reviewed
   priceReviewedBy     String? // Admin who reviewed
 
-  // Media
-  photos String[]
+  // Media - Before/After Photos
+  photos       String[] // Legacy field for backward compatibility
+  beforePhotos String[] // Photos taken before the work (by client)
+  afterPhotos  String[] // Photos taken after the work (by artisan)
 
   // B2B Billing (for professional clients)
   purchaseOrderNumber String? // Numéro de bon de commande

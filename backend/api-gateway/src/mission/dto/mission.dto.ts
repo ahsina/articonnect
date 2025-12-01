@@ -66,10 +66,20 @@ export class CreateMissionDto {
   @IsNumber()
   clientBudget?: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, description: 'Legacy photos field' })
   @IsOptional()
   @IsArray()
   photos?: string[];
+
+  @ApiProperty({ required: false, description: 'Photos taken before the work (by client)' })
+  @IsOptional()
+  @IsArray()
+  beforePhotos?: string[];
+
+  @ApiProperty({ required: false, description: 'Photos taken after the work (by artisan)' })
+  @IsOptional()
+  @IsArray()
+  afterPhotos?: string[];
 
   // B2B Billing fields
   @ApiProperty({ required: false, description: 'Purchase order number for B2B clients' })
@@ -107,4 +117,16 @@ export class UpdateMissionStatusDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+export class AddMissionPhotosDto {
+  @ApiProperty({ required: false, description: 'Photos to add to before photos array' })
+  @IsOptional()
+  @IsArray()
+  beforePhotos?: string[];
+
+  @ApiProperty({ required: false, description: 'Photos to add to after photos array' })
+  @IsOptional()
+  @IsArray()
+  afterPhotos?: string[];
 }

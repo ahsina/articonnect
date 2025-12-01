@@ -38,6 +38,8 @@ export default function NewMissionPage() {
   const [loading, setLoading] = useState(false);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [useDifferentBilling, setUseDifferentBilling] = useState(false);
+  const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [formData, setFormData] = useState({
     type: 'SCHEDULED',
     category: '',
@@ -82,6 +84,38 @@ export default function NewMissionPage() {
 
   const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingPhoto(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const result = await missionsApi.uploadPhoto(file);
+        return result.url;
+      });
+      const urls = await Promise.all(uploadPromises);
+      setBeforePhotos((prev) => [...prev, ...urls]);
+      toast({
+        title: t('common', 'success'),
+        description: t('missions', 'photosUploaded') || 'Photos téléchargées',
+      });
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast({
+        title: t('common', 'error'),
+        description: t('missions', 'photoUploadError') || 'Erreur lors du téléchargement',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setBeforePhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleCategorySelect = (category: string) => {
     setFormData({ ...formData, category });
     setStep(2);
@@ -110,6 +144,7 @@ export default function NewMissionPage() {
         longitude: coords.lng,
         clientBudget: formData.clientBudget ? parseFloat(formData.clientBudget) : undefined,
         scheduledFor: formData.scheduledFor ? new Date(formData.scheduledFor) : undefined,
+        beforePhotos: beforePhotos.length > 0 ? beforePhotos : undefined,
       };
 
       // Add B2B fields only for professional clients
@@ -387,6 +422,72 @@ export default function NewMissionPage() {
                   <p className="text-xs text-gray-500 mt-1">
                     {t('missions', 'budgetHelper')}
                   </p>
+                </div>
+
+                {/* Photos Avant - Before Photos */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-lg">📷</span>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {t('missions', 'beforePhotos') || 'Photos avant travaux'}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {t('missions', 'beforePhotosHelper') || 'Ajoutez des photos pour montrer l\'état actuel du problème'}
+                  </p>
+
+                  {/* Photo Grid */}
+                  {beforePhotos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {beforePhotos.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        disabled={uploadingPhoto}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                        {uploadingPhoto ? (
+                          <span className="text-gray-500">
+                            {t('common', 'uploading') || 'Téléchargement...'}
+                          </span>
+                        ) : (
+                          <>
+                            <span>📤</span>
+                            <span className="text-gray-700">
+                              {t('missions', 'addPhotos') || 'Ajouter des photos'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      {beforePhotos.length}/5 photos
+                    </span>
+                  </div>
                 </div>
 
                 {/* B2B Section - Only for professional clients */}
