@@ -21,8 +21,13 @@ export const missionsApi = {
     return response.data;
   },
 
-  cancel: async (id: string) => {
-    const response = await apiClient.post(`/missions/${id}/cancel`);
+  cancel: async (id: string, reason?: string) => {
+    const response = await apiClient.post(`/missions/${id}/cancel`, { reason });
+    return response.data;
+  },
+
+  getCancellationFees: async (id: string) => {
+    const response = await apiClient.get(`/missions/${id}/cancellation-fees`);
     return response.data;
   },
 

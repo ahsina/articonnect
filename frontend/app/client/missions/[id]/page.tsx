@@ -96,6 +96,15 @@ export default function MissionDetailsPage() {
     message: '',
   });
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancellationFees, setCancellationFees] = useState<{
+    canCancel: boolean;
+    fee: number;
+    feePercentage: number;
+    reason: string;
+    totalRefund?: number;
+  } | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     if (missionId) {
@@ -130,17 +139,58 @@ export default function MissionDetailsPage() {
     mission?.internalReference ||
     mission?.billingCompanyName;
 
-  const handleCancel = async () => {
-    if (!confirm(t('missions', 'confirmCancel') || 'Voulez-vous vraiment annuler cette mission ?')) {
-      return;
-    }
-
+  const handleShowCancelModal = async () => {
     try {
-      await missionsApi.cancel(missionId);
+      // Get cancellation fees first
+      const fees = await missionsApi.getCancellationFees(missionId).catch(() => ({
+        canCancel: true,
+        fee: 0,
+        feePercentage: 0,
+        reason: getCancellationFeeReason(),
+      }));
+      setCancellationFees(fees);
+      setShowCancelModal(true);
+    } catch (error) {
+      console.error('Error getting cancellation fees:', error);
+      setCancellationFees({
+        canCancel: true,
+        fee: 0,
+        feePercentage: 0,
+        reason: getCancellationFeeReason(),
+      });
+      setShowCancelModal(true);
+    }
+  };
+
+  const getCancellationFeeReason = () => {
+    if (!mission) return '';
+    switch (mission.status) {
+      case 'PENDING':
+        return t('cancellation', 'freeCancelPending') || 'Annulation gratuite - Mission non encore acceptée';
+      case 'NEGOTIATING':
+        return t('cancellation', 'freeCancelNegotiating') || 'Annulation gratuite - Négociation en cours';
+      case 'ACCEPTED':
+        return t('cancellation', 'feeAccepted') || 'Frais de 10% - Artisan déjà assigné';
+      case 'IN_PROGRESS':
+        return t('cancellation', 'feeInProgress') || 'Frais de 50% - Travaux commencés';
+      case 'PENDING_DEPOSIT':
+        return t('cancellation', 'feeDeposit') || 'Frais de 10% - Acompte versé';
+      case 'IN_TRANSIT':
+        return t('cancellation', 'feeTransit') || 'Frais de 25% - Artisan en déplacement';
+      default:
+        return '';
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      await missionsApi.cancel(missionId, cancelReason);
       toast({
         title: t('common', 'success'),
         description: t('missions', 'missionCancelled') || 'Mission annulée',
       });
+      setShowCancelModal(false);
+      setCancelReason('');
       loadData();
     } catch (error) {
       console.error('Error cancelling mission:', error);
@@ -912,7 +962,7 @@ export default function MissionDetailsPage() {
                     <Button className="w-full" variant="outline">
                       {t('common', 'edit') || 'Modifier'}
                     </Button>
-                    <Button className="w-full" variant="destructive" onClick={handleCancel}>
+                    <Button className="w-full" variant="destructive" onClick={handleShowCancelModal}>
                       {t('missions', 'cancelMission') || 'Annuler la mission'}
                     </Button>
                   </>
@@ -923,7 +973,7 @@ export default function MissionDetailsPage() {
                     <Button className="w-full" onClick={handleComplete}>
                       {t('missions', 'markCompleted') || 'Marquer comme terminée'}
                     </Button>
-                    <Button className="w-full" variant="destructive" onClick={handleCancel}>
+                    <Button className="w-full" variant="destructive" onClick={handleShowCancelModal}>
                       {t('missions', 'cancelMission') || 'Annuler la mission'}
                     </Button>
                   </>
@@ -999,6 +1049,103 @@ export default function MissionDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancellation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                ⚠️ {t('cancellation', 'cancelMission') || 'Annuler la mission'}
+              </CardTitle>
+              <CardDescription>
+                {t('cancellation', 'cancelWarning') ||
+                  'Cette action est irréversible. Veuillez lire les conditions ci-dessous.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Fee Information */}
+              <div
+                className={`p-4 rounded-lg ${
+                  (cancellationFees?.fee || 0) > 0
+                    ? 'bg-yellow-50 border border-yellow-200'
+                    : 'bg-green-50 border border-green-200'
+                }`}
+              >
+                <p className="font-medium text-gray-900 mb-2">
+                  {t('cancellation', 'fees') || 'Frais d\'annulation'}
+                </p>
+                <p
+                  className={`text-lg font-bold ${
+                    (cancellationFees?.fee || 0) > 0 ? 'text-yellow-700' : 'text-green-700'
+                  }`}
+                >
+                  {(cancellationFees?.fee || 0) > 0
+                    ? `${cancellationFees?.fee}€ (${cancellationFees?.feePercentage}%)`
+                    : t('cancellation', 'noFees') || 'Gratuit'}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {cancellationFees?.reason || getCancellationFeeReason()}
+                </p>
+              </div>
+
+              {/* Fee Details by Status */}
+              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium mb-2">
+                  {t('cancellation', 'feeSchedule') || 'Barème des frais:'}
+                </p>
+                <ul className="space-y-1">
+                  <li>• {t('cancellation', 'pendingFee') || 'En attente: Gratuit'}</li>
+                  <li>• {t('cancellation', 'acceptedFee') || 'Acceptée: 10%'}</li>
+                  <li>• {t('cancellation', 'transitFee') || 'Artisan en route: 25%'}</li>
+                  <li>• {t('cancellation', 'inProgressFee') || 'En cours: 50%'}</li>
+                </ul>
+              </div>
+
+              {/* Reason Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('cancellation', 'reason') || 'Raison de l\'annulation (optionnel)'}
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows={2}
+                  placeholder={
+                    t('cancellation', 'reasonPlaceholder') ||
+                    'Indiquez la raison de votre annulation...'
+                  }
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setCancelReason('');
+                  }}
+                  className="flex-1"
+                >
+                  {t('common', 'back') || 'Retour'}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmCancel}
+                  className="flex-1"
+                  disabled={cancellationFees?.canCancel === false}
+                >
+                  {(cancellationFees?.fee || 0) > 0
+                    ? `${t('cancellation', 'confirmWithFees') || 'Annuler'} (${cancellationFees?.fee}€)`
+                    : t('cancellation', 'confirmFree') || 'Confirmer l\'annulation'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
