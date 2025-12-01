@@ -163,7 +163,7 @@ export default function ArtisanDetailsPage() {
   };
 
   const handleContactArtisan = () => {
-    router.push(`/client/missions/create?artisanId=${artisanId}`);
+    router.push(`/client/missions/new?artisanId=${artisanId}`);
   };
 
   if (loading) {

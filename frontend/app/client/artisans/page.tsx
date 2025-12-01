@@ -296,7 +296,7 @@ export default function ArtisansListPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => router.push(`/artisans/${artisan.id}`)}
+                      onClick={() => router.push(`/client/artisans/${artisan.id}`)}
                     >
                       {t('artisans', 'viewProfile')}
                     </Button>

@@ -47,6 +47,7 @@ function ClientHeader() {
     { href: '/client/artisans', label: t('nav', 'artisans') || 'Artisans' },
     { href: '/client/favorites', label: t('nav', 'favorites') || 'Favoris' },
     { href: '/client/invoices', label: t('nav', 'invoices') || 'Factures' },
+    { href: '/client/disputes', label: t('nav', 'disputes') || 'Litiges' },
   ];
 
   return (
