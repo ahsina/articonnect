@@ -12,8 +12,8 @@ COPY package*.json ./
 COPY backend/shared/package*.json ./backend/shared/
 COPY backend/api-gateway/package*.json ./backend/api-gateway/
 
-# Install dependencies
-RUN npm ci --only=production
+# Retire le hook husky (script "prepare" racine) avant l'install — absent en prod-only
+RUN npm pkg delete scripts.prepare && npm ci --only=production
 
 # ========================================
 # Stage 2: Build
@@ -22,13 +22,16 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# OpenSSL requis pour que Prisma détecte la bonne cible (linux-musl-openssl-3.0.x) au generate
+RUN apk add --no-cache openssl
+
 # Copy package files
 COPY package*.json ./
 COPY backend/shared/package*.json ./backend/shared/
 COPY backend/api-gateway/package*.json ./backend/api-gateway/
 
-# Install all dependencies (including dev)
-RUN npm ci
+# Retire le hook husky (script "prepare" racine) avant l'install
+RUN npm pkg delete scripts.prepare && npm ci
 
 # Copy source code
 COPY backend/shared ./backend/shared
@@ -49,25 +52,17 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# dumb-init (signaux) + openssl (libssl3 pour le query engine Prisma au runtime)
+RUN apk add --no-cache dumb-init openssl
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# Copy dependencies from dependencies stage
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=dependencies /app/backend/shared/node_modules ./backend/shared/node_modules
-COPY --from=dependencies /app/backend/api-gateway/node_modules ./backend/api-gateway/node_modules
-
-# Copy Prisma schema and generated client
-COPY --from=build /app/backend/shared/prisma ./backend/shared/prisma
-COPY --from=build /app/backend/shared/node_modules/.prisma ./backend/shared/node_modules/.prisma
-
-# Copy built application
-COPY --from=build /app/backend/api-gateway/dist ./backend/api-gateway/dist
-COPY --from=build /app/backend/api-gateway/package*.json ./backend/api-gateway/
+# Monorepo npm workspaces : les dépendances sont hoistées dans /app/node_modules et le client
+# Prisma est généré au même endroit. On copie l'arbre /app complet du stage build (inclut
+# node_modules hoisté + client Prisma généré + dist + la CLI prisma pour `db push`).
+COPY --from=build /app ./
 
 # Change ownership
 RUN chown -R nestjs:nodejs /app

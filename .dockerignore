@@ -1,0 +1,28 @@
+# Dépendances et artefacts de build (réinstallés/recompilés dans l'image)
+**/node_modules
+**/dist
+**/.next
+**/out
+**/coverage
+**/coverage-e2e
+
+# Git & CI
+.git
+.github
+
+# Logs et temporaires
+**/*.log
+**/.DS_Store
+**/.cache
+
+# Env locaux (les valeurs prod sont injectées via --env-file / build-args)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Overlay de déploiement (pas besoin dans le contexte image)
+deploy
+
+# Docs volumineuses
+*.md
+docs

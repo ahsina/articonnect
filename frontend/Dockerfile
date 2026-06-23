@@ -12,7 +12,7 @@ COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
 # Install dependencies
-RUN cd frontend && npm ci
+RUN npm pkg delete scripts.prepare && cd frontend && npm ci
 
 # ========================================
 # Stage 2: Build
@@ -26,7 +26,7 @@ COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
 # Install all dependencies
-RUN cd frontend && npm ci
+RUN npm pkg delete scripts.prepare && cd frontend && npm ci
 
 # Copy source code
 COPY frontend ./frontend
@@ -52,17 +52,12 @@ RUN apk add --no-cache dumb-init
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
-# Copy dependencies
-COPY --from=dependencies /app/frontend/node_modules ./node_modules
-
-# Copy built application
-COPY --from=build /app/frontend/.next ./.next
-COPY --from=build /app/frontend/public ./public
-COPY --from=build /app/frontend/package*.json ./
-COPY --from=build /app/frontend/next.config.js ./
+# Monorepo npm workspaces : les deps (dont `next`) sont hoistées dans /app/node_modules.
+# On copie l'arbre /app complet du stage build (node_modules hoisté + frontend/.next + sources).
+COPY --from=build /app ./
 
 # Create .next/cache directory
-RUN mkdir -p .next/cache
+RUN mkdir -p frontend/.next/cache
 
 # Change ownership
 RUN chown -R nextjs:nodejs /app
@@ -72,6 +67,9 @@ USER nextjs
 
 # Expose port
 EXPOSE 3000
+
+# On démarre depuis le dossier frontend (next start y trouve .next et résout /app/node_modules)
+WORKDIR /app/frontend
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \

@@ -70,3 +70,7 @@ frontend/android/key.properties
 
 # Mobile build artifacts
 frontend/out/
+
+# Secrets & artefacts du déploiement démo (ne JAMAIS committer)
+deploy/.env.deploy
+deploy/ssl/
