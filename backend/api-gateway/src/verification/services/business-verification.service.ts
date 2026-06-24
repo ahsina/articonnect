@@ -242,9 +242,9 @@ export class BusinessVerificationService {
   async getUnverifiedArtisans(limit: number = 50) {
     return this.prisma.artisanProfile.findMany({
       where: {
+        // businessVerified est non-nullable (default false) : pas de clause `null` (sinon Prisma 500).
         OR: [
           { businessVerified: false },
-          { businessVerified: null },
           { businessVerificationStatus: VerificationStatus.PENDING },
         ],
       },

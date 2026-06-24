@@ -115,6 +115,8 @@ export class ChatService {
 
   async getConversations(userId: string) {
     // Get unique users the current user has chatted with
+    // NB : Prisma nomme la table "Message" et les colonnes en camelCase (identifiants Postgres
+    // sensibles à la casse → guillemets obligatoires).
     const conversations = await this.prisma.$queryRaw`
       SELECT DISTINCT ON (other_user_id)
         other_user_id,
@@ -124,15 +126,15 @@ export class ChatService {
       FROM (
         SELECT
           CASE
-            WHEN sender_id = ${userId} THEN receiver_id
-            ELSE sender_id
+            WHEN "senderId" = ${userId} THEN "receiverId"
+            ELSE "senderId"
           END as other_user_id,
-          content as last_message,
-          created_at as last_message_at,
-          CASE WHEN receiver_id = ${userId} AND read = false THEN 1 ELSE 0 END as unread_count
-        FROM messages
-        WHERE sender_id = ${userId} OR receiver_id = ${userId}
-        ORDER BY created_at DESC
+          "content" as last_message,
+          "createdAt" as last_message_at,
+          CASE WHEN "receiverId" = ${userId} AND "read" = false THEN 1 ELSE 0 END as unread_count
+        FROM "Message"
+        WHERE "senderId" = ${userId} OR "receiverId" = ${userId}
+        ORDER BY "createdAt" DESC
       ) as conversations
       ORDER BY other_user_id, last_message_at DESC
     `;

@@ -1015,8 +1015,24 @@ export interface Report {
 
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const response = await apiClient.get('/admin/dashboard/stats');
-    return response.data;
+    const response = await apiClient.get('/admin/dashboard');
+    const d = response.data || {};
+    // Le back renvoie une structure imbriquée ; la page attend un objet plat → on adapte.
+    return {
+      totalUsers: d.users?.total ?? 0,
+      totalClients: d.users?.clients ?? 0,
+      totalArtisans: d.users?.artisans ?? 0,
+      newUsers7d: d.users?.new7d ?? 0,
+      activeUsers30d: d.users?.active30d ?? d.users?.total ?? 0,
+      totalMissions: d.missions?.total ?? 0,
+      pendingMissions: d.missions?.pending ?? 0,
+      activeMissions: d.missions?.active ?? 0,
+      completedMissions: d.missions?.completed ?? 0,
+      totalRevenue: Number(d.revenue?.totalTransactions ?? 0),
+      platformRevenue: Number(d.revenue?.totalCommission ?? 0),
+      activeDisputes: d.disputes?.active ?? 0,
+      ...d,
+    } as unknown as DashboardStats;
   },
 
   // Analytics
@@ -1070,21 +1086,23 @@ export const adminApi = {
 
   // Moderation
   getReports: async (filters?: { status?: string; type?: string }): Promise<Report[]> => {
-    const response = await apiClient.get('/admin/moderation/reports', {
+    const response = await apiClient.get('/moderation/reports', {
       params: filters,
     });
-    return response.data;
+    // Le back renvoie { reports: [...], pagination } → on retourne le tableau.
+    return response.data?.reports ?? response.data?.data ?? response.data;
   },
 
   resolveReport: async (reportId: string, action: string, resolution: string): Promise<void> => {
-    await apiClient.post(`/admin/moderation/reports/${reportId}/resolve`, {
+    await apiClient.put(`/moderation/reports/${reportId}/resolve`, {
       action,
       resolution,
     });
   },
 
   deleteReport: async (reportId: string): Promise<void> => {
-    await apiClient.delete(`/admin/moderation/reports/${reportId}`);
+    // Pas de suppression côté back : on clôt le signalement (statut DISMISSED).
+    await apiClient.put(`/moderation/reports/${reportId}/status`, { status: 'DISMISSED' });
   },
 
   // Fraud Settings

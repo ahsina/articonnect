@@ -81,7 +81,9 @@ export default function ClientInvoicesPage() {
         apiClient.get('/invoices'),
         userApi.getClientProfile().catch(() => null),
       ]);
-      setInvoices(invoicesResponse.data);
+      // Le back renvoie { invoices: [...], total, ... } — on extrait le tableau.
+      const inv = invoicesResponse.data?.invoices ?? invoicesResponse.data?.data ?? invoicesResponse.data;
+      setInvoices(Array.isArray(inv) ? inv : []);
       setClientProfile(profileData);
     } catch (error) {
       console.error('Error loading data:', error);

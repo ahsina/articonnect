@@ -244,24 +244,26 @@ export default function ClientOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Artisan Info */}
-                  <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
-                    <img
-                      src={order.artisan.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                      alt={order.artisan.firstName}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div>
-                      <p className="text-sm text-gray-600">{t('orders', 'soldBy')}</p>
-                      <p className="font-semibold text-gray-900">
-                        {order.artisan.firstName} {order.artisan.lastName}
-                      </p>
+                  {/* Artisan Info (le listing peut ne pas inclure l'artisan) */}
+                  {order.artisan && (
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                      <img
+                        src={order.artisan.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                        alt={order.artisan.firstName}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div>
+                        <p className="text-sm text-gray-600">{t('orders', 'soldBy')}</p>
+                        <p className="font-semibold text-gray-900">
+                          {order.artisan.firstName} {order.artisan.lastName}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Order Items */}
                   <div className="space-y-3 mb-4">
-                    {order.items.map((item) => (
+                    {(order.items ?? []).map((item) => (
                       <div key={item.id} className="flex items-center gap-4">
                         <img
                           src={item.productImage}
@@ -271,12 +273,12 @@ export default function ClientOrdersPage() {
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{item.productName}</p>
                           <p className="text-sm text-gray-600">
-                            {t('cart', 'quantity')}: {item.quantity} × {item.price}€
+                            {t('cart', 'quantity')}: {item.quantity} × {Number(item.price)}€
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            {(item.quantity * item.price).toFixed(2)}€
+                            {(item.quantity * Number(item.price)).toFixed(2)}€
                           </p>
                         </div>
                       </div>
@@ -311,7 +313,7 @@ export default function ClientOrdersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/client/marketplace/${order.items[0].productId}`)}
+                        onClick={() => order.items?.[0] && router.push(`/client/marketplace/${order.items[0].productId}`)}
                       >
                         {t('orders', 'leaveReview')}
                       </Button>
@@ -328,13 +330,15 @@ export default function ClientOrdersPage() {
                       </Button>
                     )}
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/client/messages?userId=${order.artisan.id}`)}
-                    >
-                      💬 {t('orders', 'contactSeller')}
-                    </Button>
+                    {order.artisan?.id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/client/messages?userId=${order.artisan.id}`)}
+                      >
+                        💬 {t('orders', 'contactSeller')}
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -387,7 +391,7 @@ export default function ClientOrdersPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-3">{t('orders', 'orderedItems')}</p>
                     <div className="space-y-3">
-                      {selectedOrder.items.map((item) => (
+                      {(selectedOrder.items ?? []).map((item) => (
                         <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                           <img
                             src={item.productImage}
@@ -397,11 +401,11 @@ export default function ClientOrdersPage() {
                           <div className="flex-1">
                             <p className="font-medium">{item.productName}</p>
                             <p className="text-sm text-gray-600">
-                              {item.quantity} × {item.price}€
+                              {item.quantity} × {Number(item.price)}€
                             </p>
                           </div>
                           <p className="font-semibold">
-                            {(item.quantity * item.price).toFixed(2)}€
+                            {(item.quantity * Number(item.price)).toFixed(2)}€
                           </p>
                         </div>
                       ))}

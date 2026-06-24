@@ -49,17 +49,28 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       keys = keyOrCategory.split('.');
     }
 
+    // Fallback lisible si la clé est absente du dictionnaire : on humanise le dernier
+    // segment (ex: "workingHours" → "Working Hours") au lieu d'afficher la clé brute pointée.
+    const humanize = (s: string): string => {
+      const seg = (s.includes('.') ? s.split('.').pop()! : s) || s;
+      return seg
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/[._-]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .trim();
+    };
+
     let result: any = allTranslations[language];
 
     for (const k of keys) {
       if (result && typeof result === 'object' && k in result) {
         result = result[k];
       } else {
-        return key !== undefined ? `${keyOrCategory}.${key}` : keyOrCategory;
+        return humanize(key !== undefined ? key : keyOrCategory);
       }
     }
 
-    return typeof result === 'string' ? result : (key !== undefined ? `${keyOrCategory}.${key}` : keyOrCategory);
+    return typeof result === 'string' ? result : humanize(key !== undefined ? key : keyOrCategory);
   };
 
   return (
