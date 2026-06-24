@@ -9,6 +9,7 @@ import { MissionModule } from './mission/mission.module';
 import { GeoModule } from './geo/geo.module';
 import { PaymentModule } from './payment/payment.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { ArtisanModule } from './artisan/artisan.module';
 import { AdminModule } from './admin/admin.module';
 import { ChatModule } from './chat/chat.module';
 import { NotificationModule } from './notification/notification.module';
@@ -100,6 +101,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
     GeoModule,
     PaymentModule,
     MarketplaceModule,
+    ArtisanModule,
     SpecialtyModule,
     ReviewModule,
     UploadModule,

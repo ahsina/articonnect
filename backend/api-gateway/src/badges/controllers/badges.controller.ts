@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { BadgesService } from '../services/badges.service';
@@ -27,6 +28,16 @@ export class BadgesController {
   @Get()
   async getAllBadges(@Query('includeInactive') includeInactive?: string) {
     return this.badgesService.getAllBadges(includeInactive === 'true');
+  }
+
+  /**
+   * Get current user's badges
+   * GET /badges/my-badges  (déclaré avant :id pour ne pas être capturé par la route paramétrée)
+   */
+  @Get('my-badges')
+  @UseGuards(JwtAuthGuard)
+  async getMyBadges(@Request() req) {
+    return this.badgesService.getUserBadges(req.user.userId);
   }
 
   /**

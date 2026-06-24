@@ -230,7 +230,8 @@ export class CompanyService {
       });
 
       if (!employment) {
-        throw new NotFoundException("Vous n'êtes associé à aucune entreprise");
+        // Pas d'entreprise : on renvoie null (le front gère l'absence) plutôt qu'un 404 bruyant.
+        return null;
       }
 
       return employment.company;

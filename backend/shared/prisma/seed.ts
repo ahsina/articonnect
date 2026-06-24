@@ -665,6 +665,29 @@ Qualité:
     },
   });
 
+  // Démo : créer la config anti-fraude avec la détection multi-comptes désactivée
+  // (sinon les connexions des comptes de démo depuis une même IP sont bloquées en 403).
+  const existingFraudCfg = await prisma.fraudProtectionConfig.findFirst();
+  if (!existingFraudCfg) {
+    await prisma.fraudProtectionConfig.create({
+      data: {
+        multiAccountDetectionEnabled: false,
+        sessionAnomalyDetectionEnabled: false,
+        botDetectionEnabled: false,
+        payoutFraudScreeningEnabled: false,
+      },
+    }).catch(() => undefined);
+  } else {
+    await prisma.fraudProtectionConfig.updateMany({
+      data: {
+        multiAccountDetectionEnabled: false,
+        sessionAnomalyDetectionEnabled: false,
+        botDetectionEnabled: false,
+        payoutFraudScreeningEnabled: false,
+      },
+    }).catch(() => undefined);
+  }
+
   console.log('✅ Seeding completed successfully!');
   console.log('');
   console.log('📧 Test accounts created:');
