@@ -19,8 +19,8 @@ const TEST_PASSWORDS = {
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // Clean existing data (development only)
-  if (process.env.NODE_ENV === 'development') {
+  // Clean existing data (development, ou reset explicite via SEED_RESET=true)
+  if (process.env.NODE_ENV === 'development' || process.env.SEED_RESET === 'true') {
     console.log('🗑️  Cleaning existing data...');
     await prisma.negotiation.deleteMany();
     await prisma.transaction.deleteMany();
@@ -41,6 +41,7 @@ async function main() {
     await prisma.artisanProfile.deleteMany();
     await prisma.user.deleteMany();
     await prisma.specialty.deleteMany();
+    await prisma.category.deleteMany();
   }
 
   // Create Specialties
@@ -383,6 +384,29 @@ async function main() {
     }),
   ]);
 
+  // Create Product Categories
+  console.log('🗂️  Creating product categories...');
+  const slugify = (str: string): string =>
+    str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  const productCategoryNames = [
+    'Plomberie', 'Sanitaire', 'Sécurité', 'Électricité', 'Électrique',
+    'Bois', 'Finition', 'equipment', 'furniture', 'lighting', 'tools',
+  ];
+  const categoryMap: Record<string, string> = {};
+  for (const name of productCategoryNames) {
+    const cat = await prisma.category.upsert({
+      where: { slug: slugify(name) },
+      update: {},
+      create: { name, slug: slugify(name) },
+    });
+    categoryMap[name] = cat.id;
+  }
+
   // Create Sample Products
   console.log('🛒 Creating sample products...');
   const products = await Promise.all([
@@ -404,7 +428,7 @@ Caractéristiques:
 • Garantie 10 ans
 • Économie d'eau 30%
 • Installation facile`,
-        category: 'tools',
+        categoryId: categoryMap['tools'],
         photos: ['https://images.unsplash.com/photo-1585821569331-f071db2abd8d?w=800'],
         price: 349.99,
         vatRate: 17,
@@ -425,7 +449,7 @@ Caractéristiques:
 • Temps de chauffe: 3h30
 • Thermostat réglable 30-75°C
 • Garantie 5 ans`,
-        category: 'equipment',
+        categoryId: categoryMap['equipment'],
         photos: ['https://images.unsplash.com/photo-1607400201889-565b1ee75f8e?w=800'],
         price: 459.00,
         vatRate: 17,
@@ -446,7 +470,7 @@ Performance:
 • Mode boost séchage rapide
 • Dimensions: 60 x 120 cm
 • Garantie 3 ans`,
-        category: 'equipment',
+        categoryId: categoryMap['equipment'],
         photos: ['https://images.unsplash.com/photo-1585128792301-dba8e345a4ff?w=800'],
         price: 299.00,
         vatRate: 17,
@@ -474,7 +498,7 @@ Design:
 • Blanc chaud 3000K
 • Intensité variable avec télécommande
 • Garantie 3 ans`,
-        category: 'lighting',
+        categoryId: categoryMap['lighting'],
         photos: ['https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800'],
         price: 289.00,
         vatRate: 17,
@@ -497,7 +521,7 @@ Contenu:
 • Télécommande universelle
 
 Compatible Alexa et Google Home`,
-        category: 'equipment',
+        categoryId: categoryMap['equipment'],
         photos: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=800'],
         price: 599.00,
         vatRate: 17,
@@ -518,7 +542,7 @@ Caractéristiques:
 • Blanc chaud 2700K
 • IP44 (extérieur couvert)
 • Garantie 2 ans`,
-        category: 'lighting',
+        categoryId: categoryMap['lighting'],
         photos: ['https://images.unsplash.com/photo-1550854180-70f368eae657?w=800'],
         price: 129.00,
         vatRate: 17,
@@ -545,7 +569,7 @@ Caractéristiques:
 • Épaisseur plateau: 4cm
 • Garantie 10 ans
 • Livraison et installation possibles`,
-        category: 'furniture',
+        categoryId: categoryMap['furniture'],
         photos: ['https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=800'],
         price: 850.00,
         vatRate: 17,
@@ -587,7 +611,7 @@ Design personnalisable:
 
 Délai de fabrication: 4-6 semaines
 Livraison et installation incluses`,
-        category: 'furniture',
+        categoryId: categoryMap['furniture'],
         photos: ['https://images.unsplash.com/photo-1594620302200-9a762244a156?w=800'],
         price: 1250.00,
         vatRate: 17,
@@ -613,7 +637,7 @@ Qualité:
 • Finition vernis mat
 • Empilables
 • Garantie 5 ans`,
-        category: 'furniture',
+        categoryId: categoryMap['furniture'],
         photos: ['https://images.unsplash.com/photo-1503602642458-232111445657?w=800'],
         price: 380.00,
         vatRate: 17,
