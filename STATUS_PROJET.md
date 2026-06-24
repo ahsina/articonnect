@@ -31,21 +31,20 @@ missions & devis + **signature électronique**, paiements **Stripe/PayPal/vireme
 - **Build images Docker (Node 20)** : backend ✅ et frontend ✅ compilent (après corrections, §6).
 - **Démarrage backend** : ✅ « Nest application successfully started » — après correction de **3 bugs
   bloquants au boot** (voir §6) qui empêchaient toute exécution de l'API.
-- **Tests unitaires** (Jest, image Node 20) : **1682 / 1683 passent** (83/84 suites). Seul échec :
-  `clamav.service.spec.ts › should not throw when disabled in non-production` (attente de test erronée,
-  pas un bug produit). Taux de réussite **99,9 %**.
+- **Tests unitaires** (Jest, image Node 20) : **1683 / 1683 passent — 84/84 suites (100 %)**.
+  (Le seul échec initial était un artefact d'exécution sous `NODE_ENV=production` ; le test a été
+  rendu déterministe.)
 - **Dette / TODO** : seulement **3 TODO** backend (notifications devis ×2, revue de compte chat),
   0 TODO frontend, icônes PWA présentes. Code globalement propre après le merge.
 
-### Anomalies notables trouvées
-1. **Dérive schéma ↔ migrations** : la branche artisan a ajouté **+360 lignes** à `schema.prisma`
-   **sans migration** correspondante → en déploiement on a synchronisé via `prisma db push`
-   (et non `migrate deploy`). ⚠️ À régulariser : générer une migration pour aligner l'historique.
-2. **`prisma/seed.ts` obsolète** : ne compile plus contre le schéma courant
-   (`Product.category` est devenu une **relation**, le seed le passe encore en `string` — 9 erreurs TS).
-   La base de démo est donc **vide** (l'appli reste navigable). À corriger pour re-seeder.
-3. **Dockerfiles non fonctionnels en l'état** (corrigés, §6) : hook husky, hoisting workspaces,
-   absence de `.dockerignore`, OpenSSL manquant pour Prisma sur Alpine.
+### Anomalies trouvées — toutes corrigées (cf. §6)
+1. ~~Dérive schéma ↔ migrations~~ → **RÉSOLU** : l'historique de migrations était en fait incomplet
+   (aucune migration de base ne créait les tables coeur ; `migrate deploy` échouait de zéro).
+   Squashé en une **baseline unique** validée (`migrate deploy` de zéro = 113 tables, diff vide).
+2. ~~`prisma/seed.ts` obsolète~~ → **RÉSOLU** : aligné sur le schéma (relation Category) et rendu
+   re-jouable (`SEED_RESET=true`). La base de démo est **peuplée** (5 spécialités, 6 users, 9 produits,
+   11 catégories) avec comptes connectables (cf. §4).
+3. ~~Dockerfiles non fonctionnels~~ → **RÉSOLU** : husky, hoisting workspaces, `.dockerignore`, OpenSSL.
 
 ## 4. Déploiement démo — LIVE ✅
 
@@ -67,6 +66,10 @@ Architecture mono-origine derrière nginx : `/api/*`→backend (préfixe retiré
 `/`→frontend. Fichiers : `deploy/docker-compose.deploy.yml`, `deploy/nginx.ip.conf`,
 `deploy/.env.deploy` (secrets, non commité), `deploy/gen-cert.sh`.
 
+**Données & comptes de démo** : base peuplée. Connexion possible :
+`admin@articonnect.com / Admin1234!`, `jean.dupont@example.com / Client1234!`,
+`pierre.plombier@example.com / Artisan1234!` (anti-fraude multi-comptes désactivé pour la démo).
+
 ### Mode démo — ce qui est inactif (placeholders, nécessite de vraies clés)
 Paiements **Stripe/PayPal**, upload **AWS S3**, SMS **Twilio**, push **Firebase**, e-mail **SMTP**
 (utilise un compte de test Ethereal au boot), **Google Maps**, login **OAuth social**
@@ -77,13 +80,11 @@ Paiements **Stripe/PayPal**, upload **AWS S3**, SMS **Twilio**, push **Firebase*
 **P0 — pour une vraie mise en production**
 - Fournir les vraies clés tierces (Stripe live, AWS S3, Twilio, SMTP, Firebase, OAuth, Maps).
 - Domaine + TLS Let's Encrypt (remplacer le cert auto-signé) ; durcir la CSP (`unsafe-inline` à retirer).
-- Régénérer une **migration Prisma** alignée sur le schéma (cf. §3.1) au lieu de `db push`.
-- Réparer `seed.ts` puis charger des données de référence (spécialités, pays, devises).
+- Réactiver les détections anti-fraude (désactivées pour la démo) avec des seuils adaptés.
 
 **P1 — qualité / complétude**
 - Vérifier/auditer les flux paiement de bout en bout une fois Stripe câblé (webhooks, payouts).
-- Résoudre les 3 TODO (notifications devis, modération chat).
-- Stabiliser et faire passer la suite de tests CI (cf. résultats §3).
+- ~~Régulariser les migrations Prisma~~, ~~réparer seed.ts~~, ~~3 TODO backend~~, ~~suite de tests verte~~ → **FAIT**.
 
 **P2 — exploitation**
 - Sauvegardes Postgres planifiées, monitoring/alerting (Sentry DSN), rotation des logs.
