@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Ip,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
@@ -130,7 +131,8 @@ export class AuthController {
     const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
     if (!refreshToken) {
-      throw new Error('Refresh token manquant');
+      // 401 (et non 500) : cas normal d'un visiteur non authentifié
+      throw new UnauthorizedException('Refresh token manquant');
     }
 
     const result = await this.authService.refreshAccessToken(refreshToken);

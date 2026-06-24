@@ -17,7 +17,13 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const requestUrl: string = originalRequest?.url || '';
+    const isAuthEndpoint =
+      requestUrl.includes('/auth/refresh') ||
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/register');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -29,8 +35,14 @@ apiClient.interceptors.response.use(
         // Retry original request - new access token will be sent automatically via cookie
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - redirect to login
-        window.location.href = '/auth/login';
+        // Refresh échoué : rediriger vers le login UNIQUEMENT si on n'y est pas déjà,
+        // sinon boucle infinie (la page login re-vérifie le profil → 401 → refresh → redirect…).
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.startsWith('/auth')
+        ) {
+          window.location.href = '/auth/login';
+        }
         return Promise.reject(refreshError);
       }
     }
