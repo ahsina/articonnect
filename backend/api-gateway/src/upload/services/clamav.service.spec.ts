@@ -90,11 +90,15 @@ describe('ClamavService', () => {
 
   describe('scanAndValidate', () => {
     it('should not throw when disabled in non-production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'test';
       const buffer = Buffer.from('test content');
 
       await expect(
         service.scanAndValidate(buffer, 'test.txt', 'user-123'),
       ).resolves.not.toThrow();
+
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should throw BadRequestException in production when disabled', async () => {
