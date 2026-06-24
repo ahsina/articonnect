@@ -35,9 +35,11 @@ async function bootstrap() {
   // Cookie parser - must be before routes
   app.use(cookieParser());
 
-  // Raw body for Stripe webhooks signature verification
+  // Raw body for Stripe webhooks signature verification.
+  // Le backend n'a PAS de préfixe global : la route reçue est /payments/webhook
+  // (nginx retire le préfixe /api). On enregistre les deux chemins par sécurité.
   app.use(
-    '/api/payments/webhook',
+    ['/payments/webhook', '/api/payments/webhook'],
     express.raw({ type: 'application/json' }),
     (req, res, next) => {
       req.rawBody = req.body;
