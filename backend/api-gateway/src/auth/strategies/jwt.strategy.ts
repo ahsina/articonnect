@@ -48,6 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     return {
       userId: user.id,
+      id: user.id, // alias : de nombreux controllers lisent req.user.id (les deux doivent fonctionner)
       email: user.email,
       role: user.role,
       firstName: user.firstName,

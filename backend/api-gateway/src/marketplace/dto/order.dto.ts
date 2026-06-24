@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsNumber, ValidateNested, Min } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber, ValidateNested, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -13,7 +13,7 @@ export class OrderItemDto {
   quantity: number;
 
   @ApiProperty({ required: false, example: 'uuid-variant-id' })
-  @IsString()
+  @IsOptional()
   @IsString()
   variantId?: string;
 }

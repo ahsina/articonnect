@@ -47,6 +47,13 @@ export class NegotiationService {
       throw new ForbiddenException('Vous n\'êtes pas autorisé à négocier sur cette mission');
     }
 
+    // Pas de contrepartie (ex: aucun artisan encore assigné) : refus propre (400) au lieu d'un crash.
+    if (!receiverId) {
+      throw new BadRequestException(
+        'Aucun artisan n\'est assigné à cette mission : la négociation n\'est pas possible.'
+      );
+    }
+
     // Calculate expiration based on mission type
     const expiresAt = this.calculateNegotiationExpiration(mission.type);
 

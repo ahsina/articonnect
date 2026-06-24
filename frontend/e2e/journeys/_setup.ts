@@ -20,6 +20,19 @@ export async function login(page: Page, persona: Persona): Promise<void> {
   await page.waitForURL((url) => !url.pathname.includes('/auth/login'), { timeout: 20000 });
 }
 
+/**
+ * Crée un contexte de requêtes API authentifié pour un persona (cookies httpOnly stockés).
+ * Utilisé pour les flux d'écriture multi-personas (client/artisan/admin) sans navigateur.
+ */
+export async function apiContext(playwright: any, persona: Persona) {
+  const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'https://149.56.131.178:9443';
+  const ctx = await playwright.request.newContext({ baseURL, ignoreHTTPSErrors: true });
+  const u = DEMO_USERS[persona];
+  const r = await ctx.post('/api/auth/login', { data: { email: u.email, password: u.password } });
+  if (r.status() >= 300) throw new Error(`apiLogin ${persona} -> ${r.status()} ${await r.text()}`);
+  return ctx;
+}
+
 /** Visite une page et vérifie qu'elle rend sans erreur fatale (pas d'écran d'erreur Next/boundary). */
 export async function visitOk(page: Page, path: string): Promise<void> {
   const resp = await page.goto(path, { waitUntil: 'domcontentloaded' });
