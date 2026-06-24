@@ -151,17 +151,38 @@ exécutée contre le déploiement démo via l'image officielle Playwright. Elle 
 Lancer : `PLAYWRIGHT_BASE_URL=https://149.56.131.178:9443 npx playwright test --config=playwright.demo.config.ts`
 (ou via l'image `mcr.microsoft.com/playwright:v1.40.0-jammy`).
 
+### Sous-flux métier profonds (API authentifiée, multi-personas) — 8 tests
+`e2e/journeys/deep-flows.spec.ts` orchestre client/artisan/admin et vérifie chaque écriture par une
+lecture : **profil client** (write→read), **mission**, **règles d'autorisation négociation**,
+**règle métier litige**, **cycle DEVIS complet (création → envoi → acceptation → SIGNATURE
+ÉLECTRONIQUE → statut ACCEPTED)**, **commande marketplace** (write→read), **données admin**.
+
+**Total e2e : 25/25 verts** (17 parcours UI + 8 sous-flux).
+
 ### Bugs réels découverts par l'e2e (et corrigés)
-La campagne a révélé **6 défauts invisibles à la lecture de code**, tous corrigés :
+La campagne a révélé **9 défauts invisibles à la lecture de code et aux tests unitaires**, tous corrigés :
 1. `PrismaService` plantait (`reading 'where'`) sur tout appel sans args (`count()`) → `/admin/users` renvoyait **500**.
 2. Endpoints `GET/PUT /users/client-profile` **manquants** (404) → profil client cassé sur plusieurs pages.
 3. Marketplace : crash au rendu (`images[0]` alors que le backend renvoie `photos`) + `price`/`vatRate`
    sérialisés en **string** (Decimal) → `price.toFixed()` plantait. Normalisés côté client.
 4. `adminApi.getUsers` renvoyait l'objet `{data, meta}` au lieu du tableau → liste users vide/cassée.
 5. Rate-limiter trop strict → rendu **configurable par env** (relâché pour la démo).
+6. **`jwt.strategy` n'exposait que `userId`** alors que **16 controllers** lisent `req.user.id`
+   (**178 usages** : devis, documents, support, portfolio, CRM, chat interne, sous-traitance, analytics…)
+   → tous recevaient un id **undefined** (500). Ajout de l'alias `id` → 16 domaines réparés d'un coup.
+7. `negotiation` : crash 500 (Prisma) si `receiverId` null (mission sans artisan) → refus propre (400).
+8. `order` DTO : `variantId` avait deux `@IsString` sans `@IsOptional` → commande **impossible** sans variante.
+9. (rappel) boucle de refresh d'auth infinie pour visiteurs anonymes (corrigée plus tôt).
 
-> C'est la démonstration concrète de la réserve §6 : « code présent » ≠ « fonctionne ». La couverture
-> *vérifiée* des parcours principaux est désormais **réelle**, pas estimée.
+> Démonstration concrète de la réserve §6 : « code présent » ≠ « fonctionne ». Le bug #6 à lui seul
+> cassait silencieusement ~16 domaines fonctionnels — invisible sans exécution réelle. La couverture
+> *vérifiée* des parcours et sous-flux principaux est désormais **réelle**.
+
+### Reste gated par des dépendances tierces (non couvert e2e)
+- **Paiement Stripe** (escrow/commission/payout), **KYC Stripe Identity**, **SMS/vérif. téléphone Twilio**.
+- Conséquence : le cycle de mission **au-delà de la création** (acceptation artisan → négociation →
+  litige sur mission active) est gated par la vérif. téléphone (Twilio) — testé jusqu'aux **règles
+  d'autorisation** (403/400), pas le happy-path complet.
 
 ## 7. Conclusion
 
