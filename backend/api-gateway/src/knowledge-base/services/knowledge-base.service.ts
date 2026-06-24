@@ -651,7 +651,9 @@ export class KnowledgeBaseService {
   }
 
   // Featured articles
-  async getFeaturedArticles(audience?: TargetAudience, limit = 5) {
+  async getFeaturedArticles(audience?: TargetAudience, limit?: number) {
+    // `limit` peut arriver undefined/NaN/string via la query → coercion robuste.
+    const take = Number(limit) > 0 ? Math.floor(Number(limit)) : 5;
     const where: any = {
       status: ArticleStatus.PUBLISHED,
     };
@@ -666,7 +668,7 @@ export class KnowledgeBaseService {
         { viewCount: 'desc' },
         { helpfulCount: 'desc' },
       ],
-      take: limit,
+      take,
       select: {
         id: true,
         title: true,

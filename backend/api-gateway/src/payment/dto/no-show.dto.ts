@@ -1,5 +1,6 @@
 import {
   IsString,
+  IsOptional,
   IsNumber,
   IsArray,
   IsObject,
@@ -42,6 +43,7 @@ export class ContactAttemptDto {
     description: 'Notes sur la tentative',
     example: 'Pas de réponse',
   })
+  @IsOptional()
   @IsString()
   notes?: string;
 }
@@ -155,6 +157,7 @@ export class ValidateNoShowDto {
     description: 'Notes de l\'admin',
     example: 'Preuves validées, client bien absent',
   })
+  @IsOptional()
   @IsString()
   reviewNotes?: string;
 }
