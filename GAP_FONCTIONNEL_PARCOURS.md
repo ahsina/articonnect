@@ -85,7 +85,7 @@ pour toutes les clés référencées par l'UI. Effort moyen mais volumineux (aud
 | **D** (chat 500, admin dashboard/modération/vérifications) | ✅ **CORRIGÉ** — endpoints 200, pages ne crashent plus |
 | **C** (`client/orders`, `client/invoices`) | ✅ **CORRIGÉ** — rendu sécurisé, plus de crash |
 | **B** (clés i18n brutes) | ✅ **MITIGÉ** — `t()` humanise toute clé absente (plus jamais de clé pointée brute affichée). _Reste à faire : ajouter les vraies traductions fr/en/de pour une finition parfaite._ |
-| **A** (espace artisan déconnecté, ~20 endpoints `/artisan/*`) | 🔴 **À FAIRE — gros chantier** (voir ci-dessous) |
+| **A** (espace artisan déconnecté, ~20 endpoints `/artisan/*`) | ✅ **CORRIGÉ** — nouveau `ArtisanController` qui relie/agrège les modèles existants. Les 9 écrans artisan affichent de vraies données (0 crash, 0 404). |
 
 Après correctifs : **espace CLIENT = 0 défaut** (capture re-vérifiée), **ADMIN = OK**, **ARTISAN** = layout
 correct + textes lisibles mais **données vides** (famille A).
