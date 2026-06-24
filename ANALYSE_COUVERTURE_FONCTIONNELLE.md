@@ -135,6 +135,34 @@ tierces à activer, et (b) des raffinements UX, pas sur la logique métier centr
 
 ---
 
+## 6 bis. Vérification e2e (couverture *vérifiée*, plus seulement estimée)
+
+Une campagne **Playwright** a été ajoutée (`frontend/e2e/journeys/`, config `playwright.demo.config.ts`),
+exécutée contre le déploiement démo via l'image officielle Playwright. Elle pilote un vrai navigateur
+→ exerce **UI → API → DB** pour les 3 personas. **Résultat : 17/17 tests verts.**
+
+| Persona | Couvert (vérifié en exécution) |
+|---|---|
+| **Auth** | login des 3 rôles + redirection par rôle |
+| **Client** | dashboard, navigation des 11 pages, marketplace (produits réels), **création de mission de A à Z** (write vérifié en base : enregistrements `Mission` persistés et ré-affichés dans l'UI) |
+| **Artisan** | dashboard, navigation (missions, devis, revenus, profil, certifs, dispos, settings), espace entreprise |
+| **Admin** | dashboard, back-office (15 pages), **gestion utilisateurs (liste réelle)**, specialties, pages de configuration |
+
+Lancer : `PLAYWRIGHT_BASE_URL=https://149.56.131.178:9443 npx playwright test --config=playwright.demo.config.ts`
+(ou via l'image `mcr.microsoft.com/playwright:v1.40.0-jammy`).
+
+### Bugs réels découverts par l'e2e (et corrigés)
+La campagne a révélé **6 défauts invisibles à la lecture de code**, tous corrigés :
+1. `PrismaService` plantait (`reading 'where'`) sur tout appel sans args (`count()`) → `/admin/users` renvoyait **500**.
+2. Endpoints `GET/PUT /users/client-profile` **manquants** (404) → profil client cassé sur plusieurs pages.
+3. Marketplace : crash au rendu (`images[0]` alors que le backend renvoie `photos`) + `price`/`vatRate`
+   sérialisés en **string** (Decimal) → `price.toFixed()` plantait. Normalisés côté client.
+4. `adminApi.getUsers` renvoyait l'objet `{data, meta}` au lieu du tableau → liste users vide/cassée.
+5. Rate-limiter trop strict → rendu **configurable par env** (relâché pour la démo).
+
+> C'est la démonstration concrète de la réserve §6 : « code présent » ≠ « fonctionne ». La couverture
+> *vérifiée* des parcours principaux est désormais **réelle**, pas estimée.
+
 ## 7. Conclusion
 
 ArtiConnect présente une **couverture fonctionnelle large et majoritairement implémentée** (~75 % complet
