@@ -252,8 +252,24 @@ export class ContentFilterService {
       if (violationCount >= 5) {
         this.logger.error(`User ${userId} exceeded violation threshold (${violationCount})`);
 
-        // TODO: Trigger account review or suspension
-        // await this.suspendUser(userId, 'REPEATED_CONTACT_SHARING');
+        // Suspension automatique du compte + marquage des violations pour revue admin.
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { status: true },
+        });
+        if (user && user.status !== 'SUSPENDED') {
+          await this.prisma.user.update({
+            where: { id: userId },
+            data: { status: 'SUSPENDED' },
+          });
+          await this.prisma.contentViolation.updateMany({
+            where: { userId, reviewed: false },
+            data: { actionTaken: 'ACCOUNT_SUSPENDED' },
+          });
+          this.logger.warn(
+            `User ${userId} auto-suspended after ${violationCount} content violations (REPEATED_CONTACT_SHARING)`,
+          );
+        }
       }
     } catch (error) {
       this.logger.error('Failed to log content violation', error);

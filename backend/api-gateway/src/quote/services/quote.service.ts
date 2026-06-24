@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { NotificationService } from '../../notification/services/notification.service';
 import {
   CreateQuoteDto,
   UpdateQuoteDto,
@@ -14,7 +16,35 @@ import { QuoteTotals } from '../../common/types/json-fields.types';
 
 @Injectable()
 export class QuoteService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(QuoteService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
+
+  /**
+   * Notifie un utilisateur d'un évènement lié à un devis (best-effort : un échec
+   * de notification ne doit pas faire échouer l'opération métier).
+   */
+  private async notifyQuoteEvent(
+    userId: string,
+    title: string,
+    message: string,
+    link: string,
+  ): Promise<void> {
+    try {
+      await this.notificationService.createNotification(
+        userId,
+        NotificationType.SYSTEM,
+        title,
+        message,
+        link,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send quote notification to ${userId}`, error as Error);
+    }
+  }
 
   private async generateQuoteNumber(): Promise<string> {
     const year = new Date().getFullYear();
@@ -297,7 +327,12 @@ export class QuoteService {
       },
     });
 
-    // TODO: Send notification to client
+    await this.notifyQuoteEvent(
+      quote.clientId,
+      'Nouveau devis reçu',
+      `Vous avez reçu le devis ${quote.quoteNumber}. Consultez-le et répondez.`,
+      `/client/quotes/${quote.id}`,
+    );
 
     return updated;
   }
@@ -356,7 +391,14 @@ export class QuoteService {
       },
     });
 
-    // TODO: Send notification to artisan
+    await this.notifyQuoteEvent(
+      quote.artisanId,
+      dto.accepted ? 'Devis accepté' : 'Devis refusé',
+      dto.accepted
+        ? `Votre devis ${quote.quoteNumber} a été accepté par le client.`
+        : `Votre devis ${quote.quoteNumber} a été refusé par le client.`,
+      `/artisan/quotations`,
+    );
 
     return updated;
   }
