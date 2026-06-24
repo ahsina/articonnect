@@ -104,9 +104,12 @@ test.describe.serial('Sous-flux métier (API authentifiée, multi-personas)', ()
   });
 
   test('7. Client passe une commande marketplace (write→read)', async () => {
-    const products = await (await client.get('/api/marketplace/products?limit=1')).json();
-    productId = (products.data ?? products)[0]?.id;
-    expect(productId, 'un produit doit exister').toBeTruthy();
+    const products = await (await client.get('/api/marketplace/products?limit=50')).json();
+    const list = products.data ?? products;
+    // Choisir un produit réellement en stock (les runs précédents peuvent en épuiser certains).
+    const inStock = list.find((p: any) => (p.stock ?? 0) > 0) ?? list[0];
+    productId = inStock?.id;
+    expect(productId, 'un produit en stock doit exister').toBeTruthy();
     const r = await client.post('/api/marketplace/orders', {
       data: { items: [{ productId, quantity: 1 }], shippingAddress: '15 Rue de la Gare, 1234 Luxembourg' },
     });
