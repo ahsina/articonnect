@@ -17,7 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UserService } from '../services/user.service';
 import { GdprService } from '../services/gdpr.service';
-import { UpdateProfileDto, CreateArtisanProfileDto } from '../dto/user.dto';
+import { UpdateProfileDto, CreateArtisanProfileDto, UpdateClientProfileDto } from '../dto/user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -41,6 +41,22 @@ export class UserController {
   @ApiOperation({ summary: 'Update user profile' })
   async updateProfile(@Request() req, @Body() updateDto: UpdateProfileDto) {
     return this.userService.updateProfile(req.user.userId, updateDto);
+  }
+
+  @Get('client-profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current client profile (B2B/B2C)' })
+  async getClientProfile(@Request() req) {
+    return this.userService.getClientProfile(req.user.userId);
+  }
+
+  @Put('client-profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create or update current client profile' })
+  async updateClientProfile(@Request() req, @Body() dto: UpdateClientProfileDto) {
+    return this.userService.updateClientProfile(req.user.userId, dto);
   }
 
   @Post('artisan-profile')

@@ -15,6 +15,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.$use(async (params: Prisma.MiddlewareParams, next) => {
       // Check if this is a soft delete model
       if (params.model && SOFT_DELETE_MODELS.includes(params.model)) {
+        // Certaines opérations (ex: count(), findMany()) sont appelées sans arguments :
+        // params.args est alors undefined. On le garantit pour éviter un crash sur args.where.
+        if (!params.args) {
+          params.args = {};
+        }
         // Convert delete to soft delete (update deletedAt)
         if (params.action === 'delete') {
           params.action = 'update';

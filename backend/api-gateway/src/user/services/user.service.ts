@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { UpdateProfileDto, CreateArtisanProfileDto } from '../dto/user.dto';
+import { UpdateProfileDto, CreateArtisanProfileDto, UpdateClientProfileDto } from '../dto/user.dto';
 import { Prisma } from '@prisma/client';
 import { BusinessVerificationService } from '../../verification/services/business-verification.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
@@ -42,6 +42,30 @@ export class UserService {
 
     const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
     return sanitized;
+  }
+
+  /** Profil client (B2C/B2B). Renvoie null si l'utilisateur n'a pas (encore) de profil client. */
+  async getClientProfile(userId: string) {
+    return this.prisma.clientProfile.findUnique({
+      where: { userId },
+      include: { addresses: true },
+    });
+  }
+
+  /** Crée ou met à jour le profil client (upsert). */
+  async updateClientProfile(userId: string, dto: UpdateClientProfileDto) {
+    const data = {
+      clientType: dto.clientType,
+      companyName: dto.companyName,
+      siret: dto.siret,
+      vatNumber: dto.vatNumber,
+      industry: dto.industry,
+    };
+    return this.prisma.clientProfile.upsert({
+      where: { userId },
+      update: data,
+      create: { userId, ...data },
+    });
   }
 
   async updateProfile(userId: string, updateDto: UpdateProfileDto) {

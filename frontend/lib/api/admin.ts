@@ -1046,7 +1046,8 @@ export const adminApi = {
     search?: string;
   }): Promise<UserWithStats[]> => {
     const response = await apiClient.get('/admin/users', { params: filters });
-    return response.data;
+    // Le backend renvoie { data: [...], meta: {...} } → on retourne le tableau.
+    return response.data?.data ?? response.data;
   },
 
   suspendUser: async (userId: string, reason: string): Promise<void> => {

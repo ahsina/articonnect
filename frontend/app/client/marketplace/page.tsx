@@ -351,7 +351,7 @@ export default function MarketplacePage() {
                   {/* Product Image */}
                   <div className="relative">
                     <img
-                      src={product.images[0]}
+                      src={product.images[0] || '/icon-512x512.png'}
                       alt={product.name}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />

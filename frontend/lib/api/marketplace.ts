@@ -8,7 +8,8 @@ export interface Product {
   description: string;
   price: number;
   category: string;
-  images: string[];
+  images: string[]; // normalisé côté client à partir de `photos` (champ Prisma backend)
+  photos?: string[];
   stock: number;
   status: ProductStatus;
   variants?: ProductVariant[];
@@ -71,6 +72,22 @@ export interface PaginatedResponse<T> {
   };
 }
 
+/**
+ * Normalise un produit renvoyé par le backend pour l'UI :
+ *  - `images` (toujours un tableau) dérivé du champ Prisma `photos`
+ *  - `price` / `vatRate` convertis en nombre (Prisma Decimal est sérialisé en string)
+ */
+function normalizeProductImages<T extends { images?: string[]; photos?: string[]; price?: unknown; vatRate?: unknown }>(p: T): T {
+  if (!p) return p;
+  const images = (p.images && p.images.length ? p.images : p.photos) || [];
+  return {
+    ...p,
+    images,
+    price: p.price !== undefined && p.price !== null ? Number(p.price) : p.price,
+    vatRate: p.vatRate !== undefined && p.vatRate !== null ? Number(p.vatRate) : p.vatRate,
+  };
+}
+
 export const marketplaceApi = {
   // Products
   getProducts: async (filters?: {
@@ -86,12 +103,12 @@ export const marketplaceApi = {
     limit?: number;
   }) => {
     const response = await apiClient.get<PaginatedResponse<Product>>('/marketplace/products', { params: filters });
-    return response.data;
+    return { ...response.data, data: (response.data.data || []).map(normalizeProductImages) };
   },
 
   getProductById: async (id: string) => {
     const response = await apiClient.get(`/marketplace/products/${id}`);
-    return response.data;
+    return normalizeProductImages(response.data);
   },
 
   createProduct: async (data: CreateProductDto) => {

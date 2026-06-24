@@ -70,17 +70,17 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       {
         name: 'short',
         ttl: 1000, // 1 second
-        limit: 10, // 10 requests per second
+        limit: Number(process.env.THROTTLE_SHORT_LIMIT) || 10,
       },
       {
         name: 'medium',
         ttl: 60000, // 1 minute
-        limit: 100, // 100 requests per minute
+        limit: Number(process.env.THROTTLE_MEDIUM_LIMIT) || 100,
       },
       {
         name: 'long',
         ttl: 3600000, // 1 hour
-        limit: 1000, // 1000 requests per hour
+        limit: Number(process.env.THROTTLE_LONG_LIMIT) || 1000,
       },
     ]),
     SentryModule.forRootAsync(),

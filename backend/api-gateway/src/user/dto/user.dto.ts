@@ -18,6 +18,33 @@ export class UpdateProfileDto {
   phone?: string;
 }
 
+export class UpdateClientProfileDto {
+  @ApiProperty({ required: false, enum: ['INDIVIDUAL', 'PROFESSIONAL'] })
+  @IsOptional()
+  @IsString()
+  clientType?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  siret?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  vatNumber?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  industry?: string;
+}
+
 export class CreateArtisanProfileDto {
   @ApiProperty()
   @IsString()
