@@ -681,11 +681,12 @@ export class KnowledgeBaseService {
   }
 
   // Recently updated
-  async getRecentlyUpdated(limit = 10) {
+  async getRecentlyUpdated(limit?: number) {
+    const take = Number(limit) > 0 ? Math.floor(Number(limit)) : 10;
     return this.prisma.knowledgeBaseArticle.findMany({
       where: { status: ArticleStatus.PUBLISHED },
       orderBy: { updatedAt: 'desc' },
-      take: limit,
+      take,
       select: {
         id: true,
         title: true,

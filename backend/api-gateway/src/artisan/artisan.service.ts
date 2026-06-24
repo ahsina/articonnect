@@ -173,8 +173,10 @@ export class ArtisanService {
   }
   async requestTimeOff(userId: string, dto: any) {
     const p = await this.profile(userId);
+    const VALID = ['VACATION', 'SICK_LEAVE', 'PERSONAL', 'PUBLIC_HOLIDAY', 'OTHER'];
+    const type = VALID.includes(dto.type) ? dto.type : 'VACATION';
     return this.prisma.timeOff.create({
-      data: { artisanId: p.id, startDate: new Date(dto.startDate), endDate: new Date(dto.endDate), reason: dto.reason ?? undefined } as any,
+      data: { artisanId: p.id, type, startDate: new Date(dto.startDate), endDate: new Date(dto.endDate), reason: dto.reason ?? undefined } as any,
     });
   }
   async cancelTimeOff(userId: string, id: string) {
