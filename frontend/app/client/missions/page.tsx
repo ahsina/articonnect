@@ -246,6 +246,18 @@ export default function ClientMissionsPage() {
                           {formatDate(mission.scheduledFor)}
                         </div>
                       )}
+                      {mission.agreedPrice && !['COMPLETED', 'CANCELLED', 'AUTO_VALIDATED'].includes(mission.status) && (
+                        <Button
+                          size="sm"
+                          className="mt-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/client/payment/${mission.id}`);
+                          }}
+                        >
+                          💳 Payer
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
