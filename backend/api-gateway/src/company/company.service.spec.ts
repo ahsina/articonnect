@@ -226,13 +226,12 @@ describe('CompanyService', () => {
       expect(result).toEqual(mockCompany);
     });
 
-    it('should throw NotFoundException if user has no company', async () => {
+    it('should return null if user has no company', async () => {
       mockPrismaService.company.findUnique.mockResolvedValue(null);
       mockPrismaService.companyEmployee.findFirst.mockResolvedValue(null);
 
-      await expect(service.getMyCompany('user-123')).rejects.toThrow(
-        NotFoundException,
-      );
+      // Comportement: pas d'entreprise → null (et non 404) pour éviter le bruit côté UI.
+      await expect(service.getMyCompany('user-123')).resolves.toBeNull();
     });
   });
 
