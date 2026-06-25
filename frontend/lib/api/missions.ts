@@ -85,12 +85,12 @@ export const missionsApi = {
     return response.data;
   },
 
-  // Photo Upload — demande une URL d'upload présignée (stockage réel = nécessite S3 configuré)
+  // Photo Upload — upload direct (multipart) vers le backend qui stocke dans S3/MinIO
   uploadPhoto: async (file: File): Promise<{ url: string }> => {
-    const response = await apiClient.post('/upload/presigned-url', {
-      fileType: 'mission_photo',
-      mimeType: file.type || 'image/jpeg',
-    });
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('fileType', 'mission-photo');
+    const response = await apiClient.post('/upload/file', fd);
     return response.data;
   },
 

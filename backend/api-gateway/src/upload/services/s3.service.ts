@@ -17,6 +17,7 @@ export class S3Service {
   private readonly s3Client: S3Client;
   private readonly bucket: string;
   private readonly region: string;
+  private readonly publicUrl: string;
   private readonly logger = new Logger(S3Service.name);
 
   private readonly allowedMimeTypes = {
@@ -32,16 +33,27 @@ export class S3Service {
   constructor(private readonly clamavService: ClamavService) {
     this.bucket = process.env.AWS_S3_BUCKET || 'articonnect-dev';
     this.region = process.env.AWS_REGION || 'eu-west-1';
+    this.publicUrl = process.env.S3_PUBLIC_URL || '';
 
+    // endpoint custom + forcePathStyle => compatible MinIO / S3-compatible
+    const endpoint = process.env.AWS_S3_ENDPOINT;
     this.s3Client = new S3Client({
       region: this.region,
+      ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
       },
     });
 
-    this.logger.log(`S3Service initialized with bucket: ${this.bucket}`);
+    this.logger.log(
+      `S3Service initialized with bucket: ${this.bucket}${endpoint ? ` (endpoint: ${endpoint})` : ''}`,
+    );
+  }
+
+  /** Construit l'URL publique d'un objet (servie via nginx /files/) ou retourne la clé brute. */
+  private toPublicUrl(key: string): string {
+    return this.publicUrl ? `${this.publicUrl}/${key}` : key;
   }
 
   /**
@@ -76,10 +88,8 @@ export class S3Service {
 
       await this.s3Client.send(command);
 
-      // Return S3 key (not public URL - files are private)
-      // Frontend can request pre-signed URLs for viewing/downloading
       this.logger.log(`File uploaded successfully: ${filename}`);
-      return filename;
+      return this.toPublicUrl(filename);
     } catch (error) {
       this.logger.error('Failed to upload file to S3', error);
       throw new BadRequestException('Échec du téléchargement du fichier');
@@ -112,9 +122,8 @@ export class S3Service {
 
       await this.s3Client.send(command);
 
-      // Return S3 key (not public URL - files are private)
       this.logger.log(`Buffer uploaded successfully: ${filename}`);
-      return filename;
+      return this.toPublicUrl(filename);
     } catch (error) {
       this.logger.error('Failed to upload buffer to S3', error);
       throw new BadRequestException('Échec du téléchargement du fichier');
@@ -270,12 +279,16 @@ export class S3Service {
   }
 
   private extractKeyFromUrl(url: string): string {
-    // Extract key from S3 URL
-    // Example: https://bucket.s3.region.amazonaws.com/path/to/file.jpg
-    const urlParts = url.split('.amazonaws.com/');
-    if (urlParts.length < 2) {
-      throw new BadRequestException('URL S3 invalide');
+    // URL publique (nginx /files/) => on retire le préfixe
+    if (this.publicUrl && url.startsWith(this.publicUrl)) {
+      return url.slice(this.publicUrl.length + 1);
     }
-    return urlParts[1];
+    // URL S3 AWS classique
+    const urlParts = url.split('.amazonaws.com/');
+    if (urlParts.length >= 2) {
+      return urlParts[1];
+    }
+    // Sinon, on suppose que c'est déjà une clé
+    return url.replace(/^\/+/, '');
   }
 }

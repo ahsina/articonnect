@@ -260,12 +260,12 @@ export const artisanApi = {
   },
 
   uploadCertificationDocument: async (id: string, file: File): Promise<{ url: string }> => {
-    // Flux upload : URL présignée (stockage réel = S3 requis), puis attache au certif
-    const { data } = await apiClient.post('/upload/presigned-url', {
-      fileType: 'certification',
-      mimeType: file.type || 'application/pdf',
-    });
-    const url = data?.url || data?.fileUrl || '';
+    // Upload direct (multipart) → stockage S3/MinIO → attache l'URL au certif
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('fileType', 'certification');
+    const { data } = await apiClient.post('/upload/file', fd);
+    const url = data?.url || '';
     await apiClient.post(`/certifications/${id}/document`, { document: url });
     return { url };
   },

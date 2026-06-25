@@ -192,12 +192,19 @@ export class ClamavService {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // In production, reject uploads if ClamAV is not available
-    // This prevents malware uploads when antivirus service is down
-    if (isProduction && !this.enabled) {
+    // This prevents malware uploads when antivirus service is down.
+    // ⚠️ Escape DÉMO uniquement : ALLOW_UNSCANNED_UPLOADS=true permet les uploads sans antivirus
+    // (à NE PAS activer en vraie production).
+    const allowUnscanned = process.env.ALLOW_UNSCANNED_UPLOADS === 'true';
+    if (isProduction && !this.enabled && !allowUnscanned) {
       this.logger.error('ClamAV unavailable in production - rejecting upload for security');
       throw new BadRequestException(
         'Le service antivirus est temporairement indisponible. Veuillez réessayer plus tard.',
       );
+    }
+    if (allowUnscanned && !this.enabled) {
+      this.logger.warn('ALLOW_UNSCANNED_UPLOADS actif : upload accepté SANS scan antivirus (démo).');
+      return;
     }
 
     const result = await this.scanBuffer(buffer, filename, userId);

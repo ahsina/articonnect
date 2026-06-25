@@ -69,7 +69,9 @@ export class UploadController {
     );
 
     // Return presigned URL and the final public URL
-    const publicUrl = `https://${process.env.AWS_S3_BUCKET || 'articonnect-dev'}.s3.${process.env.AWS_REGION || 'eu-west-1'}.amazonaws.com/${key}`;
+    const publicUrl = process.env.S3_PUBLIC_URL
+      ? `${process.env.S3_PUBLIC_URL}/${key}`
+      : `https://${process.env.AWS_S3_BUCKET || 'articonnect-dev'}.s3.${process.env.AWS_REGION || 'eu-west-1'}.amazonaws.com/${key}`;
 
     return {
       uploadUrl: url,

@@ -253,12 +253,11 @@ export default function MissionDetailPage() {
     setUploadingPhoto(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
-        // URL présignée (stockage réel = S3 requis)
-        const response = await apiClient.post('/upload/presigned-url', {
-          fileType: 'mission_photo',
-          mimeType: file.type || 'image/jpeg',
-        });
-        return response.data.url || response.data.fileUrl;
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('fileType', 'mission-photo');
+        const response = await apiClient.post('/upload/file', fd);
+        return response.data.url;
       });
       const urls = await Promise.all(uploadPromises);
       setAfterPhotos((prev) => [...prev, ...urls]);

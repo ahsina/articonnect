@@ -278,10 +278,11 @@ describe('S3Service', () => {
       );
     });
 
-    it('should throw error for invalid URL', async () => {
-      await expect(
-        service.deleteFile('invalid-url'),
-      ).rejects.toThrow(BadRequestException);
+    it('should treat a non-S3 string as a raw key (S3-compatible/MinIO)', async () => {
+      // Désormais, une chaîne sans host S3 est traitée comme une clé brute
+      // (support des URLs publiques MinIO et des clés). deleteFile ne rejette plus.
+      mockS3Send.mockResolvedValue({});
+      await expect(service.deleteFile('invalid-url')).resolves.toBeUndefined();
     });
 
     it('should handle delete errors', async () => {

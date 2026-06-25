@@ -223,13 +223,13 @@ export const companyApi = {
     return response.data;
   },
 
-  // Upload company logo — URL présignée (stockage réel = S3 requis) puis attache à l'entreprise
+  // Upload company logo — upload direct (multipart) → S3/MinIO → attache l'URL à l'entreprise
   uploadLogo: async (id: string, file: File): Promise<{ url: string }> => {
-    const { data } = await apiClient.post('/upload/presigned-url', {
-      fileType: 'document',
-      mimeType: file.type || 'image/png',
-    });
-    const url = data?.url || data?.fileUrl || '';
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('fileType', 'document');
+    const { data } = await apiClient.post('/upload/file', fd);
+    const url = data?.url || '';
     await apiClient.post(`/companies/${id}/logo`, { logo: url });
     return { url };
   },
