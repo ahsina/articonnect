@@ -1,6 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import NodeClam from 'clamscan';
+// clamscan exporte le constructeur en CommonJS (module.exports = NodeClam) ;
+// sans esModuleInterop, l'import default casse → on utilise l'import CommonJS.
+import NodeClam = require('clamscan');
 import { PrismaService } from '../../common/prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
