@@ -69,7 +69,7 @@ export default function ArtisanPublicProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const response = await apiClient.get(`/artisans/${artisanId}/public`);
+      const response = await apiClient.get(`/users/artisans/${artisanId}`);
       setProfile(response.data);
     } catch (error) {
       console.error('Error loading artisan profile:', error);

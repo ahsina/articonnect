@@ -111,7 +111,7 @@ export default function ArtisanSettingsPage() {
 
     setVerifying(true);
     try {
-      const response = await fetch('/api/auth/phone/verify', {
+      const response = await fetch('/api/auth/phone/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: phoneNumber, code: verificationCode }),

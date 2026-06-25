@@ -1067,20 +1067,23 @@ export const adminApi = {
   },
 
   suspendUser: async (userId: string, reason: string): Promise<void> => {
-    await apiClient.post(`/admin/users/${userId}/suspend`, { reason });
+    await apiClient.put(`/admin/users/${userId}/suspend`, { reason });
   },
 
   unsuspendUser: async (userId: string): Promise<void> => {
-    await apiClient.post(`/admin/users/${userId}/unsuspend`);
+    await apiClient.put(`/admin/users/${userId}/activate`);
   },
 
   getUserDetails: async (userId: string): Promise<Record<string, unknown>> => {
-    const response = await apiClient.get(`/admin/users/${userId}`);
-    return response.data;
+    // Pas de route détail dédiée : on filtre la liste admin
+    const response = await apiClient.get('/admin/users', { params: { limit: 1000 } });
+    const list = (response.data?.data ?? response.data ?? []) as Array<Record<string, unknown>>;
+    return list.find((u) => u.id === userId) ?? {};
   },
 
   getMissionStats: async (): Promise<Record<string, unknown>> => {
-    const response = await apiClient.get('/admin/missions/stats');
+    // Pas de route /admin/missions/stats : le dashboard contient les stats missions
+    const response = await apiClient.get('/admin/dashboard');
     return response.data;
   },
 
@@ -1390,7 +1393,7 @@ export const adminApi = {
 
   // Reputation Management
   getUserReputation: async (userId: string): Promise<UserReputation> => {
-    const response = await apiClient.get(`/reputation/${userId}`);
+    const response = await apiClient.get(`/reputation/user/${userId}`);
     return response.data;
   },
 
@@ -1414,7 +1417,21 @@ export const adminApi = {
   },
 
   updatePlatformConfig: async (updates: Partial<PlatformConfig>): Promise<PlatformConfig> => {
-    const response = await apiClient.put('/admin/platform-config', updates);
+    // Pas de route globale : on applique chaque section via son endpoint dédié
+    const sections: Record<string, string> = {
+      fees: 'fees', payments: 'payments', rateLimits: 'rate-limits',
+      reputationRules: 'reputation-rules', noShow: 'no-show', tax: 'tax',
+      notifications: 'notifications', integrations: 'integrations',
+      contentModeration: 'content-moderation', compliance: 'compliance',
+      missions: 'missions', users: 'users', performance: 'performance',
+    };
+    const u = updates as Record<string, unknown>;
+    for (const [key, path] of Object.entries(sections)) {
+      if (u[key] !== undefined && u[key] !== null) {
+        await apiClient.put(`/admin/platform-config/${path}`, u[key]);
+      }
+    }
+    const response = await apiClient.get('/admin/platform-config');
     return response.data;
   },
 

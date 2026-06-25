@@ -82,13 +82,22 @@ export default function ArtisanDashboard() {
         console.error('Error loading earnings:', err);
       }
 
+      // Load real rating from dashboard stats
+      let rating = 0;
+      try {
+        const dash = await artisanApi.getDashboardStats();
+        rating = Number(dash?.averageRating ?? 0);
+      } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+      }
+
       // Calculate stats
       setStats({
         total: data.length,
         inProgress: data.filter((m: Mission) => m.status === 'IN_PROGRESS').length,
         completed: data.filter((m: Mission) => m.status === 'COMPLETED').length,
         pending: data.filter((m: Mission) => m.status === 'PENDING').length,
-        rating: 4.8, // Would come from API
+        rating,
       });
     } catch (error) {
       console.error('Error loading dashboard:', error);

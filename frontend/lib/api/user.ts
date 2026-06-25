@@ -101,12 +101,12 @@ export const userApi = {
 
   // Notification Preferences
   getNotificationPreferences: async (): Promise<NotificationPreferences> => {
-    const response = await apiClient.get('/users/notification-preferences');
+    const response = await apiClient.get('/notifications/preferences');
     return response.data;
   },
 
   updateNotificationPreferences: async (data: UpdateNotificationPreferencesDto) => {
-    const response = await apiClient.put('/users/notification-preferences', data);
+    const response = await apiClient.put('/notifications/preferences', data);
     return response.data;
   },
 
@@ -117,12 +117,12 @@ export const userApi = {
   },
 
   markNotificationAsRead: async (id: string) => {
-    const response = await apiClient.put(`/notifications/${id}/read`);
+    const response = await apiClient.patch(`/notifications/${id}/read`);
     return response.data;
   },
 
   markAllNotificationsAsRead: async () => {
-    const response = await apiClient.put('/notifications/read-all');
+    const response = await apiClient.patch('/notifications/mark-all-read');
     return response.data;
   },
 
@@ -152,7 +152,7 @@ export const userApi = {
   },
 
   cancelDispute: async (id: string) => {
-    const response = await apiClient.put(`/disputes/${id}/cancel`);
+    const response = await apiClient.post(`/disputes/${id}/cancel`);
     return response.data;
   },
 };

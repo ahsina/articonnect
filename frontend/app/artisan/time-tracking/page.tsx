@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { artisanApi } from '@/lib/api/artisan';
+import apiClient from '@/lib/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { translateTimeEntryStatus } from '@/lib/utils/enum-translations';
 
@@ -67,53 +68,15 @@ export default function ArtisanTimeTrackingPage() {
   const loadTimeEntries = async () => {
     setLoading(true);
     try {
-      // Mock data for demonstration - replace with real API call
-      // const response = await artisanApi.getTimeEntries(dateRange);
-
-      setEntries([
-        {
-          id: '1',
-          date: new Date().toISOString().split('T')[0],
-          missionId: 'm1',
-          missionTitle: 'Installation chauffe-eau',
-          clientName: 'Jean Dupont',
-          startTime: '08:30',
-          endTime: '12:30',
-          breakMinutes: 30,
-          totalHours: 3.5,
-          notes: 'Installation completed successfully',
-          status: 'COMPLETED',
-        },
-        {
-          id: '2',
-          date: new Date().toISOString().split('T')[0],
-          missionId: 'm2',
-          missionTitle: 'Repair fuite',
-          clientName: 'Marie Martin',
-          startTime: '14:00',
-          endTime: '16:45',
-          breakMinutes: 0,
-          totalHours: 2.75,
-          status: 'COMPLETED',
-        },
-        {
-          id: '3',
-          date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          missionId: 'm3',
-          missionTitle: 'Maintenance chaudiere',
-          clientName: 'Pierre Leroy',
-          startTime: '09:00',
-          endTime: '17:00',
-          breakMinutes: 60,
-          totalHours: 7,
-          status: 'APPROVED',
-        },
+      // Données réelles du pointage (vide si aucune saisie — plus de données fictives)
+      const [todayRes, weeklyRes] = await Promise.all([
+        apiClient.get('/time-tracking/today').catch(() => ({ data: null })),
+        apiClient.get('/time-tracking/weekly').catch(() => ({ data: null })),
       ]);
-
-      setSummary([
-        { date: new Date().toISOString().split('T')[0], totalHours: 6.25, totalBreak: 30, entriesCount: 2, earnings: 312.5 },
-        { date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], totalHours: 7, totalBreak: 60, entriesCount: 1, earnings: 350 },
-      ]);
+      const todayEntries = (todayRes.data?.entries ?? todayRes.data ?? []) as TimeEntry[];
+      setEntries(Array.isArray(todayEntries) ? todayEntries : []);
+      const days = (weeklyRes.data?.days ?? weeklyRes.data?.summary ?? []) as DailySummary[];
+      setSummary(Array.isArray(days) ? days : []);
     } catch (error) {
       console.error('Error loading time entries:', error);
       toast({

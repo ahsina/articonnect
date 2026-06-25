@@ -97,7 +97,7 @@ export default function ClientInvoicesPage() {
   const handleDownloadPDF = async (invoiceId: string) => {
     setDownloading(invoiceId);
     try {
-      const response = await apiClient.get(`/documents/invoice/${invoiceId}/pdf`, {
+      const response = await apiClient.get(`/invoices/${invoiceId}/pdf`, {
         responseType: 'blob',
       });
 
@@ -345,8 +345,13 @@ export default function ClientInvoicesPage() {
                       )}
                     </Button>
 
-                    {invoice.status === 'PENDING' || invoice.status === 'OVERDUE' ? (
-                      <Button size="sm">{t('invoices', 'payNow')}</Button>
+                    {(invoice.status === 'PENDING' || invoice.status === 'OVERDUE') && invoice.missionId ? (
+                      <Button
+                        size="sm"
+                        onClick={() => router.push(`/client/payment/${invoice.missionId}`)}
+                      >
+                        {t('invoices', 'payNow')}
+                      </Button>
                     ) : null}
                   </div>
                 </CardContent>

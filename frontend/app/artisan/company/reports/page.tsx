@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { companyApi, Company, CompanyStats } from '@/lib/api/company';
+import apiClient from '@/lib/api/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CompanyReportsPage() {
@@ -37,6 +38,20 @@ export default function CompanyReportsPage() {
     }
   };
 
+  const handleExport = async () => {
+    if (!company) return;
+    const { data } = await apiClient.get(`/reports/company/${company.id}/financial-summary`, {
+      params: { startDate: dateRange.start, endDate: dateRange.end },
+    });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-${company.id}-${dateRange.start}_${dateRange.end}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -64,7 +79,7 @@ export default function CompanyReportsPage() {
             {t('company', 'reportsDesc') || 'View your company performance metrics'}
           </p>
         </div>
-        <Button variant="outline">📥 {t('company', 'exportReport') || 'Export Report'}</Button>
+        <Button variant="outline" onClick={handleExport}>📥 {t('company', 'exportReport') || 'Export Report'}</Button>
       </div>
 
       {/* Date Range Filter */}
@@ -87,7 +102,7 @@ export default function CompanyReportsPage() {
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
               className="w-40"
             />
-            <Button size="sm">{t('common', 'apply') || 'Apply'}</Button>
+            <Button size="sm" onClick={() => loadData()}>{t('common', 'apply') || 'Apply'}</Button>
           </div>
         </CardContent>
       </Card>

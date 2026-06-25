@@ -177,34 +177,36 @@ export const employeeApi = {
     id: string,
     params?: { page?: number; limit?: number; status?: string },
   ): Promise<PaginatedResponse<EmployeeEarning>> => {
-    const response = await apiClient.get(`/employees/${id}/earnings`, { params });
+    const response = await apiClient.get(`/reports/employee/${id}/earnings-history`, { params });
     return response.data;
   },
 
-  // Get employee shifts
+  // Get employee shifts (planning)
   getShifts: async (
     id: string,
     params?: { startDate?: string; endDate?: string },
   ): Promise<EmployeeShift[]> => {
-    const response = await apiClient.get(`/employees/${id}/shifts`, { params });
+    const response = await apiClient.get(`/employee-features/employee/${id}/schedule`, { params });
     return response.data;
   },
 
-  // Create a shift for an employee
-  createShift: async (data: CreateShiftDto): Promise<EmployeeShift> => {
-    const response = await apiClient.post('/employees/shifts', data);
+  // Create a shift for an employee (companyId requis en query)
+  createShift: async (data: CreateShiftDto & { companyId?: string }): Promise<EmployeeShift> => {
+    const response = await apiClient.post('/employee-features/shifts', data, {
+      params: { companyId: (data as { companyId?: string }).companyId },
+    });
     return response.data;
   },
 
   // Update a shift
   updateShift: async (shiftId: string, data: UpdateShiftDto): Promise<EmployeeShift> => {
-    const response = await apiClient.put(`/employees/shifts/${shiftId}`, data);
+    const response = await apiClient.put(`/employee-features/shifts/${shiftId}`, data);
     return response.data;
   },
 
   // Delete a shift
   deleteShift: async (shiftId: string): Promise<{ message: string }> => {
-    const response = await apiClient.delete(`/employees/shifts/${shiftId}`);
+    const response = await apiClient.delete(`/employee-features/shifts/${shiftId}`);
     return response.data;
   },
 };

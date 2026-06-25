@@ -41,8 +41,12 @@ export const missionsApi = {
     return response.data;
   },
 
-  dispute: async (id: string, reason: string) => {
-    const response = await apiClient.post(`/missions/${id}/dispute`, { reason });
+  dispute: async (id: string, reason: string, description?: string) => {
+    const response = await apiClient.post('/disputes', {
+      missionId: id,
+      reason,
+      description: description || reason,
+    });
     return response.data;
   },
 
@@ -81,26 +85,27 @@ export const missionsApi = {
     return response.data;
   },
 
-  // Photo Upload
+  // Photo Upload — demande une URL d'upload présignée (stockage réel = nécessite S3 configuré)
   uploadPhoto: async (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiClient.post('/uploads/mission-photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    const response = await apiClient.post('/upload/presigned-url', {
+      fileType: 'mission_photo',
+      mimeType: file.type || 'image/jpeg',
     });
     return response.data;
   },
 
   addBeforePhotos: async (missionId: string, photoUrls: string[]) => {
     const response = await apiClient.post(`/missions/${missionId}/photos`, {
-      beforePhotos: photoUrls,
+      photos: photoUrls,
+      type: 'before',
     });
     return response.data;
   },
 
   addAfterPhotos: async (missionId: string, photoUrls: string[]) => {
     const response = await apiClient.post(`/missions/${missionId}/photos`, {
-      afterPhotos: photoUrls,
+      photos: photoUrls,
+      type: 'after',
     });
     return response.data;
   },

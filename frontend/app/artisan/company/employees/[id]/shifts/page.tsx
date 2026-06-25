@@ -92,13 +92,17 @@ export default function EmployeeShiftsPage() {
     }
 
     try {
-      // This would call the API to create a shift
-      // await employeeApi.createShift(employeeId, shiftForm);
+      await employeeApi.createShift({
+        employeeId,
+        companyId: (employee as { companyId?: string })?.companyId,
+        ...shiftForm,
+      } as never);
       toast({
         title: t('common', 'success') || 'Success',
         description: t('company', 'shiftAdded') || 'Shift added successfully',
         variant: 'success',
       });
+      loadData();
       setShowAddModal(false);
       setShiftForm({
         date: '',

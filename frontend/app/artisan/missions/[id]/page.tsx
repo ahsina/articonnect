@@ -128,7 +128,7 @@ export default function MissionDetailPage() {
     try {
       const [missionResponse, timelineResponse, negotiationsResponse, userResponse] = await Promise.all([
         apiClient.get(`/missions/${missionId}`),
-        apiClient.get(`/missions/${missionId}/timeline`).catch(() => ({ data: [] })),
+        apiClient.get(`/missions/${missionId}/tracking`).catch(() => ({ data: [] })),
         apiClient.get(`/missions/${missionId}/negotiations`).catch(() => ({ data: [] })),
         apiClient.get('/users/profile').catch(() => ({ data: null })),
       ]);
@@ -201,7 +201,7 @@ export default function MissionDetailPage() {
   const handleStartMission = async () => {
     setActionLoading(true);
     try {
-      await apiClient.post(`/missions/${missionId}/start`);
+      await apiClient.post(`/missions/${missionId}/start-travel`);
       toast({
         title: t('common', 'success') || 'Success',
         description: t('artisan', 'missionStarted') || 'Mission started',
@@ -253,12 +253,12 @@ export default function MissionDetailPage() {
     setUploadingPhoto(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await apiClient.post('/uploads/mission-photo', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        // URL présignée (stockage réel = S3 requis)
+        const response = await apiClient.post('/upload/presigned-url', {
+          fileType: 'mission_photo',
+          mimeType: file.type || 'image/jpeg',
         });
-        return response.data.url;
+        return response.data.url || response.data.fileUrl;
       });
       const urls = await Promise.all(uploadPromises);
       setAfterPhotos((prev) => [...prev, ...urls]);
@@ -406,11 +406,11 @@ export default function MissionDetailPage() {
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + parseInt(quotationForm.validDays));
 
-      await apiClient.post(`/missions/${missionId}/quotation`, {
-        amount: parseFloat(quotationForm.amount),
-        description: quotationForm.description,
-        validUntil: validUntil.toISOString(),
-        items: quotationForm.items.length > 0 ? quotationForm.items : undefined,
+      // Une quotation sur une mission = une offre de négociation (proposition de prix)
+      await apiClient.post(`/missions/${missionId}/negotiations`, {
+        missionId,
+        proposedPrice: parseFloat(quotationForm.amount),
+        message: quotationForm.description,
       });
 
       toast({

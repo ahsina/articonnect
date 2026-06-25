@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { companyApi, Company, CompanyEmployee } from '@/lib/api/company';
 import { employeeApi } from '@/lib/api/employee';
 import { missionsApi } from '@/lib/api/missions';
+import apiClient from '@/lib/api/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { translateMissionStatus, translateEmployeeRole } from '@/lib/utils/enum-translations';
@@ -70,7 +71,9 @@ export default function MissionAssignmentsPage() {
 
   const handleAssign = async (missionId: string, employeeId: string) => {
     try {
-      // This would need a backend endpoint for mission assignment
+      await apiClient.post(`/missions/assignment/${missionId}/assign-to-employee`, {
+        employeeId,
+      });
       toast({
         title: t('common', 'success') || 'Success',
         description: t('company', 'missionAssigned') || 'Mission assigned successfully',

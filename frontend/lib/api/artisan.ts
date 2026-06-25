@@ -260,12 +260,14 @@ export const artisanApi = {
   },
 
   uploadCertificationDocument: async (id: string, file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiClient.post(`/artisan/certifications/${id}/document`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    // Flux upload : URL présignée (stockage réel = S3 requis), puis attache au certif
+    const { data } = await apiClient.post('/upload/presigned-url', {
+      fileType: 'certification',
+      mimeType: file.type || 'application/pdf',
     });
-    return response.data;
+    const url = data?.url || data?.fileUrl || '';
+    await apiClient.post(`/certifications/${id}/document`, { document: url });
+    return { url };
   },
 
   // Working Hours
@@ -297,7 +299,9 @@ export const artisanApi = {
     id: string,
     data: Partial<CreateAvailabilitySlotDto>,
   ): Promise<AvailabilitySlot> => {
-    const response = await apiClient.put(`/artisan/availability/${id}`, data);
+    // Pas de route PUT dédiée : on remplace le créneau (supprime + recrée)
+    await apiClient.delete(`/artisan/availability/${id}`);
+    const response = await apiClient.post('/artisan/availability', data);
     return response.data;
   },
 
@@ -338,7 +342,7 @@ export const artisanApi = {
     reviewId: string,
     content: string,
   ): Promise<{ id: string; content: string; createdAt: string }> => {
-    const response = await apiClient.post(`/artisan/reviews/${reviewId}/respond`, { content });
+    const response = await apiClient.post(`/review-responses/${reviewId}`, { response: content });
     return response.data;
   },
 
@@ -389,7 +393,12 @@ export const artisanApi = {
       items?: { description: string; quantity: number; unitPrice: number }[];
     },
   ): Promise<any> => {
-    const response = await apiClient.post(`/missions/${missionId}/quotation`, data);
+    // Une "quotation" sur une mission = une offre de négociation (proposition de prix)
+    const response = await apiClient.post(`/missions/${missionId}/negotiations`, {
+      missionId,
+      proposedPrice: data.amount,
+      message: data.description,
+    });
     return response.data;
   },
 

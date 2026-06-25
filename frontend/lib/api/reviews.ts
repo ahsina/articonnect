@@ -41,7 +41,7 @@ export const reviewsApi = {
   },
 
   getMyReviews: async (): Promise<Review[]> => {
-    const response = await apiClient.get('/reviews/my-reviews');
+    const response = await apiClient.get('/artisan/reviews');
     return response.data;
   },
 };
