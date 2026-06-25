@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 import { BusinessVerificationService } from '../../verification/services/business-verification.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { Country } from '../../verification/dto/verification.dto';
+import { S3Service, FileType } from '../../upload/services/s3.service';
 
 @Injectable()
 export class UserService {
@@ -16,6 +17,7 @@ export class UserService {
     private businessVerificationService: BusinessVerificationService,
     private featureToggle: FeatureToggleService,
     private configService: ConfigService,
+    private s3Service: S3Service,
   ) {}
 
   async getProfile(userId: string) {
@@ -288,8 +290,6 @@ export class UserService {
       throw new NotFoundException('Fichier trop volumineux. Maximum 5MB');
     }
 
-    // For now, we'll use a DiceBear avatar URL
-    // In production, you would upload to S3/CloudFlare/etc and store the URL
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -298,9 +298,17 @@ export class UserService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    // Generate avatar URL using configurable avatar API (default: DiceBear)
-    const avatarApiUrl = this.configService.get<string>('AVATAR_API_URL') || 'https://api.dicebear.com/7.x/avataaars/svg';
-    const avatarUrl = `${avatarApiUrl}?seed=${user.firstName}${user.lastName}`;
+    // Upload réel du fichier vers S3/MinIO ; fallback DiceBear si l'upload échoue
+    let avatarUrl: string;
+    try {
+      avatarUrl = await this.s3Service.uploadFile(file, FileType.AVATAR, userId);
+    } catch (err) {
+      this.logger.error('Avatar upload to S3 failed, falling back to DiceBear', err as Error);
+      const avatarApiUrl =
+        this.configService.get<string>('AVATAR_API_URL') ||
+        'https://api.dicebear.com/7.x/avataaars/svg';
+      avatarUrl = `${avatarApiUrl}?seed=${user.firstName}${user.lastName}`;
+    }
 
     // Update user avatar
     const updatedUser = await this.prisma.user.update({

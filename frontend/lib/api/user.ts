@@ -82,9 +82,8 @@ export const userApi = {
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await apiClient.post('/users/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // Pas de Content-Type manuel : le navigateur ajoute le boundary multipart
+    const response = await apiClient.post('/users/avatar', formData);
     return response.data;
   },
 

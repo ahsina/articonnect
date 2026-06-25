@@ -9,9 +9,10 @@ import { AvailabilityService } from './services/availability.service';
 import { PaymentModule } from '../payment/payment.module';
 import { VerificationModule } from '../verification/verification.module';
 import { FraudModule } from '../fraud/fraud.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
-  imports: [PaymentModule, VerificationModule, FraudModule],
+  imports: [PaymentModule, VerificationModule, FraudModule, UploadModule],
   controllers: [UserController, StripeController, AvailabilityController],
   providers: [UserService, StripeConnectService, GdprService, AvailabilityService],
   exports: [UserService, StripeConnectService, GdprService, AvailabilityService],

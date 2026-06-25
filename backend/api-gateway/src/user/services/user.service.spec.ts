@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { BusinessVerificationService } from '../../verification/services/business-verification.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { ConfigService } from '@nestjs/config';
+import { S3Service } from '../../upload/services/s3.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('UserService', () => {
@@ -37,6 +38,10 @@ describe('UserService', () => {
     get: jest.fn(),
   };
 
+  const mockS3Service = {
+    uploadFile: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -45,6 +50,7 @@ describe('UserService', () => {
         { provide: BusinessVerificationService, useValue: mockBusinessVerificationService },
         { provide: FeatureToggleService, useValue: mockFeatureToggleService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: S3Service, useValue: mockS3Service },
       ],
     }).compile();
 
@@ -436,21 +442,20 @@ describe('UserService', () => {
       size: 1024 * 1024, // 1MB
     } as Express.Multer.File;
 
-    it('should update user avatar', async () => {
+    it('should update user avatar via S3 upload', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({
         id: userId,
         firstName: 'John',
         lastName: 'Doe',
       });
-      mockConfigService.get.mockReturnValue('https://api.dicebear.com/7.x/avataaars/svg');
-      mockPrismaService.user.update.mockResolvedValue({
-        id: userId,
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JohnDoe',
-      });
+      const s3Url = 'https://149.56.131.178:9443/files/avatar/user-123/123-abc.jpg';
+      mockS3Service.uploadFile.mockResolvedValue(s3Url);
+      mockPrismaService.user.update.mockResolvedValue({ id: userId, avatar: s3Url });
 
       const result = await service.uploadAvatar(userId, mockFile);
 
-      expect(result.avatar).toContain('dicebear');
+      expect(mockS3Service.uploadFile).toHaveBeenCalled();
+      expect(result.avatar).toBe(s3Url);
     });
 
     it('should throw error if no file provided', async () => {
