@@ -863,4 +863,98 @@ export class MissionService {
       retractionExpiresAt: mission.retractionExpiresAt,
     };
   }
+
+  // ================================================================
+  // Annulation / refus / photos
+  // ================================================================
+
+  async declineMission(missionId: string, userId: string) {
+    const mission = await this.prisma.mission.findUnique({ where: { id: missionId } });
+    if (!mission) throw new NotFoundException('Mission introuvable');
+    if (mission.artisanId !== userId) {
+      throw new ForbiddenException("Vous n'êtes pas assigné à cette mission");
+    }
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: { status: MissionStatus.PENDING, artisanId: null },
+    });
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.PENDING,
+      userId,
+      'ARTISAN',
+      "Mission refusée par l'artisan",
+    );
+    return updated;
+  }
+
+  async cancelMission(missionId: string, userId: string, reason?: string) {
+    const mission = await this.findOne(missionId, userId);
+    if (
+      mission.status === MissionStatus.COMPLETED ||
+      mission.status === MissionStatus.CANCELLED
+    ) {
+      throw new BadRequestException('Cette mission ne peut plus être annulée');
+    }
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: { status: MissionStatus.CANCELLED, cancelledAt: new Date() },
+    });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.CANCELLED,
+      userId,
+      user?.role || 'CLIENT',
+      reason || 'Mission annulée',
+    );
+    return updated;
+  }
+
+  async getCancellationFees(missionId: string, userId: string) {
+    const mission = await this.findOne(missionId, userId);
+    const basePrice = Number(mission.agreedPrice || mission.clientBudget || 0);
+    let feeRate = 0;
+    if (
+      mission.status === MissionStatus.ACCEPTED ||
+      mission.status === MissionStatus.IN_TRANSIT
+    ) {
+      feeRate = 0.1;
+    } else if (mission.status === MissionStatus.IN_PROGRESS) {
+      feeRate = 0.25;
+    }
+    const cancellationFee = Math.round(basePrice * feeRate * 100) / 100;
+    return {
+      missionId,
+      status: mission.status,
+      basePrice,
+      feeRate,
+      cancellationFee,
+      refundable: Math.round((basePrice - cancellationFee) * 100) / 100,
+    };
+  }
+
+  async addPhotos(
+    missionId: string,
+    userId: string,
+    photos: string[],
+    type?: 'before' | 'after' | 'general',
+  ) {
+    const mission = await this.findOne(missionId, userId);
+    const field =
+      type === 'before'
+        ? 'beforePhotos'
+        : type === 'after'
+          ? 'afterPhotos'
+          : 'photos';
+    const existing: string[] = (mission as any)[field] || [];
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: { [field]: [...existing, ...photos] } as any,
+    });
+    return { missionId, [field]: (updated as any)[field] };
+  }
 }

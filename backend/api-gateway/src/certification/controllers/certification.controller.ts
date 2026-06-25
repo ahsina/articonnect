@@ -83,6 +83,18 @@ export class CertificationController {
     return this.certificationService.delete(req.user.userId, id);
   }
 
+  @Post(':id/document')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Attach a document (URL) to a certification' })
+  @ApiResponse({ status: 200, description: 'Document attached' })
+  async addDocument(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { document: string },
+  ) {
+    return this.certificationService.update(req.user.userId, id, { document: body.document } as any);
+  }
+
   @Post(':id/verify')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')

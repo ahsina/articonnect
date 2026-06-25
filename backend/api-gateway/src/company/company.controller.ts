@@ -95,6 +95,18 @@ export class CompanyController {
     return this.companyService.updateCompanySettings(id, req.user.userId, updateSettingsDto);
   }
 
+  @Post(':id/logo')
+  @Roles('ARTISAN')
+  @ApiOperation({ summary: 'Update company logo (URL)' })
+  @ApiParam({ name: 'id', description: 'Company ID' })
+  async updateLogo(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() body: { logo: string },
+  ) {
+    return this.companyService.updateLogo(id, req.user.userId, body.logo);
+  }
+
   @Get(':id/stats')
   @ApiOperation({ summary: 'Get company statistics' })
   @ApiParam({ name: 'id', description: 'Company ID' })

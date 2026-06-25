@@ -291,6 +291,24 @@ export class CompanyService {
     };
   }
 
+  async updateLogo(companyId: string, userId: string, logo: string) {
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      include: { employees: true },
+    });
+    if (!company) {
+      throw new NotFoundException('Entreprise non trouvée');
+    }
+    const employeeRecord = company.employees.find((emp) => emp.userId === userId);
+    if (!employeeRecord) {
+      throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
+    }
+    return this.prisma.company.update({
+      where: { id: companyId },
+      data: { logo },
+    });
+  }
+
   async updateCompany(companyId: string, userId: string, updateCompanyDto: UpdateCompanyDto) {
     const company = await this.prisma.company.findUnique({
       where: { id: companyId },

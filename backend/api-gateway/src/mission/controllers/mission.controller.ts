@@ -151,6 +151,47 @@ export class MissionController {
     return this.negotiationService.accept(req.user.userId, negotiationId, dto);
   }
 
+  @Post(':id/decline')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Refuser une mission (artisan)' })
+  async declineMission(@Request() req, @Param('id') id: string) {
+    return this.missionService.declineMission(id, req.user.userId);
+  }
+
+  @Post(':id/cancel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Annuler une mission' })
+  async cancelMission(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.missionService.cancelMission(id, req.user.userId, body?.reason);
+  }
+
+  @Get(':id/cancellation-fees')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Estimer les frais d\'annulation' })
+  async getCancellationFees(@Request() req, @Param('id') id: string) {
+    return this.missionService.getCancellationFees(id, req.user.userId);
+  }
+
+  @Post(':id/photos')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ajouter des photos à une mission (URLs)' })
+  async addPhotos(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { photos: string[]; type?: 'before' | 'after' | 'general' },
+  ) {
+    return this.missionService.addPhotos(id, req.user.userId, body.photos || [], body.type);
+  }
+
   // ================================================================
   // HYBRID PAYMENT SYSTEM - MISSION WORKFLOW ENDPOINTS
   // ================================================================

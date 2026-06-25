@@ -8,6 +8,7 @@ import { OrderService } from './services/order.service';
 import { FavoriteService } from './services/favorite.service';
 import { RequestService } from './services/request.service';
 import { ReturnService } from './services/return.service';
+import { CategoryService } from './services/category.service';
 import { PrismaModule } from '../common/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 
@@ -25,6 +26,7 @@ import { AuthModule } from '../auth/auth.module';
     FavoriteService,
     RequestService,
     ReturnService,
+    CategoryService,
   ],
   exports: [
     ProductService,

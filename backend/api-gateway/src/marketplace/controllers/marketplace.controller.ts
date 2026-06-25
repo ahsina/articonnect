@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagg
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ProductService } from '../services/product.service';
 import { OrderService } from '../services/order.service';
+import { CategoryService } from '../services/category.service';
 import { CreateProductDto, UpdateProductDto } from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { CreateOrderDto, UpdateOrderStatusDto } from '../dto/order.dto';
@@ -13,7 +14,16 @@ export class MarketplaceController {
   constructor(
     private readonly productService: ProductService,
     private readonly orderService: OrderService,
+    private readonly categoryService: CategoryService,
   ) {}
+
+  @Get('categories')
+  @ApiOperation({ summary: 'List product categories' })
+  async getCategories(@Query('tree') tree?: string) {
+    return tree === 'true'
+      ? this.categoryService.getTree()
+      : this.categoryService.findAll();
+  }
 
   @Get('products')
   @ApiOperation({ summary: 'Get all products with advanced filters and pagination' })
@@ -69,6 +79,15 @@ export class MarketplaceController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   async updateProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
     return this.productService.update(id, data);
+  }
+
+  @Delete('products/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a product' })
+  @ApiResponse({ status: 200, description: 'Product deleted' })
+  async deleteProduct(@Param('id') id: string) {
+    return this.productService.delete(id);
   }
 
   // ==================== PRODUCT VARIANTS ====================
@@ -143,6 +162,14 @@ export class MarketplaceController {
   @ApiResponse({ status: 200, description: 'List of orders' })
   async getOrders(@Request() req) {
     return this.orderService.findAll(req.user.userId);
+  }
+
+  @Get('orders/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get order details' })
+  async getOrder(@Request() req, @Param('id') id: string) {
+    return this.orderService.findOne(id, req.user.userId);
   }
 
   @Patch('orders/:id/status')
