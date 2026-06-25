@@ -36,13 +36,23 @@ test.describe('Couverture écritures vague 4', () => {
     await admin?.dispose(); await artisan?.dispose(); await client?.dispose();
   });
 
-  test('marketplace products + variants', async () => {
+  test('marketplace products + variants + order + return', async () => {
     const sfx = Date.now();
-    const p = await W(artisan, 'post', '/api/marketplace/products', { name: `Produit ${sfx}`, description: 'Produit de test couverture', price: 49.9, category: 'Plomberie', stock: 100 });
+    const existing = await jget(client, '/api/marketplace/products');
+    const elist = (Array.isArray(existing) ? existing : existing?.data ?? []);
+    const categoryId = elist[0]?.categoryId ?? elist[0]?.category?.id;
+    const p = await W(artisan, 'post', '/api/marketplace/products', { name: `Produit ${sfx}`, description: 'Produit de test couverture', price: 49.9, category: categoryId, stock: 100, status: 'ACTIVE' });
     const pid = gid(p.json);
     if (pid) {
       await W(artisan, 'patch', `/api/marketplace/products/${pid}`, { price: 59.9 });
       await W(artisan, 'post', `/api/marketplace/products/${pid}/variants`, { name: 'Grand modèle', priceAdjustment: 10, stock: 20 });
+      // commande sur ce produit en stock → retour (return.service)
+      const order = await W(client, 'post', '/api/marketplace/orders', { items: [{ productId: pid, quantity: 1 }], shippingAddress: '1 rue, Luxembourg' });
+      const orderId = gid(order.json);
+      const oitems = order.json?.items ?? order.json?.orderItems ?? [];
+      if (orderId && oitems[0]) {
+        await W(client, 'post', '/api/marketplace/returns', { orderId, items: [{ orderItemId: oitems[0].id, productId: pid, quantity: 1, reason: 'DEFECTIVE' }], description: 'Défectueux' });
+      }
     }
   });
 
