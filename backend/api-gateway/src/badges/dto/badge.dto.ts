@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsBoolean, Allow } from 'class-validator';
 import { BadgeType, BadgeTier } from '@prisma/client';
 
 export class CreateBadgeDto {
@@ -21,6 +21,7 @@ export class CreateBadgeDto {
   @IsEnum(BadgeTier)
   tier: BadgeTier;
 
+  @Allow()
   criteria: any; // JSON object
 
   @IsBoolean()
