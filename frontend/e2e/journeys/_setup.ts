@@ -4,7 +4,7 @@ import { Page, expect } from '@playwright/test';
 export const DEMO_USERS = {
   client: { email: 'jean.dupont@example.com', password: 'Client1234!', role: 'CLIENT', dashboard: '/client/dashboard' },
   artisan: { email: 'pierre.plombier@example.com', password: 'Artisan1234!', role: 'ARTISAN', dashboard: '/artisan/dashboard' },
-  admin: { email: 'admin@articonnect.com', password: 'Admin1234!', role: 'ADMIN', dashboard: '/admin/dashboard' },
+  admin: { email: 'admin@articonnect.com', password: process.env.E2E_ADMIN_PASSWORD || 'Admin1234!', role: 'ADMIN', dashboard: '/admin/dashboard' },
 } as const;
 
 export type Persona = keyof typeof DEMO_USERS;
