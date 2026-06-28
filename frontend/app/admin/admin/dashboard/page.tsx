@@ -400,7 +400,7 @@ export default function AdminDashboardPage() {
         <div className="mt-8">
           <button
             onClick={() => router.push('/admin/settings')}
-            className="w-full p-6 bg-gradient-to-r from-primary to-orange-600 rounded-xl hover:from-primary hover:to-orange-600 transition-all shadow-lg hover:shadow-xl text-left"
+            className="w-full p-6 bg-gradient-to-r from-primary to-yellow-600 rounded-xl hover:from-primary hover:to-yellow-600 transition-all shadow-lg hover:shadow-xl text-left"
           >
             <div className="flex items-center gap-4">
               <span className="text-4xl">⚙️</span>

@@ -172,7 +172,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       isActive(linkItem.href)
                         ? 'bg-primary text-white'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-primary to-orange-600 text-white hover:from-primary hover:to-orange-600'
+                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-white hover:from-primary hover:to-yellow-600'
                           : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
                     }`}
                   >

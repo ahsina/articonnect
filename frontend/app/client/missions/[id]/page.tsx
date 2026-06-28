@@ -485,7 +485,7 @@ export default function MissionDetailsPage() {
                   {mission.beforePhotos && mission.beforePhotos.length > 0 && (
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-orange-400"></span>
+                        <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
                         {t('missions', 'beforePhotos') || 'Avant travaux'}
                       </h4>
                       <div className="grid grid-cols-3 gap-3">
@@ -677,7 +677,7 @@ export default function MissionDetailsPage() {
 
             {/* Negotiation Section */}
             {(mission.status === 'PENDING' || mission.status === 'NEGOTIATING' || negotiations.length > 0) && (
-              <Card className="border-orange-500/20">
+              <Card className="border-yellow-500/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -728,7 +728,7 @@ export default function MissionDetailsPage() {
                               className={`p-3 rounded-lg border ${
                                 isFromMe
                                   ? 'bg-primary/10 border-primary/20 ml-4'
-                                  : 'bg-orange-500/10 border-orange-500/20 mr-4'
+                                  : 'bg-yellow-500/10 border-yellow-500/20 mr-4'
                               } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
                                 neg.accepted === false ? 'opacity-60' : ''
                               }`}
@@ -881,7 +881,7 @@ export default function MissionDetailsPage() {
                   )}
 
                   {negotiations.length >= 5 && (
-                    <p className="text-sm text-orange-600 text-center">
+                    <p className="text-sm text-yellow-600 text-center">
                       {t('negotiations', 'limitReached') ||
                         'Limite de 5 négociations atteinte. Veuillez accepter une offre ou créer une nouvelle mission.'}
                     </p>

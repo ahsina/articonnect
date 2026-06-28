@@ -198,7 +198,7 @@ export default function MissionsManagementPage() {
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Pending Disputes</span>
                   <span
-                    className={`font-semibold ${metrics.disputes.pending > 0 ? 'text-orange-600' : 'text-foreground'}`}
+                    className={`font-semibold ${metrics.disputes.pending > 0 ? 'text-yellow-600' : 'text-foreground'}`}
                   >
                     {metrics.disputes.pending}
                   </span>
@@ -321,7 +321,7 @@ export default function MissionsManagementPage() {
             <div className="flex flex-wrap gap-4">
               <button
                 onClick={() => router.push('/admin/moderation')}
-                className="flex items-center gap-2 px-4 py-3 bg-orange-500/15 text-orange-400 rounded-lg hover:bg-orange-200"
+                className="flex items-center gap-2 px-4 py-3 bg-yellow-500/15 text-yellow-400 rounded-lg hover:bg-yellow-200"
               >
                 <span>⚠️</span>
                 <span>View Disputes</span>

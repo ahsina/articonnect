@@ -137,7 +137,7 @@ export default function HomePage() {
 
       {/* CTA FINAL */}
       <section className="container mx-auto px-4 py-24">
-        <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/15 to-orange-600/5 p-10 text-center sm:p-16">
+        <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/15 to-yellow-600/5 p-10 text-center sm:p-16">
           <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-[100px]" />
           <h2 className="font-display relative text-3xl font-bold sm:text-5xl">
             Prêt à lancer votre projet ?

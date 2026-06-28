@@ -90,7 +90,7 @@ export default function ReputationPage() {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-primary';
     if (score >= 40) return 'text-yellow-600';
-    if (score >= 20) return 'text-orange-600';
+    if (score >= 20) return 'text-yellow-600';
     return 'text-red-600';
   };
 
@@ -98,7 +98,7 @@ export default function ReputationPage() {
     const colors: Record<string, string> = {
       GOLD: 'bg-yellow-500/15 text-yellow-400',
       SILVER: 'bg-muted text-foreground',
-      BRONZE: 'bg-orange-500/15 text-orange-400',
+      BRONZE: 'bg-yellow-500/15 text-yellow-400',
       NEW: 'bg-primary/10 text-primary',
       TRUSTED: 'bg-green-500/15 text-green-400',
       WARNING: 'bg-red-500/15 text-red-400',
@@ -236,9 +236,9 @@ export default function ReputationPage() {
                         {reputation.cancelledMissions}
                       </p>
                     </div>
-                    <div className="p-4 bg-orange-500/10 rounded-lg">
+                    <div className="p-4 bg-yellow-500/10 rounded-lg">
                       <p className="text-sm text-muted-foreground">No-Shows</p>
-                      <p className="text-xl font-bold text-orange-600">{reputation.noShowCount}</p>
+                      <p className="text-xl font-bold text-yellow-600">{reputation.noShowCount}</p>
                     </div>
                     <div className="p-4 bg-yellow-500/10 rounded-lg">
                       <p className="text-sm text-muted-foreground">Avg Rating</p>

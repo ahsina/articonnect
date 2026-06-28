@@ -175,17 +175,17 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-muted-foreground">Score &gt;= {settings.silverThreshold}</p>
             </div>
-            <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
-              <label className="block text-sm font-medium text-orange-400 mb-1">Bronze</label>
+            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+              <label className="block text-sm font-medium text-yellow-400 mb-1">Bronze</label>
               <input
                 type="number"
                 value={settings.bronzeThreshold}
                 onChange={(e) => updateSetting('bronzeThreshold', parseInt(e.target.value))}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-orange-500/30 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg focus:ring-2 focus:ring-yellow-500"
               />
-              <p className="mt-1 text-xs text-orange-600">Score &gt;= {settings.bronzeThreshold}</p>
+              <p className="mt-1 text-xs text-yellow-600">Score &gt;= {settings.bronzeThreshold}</p>
             </div>
             <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
               <label className="block text-sm font-medium text-green-400 mb-1">Trusted</label>

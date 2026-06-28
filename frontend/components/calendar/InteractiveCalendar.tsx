@@ -67,7 +67,7 @@ const EVENT_COLORS = {
   unavailable: 'bg-red-500',
   booked: 'bg-primary',
   mission: 'bg-purple-500',
-  'time-off': 'bg-orange-500',
+  'time-off': 'bg-yellow-500',
 };
 
 export default function InteractiveCalendar({
@@ -203,7 +203,7 @@ export default function InteractiveCalendar({
               ${isToday(day) ? 'border-primary bg-primary/10' : 'border-border'}
               ${isSelected ? 'ring-2 ring-primary' : ''}
               ${isPastDay ? 'bg-muted cursor-not-allowed opacity-60' : 'hover:bg-accent'}
-              ${isHolidayDay ? 'bg-orange-500/10 border-orange-500/20' : ''}
+              ${isHolidayDay ? 'bg-yellow-500/10 border-yellow-500/20' : ''}
             `}
           >
             <div className="flex items-center justify-between mb-1">
@@ -211,7 +211,7 @@ export default function InteractiveCalendar({
                 {format(day, 'd')}
               </span>
               {isHolidayDay && (
-                <Badge variant="outline" className="text-xs bg-orange-500/15 text-orange-400 border-orange-500/20">
+                <Badge variant="outline" className="text-xs bg-yellow-500/15 text-yellow-400 border-yellow-500/20">
                   {t('calendar', 'holiday') || 'Holiday'}
                 </Badge>
               )}

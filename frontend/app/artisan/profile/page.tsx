@@ -522,7 +522,7 @@ function ArtisanProfileContent() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">
+              <div className="text-3xl font-bold text-yellow-600">
                 {profile.certifications?.length || 0}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -732,7 +732,7 @@ function ArtisanProfileContent() {
                   {badges.map((badge) => (
                     <div
                       key={badge.id}
-                      className="p-4 bg-gradient-to-br from-yellow-500/10 to-orange-50 border border-yellow-500/20 rounded-lg text-center hover:shadow-md transition-shadow"
+                      className="p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-50 border border-yellow-500/20 rounded-lg text-center hover:shadow-md transition-shadow"
                     >
                       <div className="text-4xl mb-2">{badge.icon}</div>
                       <div className="font-semibold text-foreground">{badge.name}</div>
@@ -787,7 +787,7 @@ function ArtisanProfileContent() {
                     <div className="font-medium text-foreground">Verified Expert</div>
                     <div className="text-sm text-muted-foreground">Upload 5 certifications</div>
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-orange-600 rounded-full" style={{ width: `${Math.min((profile?.certifications?.length || 0) / 5 * 100, 100)}%` }} />
+                      <div className="h-full bg-yellow-600 rounded-full" style={{ width: `${Math.min((profile?.certifications?.length || 0) / 5 * 100, 100)}%` }} />
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">{profile?.certifications?.length || 0} / 5</div>
                   </div>

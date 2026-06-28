@@ -148,7 +148,7 @@ export default function SettingsOverviewPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-orange-600">v1.0</p>
+              <p className="text-3xl font-bold text-yellow-600">v1.0</p>
               <p className="text-sm text-muted-foreground">Config Version</p>
             </div>
           </CardContent>

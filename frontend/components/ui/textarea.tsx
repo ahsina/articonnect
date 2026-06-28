@@ -69,7 +69,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             <p
               className={cn(
                 'text-sm',
-                charCount > maxLength * 0.9 ? 'text-orange-500' : 'text-muted-foreground',
+                charCount > maxLength * 0.9 ? 'text-yellow-500' : 'text-muted-foreground',
               )}
             >
               {charCount}/{maxLength}

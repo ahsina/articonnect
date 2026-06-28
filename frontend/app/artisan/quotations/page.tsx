@@ -358,7 +358,7 @@ export default function QuotationsPage() {
                           {translateQuotationStatus(quotation.status, t)}
                         </Badge>
                         {quotation.status === 'PENDING' && isExpiringSoon(quotation.validUntil) && (
-                          <Badge className="bg-orange-500/15 text-orange-400">
+                          <Badge className="bg-yellow-500/15 text-yellow-400">
                             ⏰ {t('artisan', 'expiringSoon') || 'Expiring Soon'}
                           </Badge>
                         )}

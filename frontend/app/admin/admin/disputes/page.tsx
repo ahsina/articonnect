@@ -83,7 +83,7 @@ export default function DisputesPage() {
       case DisputePriority.CRITICAL:
         return 'bg-red-500/15 text-red-400 border-red-500/30';
       case DisputePriority.HIGH:
-        return 'bg-orange-500/15 text-orange-400 border-orange-500/30';
+        return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
       case DisputePriority.MEDIUM:
         return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
       case DisputePriority.LOW:
@@ -191,9 +191,9 @@ export default function DisputesPage() {
               <p className="text-sm text-muted-foreground">Critical</p>
             </CardContent>
           </Card>
-          <Card className="border-orange-500/20">
+          <Card className="border-yellow-500/20">
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-orange-600">{stats.high}</p>
+              <p className="text-2xl font-bold text-yellow-600">{stats.high}</p>
               <p className="text-sm text-muted-foreground">High Priority</p>
             </CardContent>
           </Card>

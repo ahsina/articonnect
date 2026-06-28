@@ -31,7 +31,7 @@ const getStrength = (password: string): { score: number; label: string; color: s
   if (percentage <= 20) {
     return { score: 1, label: 'Très faible', color: 'bg-red-500' };
   } else if (percentage <= 40) {
-    return { score: 2, label: 'Faible', color: 'bg-orange-500' };
+    return { score: 2, label: 'Faible', color: 'bg-yellow-500' };
   } else if (percentage <= 60) {
     return { score: 3, label: 'Moyen', color: 'bg-yellow-500' };
   } else if (percentage <= 80) {

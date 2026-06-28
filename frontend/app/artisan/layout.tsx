@@ -272,7 +272,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                       isActive(linkItem.href)
                         ? 'bg-primary text-white'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-primary to-orange-600 text-white hover:from-primary hover:to-orange-600'
+                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-white hover:from-primary hover:to-yellow-600'
                           : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                     }`}
                   >

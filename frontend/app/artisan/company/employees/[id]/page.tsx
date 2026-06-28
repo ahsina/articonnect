@@ -125,7 +125,7 @@ export default function EmployeeDetailPage() {
       MANAGER: 'bg-primary/10 text-primary',
       SUPERVISOR: 'bg-green-500/15 text-green-400',
       TECHNICIAN: 'bg-muted text-foreground',
-      CONTRACTOR: 'bg-orange-500/15 text-orange-400',
+      CONTRACTOR: 'bg-yellow-500/15 text-yellow-400',
     };
     return colors[role] || 'bg-muted text-foreground';
   };

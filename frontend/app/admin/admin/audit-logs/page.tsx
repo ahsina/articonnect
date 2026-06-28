@@ -88,7 +88,7 @@ export default function AuditLogsPage() {
       return 'bg-purple-500/15 text-purple-400';
     }
     if (actionLower.includes('suspend') || actionLower.includes('block')) {
-      return 'bg-orange-500/15 text-orange-400';
+      return 'bg-yellow-500/15 text-yellow-400';
     }
     return 'bg-muted text-foreground';
   };

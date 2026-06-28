@@ -81,7 +81,7 @@ module.exports = {
   			DEFAULT: '0 4px 12px -2px rgb(0 0 0 / 0.5)',
   			md: '0 8px 24px -4px rgb(0 0 0 / 0.55)',
   			lg: '0 16px 40px -8px rgb(0 0 0 / 0.6)',
-  			glow: '0 0 0 1px hsl(18 100% 58% / 0.4), 0 8px 30px -6px hsl(18 100% 58% / 0.35)',
+  			glow: '0 0 0 1px hsl(50 100% 50% / 0.4), 0 8px 30px -6px hsl(50 100% 50% / 0.35)',
   		},
   		keyframes: {
   			'accordion-down': {

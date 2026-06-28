@@ -251,10 +251,10 @@ export default function ArtisanTimeTrackingPage() {
             <div className="text-2xl font-bold text-purple-400">{totalWeekEarnings.toFixed(2)}EUR</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-50 to-yellow-500/5 border-orange-500/20">
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-500/5 border-yellow-500/20">
           <CardContent className="p-4">
-            <div className="text-sm text-orange-600">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
-            <div className="text-2xl font-bold text-orange-400">
+            <div className="text-sm text-yellow-600">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
+            <div className="text-2xl font-bold text-yellow-400">
               {totalWeekHours > 0 ? (totalWeekEarnings / totalWeekHours).toFixed(2) : 0}EUR/h
             </div>
           </CardContent>

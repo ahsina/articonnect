@@ -446,7 +446,7 @@ export default function AnalyticsPage() {
                               : index === 1
                               ? 'bg-muted text-foreground'
                               : index === 2
-                              ? 'bg-orange-500/15 text-orange-400'
+                              ? 'bg-yellow-500/15 text-yellow-400'
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >

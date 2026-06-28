@@ -443,7 +443,7 @@ export default function MissionDetailPage() {
       OPEN: 'bg-primary/10 text-primary',
       ASSIGNED: 'bg-purple-500/15 text-purple-400',
       ACCEPTED: 'bg-primary/15 text-primary',
-      IN_PROGRESS: 'bg-orange-500/15 text-orange-400',
+      IN_PROGRESS: 'bg-yellow-500/15 text-yellow-400',
       COMPLETED: 'bg-green-500/15 text-green-400',
       CANCELLED: 'bg-red-500/15 text-red-400',
       DISPUTED: 'bg-red-500/15 text-red-400',
@@ -455,7 +455,7 @@ export default function MissionDetailPage() {
     const colors: Record<string, string> = {
       LOW: 'bg-muted text-foreground',
       NORMAL: 'bg-primary/10 text-primary',
-      HIGH: 'bg-orange-500/15 text-orange-400',
+      HIGH: 'bg-yellow-500/15 text-yellow-400',
       URGENT: 'bg-red-500/15 text-red-400',
     };
     return colors[priority] || 'bg-muted text-foreground';
@@ -713,7 +713,7 @@ export default function MissionDetailPage() {
 
           {/* Negotiation Section */}
           {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
-            <Card className="md:col-span-2 border-orange-500/20">
+            <Card className="md:col-span-2 border-yellow-500/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -959,7 +959,7 @@ export default function MissionDetailPage() {
                 )}
 
                 {negotiations.length >= 5 && (
-                  <p className="text-sm text-orange-600 text-center">
+                  <p className="text-sm text-yellow-600 text-center">
                     {t('negotiations', 'limitReached') ||
                       'Limite de 5 négociations atteinte.'}
                   </p>
@@ -973,7 +973,7 @@ export default function MissionDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-orange-400"></span>
+                  <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
                   {t('missions', 'beforePhotos') || 'Photos avant travaux'}
                 </CardTitle>
               </CardHeader>

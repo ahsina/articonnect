@@ -178,7 +178,7 @@ export default function VerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Re-verification Needed</p>
-                  <p className="text-3xl font-bold text-orange-600">
+                  <p className="text-3xl font-bold text-yellow-600">
                     {reverificationNeeded.length}
                   </p>
                 </div>
@@ -377,7 +377,7 @@ export default function VerificationsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-500/15 text-orange-400">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-500/15 text-yellow-400">
                               NEEDS REVERIFICATION
                             </span>
                           </td>

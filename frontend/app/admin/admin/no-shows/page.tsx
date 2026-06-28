@@ -273,7 +273,7 @@ export default function NoShowsPage() {
                             </span>
                             {noShow.evidence.photos && noShow.evidence.photos.length > 0 && (
                               <span
-                                className="px-2 py-1 text-xs bg-orange-500/15 text-orange-400 rounded"
+                                className="px-2 py-1 text-xs bg-yellow-500/15 text-yellow-400 rounded"
                                 title="Photos"
                               >
                                 {noShow.evidence.photos.length} pics
@@ -390,8 +390,8 @@ export default function NoShowsPage() {
                         </p>
                         <p className="text-sm text-muted-foreground">{selectedNoShow.artisan?.email}</p>
                       </div>
-                      <div className="p-4 bg-orange-500/10 rounded-lg">
-                        <p className="text-sm text-orange-600 font-medium">Client (No-Show)</p>
+                      <div className="p-4 bg-yellow-500/10 rounded-lg">
+                        <p className="text-sm text-yellow-600 font-medium">Client (No-Show)</p>
                         <p className="font-medium text-foreground">
                           {selectedNoShow.client?.firstName} {selectedNoShow.client?.lastName}
                         </p>

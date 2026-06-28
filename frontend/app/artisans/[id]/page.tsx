@@ -133,7 +133,7 @@ export default function ArtisanPublicProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-orange-600 text-white">
+      <div className="bg-gradient-to-r from-primary to-yellow-600 text-white">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Button
             variant="ghost"
@@ -225,7 +225,7 @@ export default function ArtisanPublicProfilePage() {
           </Card>
           <Card className="shadow-lg">
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-orange-600">
+              <div className="text-3xl font-bold text-yellow-600">
                 {profile.emergencyRate ? `EUR ${profile.emergencyRate}` : 'N/A'}
               </div>
               <div className="text-muted-foreground">

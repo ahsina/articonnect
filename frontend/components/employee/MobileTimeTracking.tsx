@@ -391,7 +391,7 @@ export function MobileTimeTracking() {
                 {day.workDuration > 0 ? formatTime(day.workDuration) : '-'}
               </div>
               {day.overtime > 0 && (
-                <div className="text-xs text-orange-400">+{formatTime(day.overtime)}</div>
+                <div className="text-xs text-yellow-400">+{formatTime(day.overtime)}</div>
               )}
             </div>
           ))}

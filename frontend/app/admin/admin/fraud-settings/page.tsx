@@ -223,7 +223,7 @@ export default function FraudSettingsPage() {
       red: 'bg-red-500/10 border-red-500/20',
       indigo: 'bg-primary/10 border-primary/20',
       teal: 'bg-teal-500/10 border-teal-500/20',
-      orange: 'bg-orange-500/10 border-orange-500/20',
+      orange: 'bg-yellow-500/10 border-yellow-500/20',
       gray: 'bg-background border-border',
     };
 

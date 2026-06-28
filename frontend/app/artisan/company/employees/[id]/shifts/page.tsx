@@ -139,7 +139,7 @@ export default function EmployeeShiftsPage() {
   const getShiftTypeColor = (type: string) => {
     const colors: Record<string, string> = {
       REGULAR: 'bg-primary/10 text-primary border-primary/20',
-      OVERTIME: 'bg-orange-500/15 text-orange-400 border-orange-500/20',
+      OVERTIME: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
       ON_CALL: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
       TRAINING: 'bg-green-500/15 text-green-400 border-green-500/20',
     };
@@ -264,7 +264,7 @@ export default function EmployeeShiftsPage() {
               <span className="text-sm">{t('company', 'regular') || 'Regular'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-orange-500/15 border border-orange-500/20" />
+              <div className="w-4 h-4 rounded bg-yellow-500/15 border border-yellow-500/20" />
               <span className="text-sm">{t('company', 'overtime') || 'Overtime'}</span>
             </div>
             <div className="flex items-center gap-2">
