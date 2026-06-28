@@ -24,21 +24,21 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/admin/dashboard')}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-muted-foreground hover:text-foreground"
               >
                 ← Back to Dashboard
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Platform Settings</h1>
-                <p className="text-sm text-gray-500">Configure platform-wide settings and rules</p>
+                <h1 className="text-2xl font-bold text-foreground">Platform Settings</h1>
+                <p className="text-sm text-muted-foreground">Configure platform-wide settings and rules</p>
               </div>
             </div>
           </div>
@@ -49,8 +49,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         <div className="flex gap-6">
           {/* Sidebar Navigation */}
           <div className="w-64 flex-shrink-0">
-            <nav className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <ul className="divide-y divide-gray-100">
+            <nav className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+              <ul className="divide-y divide-border">
                 {settingsNavItems.map((item) => {
                   const isActive = pathname === item.href;
                   return (
@@ -59,8 +59,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                         onClick={() => router.push(item.href)}
                         className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
                           isActive
-                            ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
-                            : 'text-gray-700 hover:bg-gray-50'
+                            ? 'bg-primary/10 text-primary border-l-4 border-blue-600'
+                            : 'text-foreground hover:bg-accent'
                         }`}
                       >
                         <span className="text-lg">{item.icon}</span>

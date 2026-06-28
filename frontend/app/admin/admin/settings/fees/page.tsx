@@ -82,7 +82,7 @@ export default function FeesSettingsPage() {
     <div className="space-y-6">
       {/* Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -90,7 +90,7 @@ export default function FeesSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -104,7 +104,7 @@ export default function FeesSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Platform Commission Rate (%)
               </label>
               <input
@@ -116,14 +116,14 @@ export default function FeesSettingsPage() {
                 min="0"
                 max="50"
                 step="0.5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Artisan receives: {100 - settings.platformCommissionRate}%
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Min Commission (cents)
               </label>
               <input
@@ -131,14 +131,14 @@ export default function FeesSettingsPage() {
                 value={settings.minCommissionAmount}
                 onChange={(e) => updateSetting('minCommissionAmount', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.minCommissionAmount)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Commission (cents)
               </label>
               <input
@@ -146,9 +146,9 @@ export default function FeesSettingsPage() {
                 value={settings.maxCommissionAmount}
                 onChange={(e) => updateSetting('maxCommissionAmount', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.maxCommissionAmount)}
               </p>
             </div>
@@ -165,7 +165,7 @@ export default function FeesSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Deposit Percentage (%)
               </label>
               <input
@@ -174,11 +174,11 @@ export default function FeesSettingsPage() {
                 onChange={(e) => updateSetting('depositPercentage', parseFloat(e.target.value))}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Minimum Deposit (cents)
               </label>
               <input
@@ -186,14 +186,14 @@ export default function FeesSettingsPage() {
                 value={settings.depositMinimum}
                 onChange={(e) => updateSetting('depositMinimum', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.depositMinimum)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Maximum Deposit (cents)
               </label>
               <input
@@ -201,9 +201,9 @@ export default function FeesSettingsPage() {
                 value={settings.depositMaximum}
                 onChange={(e) => updateSetting('depositMaximum', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.depositMaximum)}
               </p>
             </div>
@@ -220,7 +220,7 @@ export default function FeesSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Urgent Mission Multiplier
               </label>
               <input
@@ -232,14 +232,14 @@ export default function FeesSettingsPage() {
                 min="1"
                 max="5"
                 step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 e.g., 1.5 = 50% price increase for urgent
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Weekend Multiplier
               </label>
               <input
@@ -249,11 +249,11 @@ export default function FeesSettingsPage() {
                 min="1"
                 max="5"
                 step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Holiday Multiplier
               </label>
               <input
@@ -263,7 +263,7 @@ export default function FeesSettingsPage() {
                 min="1"
                 max="5"
                 step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -279,7 +279,7 @@ export default function FeesSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Standard Cancellation Fee (%)
               </label>
               <input
@@ -290,11 +290,11 @@ export default function FeesSettingsPage() {
                 }
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Late Cancellation Threshold (hours)
               </label>
               <input
@@ -302,14 +302,14 @@ export default function FeesSettingsPage() {
                 value={settings.lateCancellationHours}
                 onChange={(e) => updateSetting('lateCancellationHours', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Cancellations within this time apply late fee
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Late Cancellation Fee (%)
               </label>
               <input
@@ -320,7 +320,7 @@ export default function FeesSettingsPage() {
                 }
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -336,7 +336,7 @@ export default function FeesSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Artisan Payout Percentage (%)
               </label>
               <input
@@ -347,12 +347,12 @@ export default function FeesSettingsPage() {
                 }
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">Should equal 100 - commission rate</p>
+              <p className="mt-1 text-xs text-muted-foreground">Should equal 100 - commission rate</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Referral Bonus (cents)
               </label>
               <input
@@ -360,14 +360,14 @@ export default function FeesSettingsPage() {
                 value={settings.referralBonusAmount}
                 onChange={(e) => updateSetting('referralBonusAmount', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.referralBonusAmount)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 First Mission Discount (%)
               </label>
               <input
@@ -376,7 +376,7 @@ export default function FeesSettingsPage() {
                 onChange={(e) => updateSetting('firstMissionDiscount', parseFloat(e.target.value))}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -388,7 +388,7 @@ export default function FeesSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Fee Settings'}
         </button>

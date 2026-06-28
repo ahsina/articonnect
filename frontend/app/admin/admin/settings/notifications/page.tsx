@@ -91,7 +91,7 @@ export default function NotificationSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -99,7 +99,7 @@ export default function NotificationSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -122,8 +122,8 @@ export default function NotificationSettingsPage() {
                 key={channel.key}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${
                   settings[channel.key]
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'border-green-500 bg-green-500/10'
+                    : 'border-border bg-background'
                 }`}
                 onClick={() => updateSetting(channel.key, !settings[channel.key])}
               >
@@ -131,7 +131,7 @@ export default function NotificationSettingsPage() {
                   <span className="text-2xl">{channel.icon}</span>
                   <div>
                     <p className="font-medium">{channel.label}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {settings[channel.key] ? 'Enabled' : 'Disabled'}
                     </p>
                   </div>
@@ -156,14 +156,14 @@ export default function NotificationSettingsPage() {
               { key: 'missionCompletedNotify' as const, label: 'Mission Completed' },
               { key: 'missionCancelledNotify' as const, label: 'Mission Cancelled' },
             ].map((item) => (
-              <label key={item.key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+              <label key={item.key} className="flex items-center gap-2 p-3 bg-background rounded-lg">
                 <input
                   type="checkbox"
                   checked={settings[item.key]}
                   onChange={(e) => updateSetting(item.key, e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">{item.label}</span>
+                <span className="text-sm text-foreground">{item.label}</span>
               </label>
             ))}
           </div>
@@ -183,14 +183,14 @@ export default function NotificationSettingsPage() {
               { key: 'paymentFailedNotify' as const, label: 'Payment Failed' },
               { key: 'payoutProcessedNotify' as const, label: 'Payout Processed' },
             ].map((item) => (
-              <label key={item.key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+              <label key={item.key} className="flex items-center gap-2 p-3 bg-background rounded-lg">
                 <input
                   type="checkbox"
                   checked={settings[item.key]}
                   onChange={(e) => updateSetting(item.key, e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">{item.label}</span>
+                <span className="text-sm text-foreground">{item.label}</span>
               </label>
             ))}
           </div>
@@ -212,14 +212,14 @@ export default function NotificationSettingsPage() {
               { key: 'disputeResolvedNotify' as const, label: 'Dispute Resolved' },
               { key: 'verificationStatusNotify' as const, label: 'Verification Status' },
             ].map((item) => (
-              <label key={item.key} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+              <label key={item.key} className="flex items-center gap-2 p-3 bg-background rounded-lg">
                 <input
                   type="checkbox"
                   checked={settings[item.key]}
                   onChange={(e) => updateSetting(item.key, e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">{item.label}</span>
+                <span className="text-sm text-foreground">{item.label}</span>
               </label>
             ))}
           </div>
@@ -240,27 +240,27 @@ export default function NotificationSettingsPage() {
                   type="checkbox"
                   checked={settings.promotionalEmailsEnabled}
                   onChange={(e) => updateSetting('promotionalEmailsEnabled', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">Enable promotional emails</span>
+                <span className="text-sm text-foreground">Enable promotional emails</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={settings.weeklyDigestEnabled}
                   onChange={(e) => updateSetting('weeklyDigestEnabled', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">Enable weekly digest</span>
+                <span className="text-sm text-foreground">Enable weekly digest</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={settings.marketingOptInDefault}
                   onChange={(e) => updateSetting('marketingOptInDefault', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">Marketing opt-in by default</span>
+                <span className="text-sm text-foreground">Marketing opt-in by default</span>
               </label>
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function NotificationSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Mission Reminder (hours before)
               </label>
               <input
@@ -286,11 +286,11 @@ export default function NotificationSettingsPage() {
                   updateSetting('reminderBeforeMissionHours', parseInt(e.target.value))
                 }
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Follow-up (hours after mission)
               </label>
               <input
@@ -300,11 +300,11 @@ export default function NotificationSettingsPage() {
                   updateSetting('followUpAfterMissionHours', parseInt(e.target.value))
                 }
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Inactivity Reminder (days)
               </label>
               <input
@@ -312,7 +312,7 @@ export default function NotificationSettingsPage() {
                 value={settings.inactivityReminderDays}
                 onChange={(e) => updateSetting('inactivityReminderDays', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -328,7 +328,7 @@ export default function NotificationSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Emails Per Day
               </label>
               <input
@@ -336,11 +336,11 @@ export default function NotificationSettingsPage() {
                 value={settings.maxEmailsPerDay}
                 onChange={(e) => updateSetting('maxEmailsPerDay', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max SMS Per Day
               </label>
               <input
@@ -348,40 +348,40 @@ export default function NotificationSettingsPage() {
                 value={settings.maxSmsPerDay}
                 onChange={(e) => updateSetting('maxSmsPerDay', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-background rounded-lg">
             <label className="flex items-center gap-2 mb-4">
               <input
                 type="checkbox"
                 checked={settings.respectQuietHours}
                 onChange={(e) => updateSetting('respectQuietHours', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Respect Quiet Hours</span>
+              <span className="text-sm font-medium text-foreground">Respect Quiet Hours</span>
             </label>
 
             {settings.respectQuietHours && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Quiet Hours Start</label>
+                  <label className="block text-sm text-muted-foreground mb-1">Quiet Hours Start</label>
                   <input
                     type="time"
                     value={settings.quietHoursStart}
                     onChange={(e) => updateSetting('quietHoursStart', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Quiet Hours End</label>
+                  <label className="block text-sm text-muted-foreground mb-1">Quiet Hours End</label>
                   <input
                     type="time"
                     value={settings.quietHoursEnd}
                     onChange={(e) => updateSetting('quietHoursEnd', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -395,7 +395,7 @@ export default function NotificationSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Notification Settings'}
         </button>

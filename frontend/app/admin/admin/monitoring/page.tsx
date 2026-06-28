@@ -57,28 +57,28 @@ export default function MonitoringPage() {
   const getHealthColor = (status: string) => {
     switch (status) {
       case 'EXCELLENT':
-        return 'text-green-600 bg-green-100';
+        return 'text-green-600 bg-green-500/15';
       case 'GOOD':
-        return 'text-blue-600 bg-blue-100';
+        return 'text-primary bg-primary/10';
       case 'FAIR':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-yellow-600 bg-yellow-500/15';
       case 'POOR':
-        return 'text-red-600 bg-red-100';
+        return 'text-red-600 bg-red-500/15';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
   const getAlertColor = (level: string) => {
     switch (level) {
       case 'CRITICAL':
-        return 'border-red-500 bg-red-50';
+        return 'border-red-500 bg-red-500/10';
       case 'WARNING':
-        return 'border-yellow-500 bg-yellow-50';
+        return 'border-yellow-500 bg-yellow-500/10';
       case 'INFO':
-        return 'border-blue-500 bg-blue-50';
+        return 'border-primary bg-primary/10';
       default:
-        return 'border-gray-300 bg-gray-50';
+        return 'border-border bg-background';
     }
   };
 
@@ -89,7 +89,7 @@ export default function MonitoringPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -103,20 +103,20 @@ export default function MonitoringPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">System Monitoring</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">System Monitoring</h1>
+              <p className="text-muted-foreground mt-1">
                 Real-time platform health and CRON job metrics
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function MonitoringPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
           >
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -141,10 +141,10 @@ export default function MonitoringPage() {
                   {health.score}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-foreground">
                     System Health: {health.status}
                   </h2>
-                  <p className="text-gray-500 mt-1">
+                  <p className="text-muted-foreground mt-1">
                     Last checked: {new Date(health.lastCheck).toLocaleString('fr-FR')}
                   </p>
                 </div>
@@ -153,20 +153,20 @@ export default function MonitoringPage() {
                 {alerts && (
                   <>
                     {alerts.critical > 0 && (
-                      <div className="text-center px-4 py-2 bg-red-100 rounded-lg">
+                      <div className="text-center px-4 py-2 bg-red-500/15 rounded-lg">
                         <div className="text-2xl font-bold text-red-600">{alerts.critical}</div>
                         <div className="text-xs text-red-600">Critical</div>
                       </div>
                     )}
                     {alerts.warnings > 0 && (
-                      <div className="text-center px-4 py-2 bg-yellow-100 rounded-lg">
+                      <div className="text-center px-4 py-2 bg-yellow-500/15 rounded-lg">
                         <div className="text-2xl font-bold text-yellow-600">{alerts.warnings}</div>
                         <div className="text-xs text-yellow-600">Warnings</div>
                       </div>
                     )}
-                    <div className="text-center px-4 py-2 bg-blue-100 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{alerts.info}</div>
-                      <div className="text-xs text-blue-600">Info</div>
+                    <div className="text-center px-4 py-2 bg-primary/10 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">{alerts.info}</div>
+                      <div className="text-xs text-primary">Info</div>
                     </div>
                   </>
                 )}
@@ -181,11 +181,11 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Missions</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">Total Missions</p>
+                  <p className="text-3xl font-bold text-foreground">
                     {dashboard.overview.totalMissions}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {dashboard.overview.missionsLast24h} today
                   </p>
                 </div>
@@ -198,11 +198,11 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Auto-Validated</p>
+                  <p className="text-sm text-muted-foreground">Auto-Validated</p>
                   <p className="text-3xl font-bold text-green-600">
                     {dashboard.overview.autoValidatedMissions}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {dashboard.overview.autoValidationRate} rate
                   </p>
                 </div>
@@ -215,11 +215,11 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Pending Validations</p>
+                  <p className="text-sm text-muted-foreground">Pending Validations</p>
                   <p className="text-3xl font-bold text-yellow-600">
                     {dashboard.overview.pendingValidations}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">Awaiting client action</p>
+                  <p className="text-sm text-muted-foreground mt-1">Awaiting client action</p>
                 </div>
                 <span className="text-4xl">⏳</span>
               </div>
@@ -230,11 +230,11 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Cancelled</p>
+                  <p className="text-sm text-muted-foreground">Cancelled</p>
                   <p className="text-3xl font-bold text-red-600">
                     {dashboard.overview.cancelledMissions}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">By system/users</p>
+                  <p className="text-sm text-muted-foreground mt-1">By system/users</p>
                 </div>
                 <span className="text-4xl">❌</span>
               </div>
@@ -257,13 +257,13 @@ export default function MonitoringPage() {
                 {Object.entries(health.checks).map(([key, check]) => (
                   <div
                     key={key}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                    className="flex items-center justify-between py-2 border-b border-border last:border-0"
                   >
-                    <span className="text-gray-700 capitalize">
+                    <span className="text-foreground capitalize">
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">{check.value}</span>
+                      <span className="text-muted-foreground">{check.value}</span>
                       <span>{getCheckStatusIcon(check.status)}</span>
                     </div>
                   </div>
@@ -284,8 +284,8 @@ export default function MonitoringPage() {
               <div className="space-y-3">
                 {health.recommendations.map((rec, idx) => (
                   <div key={idx} className="flex items-start gap-3 py-2">
-                    <span className="text-blue-500 mt-0.5">→</span>
-                    <span className="text-gray-700">{rec}</span>
+                    <span className="text-primary mt-0.5">→</span>
+                    <span className="text-foreground">{rec}</span>
                   </div>
                 ))}
               </div>
@@ -311,13 +311,13 @@ export default function MonitoringPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="font-semibold text-gray-900">{alert.message}</div>
-                        <div className="text-sm text-gray-600 mt-1">{alert.recommendation}</div>
+                        <div className="font-semibold text-foreground">{alert.message}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{alert.recommendation}</div>
                       </div>
                       {alert.actionUrl && (
                         <button
                           onClick={() => router.push(alert.actionUrl!)}
-                          className="text-sm text-blue-600 hover:text-blue-800"
+                          className="text-sm text-primary hover:text-primary"
                         >
                           Take Action →
                         </button>
@@ -343,41 +343,41 @@ export default function MonitoringPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-center p-4 bg-green-500/10 rounded-lg">
                 <div className="text-3xl font-bold text-green-600">
                   {dashboard.autoValidation.total}
                 </div>
-                <div className="text-sm text-gray-600">Total Auto-Validated</div>
+                <div className="text-sm text-muted-foreground">Total Auto-Validated</div>
               </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">
+              <div className="text-center p-4 bg-primary/10 rounded-lg">
+                <div className="text-3xl font-bold text-primary">
                   {dashboard.autoValidation.totalAmount}
                 </div>
-                <div className="text-sm text-gray-600">Total Amount</div>
+                <div className="text-sm text-muted-foreground">Total Amount</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-center p-4 bg-purple-500/10 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600">
                   {dashboard.autoValidation.avgDelayHours}
                 </div>
-                <div className="text-sm text-gray-600">Avg Delay</div>
+                <div className="text-sm text-muted-foreground">Avg Delay</div>
               </div>
             </div>
 
             {dashboard.autoValidation.recentAutoValidations.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Recent Auto-Validations</h4>
+                <h4 className="font-medium text-foreground mb-3">Recent Auto-Validations</h4>
                 <div className="space-y-2">
                   {dashboard.autoValidation.recentAutoValidations.slice(0, 5).map((mission) => (
                     <div
                       key={mission.id}
-                      className="flex items-center justify-between py-2 border-b border-gray-100"
+                      className="flex items-center justify-between py-2 border-b border-border"
                     >
-                      <span className="text-gray-700">{mission.title}</span>
+                      <span className="text-foreground">{mission.title}</span>
                       <div className="flex items-center gap-4">
                         <span className="text-green-600 font-medium">
                           {mission.amount.toLocaleString('fr-FR')}€
                         </span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-muted-foreground">
                           {new Date(mission.validatedAt).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
@@ -400,10 +400,10 @@ export default function MonitoringPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Current Growth</h4>
+                <h4 className="font-medium text-foreground mb-3">Current Growth</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Missions Growth</span>
+                    <span className="text-muted-foreground">Missions Growth</span>
                     <span
                       className={`font-semibold ${parseFloat(dashboard.trends.missionsGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
@@ -411,7 +411,7 @@ export default function MonitoringPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Auto-Validation Growth</span>
+                    <span className="text-muted-foreground">Auto-Validation Growth</span>
                     <span
                       className={`font-semibold ${parseFloat(dashboard.trends.autoValidationGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
@@ -421,17 +421,17 @@ export default function MonitoringPage() {
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Next Month Predictions</h4>
+                <h4 className="font-medium text-foreground mb-3">Next Month Predictions</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Expected Missions</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-muted-foreground">Expected Missions</span>
+                    <span className="font-semibold text-foreground">
                       {dashboard.trends.prediction.nextMonthMissions}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Expected Auto-Validations</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-muted-foreground">Expected Auto-Validations</span>
+                    <span className="font-semibold text-foreground">
                       {dashboard.trends.prediction.nextMonthAutoValidations}
                     </span>
                   </div>
@@ -451,28 +451,28 @@ export default function MonitoringPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-700">
+              <div className="text-center p-4 bg-background rounded-lg">
+                <div className="text-2xl font-bold text-foreground">
                   {dashboard.cleanup.cancelledBySystemLast30Days}
                 </div>
-                <div className="text-sm text-gray-600">Cancelled (30d)</div>
+                <div className="text-sm text-muted-foreground">Cancelled (30d)</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-700">
+              <div className="text-center p-4 bg-background rounded-lg">
+                <div className="text-2xl font-bold text-foreground">
                   {dashboard.cleanup.oldPendingMissions}
                 </div>
-                <div className="text-sm text-gray-600">Old Pending</div>
+                <div className="text-sm text-muted-foreground">Old Pending</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm font-medium text-gray-700">
+              <div className="text-center p-4 bg-background rounded-lg">
+                <div className="text-sm font-medium text-foreground">
                   {dashboard.cleanup.cleanupFrequency}
                 </div>
-                <div className="text-sm text-gray-600">Cleanup Schedule</div>
+                <div className="text-sm text-muted-foreground">Cleanup Schedule</div>
               </div>
             </div>
             {dashboard.cleanup.nextCleanupRecommended && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <span className="text-yellow-700">
+              <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <span className="text-yellow-400">
                   Cleanup recommended - consider running manual cleanup
                 </span>
               </div>
@@ -481,7 +481,7 @@ export default function MonitoringPage() {
         </Card>
 
         {/* Footer with generated time */}
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           Data generated at: {new Date(dashboard.generatedAt).toLocaleString('fr-FR')}
         </div>
       </div>

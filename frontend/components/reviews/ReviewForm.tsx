@@ -60,24 +60,24 @@ export function ReviewForm({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+    <div className="bg-card rounded-lg shadow p-6">
+      <h2 className="text-2xl font-bold text-foreground mb-6">
         Évaluer {artisanName}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Note globale *
           </label>
           <div className="flex items-center gap-4">
             <StarRating rating={rating} onRatingChange={setRating} size="lg" />
             {rating > 0 && (
-              <span className="text-2xl font-bold text-gray-900">{rating}/5</span>
+              <span className="text-2xl font-bold text-foreground">{rating}/5</span>
             )}
           </div>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             Cliquez sur les étoiles pour noter
           </p>
         </div>
@@ -86,7 +86,7 @@ export function ReviewForm({
         <div>
           <label
             htmlFor="comment"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-foreground mb-2"
           >
             Votre avis *
           </label>
@@ -95,27 +95,27 @@ export function ReviewForm({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={6}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Décrivez votre expérience avec cet artisan..."
           />
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Minimum 10 caractères ({comment.length}/10)
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
         {/* Guidelines */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-900 mb-2">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+          <h4 className="font-semibold text-primary mb-2">
             Conseils pour un bon avis
           </h4>
-          <ul className="text-sm text-blue-800 space-y-1">
+          <ul className="text-sm text-primary space-y-1">
             <li>✓ Soyez précis et objectif</li>
             <li>✓ Mentionnez les points positifs et négatifs</li>
             <li>✓ Décrivez la qualité du travail</li>

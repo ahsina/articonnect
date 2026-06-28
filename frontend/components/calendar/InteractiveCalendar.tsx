@@ -65,7 +65,7 @@ const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
 const EVENT_COLORS = {
   available: 'bg-green-500',
   unavailable: 'bg-red-500',
-  booked: 'bg-blue-500',
+  booked: 'bg-primary',
   mission: 'bg-purple-500',
   'time-off': 'bg-orange-500',
 };
@@ -180,7 +180,7 @@ export default function InteractiveCalendar({
     <div className="grid grid-cols-7 gap-1">
       {/* Day headers */}
       {getDaysInView.slice(0, 7).map((day, idx) => (
-        <div key={idx} className="text-center text-sm font-medium text-gray-600 py-2">
+        <div key={idx} className="text-center text-sm font-medium text-muted-foreground py-2">
           {format(day, 'EEE', { locale })}
         </div>
       ))}
@@ -199,19 +199,19 @@ export default function InteractiveCalendar({
             onClick={() => handleDateClick(day)}
             className={`
               min-h-[100px] p-2 rounded-lg border transition-all cursor-pointer
-              ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''}
-              ${isToday(day) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
-              ${isSelected ? 'ring-2 ring-blue-500' : ''}
-              ${isPastDay ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:bg-gray-50'}
-              ${isHolidayDay ? 'bg-orange-50 border-orange-200' : ''}
+              ${!isCurrentMonth ? 'bg-background text-muted-foreground' : ''}
+              ${isToday(day) ? 'border-primary bg-primary/10' : 'border-border'}
+              ${isSelected ? 'ring-2 ring-primary' : ''}
+              ${isPastDay ? 'bg-muted cursor-not-allowed opacity-60' : 'hover:bg-accent'}
+              ${isHolidayDay ? 'bg-orange-500/10 border-orange-500/20' : ''}
             `}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className={`text-sm font-medium ${isToday(day) ? 'text-blue-600' : ''}`}>
+              <span className={`text-sm font-medium ${isToday(day) ? 'text-primary' : ''}`}>
                 {format(day, 'd')}
               </span>
               {isHolidayDay && (
-                <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-200">
+                <Badge variant="outline" className="text-xs bg-orange-500/15 text-orange-400 border-orange-500/20">
                   {t('calendar', 'holiday') || 'Holiday'}
                 </Badge>
               )}
@@ -236,7 +236,7 @@ export default function InteractiveCalendar({
                 </div>
               ))}
               {dayEvents.length > 3 && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   +{dayEvents.length - 3} {t('calendar', 'more') || 'more'}
                 </div>
               )}
@@ -251,21 +251,21 @@ export default function InteractiveCalendar({
     <div className="overflow-auto max-h-[600px]">
       <div className="grid grid-cols-8 min-w-[800px]">
         {/* Time column header */}
-        <div className="sticky top-0 bg-white z-10 border-b p-2"></div>
+        <div className="sticky top-0 bg-card z-10 border-b p-2"></div>
 
         {/* Day headers */}
         {getDaysInView.map((day, idx) => (
           <div
             key={idx}
             className={`
-              sticky top-0 bg-white z-10 border-b p-2 text-center
-              ${isToday(day) ? 'bg-blue-50' : ''}
+              sticky top-0 bg-card z-10 border-b p-2 text-center
+              ${isToday(day) ? 'bg-primary/10' : ''}
             `}
           >
-            <div className="text-sm font-medium text-gray-600">
+            <div className="text-sm font-medium text-muted-foreground">
               {format(day, 'EEE', { locale })}
             </div>
-            <div className={`text-lg font-bold ${isToday(day) ? 'text-blue-600' : ''}`}>
+            <div className={`text-lg font-bold ${isToday(day) ? 'text-primary' : ''}`}>
               {format(day, 'd')}
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function InteractiveCalendar({
             {/* Time label */}
             <div
               key={`time-${slotIdx}`}
-              className="border-r border-b p-1 text-xs text-gray-500 bg-gray-50"
+              className="border-r border-b p-1 text-xs text-muted-foreground bg-background"
             >
               {slot.minutes === 0 && slot.label}
             </div>
@@ -302,9 +302,9 @@ export default function InteractiveCalendar({
                   onMouseUp={handleDragEnd}
                   className={`
                     border-b border-r h-6 relative
-                    ${slot.minutes === 0 ? 'border-t border-gray-300' : 'border-gray-100'}
-                    ${inDragRange ? 'bg-blue-100' : ''}
-                    ${isPastSlot ? 'bg-gray-50' : 'hover:bg-blue-50'}
+                    ${slot.minutes === 0 ? 'border-t border-border' : 'border-border'}
+                    ${inDragRange ? 'bg-primary/10' : ''}
+                    ${isPastSlot ? 'bg-background' : 'hover:bg-primary/10'}
                     ${!readOnly && !isPastSlot ? 'cursor-crosshair' : ''}
                   `}
                 >
@@ -388,23 +388,23 @@ export default function InteractiveCalendar({
         <div className="mt-4 flex flex-wrap gap-4 text-sm border-t pt-4">
           <div className="flex items-center gap-2">
             <div className={`w-4 h-3 rounded ${EVENT_COLORS.available}`} />
-            <span className="text-gray-600">{t('calendar', 'available') || 'Available'}</span>
+            <span className="text-muted-foreground">{t('calendar', 'available') || 'Available'}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className={`w-4 h-3 rounded ${EVENT_COLORS.unavailable}`} />
-            <span className="text-gray-600">{t('calendar', 'unavailable') || 'Unavailable'}</span>
+            <span className="text-muted-foreground">{t('calendar', 'unavailable') || 'Unavailable'}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className={`w-4 h-3 rounded ${EVENT_COLORS.booked}`} />
-            <span className="text-gray-600">{t('calendar', 'booked') || 'Booked'}</span>
+            <span className="text-muted-foreground">{t('calendar', 'booked') || 'Booked'}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className={`w-4 h-3 rounded ${EVENT_COLORS.mission}`} />
-            <span className="text-gray-600">{t('calendar', 'mission') || 'Mission'}</span>
+            <span className="text-muted-foreground">{t('calendar', 'mission') || 'Mission'}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className={`w-4 h-3 rounded ${EVENT_COLORS['time-off']}`} />
-            <span className="text-gray-600">{t('calendar', 'timeOff') || 'Time Off'}</span>
+            <span className="text-muted-foreground">{t('calendar', 'timeOff') || 'Time Off'}</span>
           </div>
         </div>
       </CardContent>

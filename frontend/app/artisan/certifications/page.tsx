@@ -120,7 +120,7 @@ export default function CertificationsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -130,10 +130,10 @@ export default function CertificationsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('artisan', 'certifications') || 'Certifications'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('artisan', 'manageCerts') || 'Manage your professional certifications'}
           </p>
         </div>
@@ -147,10 +147,10 @@ export default function CertificationsPage() {
         <Card>
           <CardContent className="p-8 text-center">
             <div className="text-5xl mb-4">📜</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-foreground mb-2">
               {t('artisan', 'noCertifications') || 'No Certifications'}
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {t('artisan', 'addFirstCert') ||
                 'Add your first certification to build trust with clients'}
             </p>
@@ -166,24 +166,24 @@ export default function CertificationsPage() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-2xl">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
                       📜
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-gray-900">{cert.name}</h4>
+                        <h4 className="font-medium text-foreground">{cert.name}</h4>
                         {cert.verified && (
-                          <Badge className="bg-green-100 text-green-800">✓ Verified</Badge>
+                          <Badge className="bg-green-500/15 text-green-400">✓ Verified</Badge>
                         )}
                         {isExpired(cert.expiryDate) && (
-                          <Badge className="bg-red-100 text-red-800">Expired</Badge>
+                          <Badge className="bg-red-500/15 text-red-400">Expired</Badge>
                         )}
                         {isExpiringSoon(cert.expiryDate) && !isExpired(cert.expiryDate) && (
-                          <Badge className="bg-yellow-100 text-yellow-800">Expiring Soon</Badge>
+                          <Badge className="bg-yellow-500/15 text-yellow-400">Expiring Soon</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">{cert.issuer}</p>
-                      <div className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-muted-foreground">{cert.issuer}</p>
+                      <div className="text-sm text-muted-foreground mt-1">
                         {t('artisan', 'issued') || 'Issued'}: {formatDate(cert.issueDate)}
                         {cert.expiryDate && (
                           <span>
@@ -204,7 +204,7 @@ export default function CertificationsPage() {
                       href={cert.document}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-primary hover:underline"
                     >
                       📄 {t('artisan', 'viewDocument') || 'View Document'}
                     </a>
@@ -225,7 +225,7 @@ export default function CertificationsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'certName') || 'Certification Name'} *
                 </label>
                 <Input
@@ -236,7 +236,7 @@ export default function CertificationsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'issuer') || 'Issuing Organization'} *
                 </label>
                 <Input
@@ -248,7 +248,7 @@ export default function CertificationsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('artisan', 'issueDate') || 'Issue Date'} *
                   </label>
                   <Input
@@ -258,7 +258,7 @@ export default function CertificationsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('artisan', 'expiryDate') || 'Expiry Date'}
                   </label>
                   <Input

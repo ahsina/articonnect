@@ -439,32 +439,32 @@ export default function MissionDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      OPEN: 'bg-blue-100 text-blue-800',
-      ASSIGNED: 'bg-purple-100 text-purple-800',
-      ACCEPTED: 'bg-indigo-100 text-indigo-800',
-      IN_PROGRESS: 'bg-orange-100 text-orange-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-      DISPUTED: 'bg-red-100 text-red-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-400',
+      OPEN: 'bg-primary/10 text-primary',
+      ASSIGNED: 'bg-purple-500/15 text-purple-400',
+      ACCEPTED: 'bg-primary/15 text-primary',
+      IN_PROGRESS: 'bg-orange-500/15 text-orange-400',
+      COMPLETED: 'bg-green-500/15 text-green-400',
+      CANCELLED: 'bg-red-500/15 text-red-400',
+      DISPUTED: 'bg-red-500/15 text-red-400',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-muted text-foreground';
   };
 
   const getPriorityBadge = (priority: string) => {
     const colors: Record<string, string> = {
-      LOW: 'bg-gray-100 text-gray-800',
-      NORMAL: 'bg-blue-100 text-blue-800',
-      HIGH: 'bg-orange-100 text-orange-800',
-      URGENT: 'bg-red-100 text-red-800',
+      LOW: 'bg-muted text-foreground',
+      NORMAL: 'bg-primary/10 text-primary',
+      HIGH: 'bg-orange-500/15 text-orange-400',
+      URGENT: 'bg-red-500/15 text-red-400',
     };
-    return colors[priority] || 'bg-gray-100 text-gray-800';
+    return colors[priority] || 'bg-muted text-foreground';
   };
 
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -473,7 +473,7 @@ export default function MissionDetailPage() {
     return (
       <div className="p-6">
         <div className="text-center py-12">
-          <p className="text-gray-500">{t('artisan', 'missionNotFound') || 'Mission not found'}</p>
+          <p className="text-muted-foreground">{t('artisan', 'missionNotFound') || 'Mission not found'}</p>
           <Button onClick={() => router.push('/artisan/missions')} className="mt-4">
             {t('common', 'back') || 'Back to Missions'}
           </Button>
@@ -491,8 +491,8 @@ export default function MissionDetailPage() {
             ← {t('common', 'back') || 'Back'}
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{mission.title}</h1>
-            <p className="text-gray-600">{mission.category}</p>
+            <h1 className="text-2xl font-bold text-foreground">{mission.title}</h1>
+            <p className="text-muted-foreground">{mission.category}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -505,7 +505,7 @@ export default function MissionDetailPage() {
       <Card className="mb-6">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {mission.status === 'OPEN' &&
                 (t('artisan', 'openMissionHint') ||
                   'This mission is available. Submit a quotation or accept it.')}
@@ -563,20 +563,20 @@ export default function MissionDetailPage() {
       <div className="flex gap-2 mb-6 border-b">
         <button
           onClick={() => setActiveTab('details')}
-          className={`px-4 py-2 font-medium ${activeTab === 'details' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'details' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('artisan', 'details') || 'Details'}
         </button>
         <button
           onClick={() => setActiveTab('timeline')}
-          className={`px-4 py-2 font-medium ${activeTab === 'timeline' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'timeline' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('artisan', 'timeline') || 'Timeline'}
         </button>
         {mission.quotation && (
           <button
             onClick={() => setActiveTab('quotation')}
-            className={`px-4 py-2 font-medium ${activeTab === 'quotation' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+            className={`px-4 py-2 font-medium ${activeTab === 'quotation' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
           >
             {t('artisan', 'quotation') || 'Quotation'}
           </button>
@@ -593,18 +593,18 @@ export default function MissionDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {t('artisan', 'description') || 'Description'}
                 </div>
-                <p className="text-gray-900 whitespace-pre-wrap">{mission.description}</p>
+                <p className="text-foreground whitespace-pre-wrap">{mission.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-gray-500">{t('artisan', 'budget') || 'Budget'}</div>
+                  <div className="text-sm text-muted-foreground">{t('artisan', 'budget') || 'Budget'}</div>
                   <div className="font-semibold text-lg">EUR {mission.budget.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     {t('artisan', 'duration') || 'Est. Duration'}
                   </div>
                   <div className="font-semibold">{mission.estimatedDuration} hours</div>
@@ -612,7 +612,7 @@ export default function MissionDetailPage() {
               </div>
               {mission.scheduledDate && (
                 <div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     {t('artisan', 'scheduledDate') || 'Scheduled Date'}
                   </div>
                   <div className="font-medium">
@@ -623,10 +623,10 @@ export default function MissionDetailPage() {
               )}
               {mission.notes && (
                 <div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     {t('artisan', 'notes') || 'Additional Notes'}
                   </div>
-                  <p className="text-gray-700">{mission.notes}</p>
+                  <p className="text-foreground">{mission.notes}</p>
                 </div>
               )}
             </CardContent>
@@ -640,22 +640,22 @@ export default function MissionDetailPage() {
             <CardContent>
               <div className="space-y-3">
                 <div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     {t('artisan', 'address') || 'Address'}
                   </div>
                   <div className="font-medium">{mission.address}</div>
-                  <div className="text-gray-600">
+                  <div className="text-muted-foreground">
                     {mission.postalCode} {mission.city}
                   </div>
                 </div>
                 {mission.distance && (
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
                     <span className="text-2xl">📍</span>
                     <div>
-                      <div className="font-medium text-blue-900">
+                      <div className="font-medium text-primary">
                         {mission.distance.toFixed(1)} km away
                       </div>
-                      <div className="text-sm text-blue-700">
+                      <div className="text-sm text-primary">
                         {t('artisan', 'fromYourLocation') || 'from your location'}
                       </div>
                     </div>
@@ -684,7 +684,7 @@ export default function MissionDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold">
                   {mission.client.firstName[0]}
                   {mission.client.lastName[0]}
                 </div>
@@ -693,7 +693,7 @@ export default function MissionDetailPage() {
                     {mission.client.firstName} {mission.client.lastName}
                   </div>
                   {mission.client.email && (
-                    <div className="text-sm text-gray-500">{mission.client.email}</div>
+                    <div className="text-sm text-muted-foreground">{mission.client.email}</div>
                   )}
                 </div>
               </div>
@@ -713,7 +713,7 @@ export default function MissionDetailPage() {
 
           {/* Negotiation Section */}
           {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
-            <Card className="md:col-span-2 border-orange-200">
+            <Card className="md:col-span-2 border-orange-500/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -724,9 +724,9 @@ export default function MissionDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Client Budget */}
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-background rounded-lg">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {t('missions', 'clientBudget') || 'Budget client'}
                     </span>
                     <span className="font-semibold text-lg">
@@ -738,7 +738,7 @@ export default function MissionDetailPage() {
                 {/* Negotiations List */}
                 {negotiations.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-700">
+                    <h4 className="text-sm font-medium text-foreground">
                       {t('negotiations', 'history') || 'Historique des offres'} ({negotiations.length}/5)
                     </h4>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -753,15 +753,15 @@ export default function MissionDetailPage() {
                             key={neg.id}
                             className={`p-3 rounded-lg border ${
                               isFromMe
-                                ? 'bg-green-50 border-green-200 ml-4'
-                                : 'bg-blue-50 border-blue-200 mr-4'
+                                ? 'bg-green-500/10 border-green-500/30 ml-4'
+                                : 'bg-primary/10 border-primary/20 mr-4'
                             } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
                               neg.accepted === false ? 'opacity-60' : ''
                             }`}
                           >
                             <div className="flex justify-between items-start">
                               <div>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted-foreground">
                                   {isFromMe
                                     ? t('negotiations', 'yourOffer') || 'Votre offre'
                                     : t('negotiations', 'clientOffer') || 'Offre du client'}
@@ -769,7 +769,7 @@ export default function MissionDetailPage() {
                                 <div className="font-bold text-lg">{neg.proposedPrice}€</div>
                                 {/* Cost breakdown */}
                                 {(neg.laborCost || neg.materialCost || neg.travelCost) && (
-                                  <div className="text-xs text-gray-500 mt-1">
+                                  <div className="text-xs text-muted-foreground mt-1">
                                     {neg.laborCost && <span>Main d'œuvre: {neg.laborCost}€</span>}
                                     {neg.materialCost && <span className="ml-2">Matériel: {neg.materialCost}€</span>}
                                     {neg.travelCost && <span className="ml-2">Déplacement: {neg.travelCost}€</span>}
@@ -778,22 +778,22 @@ export default function MissionDetailPage() {
                               </div>
                               <div className="text-right">
                                 {neg.accepted === true && (
-                                  <Badge className="bg-green-100 text-green-800">
+                                  <Badge className="bg-green-500/15 text-green-400">
                                     {t('negotiations', 'accepted') || 'Acceptée'}
                                   </Badge>
                                 )}
                                 {neg.accepted === false && (
-                                  <Badge className="bg-red-100 text-red-800">
+                                  <Badge className="bg-red-500/15 text-red-400">
                                     {t('negotiations', 'rejected') || 'Refusée'}
                                   </Badge>
                                 )}
                                 {isPending && isExpired && (
-                                  <Badge className="bg-gray-100 text-gray-800">
+                                  <Badge className="bg-muted text-foreground">
                                     {t('negotiations', 'expired') || 'Expirée'}
                                   </Badge>
                                 )}
                                 {isPending && !isExpired && (
-                                  <Badge className="bg-yellow-100 text-yellow-800">
+                                  <Badge className="bg-yellow-500/15 text-yellow-400">
                                     {t('negotiations', 'pending') || 'En attente'}
                                   </Badge>
                                 )}
@@ -801,7 +801,7 @@ export default function MissionDetailPage() {
                             </div>
 
                             {neg.message && (
-                              <p className="text-sm text-gray-600 mt-2 italic">"{neg.message}"</p>
+                              <p className="text-sm text-muted-foreground mt-2 italic">"{neg.message}"</p>
                             )}
 
                             {neg.rejectedReason && (
@@ -811,7 +811,7 @@ export default function MissionDetailPage() {
                             )}
 
                             {neg.expiresAt && isPending && !isExpired && (
-                              <p className="text-xs text-gray-400 mt-2">
+                              <p className="text-xs text-muted-foreground mt-2">
                                 {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
                                 {new Date(neg.expiresAt).toLocaleString('fr-FR')}
                               </p>
@@ -860,10 +860,10 @@ export default function MissionDetailPage() {
 
                 {/* Negotiation Form */}
                 {showNegotiationForm && (
-                  <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                  <div className="p-4 bg-background rounded-lg space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'totalPrice') || 'Prix total proposé'} (€) *
                         </label>
                         <Input
@@ -878,7 +878,7 @@ export default function MissionDetailPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'laborCost') || 'Main d\'œuvre'} (€)
                         </label>
                         <Input
@@ -892,7 +892,7 @@ export default function MissionDetailPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'materialCost') || 'Matériel'} (€)
                         </label>
                         <Input
@@ -906,7 +906,7 @@ export default function MissionDetailPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'travelCost') || 'Déplacement'} (€)
                         </label>
                         <Input
@@ -920,7 +920,7 @@ export default function MissionDetailPage() {
                         />
                       </div>
                       <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'message') || 'Message (optionnel)'}
                         </label>
                         <textarea
@@ -928,7 +928,7 @@ export default function MissionDetailPage() {
                           onChange={(e) =>
                             setNegotiationForm({ ...negotiationForm, message: e.target.value })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                           rows={2}
                           placeholder={
                             t('negotiations', 'artisanMessagePlaceholder') ||
@@ -1053,11 +1053,11 @@ export default function MissionDetailPage() {
               <CardContent className="space-y-6">
                 {/* After Photos Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-green-500"></span>
                     {t('missions', 'afterPhotos') || 'Photos après travaux'}
                   </label>
-                  <p className="text-sm text-gray-500 mb-3">
+                  <p className="text-sm text-muted-foreground mb-3">
                     {t('artisan', 'afterPhotosHelper') || 'Ajoutez des photos montrant le travail terminé'}
                   </p>
 
@@ -1072,7 +1072,7 @@ export default function MissionDetailPage() {
                         className="hidden"
                         disabled={uploadingPhoto}
                       />
-                      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/15 transition-colors">
                         {uploadingPhoto ? (
                           <>
                             <span className="animate-spin">⏳</span>
@@ -1087,7 +1087,7 @@ export default function MissionDetailPage() {
                       </div>
                     </label>
                     {afterPhotos.length > 0 && (
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                         {afterPhotos.length} photo{afterPhotos.length > 1 ? 's' : ''} sélectionnée{afterPhotos.length > 1 ? 's' : ''}
                       </span>
                     )}
@@ -1101,7 +1101,7 @@ export default function MissionDetailPage() {
                           <img
                             src={url}
                             alt={`After photo ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border-2 border-green-200"
+                            className="w-full h-24 object-cover rounded-lg border-2 border-green-500/20"
                           />
                           <button
                             type="button"
@@ -1118,14 +1118,14 @@ export default function MissionDetailPage() {
 
                 {/* Completion Notes */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('artisan', 'completionNotes') || 'Notes de complétion'}
                   </label>
                   <textarea
                     value={completionNotes}
                     onChange={(e) => setCompletionNotes(e.target.value)}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder={
                       t('artisan', 'completionNotesPlaceholder') ||
                       'Décrivez le travail effectué, les problèmes rencontrés, etc.'
@@ -1159,26 +1159,26 @@ export default function MissionDetailPage() {
           </CardHeader>
           <CardContent>
             {timeline.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {t('artisan', 'noTimeline') || 'No timeline events yet'}
               </div>
             ) : (
               <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-muted" />
                 <div className="space-y-6">
                   {timeline.map((event) => (
                     <div key={event.id} className="relative pl-10">
-                      <div className="absolute left-2 w-4 h-4 rounded-full bg-blue-600 border-2 border-white" />
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="absolute left-2 w-4 h-4 rounded-full bg-primary border-2 border-white" />
+                      <div className="bg-background p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-medium text-gray-900">{translateEventType(event.type, t)}</span>
-                          <span className="text-sm text-gray-500">
+                          <span className="font-medium text-foreground">{translateEventType(event.type, t)}</span>
+                          <span className="text-sm text-muted-foreground">
                             {new Date(event.createdAt).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-gray-600">{event.description}</p>
+                        <p className="text-muted-foreground">{event.description}</p>
                         {event.user && (
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-muted-foreground mt-1">
                             by {event.user.firstName} {event.user.lastName}
                           </p>
                         )}
@@ -1201,29 +1201,29 @@ export default function MissionDetailPage() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b">
-                <span className="text-gray-600">{t('artisan', 'amount') || 'Amount'}</span>
+                <span className="text-muted-foreground">{t('artisan', 'amount') || 'Amount'}</span>
                 <span className="text-2xl font-bold text-green-600">
                   EUR {mission.quotation.amount.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3 border-b">
-                <span className="text-gray-600">{t('artisan', 'status') || 'Status'}</span>
+                <span className="text-muted-foreground">{t('artisan', 'status') || 'Status'}</span>
                 <Badge
                   className={
                     mission.quotation.status === 'ACCEPTED'
-                      ? 'bg-green-100 text-green-800'
+                      ? 'bg-green-500/15 text-green-400'
                       : mission.quotation.status === 'PENDING'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-yellow-500/15 text-yellow-400'
                         : mission.quotation.status === 'REJECTED'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-red-500/15 text-red-400'
+                          : 'bg-muted text-foreground'
                   }
                 >
                   {translateQuotationStatus(mission.quotation.status, t)}
                 </Badge>
               </div>
               <div className="flex items-center justify-between py-3">
-                <span className="text-gray-600">{t('artisan', 'validUntil') || 'Valid Until'}</span>
+                <span className="text-muted-foreground">{t('artisan', 'validUntil') || 'Valid Until'}</span>
                 <span>{new Date(mission.quotation.validUntil).toLocaleDateString()}</span>
               </div>
             </div>
@@ -1234,14 +1234,14 @@ export default function MissionDetailPage() {
       {/* Quotation Modal */}
       {showQuotationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
               {t('artisan', 'submitQuotation') || 'Submit Quotation'}
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'amount') || 'Amount (EUR)'} *
                 </label>
                 <Input
@@ -1251,14 +1251,14 @@ export default function MissionDetailPage() {
                   min="0"
                   placeholder={mission.budget.toString()}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {t('artisan', 'clientBudget') || 'Client budget'}: EUR{' '}
                   {mission.budget.toLocaleString()}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'description') || 'Description'} *
                 </label>
                 <textarea
@@ -1267,7 +1267,7 @@ export default function MissionDetailPage() {
                     setQuotationForm({ ...quotationForm, description: e.target.value })
                   }
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder={
                     t('artisan', 'quotationDescPlaceholder') ||
                     'Describe what is included in your quotation...'
@@ -1276,7 +1276,7 @@ export default function MissionDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'validFor') || 'Valid For (days)'}
                 </label>
                 <select
@@ -1284,7 +1284,7 @@ export default function MissionDetailPage() {
                   onChange={(e) =>
                     setQuotationForm({ ...quotationForm, validDays: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="3">3 days</option>
                   <option value="7">7 days</option>

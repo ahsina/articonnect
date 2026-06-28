@@ -29,16 +29,16 @@ export default function OfflinePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-b from-card to-muted flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div className="bg-card rounded-2xl shadow-lg p-8 text-center">
           <div className="text-6xl mb-6">📡</div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             {isOnline ? 'Connexion rétablie !' : 'Vous êtes hors ligne'}
           </h1>
 
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             {isOnline
               ? 'Votre connexion internet est de retour. Cliquez ci-dessous pour continuer.'
               : 'Impossible de se connecter à Internet. Vérifiez votre connexion et réessayez.'}
@@ -56,14 +56,14 @@ export default function OfflinePage() {
 
           <button
             onClick={handleRetry}
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="w-full bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
             {isOnline ? "Retour à l'accueil" : 'Réessayer'}
           </button>
 
           <button
             onClick={() => window.history.back()}
-            className="w-full mt-3 bg-white text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="w-full mt-3 bg-card text-foreground px-6 py-3 rounded-lg font-medium border border-border hover:bg-accent transition-colors"
           >
             Retour
           </button>
@@ -71,10 +71,10 @@ export default function OfflinePage() {
           {/* Offline features */}
           {!isOnline && (
             <div className="mt-8 pt-6 border-t text-left">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
+              <h3 className="text-sm font-medium text-foreground mb-3">
                 Fonctionnalités disponibles hors ligne :
               </h3>
-              <ul className="text-sm text-gray-600 space-y-2">
+              <ul className="text-sm text-muted-foreground space-y-2">
                 <li className="flex items-center gap-2">
                   <span className="text-green-500">✓</span>
                   Consulter vos missions enregistrées
@@ -88,12 +88,12 @@ export default function OfflinePage() {
                   Accéder aux messages en cache
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-gray-400">✗</span>
-                  <span className="text-gray-400">Envoyer de nouveaux messages</span>
+                  <span className="text-muted-foreground">✗</span>
+                  <span className="text-muted-foreground">Envoyer de nouveaux messages</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-gray-400">✗</span>
-                  <span className="text-gray-400">Accepter des missions</span>
+                  <span className="text-muted-foreground">✗</span>
+                  <span className="text-muted-foreground">Accepter des missions</span>
                 </li>
               </ul>
             </div>

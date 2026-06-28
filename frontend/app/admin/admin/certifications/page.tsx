@@ -111,31 +111,31 @@ export default function CertificationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Certification Management</h1>
-              <p className="text-gray-600 mt-1">Verify and manage artisan certifications</p>
+              <h1 className="text-3xl font-bold text-foreground">Certification Management</h1>
+              <p className="text-muted-foreground mt-1">Verify and manage artisan certifications</p>
             </div>
           </div>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
             Refresh
           </button>
@@ -143,7 +143,7 @@ export default function CertificationsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -154,8 +154,8 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total</p>
-                  <p className="text-3xl font-bold text-blue-600">{certifications.length}</p>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-3xl font-bold text-primary">{certifications.length}</p>
                 </div>
                 <span className="text-4xl">📜</span>
               </div>
@@ -166,7 +166,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Pending Review</p>
+                  <p className="text-sm text-muted-foreground">Pending Review</p>
                   <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
@@ -178,7 +178,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Verified</p>
+                  <p className="text-sm text-muted-foreground">Verified</p>
                   <p className="text-3xl font-bold text-green-600">{verifiedCount}</p>
                 </div>
                 <span className="text-4xl">✅</span>
@@ -190,7 +190,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Expired</p>
+                  <p className="text-sm text-muted-foreground">Expired</p>
                   <p className="text-3xl font-bold text-red-600">{expiredCount}</p>
                 </div>
                 <span className="text-4xl">⚠️</span>
@@ -208,8 +208,8 @@ export default function CertificationsPage() {
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-lg capitalize ${
                   filter === f
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-muted text-foreground hover:bg-accent'
                 }`}
               >
                 {f}
@@ -221,7 +221,7 @@ export default function CertificationsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, organization, or artisan..."
-            className="flex-1 min-w-[300px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 min-w-[300px] px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
 
@@ -234,60 +234,60 @@ export default function CertificationsPage() {
           <CardContent>
             {filteredCertifications.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-background">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Certification
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Artisan
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Issuing Organization
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Dates
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-card divide-y divide-border">
                     {filteredCertifications.map((cert) => (
-                      <tr key={cert.id} className="hover:bg-gray-50">
+                      <tr key={cert.id} className="hover:bg-accent">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="font-medium text-gray-900">{cert.name}</div>
+                            <div className="font-medium text-foreground">{cert.name}</div>
                             {cert.certificateNumber && (
-                              <div className="text-sm text-gray-500">#{cert.certificateNumber}</div>
+                              <div className="text-sm text-muted-foreground">#{cert.certificateNumber}</div>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {cert.artisan?.firstName} {cert.artisan?.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">{cert.artisan?.email}</div>
+                            <div className="text-sm text-muted-foreground">{cert.artisan?.email}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {cert.issuingOrganization}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm">
-                            <div className="text-gray-900">
+                            <div className="text-foreground">
                               Issued: {formatDate(cert.issueDate)}
                             </div>
                             {cert.expiryDate && (
                               <div
                                 className={
-                                  isExpired(cert.expiryDate) ? 'text-red-600' : 'text-gray-500'
+                                  isExpired(cert.expiryDate) ? 'text-red-600' : 'text-muted-foreground'
                                 }
                               >
                                 Expires: {formatDate(cert.expiryDate)}
@@ -300,8 +300,8 @@ export default function CertificationsPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               cert.verified
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700'
+                                ? 'bg-green-500/15 text-green-400'
+                                : 'bg-yellow-500/15 text-yellow-400'
                             }`}
                           >
                             {cert.verified ? 'VERIFIED' : 'PENDING'}
@@ -311,7 +311,7 @@ export default function CertificationsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => setSelectedCert(cert)}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-primary hover:text-primary"
                             >
                               View
                             </button>
@@ -319,7 +319,7 @@ export default function CertificationsPage() {
                               <button
                                 onClick={() => handleUnverify(cert.id)}
                                 disabled={processingId === cert.id}
-                                className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                                className="text-red-600 hover:text-red-400 disabled:opacity-50"
                               >
                                 Unverify
                               </button>
@@ -327,7 +327,7 @@ export default function CertificationsPage() {
                               <button
                                 onClick={() => handleVerify(cert.id)}
                                 disabled={processingId === cert.id}
-                                className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-400 disabled:opacity-50"
                               >
                                 Verify
                               </button>
@@ -340,7 +340,7 @@ export default function CertificationsPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <span className="text-4xl block mb-2">📜</span>
                 <p>No certifications found</p>
               </div>
@@ -351,13 +351,13 @@ export default function CertificationsPage() {
         {/* Detail Modal */}
         {selectedCert && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Certification Details</h2>
+                  <h2 className="text-xl font-semibold text-foreground">Certification Details</h2>
                   <button
                     onClick={() => setSelectedCert(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-muted-foreground hover:text-muted-foreground"
                   >
                     X
                   </button>
@@ -365,28 +365,28 @@ export default function CertificationsPage() {
 
                 <div className="space-y-6">
                   {/* Certification Info */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Certification Information</h3>
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Certification Information</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-600">Name</p>
+                        <p className="text-sm text-muted-foreground">Name</p>
                         <p className="font-medium">{selectedCert.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Certificate Number</p>
+                        <p className="text-sm text-muted-foreground">Certificate Number</p>
                         <p className="font-medium">{selectedCert.certificateNumber || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Issuing Organization</p>
+                        <p className="text-sm text-muted-foreground">Issuing Organization</p>
                         <p className="font-medium">{selectedCert.issuingOrganization}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Status</p>
+                        <p className="text-sm text-muted-foreground">Status</p>
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${
                             selectedCert.verified
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-yellow-100 text-yellow-700'
+                              ? 'bg-green-500/15 text-green-400'
+                              : 'bg-yellow-500/15 text-yellow-400'
                           }`}
                         >
                           {selectedCert.verified ? 'VERIFIED' : 'PENDING'}
@@ -396,19 +396,19 @@ export default function CertificationsPage() {
                   </div>
 
                   {/* Dates */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Dates</h3>
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Dates</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Issue Date</p>
+                      <div className="p-4 bg-background rounded-lg">
+                        <p className="text-sm text-muted-foreground">Issue Date</p>
                         <p className="font-medium">{formatDate(selectedCert.issueDate)}</p>
                       </div>
                       <div
                         className={`p-4 rounded-lg ${
-                          isExpired(selectedCert.expiryDate) ? 'bg-red-50' : 'bg-gray-50'
+                          isExpired(selectedCert.expiryDate) ? 'bg-red-500/10' : 'bg-background'
                         }`}
                       >
-                        <p className="text-sm text-gray-600">Expiry Date</p>
+                        <p className="text-sm text-muted-foreground">Expiry Date</p>
                         <p
                           className={`font-medium ${
                             isExpired(selectedCert.expiryDate) ? 'text-red-600' : ''
@@ -418,13 +418,13 @@ export default function CertificationsPage() {
                           {isExpired(selectedCert.expiryDate) && ' (EXPIRED)'}
                         </p>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Submitted</p>
+                      <div className="p-4 bg-background rounded-lg">
+                        <p className="text-sm text-muted-foreground">Submitted</p>
                         <p className="font-medium">{formatDate(selectedCert.createdAt)}</p>
                       </div>
                       {selectedCert.verifiedAt && (
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Verified On</p>
+                        <div className="p-4 bg-green-500/10 rounded-lg">
+                          <p className="text-sm text-muted-foreground">Verified On</p>
                           <p className="font-medium">{formatDate(selectedCert.verifiedAt)}</p>
                         </div>
                       )}
@@ -432,25 +432,25 @@ export default function CertificationsPage() {
                   </div>
 
                   {/* Artisan Info */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Artisan</h3>
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="font-medium text-gray-900">
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Artisan</h3>
+                    <div className="p-4 bg-primary/10 rounded-lg">
+                      <p className="font-medium text-foreground">
                         {selectedCert.artisan?.firstName} {selectedCert.artisan?.lastName}
                       </p>
-                      <p className="text-sm text-gray-600">{selectedCert.artisan?.email}</p>
+                      <p className="text-sm text-muted-foreground">{selectedCert.artisan?.email}</p>
                     </div>
                   </div>
 
                   {/* Document */}
                   {selectedCert.documentUrl && (
-                    <div className="border-b border-gray-200 pb-4">
-                      <h3 className="font-medium text-gray-900 mb-3">Document</h3>
+                    <div className="border-b border-border pb-4">
+                      <h3 className="font-medium text-foreground mb-3">Document</h3>
                       <a
                         href={selectedCert.documentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-blue-200"
                       >
                         <span>📄</span>
                         View Document
@@ -462,7 +462,7 @@ export default function CertificationsPage() {
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => setSelectedCert(null)}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                     >
                       Close
                     </button>

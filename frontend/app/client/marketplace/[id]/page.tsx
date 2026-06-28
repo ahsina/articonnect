@@ -259,7 +259,7 @@ export default function ProductDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -268,7 +268,7 @@ export default function ProductDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{t('marketplace', 'productNotFound')}</p>
+          <p className="text-muted-foreground mb-4">{t('marketplace', 'productNotFound')}</p>
           <Button onClick={() => router.push('/client/marketplace')}>
             {t('marketplace', 'backToMarketplace')}
           </Button>
@@ -278,17 +278,17 @@ export default function ProductDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="mb-6 flex items-center gap-2 text-sm text-gray-600">
-          <button onClick={() => router.push('/client/marketplace')} className="hover:text-gray-900">
+        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+          <button onClick={() => router.push('/client/marketplace')} className="hover:text-foreground">
             {t('marketplace', 'title')}
           </button>
           <span>›</span>
           <span>{getCategoryLabel(product.category)}</span>
           <span>›</span>
-          <span className="text-gray-900">{product.name}</span>
+          <span className="text-foreground">{product.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -310,7 +310,7 @@ export default function ProductDetailsPage() {
                   key={index}
                   onClick={() => setSelectedImage(index)}
                   className={`border-2 rounded-lg overflow-hidden ${
-                    selectedImage === index ? 'border-blue-600' : 'border-gray-200'
+                    selectedImage === index ? 'border-blue-600' : 'border-border'
                   }`}
                 >
                   <img src={image} alt={`Vue ${index + 1}`} className="w-full h-20 object-cover" />
@@ -325,7 +325,7 @@ export default function ProductDetailsPage() {
               <Badge variant="info">{getCategoryLabel(product.category)}</Badge>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-4">{product.name}</h1>
 
             {/* Rating */}
             <div className="flex items-center gap-2 mb-6">
@@ -334,7 +334,7 @@ export default function ProductDetailsPage() {
                   {'★'.repeat(Math.round(averageRating))}
                   {'☆'.repeat(5 - Math.round(averageRating))}
                 </span>
-                <span className="text-gray-600 ml-2">
+                <span className="text-muted-foreground ml-2">
                   {averageRating.toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
                 </span>
               </div>
@@ -342,14 +342,14 @@ export default function ProductDetailsPage() {
 
             {/* Price */}
             <div className="mb-6">
-              <span className="text-4xl font-bold text-blue-600">{getCurrentPrice().toFixed(2)}€</span>
-              <p className="text-sm text-gray-600 mt-1">{t('marketplace', 'taxIncludedDeliveryAvailable')}</p>
+              <span className="text-4xl font-bold text-primary">{getCurrentPrice().toFixed(2)}€</span>
+              <p className="text-sm text-muted-foreground mt-1">{t('marketplace', 'taxIncludedDeliveryAvailable')}</p>
             </div>
 
             {/* Variants */}
             {product.variants && product.variants.length > 0 && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   {t('marketplace', 'sizeDimensions')}
                 </label>
                 <div className="space-y-2">
@@ -359,14 +359,14 @@ export default function ProductDetailsPage() {
                       onClick={() => setSelectedVariant(variant.id)}
                       className={`w-full p-3 border-2 rounded-lg text-left transition-colors ${
                         selectedVariant === variant.id
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-600 bg-primary/10'
+                          : 'border-border hover:border-border'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="font-medium">{variant.name}</span>
-                          <span className="text-sm text-gray-600 ml-2">
+                          <span className="text-sm text-muted-foreground ml-2">
                             ({variant.stock} {variant.stock > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')})
                           </span>
                         </div>
@@ -380,7 +380,7 @@ export default function ProductDetailsPage() {
 
             {/* Quantity */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t('cart', 'quantity')}</label>
+              <label className="block text-sm font-medium text-foreground mb-2">{t('cart', 'quantity')}</label>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -399,7 +399,7 @@ export default function ProductDetailsPage() {
                 >
                   +
                 </Button>
-                <span className="text-sm text-gray-600 ml-2">
+                <span className="text-sm text-muted-foreground ml-2">
                   {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}
                 </span>
               </div>
@@ -407,8 +407,8 @@ export default function ProductDetailsPage() {
 
             {/* Stock Warning */}
             {getCurrentStock() < 5 && (
-              <div className="mb-6 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                <p className="text-sm text-orange-800">
+              <div className="mb-6 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                <p className="text-sm text-orange-400">
                   ⚠️ {t('marketplace', 'stockLimited')} {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'exemplarPlural') : t('marketplace', 'exemplar')}{' '}
                   {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}.
                 </p>
@@ -436,7 +436,7 @@ export default function ProductDetailsPage() {
                   />
                   <div className="flex-1">
                     <p className="font-semibold">{product.artisan.companyName}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {product.artisan.city} • ★ {product.artisan.rating}
                     </p>
                   </div>
@@ -458,7 +458,7 @@ export default function ProductDetailsPage() {
                 <CardTitle>{t('marketplace', 'description')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                <p className="text-foreground whitespace-pre-line leading-relaxed">
                   {product.description}
                 </p>
               </CardContent>
@@ -485,7 +485,7 @@ export default function ProductDetailsPage() {
                               <p className="font-semibold">
                                 {review.client.firstName} {review.client.lastName}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-muted-foreground">
                                 {new Date(review.createdAt).toLocaleDateString('fr-FR', {
                                   year: 'numeric',
                                   month: 'long',
@@ -500,7 +500,7 @@ export default function ProductDetailsPage() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-gray-700">{review.comment}</p>
+                          <p className="text-foreground">{review.comment}</p>
                         </div>
                       </div>
                     </div>
@@ -521,7 +521,7 @@ export default function ProductDetailsPage() {
                   {product.specifications &&
                     Object.entries(product.specifications).map(([key, value]) => (
                       <div key={key} className="flex justify-between text-sm">
-                        <span className="text-gray-600">{key}:</span>
+                        <span className="text-muted-foreground">{key}:</span>
                         <span className="font-medium text-right">{value}</span>
                       </div>
                     ))}
@@ -559,7 +559,7 @@ export default function ProductDetailsPage() {
                     setSelectedImage(index);
                   }}
                   className={`w-3 h-3 rounded-full ${
-                    selectedImage === index ? 'bg-white' : 'bg-gray-500'
+                    selectedImage === index ? 'bg-card' : 'bg-gray-500'
                   }`}
                 />
               ))}

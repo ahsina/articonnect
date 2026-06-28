@@ -44,11 +44,11 @@ interface Invoice {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  PAID: 'bg-green-100 text-green-800',
-  OVERDUE: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-gray-100 text-gray-800',
+  DRAFT: 'bg-muted text-foreground',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PAID: 'bg-green-500/15 text-green-400',
+  OVERDUE: 'bg-red-500/15 text-red-400',
+  CANCELLED: 'bg-muted text-foreground',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -155,13 +155,13 @@ export default function ClientInvoicesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           ← {t('common', 'back')}
@@ -169,18 +169,18 @@ export default function ClientInvoicesPage() {
 
         <div className="mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-gray-900">{t('invoices', 'title')}</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('invoices', 'title')}</h1>
             {isProfessional && (
-              <Badge variant="default" className="bg-blue-600">
+              <Badge variant="default" className="bg-primary">
                 🏢 {t('client', 'professional') || 'Professionnel'}
               </Badge>
             )}
           </div>
-          <p className="text-gray-600 mt-1">{t('invoices', 'subtitle')}</p>
+          <p className="text-muted-foreground mt-1">{t('invoices', 'subtitle')}</p>
           {isProfessional && clientProfile?.companyName && (
-            <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-              <p className="font-semibold text-blue-900">{clientProfile.companyName}</p>
-              <div className="text-sm text-blue-700 flex flex-wrap gap-3">
+            <div className="mt-2 p-3 bg-primary/10 rounded-lg">
+              <p className="font-semibold text-primary">{clientProfile.companyName}</p>
+              <div className="text-sm text-primary flex flex-wrap gap-3">
                 {clientProfile.siret && <span>SIRET: {clientProfile.siret}</span>}
                 {clientProfile.vatNumber && <span>TVA: {clientProfile.vatNumber}</span>}
               </div>
@@ -192,13 +192,13 @@ export default function ClientInvoicesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('invoices', 'total')}</div>
+              <div className="text-sm text-muted-foreground">{t('invoices', 'total')}</div>
               <div className="text-2xl font-bold">{invoices.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('invoices', 'pendingAmount')}</div>
+              <div className="text-sm text-muted-foreground">{t('invoices', 'pendingAmount')}</div>
               <div className="text-2xl font-bold text-yellow-600">
                 {formatCurrency(totalPending)}
               </div>
@@ -206,7 +206,7 @@ export default function ClientInvoicesPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('invoices', 'paidAmount')}</div>
+              <div className="text-sm text-muted-foreground">{t('invoices', 'paidAmount')}</div>
               <div className="text-2xl font-bold text-green-600">
                 {formatCurrency(totalPaid)}
               </div>
@@ -214,7 +214,7 @@ export default function ClientInvoicesPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('invoices', 'overdue')}</div>
+              <div className="text-sm text-muted-foreground">{t('invoices', 'overdue')}</div>
               <div className="text-2xl font-bold text-red-600">
                 {invoices.filter((inv) => inv.status === 'OVERDUE').length}
               </div>
@@ -241,10 +241,10 @@ export default function ClientInvoicesPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">📄</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('invoices', 'noInvoices')}
               </h3>
-              <p className="text-gray-600">{t('invoices', 'noInvoicesDesc')}</p>
+              <p className="text-muted-foreground">{t('invoices', 'noInvoicesDesc')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -255,7 +255,7 @@ export default function ClientInvoicesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-foreground">
                           {invoice.invoiceNumber}
                         </h3>
                         <Badge className={STATUS_COLORS[invoice.status]}>
@@ -265,10 +265,10 @@ export default function ClientInvoicesPage() {
 
                       {invoice.mission && (
                         <div className="mb-2">
-                          <p className="text-gray-600">
+                          <p className="text-muted-foreground">
                             Mission: {invoice.mission.title}
                             {invoice.mission.artisan && (
-                              <span className="text-gray-500">
+                              <span className="text-muted-foreground">
                                 {' '}
                                 - {invoice.mission.artisan.firstName}{' '}
                                 {invoice.mission.artisan.lastName}
@@ -281,12 +281,12 @@ export default function ClientInvoicesPage() {
                             invoice.mission.internalReference) && (
                             <div className="flex flex-wrap gap-3 text-sm mt-1">
                               {invoice.mission.purchaseOrderNumber && (
-                                <span className="text-blue-600">
+                                <span className="text-primary">
                                   📋 BC: {invoice.mission.purchaseOrderNumber}
                                 </span>
                               )}
                               {invoice.mission.internalReference && (
-                                <span className="text-blue-600">
+                                <span className="text-primary">
                                   🏷️ Réf: {invoice.mission.internalReference}
                                 </span>
                               )}
@@ -295,7 +295,7 @@ export default function ClientInvoicesPage() {
 
                           {/* Billing Company Info (if different) */}
                           {invoice.mission.billingCompanyName && (
-                            <div className="text-sm text-gray-500 mt-1">
+                            <div className="text-sm text-muted-foreground mt-1">
                               Facturation: {invoice.mission.billingCompanyName}
                               {invoice.mission.billingVatNumber && (
                                 <span> (TVA: {invoice.mission.billingVatNumber})</span>
@@ -305,7 +305,7 @@ export default function ClientInvoicesPage() {
                         </div>
                       )}
 
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-2">
                         <span>Émise le {formatDate(invoice.createdAt)}</span>
                         <span>•</span>
                         <span>Échéance: {formatDate(invoice.dueDate)}</span>
@@ -321,10 +321,10 @@ export default function ClientInvoicesPage() {
                     </div>
 
                     <div className="text-right ml-4">
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-foreground">
                         {formatCurrency(invoice.totalAmount)}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         HT: {formatCurrency(invoice.subtotal)} | TVA:{' '}
                         {formatCurrency(invoice.taxAmount)}
                       </div>

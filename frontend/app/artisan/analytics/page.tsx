@@ -179,7 +179,7 @@ export default function ArtisanAnalyticsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -189,7 +189,7 @@ export default function ArtisanAnalyticsPage() {
       <div className="p-6">
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-gray-600">{t('analytics', 'noData') || 'No data available'}</p>
+            <p className="text-muted-foreground">{t('analytics', 'noData') || 'No data available'}</p>
           </CardContent>
         </Card>
       </div>
@@ -201,10 +201,10 @@ export default function ArtisanAnalyticsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('analytics', 'title') || 'Analytics Dashboard'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('analytics', 'subtitle') || 'Track your performance and earnings'}
           </p>
         </div>
@@ -224,58 +224,58 @@ export default function ArtisanAnalyticsPage() {
 
       {/* KPI Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
           <CardContent className="p-4">
             <div className="text-sm text-green-600 mb-1">
               {t('analytics', 'totalEarnings') || 'Total Earnings'}
             </div>
-            <div className="text-3xl font-bold text-green-800">
+            <div className="text-3xl font-bold text-green-400">
               {data.earnings.total.toLocaleString()}€
             </div>
             <div className="flex items-center gap-1 mt-2">
-              <Badge className={data.earnings.growth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+              <Badge className={data.earnings.growth >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}>
                 {data.earnings.growth >= 0 ? '↑' : '↓'} {Math.abs(data.earnings.growth)}%
               </Badge>
-              <span className="text-xs text-gray-600">vs last month</span>
+              <span className="text-xs text-muted-foreground">vs last month</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="p-4">
-            <div className="text-sm text-blue-600 mb-1">
+            <div className="text-sm text-primary mb-1">
               {t('analytics', 'completedMissions') || 'Completed Missions'}
             </div>
-            <div className="text-3xl font-bold text-blue-800">{data.missions.completed}</div>
-            <div className="text-xs text-gray-600 mt-2">
+            <div className="text-3xl font-bold text-primary">{data.missions.completed}</div>
+            <div className="text-xs text-muted-foreground mt-2">
               {data.missions.conversionRate}% {t('analytics', 'conversionRate') || 'conversion rate'}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
           <CardContent className="p-4">
             <div className="text-sm text-yellow-600 mb-1">
               {t('analytics', 'averageRating') || 'Average Rating'}
             </div>
-            <div className="text-3xl font-bold text-yellow-800">
+            <div className="text-3xl font-bold text-yellow-400">
               ⭐ {data.performance.averageRating}
             </div>
-            <div className="text-xs text-gray-600 mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               {data.performance.totalReviews} {t('analytics', 'reviews') || 'reviews'}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
           <CardContent className="p-4">
             <div className="text-sm text-purple-600 mb-1">
               {t('analytics', 'repeatClients') || 'Repeat Clients'}
             </div>
-            <div className="text-3xl font-bold text-purple-800">
+            <div className="text-3xl font-bold text-purple-400">
               {data.performance.repeatClientRate}%
             </div>
-            <div className="text-xs text-gray-600 mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               {t('analytics', 'returnRate') || 'client return rate'}
             </div>
           </CardContent>
@@ -386,23 +386,23 @@ export default function ArtisanAnalyticsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                     {t('analytics', 'city') || 'City'}
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-600">
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                     {t('analytics', 'missions') || 'Missions'}
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-600">
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                     {t('analytics', 'revenue') || 'Revenue'}
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-600">
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                     {t('analytics', 'avgPerMission') || 'Avg/Mission'}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {data.geography.topCities.map((city, index) => (
-                  <tr key={city.city} className="border-b hover:bg-gray-50">
+                  <tr key={city.city} className="border-b hover:bg-accent">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][index]}</span>
@@ -413,7 +413,7 @@ export default function ArtisanAnalyticsPage() {
                     <td className="text-right py-3 px-4 font-medium text-green-600">
                       {city.revenue.toLocaleString()}€
                     </td>
-                    <td className="text-right py-3 px-4 text-gray-600">
+                    <td className="text-right py-3 px-4 text-muted-foreground">
                       {Math.round(city.revenue / city.count)}€
                     </td>
                   </tr>
@@ -431,30 +431,30 @@ export default function ArtisanAnalyticsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-background rounded-lg">
               <div className="text-4xl mb-2">⚡</div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {data.performance.responseTime}h
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('analytics', 'avgResponseTime') || 'Avg Response Time'}
               </div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-background rounded-lg">
               <div className="text-4xl mb-2">✅</div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {data.performance.completionRate}%
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('analytics', 'completionRate') || 'Completion Rate'}
               </div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-background rounded-lg">
               <div className="text-4xl mb-2">📍</div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {data.geography.averageDistance} km
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('analytics', 'avgTravelDistance') || 'Avg Travel Distance'}
               </div>
             </div>

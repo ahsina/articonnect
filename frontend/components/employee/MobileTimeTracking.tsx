@@ -210,7 +210,7 @@ export function MobileTimeTracking() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -218,7 +218,7 @@ export function MobileTimeTracking() {
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-20">
       {/* Header with current time */}
-      <div className="bg-gradient-to-b from-blue-600 to-blue-800 px-4 py-8 text-center">
+      <div className="bg-gradient-to-b from-primary to-blue-800 px-4 py-8 text-center">
         <div className="text-6xl font-bold tracking-tight">
           {formatClockTime(currentTime)}
         </div>
@@ -237,14 +237,14 @@ export function MobileTimeTracking() {
           {/* Current Status */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <div className="text-sm text-gray-400 uppercase tracking-wide">Statut</div>
+              <div className="text-sm text-muted-foreground uppercase tracking-wide">Statut</div>
               <div className="text-2xl font-bold mt-1">
                 {status?.isOnBreak ? (
                   <span className="text-yellow-400">En pause</span>
                 ) : status?.isWorking ? (
                   <span className="text-green-400">En service</span>
                 ) : (
-                  <span className="text-gray-400">Hors service</span>
+                  <span className="text-muted-foreground">Hors service</span>
                 )}
               </div>
             </div>
@@ -257,13 +257,13 @@ export function MobileTimeTracking() {
           {/* Today's Stats */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-700/50 rounded-xl p-4">
-              <div className="text-sm text-gray-400">Travaille</div>
+              <div className="text-sm text-muted-foreground">Travaille</div>
               <div className="text-2xl font-bold text-blue-400">
                 {formatTime(status?.todayWorkedMinutes || 0)}
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-xl p-4">
-              <div className="text-sm text-gray-400">Pause</div>
+              <div className="text-sm text-muted-foreground">Pause</div>
               <div className="text-2xl font-bold text-yellow-400">
                 {formatTime(status?.todayBreakMinutes || 0)}
               </div>
@@ -304,7 +304,7 @@ export function MobileTimeTracking() {
                   <button
                     onClick={startBreak}
                     disabled={actionLoading}
-                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 rounded-xl font-bold text-lg transition-all active:scale-98 flex items-center justify-center gap-3 text-gray-900"
+                    className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 rounded-xl font-bold text-lg transition-all active:scale-98 flex items-center justify-center gap-3 text-foreground"
                   >
                     {actionLoading ? (
                       <div className="animate-spin w-6 h-6 border-2 border-gray-900 border-t-transparent rounded-full" />
@@ -321,7 +321,7 @@ export function MobileTimeTracking() {
                   <button
                     onClick={endBreak}
                     disabled={actionLoading}
-                    className="w-full py-4 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 rounded-xl font-bold text-lg transition-all active:scale-98 flex items-center justify-center gap-3"
+                    className="w-full py-4 bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-xl font-bold text-lg transition-all active:scale-98 flex items-center justify-center gap-3"
                   >
                     {actionLoading ? (
                       <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full" />
@@ -360,7 +360,7 @@ export function MobileTimeTracking() {
 
           {/* Location indicator */}
           {location && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-400">
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -386,7 +386,7 @@ export function MobileTimeTracking() {
                   : 'bg-gray-700/50'
               }`}
             >
-              <div className="text-xs text-gray-400">{getDayName(day.date)}</div>
+              <div className="text-xs text-muted-foreground">{getDayName(day.date)}</div>
               <div className="text-sm font-bold mt-1">
                 {day.workDuration > 0 ? formatTime(day.workDuration) : '-'}
               </div>
@@ -399,10 +399,10 @@ export function MobileTimeTracking() {
 
         {/* Week Total */}
         <div className="mt-4 bg-gray-800 rounded-xl p-4 flex justify-between items-center">
-          <span className="text-gray-400">Total semaine</span>
+          <span className="text-muted-foreground">Total semaine</span>
           <span className="text-xl font-bold">
             {formatTime(weekSummary.reduce((sum, d) => sum + d.workDuration, 0))}
-            <span className="text-sm text-gray-400 ml-1">/ 35h</span>
+            <span className="text-sm text-muted-foreground ml-1">/ 35h</span>
           </span>
         </div>
       </div>
@@ -418,7 +418,7 @@ export function MobileTimeTracking() {
                 </svg>
               </div>
               <div>
-                <div className="text-sm text-gray-400">Entree a</div>
+                <div className="text-sm text-muted-foreground">Entree a</div>
                 <div className="font-semibold">
                   {new Date(status.clockedInAt).toLocaleTimeString('fr-FR', {
                     hour: '2-digit',

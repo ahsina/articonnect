@@ -29,11 +29,11 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  ACCEPTED: 'bg-blue-100 text-blue-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  ACCEPTED: 'bg-primary/10 text-primary',
+  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+  COMPLETED: 'bg-green-500/15 text-green-400',
+  CANCELLED: 'bg-red-500/15 text-red-400',
 };
 
 export default function ArtisanMissionsPage() {
@@ -112,18 +112,18 @@ export default function ArtisanMissionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('artisan', 'myMissions')}</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('artisan', 'myMissions')}</h1>
+          <p className="text-muted-foreground">
             {t('artisan', 'manageMissions')}
           </p>
         </div>
@@ -161,7 +161,7 @@ export default function ArtisanMissionsPage() {
           {filteredMissions.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <p className="text-gray-500 mb-4">{t('artisan', 'noMissionsFound')}</p>
+                <p className="text-muted-foreground mb-4">{t('artisan', 'noMissionsFound')}</p>
                 <Button onClick={() => router.push('/artisan/dashboard')}>
                   {t('artisan', 'backToDashboard')}
                 </Button>
@@ -182,10 +182,10 @@ export default function ArtisanMissionsPage() {
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h3 className="text-xl font-semibold text-gray-900">
+                              <h3 className="text-xl font-semibold text-foreground">
                                 {mission.title}
                               </h3>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">
                                 {t('artisan', 'by')} {mission.client.firstName} {mission.client.lastName} • {mission.client.city}
                               </p>
                             </div>
@@ -194,25 +194,25 @@ export default function ArtisanMissionsPage() {
                             </Badge>
                           </div>
 
-                          <p className="text-gray-700 mb-3">{mission.description}</p>
+                          <p className="text-foreground mb-3">{mission.description}</p>
 
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div>
-                              <span className="text-gray-600">{t('artisan', 'category')}:</span>
+                              <span className="text-muted-foreground">{t('artisan', 'category')}:</span>
                               <p className="font-semibold">{mission.category}</p>
                             </div>
                             <div>
-                              <span className="text-gray-600">{t('artisan', 'price')}:</span>
+                              <span className="text-muted-foreground">{t('artisan', 'price')}:</span>
                               <p className="font-semibold text-green-600">
                                 {mission.price}€
                               </p>
                             </div>
                             <div>
-                              <span className="text-gray-600">{t('artisan', 'distance')}:</span>
+                              <span className="text-muted-foreground">{t('artisan', 'distance')}:</span>
                               <p className="font-semibold">{mission.distance} km</p>
                             </div>
                             <div>
-                              <span className="text-gray-600">{t('artisan', 'address')}:</span>
+                              <span className="text-muted-foreground">{t('artisan', 'address')}:</span>
                               <p className="font-semibold">
                                 {mission.address}, {mission.city}
                               </p>
@@ -221,7 +221,7 @@ export default function ArtisanMissionsPage() {
 
                           {mission.scheduledDate && (
                             <div className="mt-3 text-sm">
-                              <span className="text-gray-600">{t('artisan', 'scheduledDate')}:</span>
+                              <span className="text-muted-foreground">{t('artisan', 'scheduledDate')}:</span>
                               <p className="font-semibold">
                                 📅 {formatDate(mission.scheduledDate)}
                               </p>

@@ -108,7 +108,7 @@ export function Navbar({ user }: NavbarProps) {
 
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled || isMobileMenuOpen ? 'bg-white shadow-md' : 'bg-white/95 backdrop-blur-sm'
+          isScrolled || isMobileMenuOpen ? 'bg-card shadow-md' : 'bg-white/95 backdrop-blur-sm'
         }`}
         role="navigation"
         aria-label={t('nav', 'mainNavigation') || 'Navigation principale'}
@@ -119,7 +119,7 @@ export function Navbar({ user }: NavbarProps) {
             <div className="flex items-center">
               <Link
                 href={getDashboardLink()}
-                className="text-2xl font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                className="text-2xl font-bold text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
               >
                 Krafolt
               </Link>
@@ -138,8 +138,8 @@ export function Navbar({ user }: NavbarProps) {
                   <NotificationBell />
                   <LanguageSwitcher />
 
-                  <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-gray-200">
-                    <span className="text-sm text-gray-600">
+                  <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-border">
+                    <span className="text-sm text-muted-foreground">
                       {user.firstName} {user.lastName}
                     </span>
                     <Button
@@ -170,7 +170,7 @@ export function Navbar({ user }: NavbarProps) {
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] min-w-[44px]"
+                className="inline-flex items-center justify-center p-2 rounded-md text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] min-w-[44px]"
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-menu"
                 aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
@@ -190,15 +190,15 @@ export function Navbar({ user }: NavbarProps) {
               : 'max-h-0 opacity-0 overflow-hidden'
           }`}
         >
-          <div className="px-4 pt-2 pb-4 space-y-1 bg-white border-t border-gray-200">
+          <div className="px-4 pt-2 pb-4 space-y-1 bg-card border-t border-border">
             {user ? (
               <>
                 {/* User info */}
-                <div className="py-3 px-2 border-b border-gray-100 mb-2">
-                  <p className="text-sm font-medium text-gray-900">
+                <div className="py-3 px-2 border-b border-border mb-2">
+                  <p className="text-sm font-medium text-foreground">
                     {user.firstName} {user.lastName}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize">{user.role.toLowerCase()}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</p>
                 </div>
 
                 {/* Navigation links */}
@@ -206,20 +206,20 @@ export function Navbar({ user }: NavbarProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="block py-3 px-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md min-h-[44px] flex items-center"
+                    className="block py-3 px-2 text-base font-medium text-foreground hover:bg-accent rounded-md min-h-[44px] flex items-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ))}
 
-                <div className="pt-2 border-t border-gray-100 mt-2">
+                <div className="pt-2 border-t border-border mt-2">
                   <div className="py-2 px-2">
                     <LanguageSwitcher />
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left py-3 px-2 text-base font-medium text-red-600 hover:bg-red-50 rounded-md min-h-[44px] flex items-center"
+                    className="w-full text-left py-3 px-2 text-base font-medium text-red-600 hover:bg-red-500/10 rounded-md min-h-[44px] flex items-center"
                   >
                     {t('nav', 'logout') || 'Déconnexion'}
                   </button>
@@ -232,14 +232,14 @@ export function Navbar({ user }: NavbarProps) {
                 </div>
                 <Link
                   href="/login"
-                  className="block py-3 px-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md min-h-[44px] flex items-center"
+                  className="block py-3 px-2 text-base font-medium text-foreground hover:bg-accent rounded-md min-h-[44px] flex items-center"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t('nav', 'login') || 'Connexion'}
                 </Link>
                 <Link
                   href="/register"
-                  className="block py-3 px-2 text-base font-medium text-blue-600 hover:bg-blue-50 rounded-md min-h-[44px] flex items-center"
+                  className="block py-3 px-2 text-base font-medium text-primary hover:bg-primary/10 rounded-md min-h-[44px] flex items-center"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t('nav', 'register') || "S'inscrire"}

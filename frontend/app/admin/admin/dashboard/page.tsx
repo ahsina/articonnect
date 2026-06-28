@@ -38,18 +38,18 @@ export default function AdminDashboardPage() {
   const getActionColor = (action: string) => {
     const actionLower = action.toLowerCase();
     if (actionLower.includes('create') || actionLower.includes('register')) {
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-500/15 text-green-400';
     }
     if (actionLower.includes('delete') || actionLower.includes('remove')) {
-      return 'bg-red-100 text-red-700';
+      return 'bg-red-500/15 text-red-400';
     }
     if (actionLower.includes('update') || actionLower.includes('edit')) {
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-primary/10 text-primary';
     }
     if (actionLower.includes('login') || actionLower.includes('auth')) {
-      return 'bg-purple-100 text-purple-700';
+      return 'bg-purple-500/15 text-purple-400';
     }
-    return 'bg-gray-100 text-gray-700';
+    return 'bg-muted text-foreground';
   };
 
   const getResourceIcon = (resource: string) => {
@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -107,11 +107,11 @@ export default function AdminDashboardPage() {
     color?: string;
   }) => {
     const colorClasses: any = {
-      blue: 'bg-blue-100 text-blue-600',
-      green: 'bg-green-100 text-green-600',
-      yellow: 'bg-yellow-100 text-yellow-600',
-      purple: 'bg-purple-100 text-purple-600',
-      red: 'bg-red-100 text-red-600',
+      blue: 'bg-primary/10 text-primary',
+      green: 'bg-green-500/15 text-green-600',
+      yellow: 'bg-yellow-500/15 text-yellow-600',
+      purple: 'bg-purple-500/15 text-purple-600',
+      red: 'bg-red-500/15 text-red-600',
     };
 
     return (
@@ -119,9 +119,9 @@ export default function AdminDashboardPage() {
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-              <p className="text-3xl font-bold text-gray-900">{value}</p>
-              {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+              <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+              <p className="text-3xl font-bold text-foreground">{value}</p>
+              {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
             </div>
             <div
               className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${colorClasses[color]}`}
@@ -135,12 +135,12 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('admin', 'dashboard')}</h1>
-          <p className="text-gray-600 mt-2">{t('admin', 'platformOverviewKrafolt')}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('admin', 'dashboard')}</h1>
+          <p className="text-muted-foreground mt-2">{t('admin', 'platformOverviewKrafolt')}</p>
         </div>
 
         {/* Stats Grid */}
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
                 <span className="text-3xl">👥</span>
                 <div>
                   <div className="text-lg">{t('admin', 'userManagement')}</div>
-                  <div className="text-sm font-normal text-gray-500">
+                  <div className="text-sm font-normal text-muted-foreground">
                     {t('admin', 'viewManageUsers')}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function AdminDashboardPage() {
                 <span className="text-3xl">📋</span>
                 <div>
                   <div className="text-lg">{t('admin', 'missionManagement')}</div>
-                  <div className="text-sm font-normal text-gray-500">
+                  <div className="text-sm font-normal text-muted-foreground">
                     {t('admin', 'trackModerateMissions')}
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
                 <span className="text-3xl">📊</span>
                 <div>
                   <div className="text-lg">{t('admin', 'analytics')}</div>
-                  <div className="text-sm font-normal text-gray-500">
+                  <div className="text-sm font-normal text-muted-foreground">
                     {t('admin', 'detailedReports')}
                   </div>
                 </div>
@@ -257,7 +257,7 @@ export default function AdminDashboardPage() {
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
             <button
               onClick={() => router.push('/admin/audit-logs')}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-primary hover:text-primary"
             >
               View All →
             </button>
@@ -268,7 +268,7 @@ export default function AdminDashboardPage() {
                 {recentActivity.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                    className="flex items-center justify-between py-3 border-b border-border last:border-0"
                   >
                     <div className="flex items-center gap-4">
                       <span className="text-2xl">{getResourceIcon(activity.resource)}</span>
@@ -279,20 +279,20 @@ export default function AdminDashboardPage() {
                           >
                             {activity.action}
                           </span>
-                          <span className="text-gray-700">{activity.resource}</span>
+                          <span className="text-foreground">{activity.resource}</span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {activity.userId ? `User: ${activity.userId.slice(0, 8)}...` : 'System'} •{' '}
                           {activity.ipAddress}
                         </p>
                       </div>
                     </div>
-                    <span className="text-sm text-gray-400">{getTimeAgo(activity.createdAt)}</span>
+                    <span className="text-sm text-muted-foreground">{getTimeAgo(activity.createdAt)}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <span className="text-4xl block mb-2">📋</span>
                 <p>No recent activity</p>
               </div>
@@ -304,31 +304,31 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           <button
             onClick={() => router.push('/admin/fraud-settings')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">🛡️</span>
-            <span className="font-medium text-gray-700">Fraud Settings</span>
+            <span className="font-medium text-foreground">Fraud Settings</span>
           </button>
           <button
             onClick={() => router.push('/admin/monitoring')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">📊</span>
-            <span className="font-medium text-gray-700">Monitoring</span>
+            <span className="font-medium text-foreground">Monitoring</span>
           </button>
           <button
             onClick={() => router.push('/admin/feature-flags')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">🏳️</span>
-            <span className="font-medium text-gray-700">Feature Flags</span>
+            <span className="font-medium text-foreground">Feature Flags</span>
           </button>
           <button
             onClick={() => router.push('/admin/cron')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">⚙️</span>
-            <span className="font-medium text-gray-700">CRON Jobs</span>
+            <span className="font-medium text-foreground">CRON Jobs</span>
           </button>
         </div>
 
@@ -336,31 +336,31 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <button
             onClick={() => router.push('/admin/verifications')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">✅</span>
-            <span className="font-medium text-gray-700">KYC & Verification</span>
+            <span className="font-medium text-foreground">KYC & Verification</span>
           </button>
           <button
             onClick={() => router.push('/admin/disputes')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">⚠️</span>
-            <span className="font-medium text-gray-700">Disputes</span>
+            <span className="font-medium text-foreground">Disputes</span>
           </button>
           <button
             onClick={() => router.push('/admin/audit-logs')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">📜</span>
-            <span className="font-medium text-gray-700">Audit Logs</span>
+            <span className="font-medium text-foreground">Audit Logs</span>
           </button>
           <button
             onClick={() => router.push('/admin/moderation')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">🔍</span>
-            <span className="font-medium text-gray-700">Moderation</span>
+            <span className="font-medium text-foreground">Moderation</span>
           </button>
         </div>
 
@@ -368,31 +368,31 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <button
             onClick={() => router.push('/admin/no-shows')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">🚫</span>
-            <span className="font-medium text-gray-700">No-Shows</span>
+            <span className="font-medium text-foreground">No-Shows</span>
           </button>
           <button
             onClick={() => router.push('/admin/certifications')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">📜</span>
-            <span className="font-medium text-gray-700">Certifications</span>
+            <span className="font-medium text-foreground">Certifications</span>
           </button>
           <button
             onClick={() => router.push('/admin/specialties')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">🛠️</span>
-            <span className="font-medium text-gray-700">Specialties</span>
+            <span className="font-medium text-foreground">Specialties</span>
           </button>
           <button
             onClick={() => router.push('/admin/reputation')}
-            className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-left"
+            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <span className="text-2xl block mb-2">⭐</span>
-            <span className="font-medium text-gray-700">Reputation</span>
+            <span className="font-medium text-foreground">Reputation</span>
           </button>
         </div>
 
@@ -400,7 +400,7 @@ export default function AdminDashboardPage() {
         <div className="mt-8">
           <button
             onClick={() => router.push('/admin/settings')}
-            className="w-full p-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl text-left"
+            className="w-full p-6 bg-gradient-to-r from-primary to-orange-600 rounded-xl hover:from-primary hover:to-orange-600 transition-all shadow-lg hover:shadow-xl text-left"
           >
             <div className="flex items-center gap-4">
               <span className="text-4xl">⚙️</span>

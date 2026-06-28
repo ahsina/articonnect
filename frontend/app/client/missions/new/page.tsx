@@ -221,11 +221,11 @@ export default function NewMissionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('missions', 'newRequest')}</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">{t('missions', 'newRequest')}</h1>
+          <p className="text-muted-foreground mt-2">
             {t('missions', 'createRequestSteps')}
           </p>
         </div>
@@ -238,8 +238,8 @@ export default function NewMissionPage() {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                     step >= s
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                      ? 'bg-primary text-white'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {s}
@@ -247,7 +247,7 @@ export default function NewMissionPage() {
                 {s < 3 && (
                   <div
                     className={`h-1 w-24 mx-2 ${
-                      step > s ? 'bg-blue-600' : 'bg-gray-200'
+                      step > s ? 'bg-primary' : 'bg-muted'
                     }`}
                   />
                 )}
@@ -255,13 +255,13 @@ export default function NewMissionPage() {
             ))}
           </div>
           <div className="flex justify-between mt-2 text-sm">
-            <span className={step >= 1 ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
+            <span className={step >= 1 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
               {t('missions', 'categoryStep')}
             </span>
-            <span className={step >= 2 ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
+            <span className={step >= 2 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
               {t('missions', 'detailsStep')}
             </span>
-            <span className={step >= 3 ? 'text-blue-600 font-semibold' : 'text-gray-500'}>
+            <span className={step >= 3 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
               {t('missions', 'confirmationStep')}
             </span>
           </div>
@@ -279,10 +279,10 @@ export default function NewMissionPage() {
                   <button
                     key={cat.id}
                     onClick={() => handleCategorySelect(cat.name)}
-                    className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-left"
+                    className="p-6 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/10 transition text-left"
                   >
                     <div className="text-4xl mb-2">{cat.icon}</div>
-                    <div className="font-semibold text-gray-900">{cat.name}</div>
+                    <div className="font-semibold text-foreground">{cat.name}</div>
                   </button>
                 ))}
               </div>
@@ -300,7 +300,7 @@ export default function NewMissionPage() {
               <CardContent className="space-y-4">
                 {/* Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('missions', 'requestType')}
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -309,15 +309,15 @@ export default function NewMissionPage() {
                       onClick={() => setFormData({ ...formData, type: 'EMERGENCY' })}
                       className={`p-4 border-2 rounded-lg text-center transition-all ${
                         formData.type === 'EMERGENCY'
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-200 hover:border-red-300'
+                          ? 'border-red-500 bg-red-500/10'
+                          : 'border-border hover:border-red-500/30'
                       }`}
                     >
                       <span className="text-2xl">🚨</span>
-                      <p className={`font-medium ${formData.type === 'EMERGENCY' ? 'text-red-700' : 'text-gray-900'}`}>
+                      <p className={`font-medium ${formData.type === 'EMERGENCY' ? 'text-red-400' : 'text-foreground'}`}>
                         {t('missions', 'emergency') || 'Urgence'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t('emergency', 'immediate') || 'Intervention immédiate'}
                       </p>
                     </button>
@@ -326,15 +326,15 @@ export default function NewMissionPage() {
                       onClick={() => setFormData({ ...formData, type: 'SCHEDULED' })}
                       className={`p-4 border-2 rounded-lg text-center transition-all ${
                         formData.type === 'SCHEDULED'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-300'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-blue-300'
                       }`}
                     >
                       <span className="text-2xl">📅</span>
-                      <p className={`font-medium ${formData.type === 'SCHEDULED' ? 'text-blue-700' : 'text-gray-900'}`}>
+                      <p className={`font-medium ${formData.type === 'SCHEDULED' ? 'text-primary' : 'text-foreground'}`}>
                         {t('missions', 'scheduled') || 'Planifiée'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t('emergency', 'chooseDate') || 'Choisir une date'}
                       </p>
                     </button>
@@ -343,15 +343,15 @@ export default function NewMissionPage() {
                       onClick={() => setFormData({ ...formData, type: 'QUOTE' })}
                       className={`p-4 border-2 rounded-lg text-center transition-all ${
                         formData.type === 'QUOTE'
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200 hover:border-green-300'
+                          ? 'border-green-500 bg-green-500/10'
+                          : 'border-border hover:border-green-500/30'
                       }`}
                     >
                       <span className="text-2xl">📝</span>
-                      <p className={`font-medium ${formData.type === 'QUOTE' ? 'text-green-700' : 'text-gray-900'}`}>
+                      <p className={`font-medium ${formData.type === 'QUOTE' ? 'text-green-400' : 'text-foreground'}`}>
                         {t('missions', 'quote') || 'Devis'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t('emergency', 'getQuote') || 'Demander un devis'}
                       </p>
                     </button>
@@ -360,14 +360,14 @@ export default function NewMissionPage() {
 
                 {/* Emergency Alert */}
                 {formData.type === 'EMERGENCY' && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                     <div className="flex items-start gap-3">
                       <span className="text-red-500 text-xl">⚡</span>
                       <div>
-                        <h4 className="font-semibold text-red-800">
+                        <h4 className="font-semibold text-red-400">
                           {t('emergency', 'urgentRequest') || 'Demande Urgente'}
                         </h4>
-                        <p className="text-sm text-red-700 mt-1">
+                        <p className="text-sm text-red-400 mt-1">
                           {t('emergency', 'urgentDesc') ||
                             'Votre demande sera envoyée immédiatement aux artisans disponibles à proximité. Des frais supplémentaires peuvent s\'appliquer pour les interventions en urgence.'}
                         </p>
@@ -383,7 +383,7 @@ export default function NewMissionPage() {
 
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('missions', 'requestTitle')} *
                   </label>
                   <Input
@@ -396,13 +396,13 @@ export default function NewMissionPage() {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('missions', 'detailedDescription')} *
                   </label>
                   <textarea
                     required
                     rows={4}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border border-border rounded-md px-3 py-2"
                     placeholder={t('missions', 'descriptionPlaceholder')}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -411,7 +411,7 @@ export default function NewMissionPage() {
 
                 {/* Address */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('common', 'address')} *
                   </label>
                   <Input
@@ -424,7 +424,7 @@ export default function NewMissionPage() {
 
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('common', 'city')} *
                     </label>
                     <Input
@@ -435,7 +435,7 @@ export default function NewMissionPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('common', 'postalCode')} *
                     </label>
                     <Input
@@ -446,11 +446,11 @@ export default function NewMissionPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('common', 'country')} *
                     </label>
                     <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 h-10"
+                      className="w-full border border-border rounded-md px-3 py-2 h-10"
                       value={formData.country}
                       onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     >
@@ -464,7 +464,7 @@ export default function NewMissionPage() {
                 {/* Scheduled Date */}
                 {formData.type === 'SCHEDULED' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('missions', 'desiredDate')}
                     </label>
                     <Input
@@ -477,7 +477,7 @@ export default function NewMissionPage() {
 
                 {/* Budget */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('missions', 'indicativeBudget')}
                   </label>
                   <Input
@@ -486,7 +486,7 @@ export default function NewMissionPage() {
                     value={formData.clientBudget}
                     onChange={(e) => setFormData({ ...formData, clientBudget: e.target.value })}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {t('missions', 'budgetHelper')}
                   </p>
                 </div>
@@ -495,11 +495,11 @@ export default function NewMissionPage() {
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-lg">📷</span>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {t('missions', 'beforePhotos') || 'Photos avant travaux'}
                     </h3>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
                     {t('missions', 'beforePhotosHelper') || 'Ajoutez des photos pour montrer l\'état actuel du problème'}
                   </p>
 
@@ -536,22 +536,22 @@ export default function NewMissionPage() {
                         disabled={uploadingPhoto}
                         className="hidden"
                       />
-                      <div className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                      <div className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-border rounded-lg hover:border-primary hover:bg-primary/10 transition-colors">
                         {uploadingPhoto ? (
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             {t('common', 'uploading') || 'Téléchargement...'}
                           </span>
                         ) : (
                           <>
                             <span>📤</span>
-                            <span className="text-gray-700">
+                            <span className="text-foreground">
                               {t('missions', 'addPhotos') || 'Ajouter des photos'}
                             </span>
                           </>
                         )}
                       </div>
                     </label>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted-foreground">
                       {beforePhotos.length}/5 photos
                     </span>
                   </div>
@@ -562,7 +562,7 @@ export default function NewMissionPage() {
                   <div className="border-t pt-4 mt-4">
                     <div className="flex items-center gap-2 mb-4">
                       <span className="text-lg">🏢</span>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-foreground">
                         {t('missions', 'professionalInfo') || 'Informations professionnelles'}
                       </h3>
                     </div>
@@ -570,7 +570,7 @@ export default function NewMissionPage() {
                     <div className="space-y-4">
                       {/* Purchase Order Number */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           {t('missions', 'purchaseOrderNumber') || 'N° Bon de commande'}
                         </label>
                         <Input
@@ -584,7 +584,7 @@ export default function NewMissionPage() {
 
                       {/* Internal Reference */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           {t('missions', 'internalReference') || 'Référence interne'}
                         </label>
                         <Input
@@ -603,9 +603,9 @@ export default function NewMissionPage() {
                           id="differentBilling"
                           checked={useDifferentBilling}
                           onChange={(e) => setUseDifferentBilling(e.target.checked)}
-                          className="rounded border-gray-300"
+                          className="rounded border-border"
                         />
-                        <label htmlFor="differentBilling" className="text-sm text-gray-700">
+                        <label htmlFor="differentBilling" className="text-sm text-foreground">
                           {t('missions', 'differentBillingAddress') ||
                             'Utiliser une adresse de facturation différente'}
                         </label>
@@ -613,9 +613,9 @@ export default function NewMissionPage() {
 
                       {/* Billing Info (conditional) */}
                       {useDifferentBilling && (
-                        <div className="space-y-4 pl-4 border-l-2 border-blue-200">
+                        <div className="space-y-4 pl-4 border-l-2 border-primary/20">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                               {t('missions', 'billingCompanyName') || 'Raison sociale facturation'}
                             </label>
                             <Input
@@ -628,7 +628,7 @@ export default function NewMissionPage() {
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                               {t('missions', 'billingAddress') || 'Adresse de facturation'}
                             </label>
                             <Input
@@ -641,7 +641,7 @@ export default function NewMissionPage() {
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                               {t('missions', 'billingVatNumber') || 'N° TVA facturation'}
                             </label>
                             <Input
@@ -678,28 +678,28 @@ export default function NewMissionPage() {
               <CardTitle>{t('missions', 'confirmRequest')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <div className="bg-background p-4 rounded-lg space-y-3">
                 <div>
-                  <span className="text-sm text-gray-600">{t('common', 'category')}:</span>
+                  <span className="text-sm text-muted-foreground">{t('common', 'category')}:</span>
                   <p className="font-semibold">{formData.category}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">{t('missions', 'title')}:</span>
+                  <span className="text-sm text-muted-foreground">{t('missions', 'title')}:</span>
                   <p className="font-semibold">{formData.title}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">{t('common', 'description')}:</span>
-                  <p className="text-gray-900">{formData.description}</p>
+                  <span className="text-sm text-muted-foreground">{t('common', 'description')}:</span>
+                  <p className="text-foreground">{formData.description}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">{t('common', 'address')}:</span>
-                  <p className="text-gray-900">
+                  <span className="text-sm text-muted-foreground">{t('common', 'address')}:</span>
+                  <p className="text-foreground">
                     {formData.address}, {formData.postalCode} {formData.city}
                   </p>
                 </div>
                 {formData.clientBudget && (
                   <div>
-                    <span className="text-sm text-gray-600">{t('missions', 'indicativeBudget')}:</span>
+                    <span className="text-sm text-muted-foreground">{t('missions', 'indicativeBudget')}:</span>
                     <p className="font-semibold">{formData.clientBudget}€</p>
                   </div>
                 )}
@@ -707,12 +707,12 @@ export default function NewMissionPage() {
                 {/* B2B Info Summary */}
                 {isProfessional && (formData.purchaseOrderNumber || formData.internalReference) && (
                   <div className="border-t pt-3 mt-3">
-                    <p className="text-sm font-medium text-blue-600 mb-2">
+                    <p className="text-sm font-medium text-primary mb-2">
                       🏢 {t('missions', 'professionalInfo') || 'Informations professionnelles'}
                     </p>
                     {formData.purchaseOrderNumber && (
                       <div>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           {t('missions', 'purchaseOrderNumber') || 'N° Bon de commande'}:
                         </span>
                         <p className="font-semibold">{formData.purchaseOrderNumber}</p>
@@ -720,7 +720,7 @@ export default function NewMissionPage() {
                     )}
                     {formData.internalReference && (
                       <div>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           {t('missions', 'internalReference') || 'Référence interne'}:
                         </span>
                         <p className="font-semibold">{formData.internalReference}</p>
@@ -732,23 +732,23 @@ export default function NewMissionPage() {
                 {/* Billing Info Summary */}
                 {useDifferentBilling && formData.billingCompanyName && (
                   <div className="border-t pt-3 mt-3">
-                    <p className="text-sm font-medium text-gray-600 mb-2">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">
                       📄 {t('missions', 'billingInfo') || 'Informations de facturation'}
                     </p>
                     <p className="font-semibold">{formData.billingCompanyName}</p>
                     {formData.billingAddress && (
-                      <p className="text-gray-600 text-sm">{formData.billingAddress}</p>
+                      <p className="text-muted-foreground text-sm">{formData.billingAddress}</p>
                     )}
                     {formData.billingVatNumber && (
-                      <p className="text-gray-600 text-sm">TVA: {formData.billingVatNumber}</p>
+                      <p className="text-muted-foreground text-sm">TVA: {formData.billingVatNumber}</p>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">{t('missions', 'nextSteps')}:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                <h4 className="font-semibold text-primary mb-2">{t('missions', 'nextSteps')}:</h4>
+                <ul className="text-sm text-primary space-y-1">
                   <li>✓ {t('missions', 'step1')}</li>
                   <li>✓ {t('missions', 'step2')}</li>
                   <li>✓ {t('missions', 'step3')}</li>

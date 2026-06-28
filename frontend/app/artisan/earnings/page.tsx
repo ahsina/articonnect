@@ -11,10 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { translatePaymentStatus } from '@/lib/utils/enum-translations';
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  PROCESSING: 'bg-blue-100 text-blue-800',
-  PAID: 'bg-green-100 text-green-800',
-  FAILED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PROCESSING: 'bg-primary/10 text-primary',
+  PAID: 'bg-green-500/15 text-green-400',
+  FAILED: 'bg-red-500/15 text-red-400',
 };
 
 export default function ArtisanEarningsPage() {
@@ -124,7 +124,7 @@ export default function ArtisanEarningsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -134,10 +134,10 @@ export default function ArtisanEarningsPage() {
       {/* Page Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('artisan', 'earnings') || 'Earnings'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('artisan', 'trackEarnings') || 'Track your earnings and payouts'}
           </p>
         </div>
@@ -157,42 +157,42 @@ export default function ArtisanEarningsPage() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
             <CardContent className="p-4">
               <div className="text-sm text-green-600">
                 {t('artisan', 'totalEarnings') || 'Total Earnings'}
               </div>
-              <div className="text-2xl font-bold text-green-800">
+              <div className="text-2xl font-bold text-green-400">
                 {formatCurrency(summary.totalEarnings)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
             <CardContent className="p-4">
               <div className="text-sm text-yellow-600">
                 {t('artisan', 'pendingEarnings') || 'Pending'}
               </div>
-              <div className="text-2xl font-bold text-yellow-800">
+              <div className="text-2xl font-bold text-yellow-400">
                 {formatCurrency(summary.pendingEarnings)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-4">
-              <div className="text-sm text-blue-600">
+              <div className="text-sm text-primary">
                 {t('artisan', 'thisMonth') || 'This Month'}
               </div>
-              <div className="text-2xl font-bold text-blue-800">
+              <div className="text-2xl font-bold text-primary">
                 {formatCurrency(summary.thisMonthEarnings)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
             <CardContent className="p-4">
               <div className="text-sm text-purple-600">
                 {t('artisan', 'lastMonth') || 'Last Month'}
               </div>
-              <div className="text-2xl font-bold text-purple-800">
+              <div className="text-2xl font-bold text-purple-400">
                 {formatCurrency(summary.lastMonthEarnings)}
               </div>
             </CardContent>
@@ -205,25 +205,25 @@ export default function ArtisanEarningsPage() {
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'totalMissions') || 'Total Missions'}
               </div>
-              <div className="text-2xl font-bold text-gray-900">{summary.totalMissions}</div>
+              <div className="text-2xl font-bold text-foreground">{summary.totalMissions}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'avgPerMission') || 'Avg per Mission'}
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(summary.averagePerMission)}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'paidEarnings') || 'Paid Out'}
               </div>
               <div className="text-2xl font-bold text-green-600">
@@ -268,7 +268,7 @@ export default function ArtisanEarningsPage() {
                 onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                 className="w-40"
               />
-              <span className="text-gray-500">to</span>
+              <span className="text-muted-foreground">to</span>
               <Input
                 type="date"
                 value={dateRange.end}
@@ -290,7 +290,7 @@ export default function ArtisanEarningsPage() {
         </CardHeader>
         <CardContent>
           {earnings.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('artisan', 'noEarningsFound') || 'No earnings found'}
             </div>
           ) : (
@@ -298,37 +298,37 @@ export default function ArtisanEarningsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                       {t('artisan', 'mission') || 'Mission'}
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                       {t('artisan', 'date') || 'Date'}
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       {t('artisan', 'gross') || 'Gross'}
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       {t('artisan', 'platformFee') || 'Platform Fee'}
                     </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">
+                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
                       {t('artisan', 'net') || 'Net'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-600">
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
                       {t('artisan', 'status') || 'Status'}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {earnings.map((earning) => (
-                    <tr key={earning.id} className="border-b hover:bg-gray-50">
+                    <tr key={earning.id} className="border-b hover:bg-accent">
                       <td className="py-3 px-4">
-                        <div className="font-medium text-gray-900">{earning.missionTitle}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-medium text-foreground">{earning.missionTitle}</div>
+                        <div className="text-sm text-muted-foreground">
                           ID: {earning.missionId.slice(0, 8)}...
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{formatDate(earning.createdAt)}</td>
-                      <td className="py-3 px-4 text-right text-gray-900">
+                      <td className="py-3 px-4 text-muted-foreground">{formatDate(earning.createdAt)}</td>
+                      <td className="py-3 px-4 text-right text-foreground">
                         {formatCurrency(earning.grossAmount)}
                       </td>
                       <td className="py-3 px-4 text-right text-red-600">
@@ -360,7 +360,7 @@ export default function ArtisanEarningsPage() {
               >
                 {t('common', 'previous') || 'Previous'}
               </Button>
-              <span className="py-2 px-4 text-sm text-gray-600">
+              <span className="py-2 px-4 text-sm text-muted-foreground">
                 {t('common', 'page') || 'Page'} {page} / {totalPages}
               </span>
               <Button

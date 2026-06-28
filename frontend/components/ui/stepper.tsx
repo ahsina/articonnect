@@ -76,11 +76,11 @@ const Stepper = ({
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-full border-2 font-medium',
                     'transition-colors duration-200',
-                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                    isCompleted && 'bg-blue-600 border-blue-600',
-                    isCurrent && 'border-blue-600 text-blue-600 bg-white',
-                    !isCompleted && !isCurrent && 'border-gray-300 text-gray-500 bg-white',
-                    isClickable && 'cursor-pointer hover:bg-blue-50'
+                    'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                    isCompleted && 'bg-primary border-blue-600',
+                    isCurrent && 'border-blue-600 text-primary bg-card',
+                    !isCompleted && !isCurrent && 'border-border text-muted-foreground bg-card',
+                    isClickable && 'cursor-pointer hover:bg-primary/10'
                   )}
                   aria-current={isCurrent ? 'step' : undefined}
                   aria-label={`Étape ${index + 1}: ${step.label}${isCompleted ? ' (terminée)' : isCurrent ? ' (en cours)' : ''}`}
@@ -97,13 +97,13 @@ const Stepper = ({
                   <span
                     className={cn(
                       'text-sm font-medium',
-                      (isCompleted || isCurrent) ? 'text-gray-900' : 'text-gray-500'
+                      (isCompleted || isCurrent) ? 'text-foreground' : 'text-muted-foreground'
                     )}
                   >
                     {step.label}
                   </span>
                   {step.description && (
-                    <span className="text-xs text-gray-500 mt-0.5">
+                    <span className="text-xs text-muted-foreground mt-0.5">
                       {step.description}
                     </span>
                   )}
@@ -115,7 +115,7 @@ const Stepper = ({
                 <div
                   className={cn(
                     'flex-1 h-0.5 mx-4',
-                    index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
+                    index < currentStep ? 'bg-primary' : 'bg-gray-300'
                   )}
                   aria-hidden="true"
                 />

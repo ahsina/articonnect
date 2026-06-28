@@ -120,7 +120,7 @@ export default function TaxSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -128,7 +128,7 @@ export default function TaxSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -146,23 +146,23 @@ export default function TaxSettingsPage() {
                 type="checkbox"
                 checked={settings.vatEnabled}
                 onChange={(e) => updateSetting('vatEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Enable VAT</span>
+              <span className="text-sm font-medium text-foreground">Enable VAT</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.reverseChargeEnabled}
                 onChange={(e) => updateSetting('reverseChargeEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable reverse charge (B2B)</span>
+              <span className="text-sm text-foreground">Enable reverse charge (B2B)</span>
             </label>
           </div>
 
           <div className="w-48">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Default VAT Rate (%)
             </label>
             <input
@@ -172,7 +172,7 @@ export default function TaxSettingsPage() {
               min="0"
               max="100"
               step="0.5"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
             />
           </div>
         </CardContent>
@@ -186,27 +186,27 @@ export default function TaxSettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-background">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Country
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Standard Rate (%)
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Reduced Rate (%)
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Super Reduced (%)
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-border">
                 {settings.vatRates.map((rate) => (
                   <tr key={rate.country}>
                     <td className="px-4 py-3 whitespace-nowrap font-medium">{rate.country}</td>
@@ -220,7 +220,7 @@ export default function TaxSettingsPage() {
                         min="0"
                         max="100"
                         step="0.5"
-                        className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                       />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -233,7 +233,7 @@ export default function TaxSettingsPage() {
                         min="0"
                         max="100"
                         step="0.5"
-                        className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                       />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -250,13 +250,13 @@ export default function TaxSettingsPage() {
                         min="0"
                         max="100"
                         step="0.5"
-                        className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                       />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <button
                         onClick={() => removeVatRate(rate.country)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 hover:text-red-400"
                       >
                         Remove
                       </button>
@@ -270,7 +270,7 @@ export default function TaxSettingsPage() {
           {/* Add New Country */}
           <div className="mt-4 flex gap-4 items-end">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Country Code</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Country Code</label>
               <input
                 type="text"
                 value={newCountry.country}
@@ -279,11 +279,11 @@ export default function TaxSettingsPage() {
                 }
                 maxLength={2}
                 placeholder="XX"
-                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-20 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Standard Rate</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Standard Rate</label>
               <input
                 type="number"
                 value={newCountry.rate}
@@ -292,11 +292,11 @@ export default function TaxSettingsPage() {
                 }
                 min="0"
                 max="100"
-                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-20 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reduced Rate</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Reduced Rate</label>
               <input
                 type="number"
                 value={newCountry.reducedRate}
@@ -305,7 +305,7 @@ export default function TaxSettingsPage() {
                 }
                 min="0"
                 max="100"
-                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-20 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <button
@@ -331,24 +331,24 @@ export default function TaxSettingsPage() {
                 type="checkbox"
                 checked={settings.autoGenerateInvoices}
                 onChange={(e) => updateSetting('autoGenerateInvoices', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Auto-generate invoices</span>
+              <span className="text-sm text-foreground">Auto-generate invoices</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Prefix</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Invoice Prefix</label>
               <input
                 type="text"
                 value={settings.invoiceNumberPrefix}
                 onChange={(e) => updateSetting('invoiceNumberPrefix', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Invoice Number Format
               </label>
               <input
@@ -356,11 +356,11 @@ export default function TaxSettingsPage() {
                 value={settings.invoiceNumberFormat}
                 onChange={(e) => updateSetting('invoiceNumberFormat', e.target.value)}
                 placeholder="INV-{YEAR}-{NUMBER}"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Retention Period (years)
               </label>
               <input
@@ -368,7 +368,7 @@ export default function TaxSettingsPage() {
                 value={settings.invoiceRetentionYears}
                 onChange={(e) => updateSetting('invoiceRetentionYears', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -388,24 +388,24 @@ export default function TaxSettingsPage() {
                 type="checkbox"
                 checked={settings.taxReportingEnabled}
                 onChange={(e) => updateSetting('taxReportingEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable tax reporting</span>
+              <span className="text-sm text-foreground">Enable tax reporting</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.witholdingTaxEnabled}
                 onChange={(e) => updateSetting('witholdingTaxEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable withholding tax</span>
+              <span className="text-sm text-foreground">Enable withholding tax</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Reporting Threshold (cents)
               </label>
               <input
@@ -413,15 +413,15 @@ export default function TaxSettingsPage() {
                 value={settings.taxReportingThreshold}
                 onChange={(e) => updateSetting('taxReportingThreshold', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {(settings.taxReportingThreshold / 100).toFixed(2)} EUR
               </p>
             </div>
             {settings.witholdingTaxEnabled && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Withholding Tax Rate (%)
                 </label>
                 <input
@@ -431,7 +431,7 @@ export default function TaxSettingsPage() {
                   min="0"
                   max="100"
                   step="0.5"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
             )}
@@ -444,7 +444,7 @@ export default function TaxSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Tax Settings'}
         </button>

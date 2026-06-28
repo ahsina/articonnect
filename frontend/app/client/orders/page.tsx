@@ -43,11 +43,11 @@ interface Order {
 
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  SHIPPED: 'bg-purple-100 text-purple-800',
-  DELIVERED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  CONFIRMED: 'bg-primary/10 text-primary',
+  SHIPPED: 'bg-purple-500/15 text-purple-400',
+  DELIVERED: 'bg-green-500/15 text-green-400',
+  CANCELLED: 'bg-red-500/15 text-red-400',
 };
 
 export default function ClientOrdersPage() {
@@ -119,18 +119,18 @@ export default function ClientOrdersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('orders', 'title')}</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('orders', 'title')}</h1>
+          <p className="text-muted-foreground">
             {t('orders', 'trackOrders')}
           </p>
         </div>
@@ -139,13 +139,13 @@ export default function ClientOrdersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('orders', 'totalOrders')}</div>
+              <div className="text-sm text-muted-foreground">{t('orders', 'totalOrders')}</div>
               <div className="text-2xl font-bold">{orders.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('common', 'pending')}</div>
+              <div className="text-sm text-muted-foreground">{t('common', 'pending')}</div>
               <div className="text-2xl font-bold text-yellow-600">
                 {orders.filter((o) => o.status === 'PENDING').length}
               </div>
@@ -153,15 +153,15 @@ export default function ClientOrdersPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('orders', 'inProgress')}</div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-sm text-muted-foreground">{t('orders', 'inProgress')}</div>
+              <div className="text-2xl font-bold text-primary">
                 {orders.filter((o) => ['CONFIRMED', 'SHIPPED'].includes(o.status)).length}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('orders', 'delivered')}</div>
+              <div className="text-sm text-muted-foreground">{t('orders', 'delivered')}</div>
               <div className="text-2xl font-bold text-green-600">
                 {orders.filter((o) => o.status === 'DELIVERED').length}
               </div>
@@ -209,7 +209,7 @@ export default function ClientOrdersPage() {
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">📦</div>
-                <p className="text-gray-500 mb-4">{t('orders', 'noOrders')}</p>
+                <p className="text-muted-foreground mb-4">{t('orders', 'noOrders')}</p>
                 <Button onClick={() => router.push('/client/marketplace')}>
                   {t('orders', 'discoverMarketplace')}
                 </Button>
@@ -223,22 +223,22 @@ export default function ClientOrdersPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">
+                        <h3 className="text-xl font-semibold text-foreground">
                           {t('orders', 'order')} {order.orderNumber}
                         </h3>
                         <Badge className={STATUS_COLORS[order.status]}>
                           {getStatusLabel(order.status)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {t('orders', 'orderedOn')} {formatDate(order.createdAt)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-foreground">
                         {order.totalAmount}€
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {order.items.reduce((sum, item) => sum + item.quantity, 0)} {order.items.reduce((sum, item) => sum + item.quantity, 0) > 1 ? t('cart', 'items') : t('cart', 'item')}
                       </p>
                     </div>
@@ -246,15 +246,15 @@ export default function ClientOrdersPage() {
 
                   {/* Artisan Info (le listing peut ne pas inclure l'artisan) */}
                   {order.artisan && (
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
                       <img
                         src={order.artisan.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
                         alt={order.artisan.firstName}
                         className="w-10 h-10 rounded-full"
                       />
                       <div>
-                        <p className="text-sm text-gray-600">{t('orders', 'soldBy')}</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-sm text-muted-foreground">{t('orders', 'soldBy')}</p>
+                        <p className="font-semibold text-foreground">
                           {order.artisan.firstName} {order.artisan.lastName}
                         </p>
                       </div>
@@ -271,13 +271,13 @@ export default function ClientOrdersPage() {
                           className="w-16 h-16 object-cover rounded"
                         />
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{item.productName}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-medium text-foreground">{item.productName}</p>
+                          <p className="text-sm text-muted-foreground">
                             {t('cart', 'quantity')}: {item.quantity} × {Number(item.price)}€
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-foreground">
                             {(item.quantity * Number(item.price)).toFixed(2)}€
                           </p>
                         </div>
@@ -287,12 +287,12 @@ export default function ClientOrdersPage() {
 
                   {/* Shipping Info */}
                   {order.trackingNumber && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm font-medium text-blue-900">
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
+                      <p className="text-sm font-medium text-primary">
                         {t('orders', 'trackingNumber')}: {order.trackingNumber}
                       </p>
                       {order.deliveredAt && (
-                        <p className="text-xs text-blue-700 mt-1">
+                        <p className="text-xs text-primary mt-1">
                           {t('orders', 'deliveredOn')} {formatDate(order.deliveredAt)}
                         </p>
                       )}
@@ -300,7 +300,7 @@ export default function ClientOrdersPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
                     <Button
                       variant="outline"
                       size="sm"
@@ -324,7 +324,7 @@ export default function ClientOrdersPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleCancelOrder(order.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-400"
                       >
                         {t('orders', 'cancelOrder')}
                       </Button>
@@ -366,7 +366,7 @@ export default function ClientOrdersPage() {
                 <div className="space-y-4">
                   {/* Order Number and Status */}
                   <div>
-                    <p className="text-sm text-gray-600">{t('orders', 'orderNumber')}</p>
+                    <p className="text-sm text-muted-foreground">{t('orders', 'orderNumber')}</p>
                     <p className="font-semibold text-lg">{selectedOrder.orderNumber}</p>
                     <Badge className={`${STATUS_COLORS[selectedOrder.status]} mt-2`}>
                       {getStatusLabel(selectedOrder.status)}
@@ -376,12 +376,12 @@ export default function ClientOrdersPage() {
                   {/* Dates */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">{t('orders', 'orderDate')}</p>
+                      <p className="text-sm text-muted-foreground">{t('orders', 'orderDate')}</p>
                       <p className="font-medium">{formatDate(selectedOrder.createdAt)}</p>
                     </div>
                     {selectedOrder.deliveredAt && (
                       <div>
-                        <p className="text-sm text-gray-600">{t('orders', 'deliveryDate')}</p>
+                        <p className="text-sm text-muted-foreground">{t('orders', 'deliveryDate')}</p>
                         <p className="font-medium">{formatDate(selectedOrder.deliveredAt)}</p>
                       </div>
                     )}
@@ -389,10 +389,10 @@ export default function ClientOrdersPage() {
 
                   {/* Items */}
                   <div>
-                    <p className="text-sm text-gray-600 mb-3">{t('orders', 'orderedItems')}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{t('orders', 'orderedItems')}</p>
                     <div className="space-y-3">
                       {(selectedOrder.items ?? []).map((item) => (
-                        <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        <div key={item.id} className="flex items-center gap-4 p-3 bg-background rounded-lg">
                           <img
                             src={item.productImage}
                             alt={item.productName}
@@ -400,7 +400,7 @@ export default function ClientOrdersPage() {
                           />
                           <div className="flex-1">
                             <p className="font-medium">{item.productName}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               {item.quantity} × {Number(item.price)}€
                             </p>
                           </div>
@@ -414,22 +414,22 @@ export default function ClientOrdersPage() {
 
                   {/* Shipping Address */}
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">{t('orders', 'shippingAddress')}</p>
-                    <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">{t('orders', 'shippingAddress')}</p>
+                    <div className="p-3 bg-background rounded-lg">
                       <p className="font-medium">{selectedOrder.shippingAddress.address}</p>
-                      <p className="text-gray-700">
+                      <p className="text-foreground">
                         {selectedOrder.shippingAddress.postalCode} {selectedOrder.shippingAddress.city}
                       </p>
-                      <p className="text-gray-700">{selectedOrder.shippingAddress.country}</p>
+                      <p className="text-foreground">{selectedOrder.shippingAddress.country}</p>
                     </div>
                   </div>
 
                   {/* Tracking */}
                   {selectedOrder.trackingNumber && (
                     <div>
-                      <p className="text-sm text-gray-600 mb-2">{t('orders', 'deliveryTracking')}</p>
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="font-medium text-blue-900">
+                      <p className="text-sm text-muted-foreground mb-2">{t('orders', 'deliveryTracking')}</p>
+                      <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                        <p className="font-medium text-primary">
                           {selectedOrder.trackingNumber}
                         </p>
                       </div>
@@ -437,10 +437,10 @@ export default function ClientOrdersPage() {
                   )}
 
                   {/* Total */}
-                  <div className="pt-4 border-t border-gray-200">
+                  <div className="pt-4 border-t border-border">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-medium">{t('cart', 'total')}</span>
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-2xl font-bold text-foreground">
                         {selectedOrder.totalAmount}€
                       </span>
                     </div>

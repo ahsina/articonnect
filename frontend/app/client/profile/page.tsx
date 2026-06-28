@@ -206,7 +206,7 @@ export default function ClientProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -215,7 +215,7 @@ export default function ClientProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{t('common', 'error')}</p>
+          <p className="text-muted-foreground mb-4">{t('common', 'error')}</p>
           <Button onClick={() => router.push('/client/dashboard')}>
             {t('common', 'back')}
           </Button>
@@ -225,7 +225,7 @@ export default function ClientProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
@@ -264,7 +264,7 @@ export default function ClientProfilePage() {
                     />
                     <label
                       htmlFor="avatar-upload"
-                      className={`inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-600 rounded-md hover:bg-blue-100 cursor-pointer ${
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium text-primary bg-primary/10 border border-blue-600 rounded-md hover:bg-primary/10 cursor-pointer ${
                         uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
@@ -278,7 +278,7 @@ export default function ClientProfilePage() {
               <form onSubmit={handleProfileUpdate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('auth', 'firstName')} *
                     </label>
                     <Input
@@ -292,7 +292,7 @@ export default function ClientProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('auth', 'lastName')} *
                     </label>
                     <Input
@@ -307,14 +307,14 @@ export default function ClientProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('auth', 'email')}
                   </label>
                   <Input type="email" value={profile.email} disabled />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('auth', 'phone')} *
                   </label>
                   <Input
@@ -329,7 +329,7 @@ export default function ClientProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('common', 'address')}
                   </label>
                   <Input
@@ -344,7 +344,7 @@ export default function ClientProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('common', 'postalCode')}
                     </label>
                     <Input
@@ -358,7 +358,7 @@ export default function ClientProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('common', 'city')}
                     </label>
                     <Input
@@ -372,7 +372,7 @@ export default function ClientProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       {t('common', 'country')}
                     </label>
                     <select
@@ -380,7 +380,7 @@ export default function ClientProfilePage() {
                       onChange={(e) =>
                         setFormData({ ...formData, country: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="LU">Luxembourg</option>
                       <option value="FR">France</option>
@@ -406,7 +406,7 @@ export default function ClientProfilePage() {
             <CardContent>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('auth', 'password')} *
                   </label>
                   <Input
@@ -423,7 +423,7 @@ export default function ClientProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('auth', 'newPassword')} *
                   </label>
                   <Input
@@ -440,7 +440,7 @@ export default function ClientProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('auth', 'confirmPassword')} *
                   </label>
                   <Input
@@ -467,13 +467,13 @@ export default function ClientProfilePage() {
 
           {/* Messages */}
           {message && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
               <p className="text-sm text-green-600">{message}</p>
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}

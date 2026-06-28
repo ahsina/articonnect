@@ -138,18 +138,18 @@ export default function ArtisansListPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('artisans', 'findArtisan')}</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">{t('artisans', 'findArtisan')}</h1>
+          <p className="text-muted-foreground mt-2">
             {filteredArtisans.length} {filteredArtisans.length > 1 ? t('common', 'artisan') + 's' : t('common', 'artisan')} {filteredArtisans.length > 1 ? t('artisans', 'availablePlural') : t('artisans', 'available')}
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function ArtisansListPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as ArtisanSortOption)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="rating">{t('artisans', 'topRated')}</option>
               <option value="distance">{t('artisans', 'closest')}</option>
@@ -184,8 +184,8 @@ export default function ArtisansListPage() {
                 onClick={() => setSelectedSpecialty(specialty.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   selectedSpecialty === specialty.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-primary text-white'
+                    : 'bg-card text-foreground hover:bg-accent'
                 }`}
               >
                 <span>{specialty.icon}</span>
@@ -199,7 +199,7 @@ export default function ArtisansListPage() {
         {filteredArtisans.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">{t('artisans', 'noArtisansFound')}</p>
+              <p className="text-muted-foreground mb-4">{t('artisans', 'noArtisansFound')}</p>
               <Button onClick={() => { setSearchQuery(''); setSelectedSpecialty('all'); }}>
                 {t('artisans', 'resetFilters')}
               </Button>
@@ -213,15 +213,15 @@ export default function ArtisansListPage() {
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold">
+                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-lg font-semibold">
                         {artisan.firstName[0]}
                         {artisan.lastName[0]}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-foreground">
                           {artisan.artisanProfile.companyName}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           {artisan.firstName} {artisan.lastName}
                         </p>
                       </div>
@@ -240,13 +240,13 @@ export default function ArtisansListPage() {
                       readonly
                       size="sm"
                     />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       ({artisan.artisanProfile.reviewCount} {t('artisans', 'reviews')})
                     </span>
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-gray-700 mb-4 line-clamp-2">
+                  <p className="text-sm text-foreground mb-4 line-clamp-2">
                     {artisan.artisanProfile.description}
                   </p>
 
@@ -269,17 +269,17 @@ export default function ArtisansListPage() {
 
                   {/* Info */}
                   <div className="space-y-2 mb-4 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <span>📍</span>
                       <span>
                         {artisan.artisanProfile.city}, {artisan.artisanProfile.country}
                       </span>
                       {artisan.distance && (
-                        <span className="text-blue-600">({artisan.distance} km)</span>
+                        <span className="text-primary">({artisan.distance} km)</span>
                       )}
                     </div>
                     {artisan.artisanProfile.hourlyRate && (
-                      <div className="flex items-center gap-2 text-gray-600">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <span>💰</span>
                         <span>~{artisan.artisanProfile.hourlyRate}€/h</span>
                       </div>

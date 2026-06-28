@@ -27,11 +27,11 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  ACCEPTED: 'bg-blue-100 text-blue-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  ACCEPTED: 'bg-primary/10 text-primary',
+  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+  COMPLETED: 'bg-green-500/15 text-green-400',
+  CANCELLED: 'bg-red-500/15 text-red-400',
 };
 
 export default function ArtisanDashboard() {
@@ -116,7 +116,7 @@ export default function ArtisanDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -125,10 +125,10 @@ export default function ArtisanDashboard() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('artisan', 'dashboard') || 'Dashboard'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('artisan', 'welcomeBack') || "Welcome back! Here's your activity overview."}
         </p>
       </div>
@@ -137,29 +137,29 @@ export default function ArtisanDashboard() {
       <div className="grid md:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t('artisan', 'totalMissions') || 'Total Missions'}
             </div>
-            <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600 mb-1">{t('artisan', 'pending') || 'Pending'}</div>
+            <div className="text-sm text-muted-foreground mb-1">{t('artisan', 'pending') || 'Pending'}</div>
             <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t('missions', 'inProgress') || 'In Progress'}
             </div>
-            <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
+            <div className="text-2xl font-bold text-primary">{stats.inProgress}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t('missions', 'completed') || 'Completed'}
             </div>
             <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
@@ -167,7 +167,7 @@ export default function ArtisanDashboard() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t('artisan', 'averageRating') || 'Rating'}
             </div>
             <div className="text-2xl font-bold text-yellow-600">⭐ {stats.rating}</div>
@@ -177,9 +177,9 @@ export default function ArtisanDashboard() {
 
       {/* Earnings Card */}
       {earnings && (
-        <Card className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <Card className="mb-6 bg-gradient-to-r from-green-500/10 to-green-500/5 border-green-500/20">
           <CardHeader>
-            <CardTitle className="text-green-800">
+            <CardTitle className="text-green-400">
               {t('artisan', 'earningsOverview') || 'Earnings Overview'}
             </CardTitle>
           </CardHeader>
@@ -189,7 +189,7 @@ export default function ArtisanDashboard() {
                 <div className="text-sm text-green-600">
                   {t('artisan', 'totalEarnings') || 'Total Earnings'}
                 </div>
-                <div className="text-2xl font-bold text-green-800">
+                <div className="text-2xl font-bold text-green-400">
                   {earnings.totalEarnings.toFixed(2)}€
                 </div>
               </div>
@@ -205,7 +205,7 @@ export default function ArtisanDashboard() {
                 <div className="text-sm text-green-600">
                   {t('artisan', 'thisMonth') || 'This Month'}
                 </div>
-                <div className="text-2xl font-bold text-green-800">
+                <div className="text-2xl font-bold text-green-400">
                   {earnings.thisMonthEarnings.toFixed(2)}€
                 </div>
               </div>
@@ -213,7 +213,7 @@ export default function ArtisanDashboard() {
                 <div className="text-sm text-green-600">
                   {t('artisan', 'avgPerMission') || 'Avg per Mission'}
                 </div>
-                <div className="text-2xl font-bold text-green-800">
+                <div className="text-2xl font-bold text-green-400">
                   {earnings.averagePerMission.toFixed(2)}€
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function ArtisanDashboard() {
               <Link href="/artisan/earnings">
                 <Button
                   variant="outline"
-                  className="border-green-600 text-green-600 hover:bg-green-50"
+                  className="border-green-600 text-green-600 hover:bg-green-500/10"
                 >
                   {t('artisan', 'viewAllEarnings') || 'View All Earnings'}
                 </Button>
@@ -245,7 +245,7 @@ export default function ArtisanDashboard() {
           </CardHeader>
           <CardContent>
             {nearbyMissions.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {t('artisan', 'noMissionsAvailable') || 'No missions available nearby'}
               </div>
             ) : (
@@ -254,12 +254,12 @@ export default function ArtisanDashboard() {
                   <Link
                     key={mission.id}
                     href={`/artisan/missions/${mission.id}`}
-                    className="block p-3 border rounded-lg hover:border-blue-500 transition"
+                    className="block p-3 border rounded-lg hover:border-primary transition"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{mission.title}</h4>
-                        <p className="text-sm text-gray-600">
+                        <h4 className="font-medium text-foreground">{mission.title}</h4>
+                        <p className="text-sm text-muted-foreground">
                           📍 {mission.city} • {mission.category}
                         </p>
                         {mission.clientBudget && (
@@ -295,7 +295,7 @@ export default function ArtisanDashboard() {
           </CardHeader>
           <CardContent>
             {missions.filter((m) => ['ACCEPTED', 'IN_PROGRESS'].includes(m.status)).length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {t('artisan', 'noActiveMissions') || 'No active missions'}
               </div>
             ) : (
@@ -307,16 +307,16 @@ export default function ArtisanDashboard() {
                     <Link
                       key={mission.id}
                       href={`/artisan/missions/${mission.id}`}
-                      className="block p-3 border rounded-lg hover:border-blue-500 transition"
+                      className="block p-3 border rounded-lg hover:border-primary transition"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{mission.title}</h4>
-                          <p className="text-sm text-gray-600">
+                          <h4 className="font-medium text-foreground">{mission.title}</h4>
+                          <p className="text-sm text-muted-foreground">
                             {mission.client?.firstName} {mission.client?.lastName}
                           </p>
                           {mission.scheduledDate && (
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               📅 {formatDate(mission.scheduledDate)}
                             </p>
                           )}
@@ -326,7 +326,7 @@ export default function ArtisanDashboard() {
                             {mission.status === 'IN_PROGRESS' ? 'In Progress' : 'Accepted'}
                           </Badge>
                           {mission.agreedPrice && (
-                            <p className="text-sm font-bold text-gray-900 mt-1">
+                            <p className="text-sm font-bold text-foreground mt-1">
                               {mission.agreedPrice}€
                             </p>
                           )}

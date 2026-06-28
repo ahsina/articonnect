@@ -120,7 +120,7 @@ export default function RateLimitsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -128,7 +128,7 @@ export default function RateLimitsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -142,7 +142,7 @@ export default function RateLimitsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Requests per Window
               </label>
               <input
@@ -150,11 +150,11 @@ export default function RateLimitsPage() {
                 value={settings.apiRateLimit}
                 onChange={(e) => updateSetting('apiRateLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Window Duration (minutes)
               </label>
               <input
@@ -162,7 +162,7 @@ export default function RateLimitsPage() {
                 value={settings.apiRateLimitWindow}
                 onChange={(e) => updateSetting('apiRateLimitWindow', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function RateLimitsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Login Attempts
               </label>
               <input
@@ -186,11 +186,11 @@ export default function RateLimitsPage() {
                 value={settings.loginAttemptsLimit}
                 onChange={(e) => updateSetting('loginAttemptsLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Lockout Duration (minutes)
               </label>
               <input
@@ -198,11 +198,11 @@ export default function RateLimitsPage() {
                 value={settings.loginLockoutMinutes}
                 onChange={(e) => updateSetting('loginLockoutMinutes', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Password Resets/Day
               </label>
               <input
@@ -210,7 +210,7 @@ export default function RateLimitsPage() {
                 value={settings.passwordResetLimit}
                 onChange={(e) => updateSetting('passwordResetLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function RateLimitsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Missions/Day/User
               </label>
               <input
@@ -234,41 +234,41 @@ export default function RateLimitsPage() {
                 value={settings.missionCreationLimit}
                 onChange={(e) => updateSetting('missionCreationLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Messages/Hour</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Messages/Hour</label>
               <input
                 type="number"
                 value={settings.messageLimit}
                 onChange={(e) => updateSetting('messageLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reviews/Day</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Reviews/Day</label>
               <input
                 type="number"
                 value={settings.reviewLimit}
                 onChange={(e) => updateSetting('reviewLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reports/Day</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Reports/Day</label>
               <input
                 type="number"
                 value={settings.reportLimit}
                 onChange={(e) => updateSetting('reportLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Searches/Minute
               </label>
               <input
@@ -276,7 +276,7 @@ export default function RateLimitsPage() {
                 value={settings.searchRequestsLimit}
                 onChange={(e) => updateSetting('searchRequestsLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -292,17 +292,17 @@ export default function RateLimitsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Uploads/Hour</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Uploads/Hour</label>
               <input
                 type="number"
                 value={settings.fileUploadLimit}
                 onChange={(e) => updateSetting('fileUploadLimit', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max File Size (MB)
               </label>
               <input
@@ -310,7 +310,7 @@ export default function RateLimitsPage() {
                 value={settings.fileUploadMaxSizeMb}
                 onChange={(e) => updateSetting('fileUploadMaxSizeMb', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -330,33 +330,33 @@ export default function RateLimitsPage() {
                 type="checkbox"
                 checked={settings.ipBlocklistEnabled}
                 onChange={(e) => updateSetting('ipBlocklistEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable IP blocklist</span>
+              <span className="text-sm text-foreground">Enable IP blocklist</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.geoBlockingEnabled}
                 onChange={(e) => updateSetting('geoBlockingEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable geo-blocking</span>
+              <span className="text-sm text-foreground">Enable geo-blocking</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.captchaEnabled}
                 onChange={(e) => updateSetting('captchaEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable CAPTCHA</span>
+              <span className="text-sm text-foreground">Enable CAPTCHA</span>
             </label>
           </div>
 
           {settings.captchaEnabled && (
             <div className="w-64">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 CAPTCHA Threshold Score
               </label>
               <input
@@ -365,9 +365,9 @@ export default function RateLimitsPage() {
                 onChange={(e) => updateSetting('captchaThreshold', parseInt(e.target.value))}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Suspicious activity score to trigger CAPTCHA (0-100)
               </p>
             </div>
@@ -385,26 +385,26 @@ export default function RateLimitsPage() {
           <CardContent className="space-y-6">
             {/* Blocked Countries */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Blocked Countries
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {settings.blockedCountries.map((code) => (
                   <span
                     key={code}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/15 text-red-400 rounded-full text-sm"
                   >
                     {code}
                     <button
                       onClick={() => removeBlockedCountry(code)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-400"
                     >
                       x
                     </button>
                   </span>
                 ))}
                 {settings.blockedCountries.length === 0 && (
-                  <span className="text-sm text-gray-500">No blocked countries</span>
+                  <span className="text-sm text-muted-foreground">No blocked countries</span>
                 )}
               </div>
               <div className="flex gap-2">
@@ -414,7 +414,7 @@ export default function RateLimitsPage() {
                   onChange={(e) => setNewBlockedCountry(e.target.value)}
                   placeholder="Country code (e.g., CN)"
                   maxLength={2}
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-32 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
                 <button
                   onClick={addBlockedCountry}
@@ -427,26 +427,26 @@ export default function RateLimitsPage() {
 
             {/* Allowed Countries */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Allowed Countries (whitelist mode)
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {settings.allowedCountries.map((code) => (
                   <span
                     key={code}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/15 text-green-400 rounded-full text-sm"
                   >
                     {code}
                     <button
                       onClick={() => removeAllowedCountry(code)}
-                      className="text-green-500 hover:text-green-700"
+                      className="text-green-500 hover:text-green-400"
                     >
                       x
                     </button>
                   </span>
                 ))}
                 {settings.allowedCountries.length === 0 && (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     All countries allowed (no whitelist)
                   </span>
                 )}
@@ -458,7 +458,7 @@ export default function RateLimitsPage() {
                   onChange={(e) => setNewAllowedCountry(e.target.value)}
                   placeholder="Country code (e.g., FR)"
                   maxLength={2}
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-32 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
                 <button
                   onClick={addAllowedCountry}
@@ -467,7 +467,7 @@ export default function RateLimitsPage() {
                   Allow
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 If whitelist is empty, all non-blocked countries are allowed
               </p>
             </div>
@@ -480,7 +480,7 @@ export default function RateLimitsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Rate Limit Settings'}
         </button>

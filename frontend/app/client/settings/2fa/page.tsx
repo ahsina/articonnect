@@ -147,7 +147,7 @@ export default function TwoFactorAuthPage() {
 
   if (showBackupCodes) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-background py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-6">
             ← {t('common', 'back')}
@@ -161,18 +161,18 @@ export default function TwoFactorAuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 font-medium mb-2">
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                <p className="text-sm text-yellow-400 font-medium mb-2">
                   ⚠️ {t('common', 'important')}
                 </p>
-                <p className="text-sm text-yellow-700">
+                <p className="text-sm text-yellow-400">
                   {t('common', 'backupCodesWarning')}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 rounded-lg font-mono text-sm">
+              <div className="grid grid-cols-2 gap-3 p-4 bg-background rounded-lg font-mono text-sm">
                 {backupCodes.map((code, index) => (
-                  <div key={index} className="p-2 bg-white border rounded text-center">
+                  <div key={index} className="p-2 bg-card border rounded text-center">
                     {code}
                   </div>
                 ))}
@@ -202,7 +202,7 @@ export default function TwoFactorAuthPage() {
 
   if (showSetup) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-background py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button variant="ghost" onClick={() => setShowSetup(false)} className="mb-6">
             ← {t('common', 'back')}
@@ -217,21 +217,21 @@ export default function TwoFactorAuthPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="flex justify-center bg-white p-6 rounded-lg border">
+                <div className="flex justify-center bg-card p-6 rounded-lg border">
                   <img src={qrCode} alt="QR Code 2FA" className="w-64 h-64" />
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
+                <div className="bg-background p-4 rounded-lg">
+                  <p className="text-sm font-medium text-foreground mb-2">
                     {t('common', 'orEnterManually')}
                   </p>
-                  <code className="block p-3 bg-white border rounded text-center font-mono text-sm break-all">
+                  <code className="block p-3 bg-card border rounded text-center font-mono text-sm break-all">
                     {secret}
                   </code>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm text-primary">
                     <strong>{t('common', 'recommendedApps')}</strong> Google Authenticator, Microsoft Authenticator, Authy
                   </p>
                 </div>
@@ -239,7 +239,7 @@ export default function TwoFactorAuthPage() {
 
               <form onSubmit={handleVerify2FA} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-foreground">
                     {t('common', 'enterVerificationCode')}
                   </label>
                   <Input
@@ -271,7 +271,7 @@ export default function TwoFactorAuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           ← {t('common', 'back')}
@@ -285,12 +285,12 @@ export default function TwoFactorAuthPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-start justify-between p-4 bg-background rounded-lg">
               <div className="flex-1">
-                <h3 className="font-medium text-gray-900">
+                <h3 className="font-medium text-foreground">
                   {is2FAEnabled ? t('common', 'twoFactorEnabled') : t('common', 'twoFactorDisabled')}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {is2FAEnabled
                     ? t('common', 'twoFactorEnabledDesc')
                     : t('common', 'twoFactorDisabledDesc')}
@@ -301,7 +301,7 @@ export default function TwoFactorAuthPage() {
             {!is2FAEnabled ? (
               <form onSubmit={handleEnable2FA} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-foreground">
                     {t('auth', 'password')} *
                   </label>
                   <Input
@@ -329,7 +329,7 @@ export default function TwoFactorAuthPage() {
                 ) : (
                   <form onSubmit={handleDisable2FA} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-foreground">
                         {t('auth', 'password')} *
                       </label>
                       <Input
@@ -342,7 +342,7 @@ export default function TwoFactorAuthPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-foreground">
                         {t('common', 'code2FA')} *
                       </label>
                       <Input

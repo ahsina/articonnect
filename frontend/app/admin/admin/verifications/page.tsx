@@ -92,13 +92,13 @@ export default function VerificationsPage() {
   const getStatusColor = (status?: string) => {
     switch (status?.toUpperCase()) {
       case 'VERIFIED':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-500/15 text-green-400';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-yellow-500/15 text-yellow-400';
       case 'FAILED':
-        return 'bg-red-100 text-red-700';
+        return 'bg-red-500/15 text-red-400';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -114,7 +114,7 @@ export default function VerificationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -126,27 +126,27 @@ export default function VerificationsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">KYC & Verification Management</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">KYC & Verification Management</h1>
+              <p className="text-muted-foreground mt-1">
                 Manage artisan business verification and KYC compliance
               </p>
             </div>
           </div>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
             Refresh
           </button>
@@ -154,7 +154,7 @@ export default function VerificationsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -165,7 +165,7 @@ export default function VerificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Unverified Artisans</p>
+                  <p className="text-sm text-muted-foreground">Unverified Artisans</p>
                   <p className="text-3xl font-bold text-yellow-600">{unverifiedArtisans.length}</p>
                 </div>
                 <span className="text-4xl">❓</span>
@@ -177,7 +177,7 @@ export default function VerificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Re-verification Needed</p>
+                  <p className="text-sm text-muted-foreground">Re-verification Needed</p>
                   <p className="text-3xl font-bold text-orange-600">
                     {reverificationNeeded.length}
                   </p>
@@ -191,7 +191,7 @@ export default function VerificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Pending</p>
+                  <p className="text-sm text-muted-foreground">Total Pending</p>
                   <p className="text-3xl font-bold text-red-600">
                     {unverifiedArtisans.length + reverificationNeeded.length}
                   </p>
@@ -203,7 +203,7 @@ export default function VerificationsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-border mb-6">
           <nav className="flex space-x-8">
             {tabs.map((tab) => (
               <button
@@ -211,8 +211,8 @@ export default function VerificationsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
                 <span className="mr-2">{tab.icon}</span>
@@ -234,52 +234,52 @@ export default function VerificationsPage() {
             <CardContent>
               {unverifiedArtisans.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-background">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Artisan
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Business
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Registration
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Joined
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-border">
                       {unverifiedArtisans.map((artisan) => (
-                        <tr key={artisan.id} className="hover:bg-gray-50">
+                        <tr key={artisan.id} className="hover:bg-accent">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-foreground">
                                 {artisan.firstName} {artisan.lastName}
                               </div>
-                              <div className="text-sm text-gray-500">{artisan.email}</div>
+                              <div className="text-sm text-muted-foreground">{artisan.email}</div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {artisan.businessName || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-foreground">
                               {artisan.registrationNumber || 'N/A'}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               {artisan.registrationType || ''}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {formatDate(artisan.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -295,14 +295,14 @@ export default function VerificationsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleViewStatus(artisan)}
-                                className="text-blue-600 hover:text-blue-800"
+                                className="text-primary hover:text-primary"
                               >
                                 View
                               </button>
                               <button
                                 onClick={() => handleReverify(artisan.id)}
                                 disabled={reverifyingId === artisan.id}
-                                className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-400 disabled:opacity-50"
                               >
                                 {reverifyingId === artisan.id ? 'Verifying...' : 'Verify'}
                               </button>
@@ -314,7 +314,7 @@ export default function VerificationsPage() {
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <span className="text-4xl block mb-2">✅</span>
                   <p>All artisans are verified!</p>
                 </div>
@@ -334,50 +334,50 @@ export default function VerificationsPage() {
             <CardContent>
               {reverificationNeeded.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-background">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Artisan
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Business
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Registration
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-border">
                       {reverificationNeeded.map((artisan) => (
-                        <tr key={artisan.id} className="hover:bg-gray-50">
+                        <tr key={artisan.id} className="hover:bg-accent">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-foreground">
                                 {artisan.firstName} {artisan.lastName}
                               </div>
-                              <div className="text-sm text-gray-500">{artisan.email}</div>
+                              <div className="text-sm text-muted-foreground">{artisan.email}</div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {artisan.businessName || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-foreground">
                               {artisan.registrationNumber || 'N/A'}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               {artisan.registrationType || ''}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-500/15 text-orange-400">
                               NEEDS REVERIFICATION
                             </span>
                           </td>
@@ -385,14 +385,14 @@ export default function VerificationsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleViewStatus(artisan)}
-                                className="text-blue-600 hover:text-blue-800"
+                                className="text-primary hover:text-primary"
                               >
                                 View
                               </button>
                               <button
                                 onClick={() => handleReverify(artisan.id)}
                                 disabled={reverifyingId === artisan.id}
-                                className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-400 disabled:opacity-50"
                               >
                                 {reverifyingId === artisan.id ? 'Verifying...' : 'Re-verify'}
                               </button>
@@ -404,7 +404,7 @@ export default function VerificationsPage() {
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <span className="text-4xl block mb-2">✅</span>
                   <p>No artisans need re-verification</p>
                 </div>
@@ -427,12 +427,12 @@ export default function VerificationsPage() {
                     value={kycUserId}
                     onChange={(e) => setKycUserId(e.target.value)}
                     placeholder="Enter User ID"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <button
                     onClick={handleKycLookup}
                     disabled={kycLoading || !kycUserId.trim()}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {kycLoading ? 'Loading...' : 'Lookup'}
                   </button>
@@ -440,38 +440,38 @@ export default function VerificationsPage() {
               </div>
 
               {kycStatus && (
-                <div className="border border-gray-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="border border-border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     KYC Status for {kycStatus.userId}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Verification Status</p>
+                    <div className="p-4 bg-background rounded-lg">
+                      <p className="text-sm text-muted-foreground">Verification Status</p>
                       <p className="font-semibold">
                         <span
                           className={`px-2 py-1 text-xs rounded-full ${
                             kycStatus.kycVerified
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-green-500/15 text-green-400'
+                              : 'bg-red-500/15 text-red-400'
                           }`}
                         >
                           {kycStatus.kycVerified ? 'VERIFIED' : 'NOT VERIFIED'}
                         </span>
                       </p>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">KYC Level</p>
-                      <p className="font-semibold text-gray-900">{kycStatus.kycLevel || 'N/A'}</p>
+                    <div className="p-4 bg-background rounded-lg">
+                      <p className="text-sm text-muted-foreground">KYC Level</p>
+                      <p className="font-semibold text-foreground">{kycStatus.kycLevel || 'N/A'}</p>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Verification Date</p>
-                      <p className="font-semibold text-gray-900">
+                    <div className="p-4 bg-background rounded-lg">
+                      <p className="text-sm text-muted-foreground">Verification Date</p>
+                      <p className="font-semibold text-foreground">
                         {formatDate(kycStatus.verificationDate)}
                       </p>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Documents</p>
-                      <p className="font-semibold text-gray-900">
+                    <div className="p-4 bg-background rounded-lg">
+                      <p className="text-sm text-muted-foreground">Documents</p>
+                      <p className="font-semibold text-foreground">
                         {kycStatus.documents?.length || 0} submitted
                       </p>
                     </div>
@@ -479,18 +479,18 @@ export default function VerificationsPage() {
 
                   {kycStatus.documents && kycStatus.documents.length > 0 && (
                     <div className="mt-6">
-                      <h4 className="font-medium text-gray-900 mb-3">Submitted Documents</h4>
+                      <h4 className="font-medium text-foreground mb-3">Submitted Documents</h4>
                       <div className="space-y-2">
                         {kycStatus.documents.map((doc, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-background rounded-lg"
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-2xl">📄</span>
                               <div>
-                                <p className="font-medium text-gray-900">{doc.type}</p>
-                                <p className="text-sm text-gray-500">
+                                <p className="font-medium text-foreground">{doc.type}</p>
+                                <p className="text-sm text-muted-foreground">
                                   Uploaded: {formatDate(doc.uploadedAt)}
                                 </p>
                               </div>
@@ -498,10 +498,10 @@ export default function VerificationsPage() {
                             <span
                               className={`px-2 py-1 text-xs font-medium rounded-full ${
                                 doc.status === 'APPROVED'
-                                  ? 'bg-green-100 text-green-700'
+                                  ? 'bg-green-500/15 text-green-400'
                                   : doc.status === 'PENDING'
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : 'bg-red-100 text-red-700'
+                                    ? 'bg-yellow-500/15 text-yellow-400'
+                                    : 'bg-red-500/15 text-red-400'
                               }`}
                             >
                               {doc.status}
@@ -520,16 +520,16 @@ export default function VerificationsPage() {
         {/* Verification Status Modal */}
         {selectedArtisan && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Verification Details</h2>
+                  <h2 className="text-xl font-semibold text-foreground">Verification Details</h2>
                   <button
                     onClick={() => {
                       setSelectedArtisan(null);
                       setVerificationStatus(null);
                     }}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-muted-foreground hover:text-muted-foreground"
                   >
                     X
                   </button>
@@ -537,25 +537,25 @@ export default function VerificationsPage() {
 
                 <div className="space-y-6">
                   {/* Artisan Info */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Artisan Information</h3>
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Artisan Information</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-600">Name</p>
+                        <p className="text-sm text-muted-foreground">Name</p>
                         <p className="font-medium">
                           {selectedArtisan.firstName} {selectedArtisan.lastName}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="text-sm text-muted-foreground">Email</p>
                         <p className="font-medium">{selectedArtisan.email}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Business Name</p>
+                        <p className="text-sm text-muted-foreground">Business Name</p>
                         <p className="font-medium">{selectedArtisan.businessName || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Registration #</p>
+                        <p className="text-sm text-muted-foreground">Registration #</p>
                         <p className="font-medium">{selectedArtisan.registrationNumber || 'N/A'}</p>
                       </div>
                     </div>
@@ -564,10 +564,10 @@ export default function VerificationsPage() {
                   {/* Verification Status */}
                   {verificationStatus ? (
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-3">Verification Status</h3>
+                      <h3 className="font-medium text-foreground mb-3">Verification Status</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Status</p>
+                        <div className="p-4 bg-background rounded-lg">
+                          <p className="text-sm text-muted-foreground">Status</p>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                               verificationStatus.status,
@@ -576,30 +576,30 @@ export default function VerificationsPage() {
                             {verificationStatus.status}
                           </span>
                         </div>
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Verified</p>
+                        <div className="p-4 bg-background rounded-lg">
+                          <p className="text-sm text-muted-foreground">Verified</p>
                           <p className="font-medium">
                             {verificationStatus.verified ? 'Yes' : 'No'}
                           </p>
                         </div>
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Verification Date</p>
+                        <div className="p-4 bg-background rounded-lg">
+                          <p className="text-sm text-muted-foreground">Verification Date</p>
                           <p className="font-medium">
                             {formatDate(verificationStatus.verificationDate)}
                           </p>
                         </div>
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Last Check</p>
+                        <div className="p-4 bg-background rounded-lg">
+                          <p className="text-sm text-muted-foreground">Last Check</p>
                           <p className="font-medium">{formatDate(verificationStatus.lastCheck)}</p>
                         </div>
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Next Check Due</p>
+                        <div className="p-4 bg-background rounded-lg">
+                          <p className="text-sm text-muted-foreground">Next Check Due</p>
                           <p className="font-medium">
                             {formatDate(verificationStatus.nextCheckDue)}
                           </p>
                         </div>
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Registration Type</p>
+                        <div className="p-4 bg-background rounded-lg">
+                          <p className="text-sm text-muted-foreground">Registration Type</p>
                           <p className="font-medium">
                             {verificationStatus.registrationType || 'N/A'}
                           </p>
@@ -607,19 +607,19 @@ export default function VerificationsPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-gray-500">
+                    <div className="text-center py-4 text-muted-foreground">
                       Loading verification status...
                     </div>
                   )}
 
                   {/* Actions */}
-                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-border">
                     <button
                       onClick={() => {
                         setSelectedArtisan(null);
                         setVerificationStatus(null);
                       }}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                     >
                       Close
                     </button>

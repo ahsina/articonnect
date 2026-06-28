@@ -95,7 +95,7 @@ export default function NoShowConfigPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -103,7 +103,7 @@ export default function NoShowConfigPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -120,13 +120,13 @@ export default function NoShowConfigPage() {
               type="checkbox"
               checked={settings.enabled}
               onChange={(e) => updateSetting('enabled', e.target.checked)}
-              className="w-5 h-5 text-blue-600 rounded"
+              className="w-5 h-5 text-primary rounded"
             />
             <div>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-foreground">
                 Enable No-Show Reporting System
               </span>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Allow artisans to report client no-shows for compensation
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function NoShowConfigPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Minimum Wait Time (minutes)
                   </label>
                   <input
@@ -157,14 +157,14 @@ export default function NoShowConfigPage() {
                       updateSetting('minimumWaitTimeMinutes', parseInt(e.target.value))
                     }
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Artisan must wait this long before reporting
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     GPS Radius (meters)
                   </label>
                   <input
@@ -172,14 +172,14 @@ export default function NoShowConfigPage() {
                     value={settings.gpsRadiusMeters}
                     onChange={(e) => updateSetting('gpsRadiusMeters', parseInt(e.target.value))}
                     min="10"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     How close to mission location for GPS verification
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Min Contact Attempts
                   </label>
                   <input
@@ -187,9 +187,9 @@ export default function NoShowConfigPage() {
                     value={settings.minContactAttempts}
                     onChange={(e) => updateSetting('minContactAttempts', parseInt(e.target.value))}
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Required contact attempts before reporting
                   </p>
                 </div>
@@ -201,18 +201,18 @@ export default function NoShowConfigPage() {
                     type="checkbox"
                     checked={settings.gpsVerificationRequired}
                     onChange={(e) => updateSetting('gpsVerificationRequired', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">Require GPS verification</span>
+                  <span className="text-sm text-foreground">Require GPS verification</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={settings.photoEvidenceRequired}
                     onChange={(e) => updateSetting('photoEvidenceRequired', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">Require photo evidence</span>
+                  <span className="text-sm text-foreground">Require photo evidence</span>
                 </label>
               </div>
             </CardContent>
@@ -229,7 +229,7 @@ export default function NoShowConfigPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Compensation (% of mission)
                   </label>
                   <input
@@ -240,11 +240,11 @@ export default function NoShowConfigPage() {
                     }
                     min="0"
                     max="100"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Minimum (cents)
                   </label>
                   <input
@@ -252,14 +252,14 @@ export default function NoShowConfigPage() {
                     value={settings.compensationMinimum}
                     onChange={(e) => updateSetting('compensationMinimum', parseInt(e.target.value))}
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {formatCurrency(settings.compensationMinimum)}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Maximum (cents)
                   </label>
                   <input
@@ -267,14 +267,14 @@ export default function NoShowConfigPage() {
                     value={settings.compensationMaximum}
                     onChange={(e) => updateSetting('compensationMaximum', parseInt(e.target.value))}
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {formatCurrency(settings.compensationMaximum)}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Client Penalty (%)
                   </label>
                   <input
@@ -285,9 +285,9 @@ export default function NoShowConfigPage() {
                     }
                     min="0"
                     max="100"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Penalty charged to client for no-show
                   </p>
                 </div>
@@ -309,19 +309,19 @@ export default function NoShowConfigPage() {
                   type="checkbox"
                   checked={settings.autoValidationEnabled}
                   onChange={(e) => updateSetting('autoValidationEnabled', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm font-medium text-gray-700">Enable auto-validation</span>
+                <span className="text-sm font-medium text-foreground">Enable auto-validation</span>
               </label>
 
               {settings.autoValidationEnabled && (
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm font-medium text-blue-700 mb-4">
+                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                  <p className="text-sm font-medium text-primary mb-4">
                     Auto-validation Requirements
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1">
+                      <label className="block text-sm text-foreground mb-1">
                         Min Wait Time (minutes)
                       </label>
                       <input
@@ -331,11 +331,11 @@ export default function NoShowConfigPage() {
                           updateAutoValidationReq('minWaitTime', parseInt(e.target.value))
                         }
                         min="1"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1">
+                      <label className="block text-sm text-foreground mb-1">
                         Min Contact Attempts
                       </label>
                       <input
@@ -345,7 +345,7 @@ export default function NoShowConfigPage() {
                           updateAutoValidationReq('minContactAttempts', parseInt(e.target.value))
                         }
                         min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     <div className="flex items-center">
@@ -354,9 +354,9 @@ export default function NoShowConfigPage() {
                           type="checkbox"
                           checked={settings.autoValidationRequirements.gpsVerified}
                           onChange={(e) => updateAutoValidationReq('gpsVerified', e.target.checked)}
-                          className="w-4 h-4 text-blue-600 rounded"
+                          className="w-4 h-4 text-primary rounded"
                         />
-                        <span className="text-sm text-gray-700">GPS must be verified</span>
+                        <span className="text-sm text-foreground">GPS must be verified</span>
                       </label>
                     </div>
                   </div>
@@ -376,7 +376,7 @@ export default function NoShowConfigPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Dispute Window (hours)
                   </label>
                   <input
@@ -384,12 +384,12 @@ export default function NoShowConfigPage() {
                     value={settings.disputeWindowHours}
                     onChange={(e) => updateSetting('disputeWindowHours', parseInt(e.target.value))}
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Time client has to dispute a no-show</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Time client has to dispute a no-show</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Repeat Offender Threshold
                   </label>
                   <input
@@ -399,12 +399,12 @@ export default function NoShowConfigPage() {
                       updateSetting('repeatOffenderThreshold', parseInt(e.target.value))
                     }
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">No-shows before escalation measures</p>
+                  <p className="mt-1 text-xs text-muted-foreground">No-shows before escalation measures</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Repeat Penalty Multiplier
                   </label>
                   <input
@@ -415,9 +415,9 @@ export default function NoShowConfigPage() {
                     }
                     min="1"
                     step="0.1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Penalty multiplier for repeat offenders
                   </p>
                 </div>
@@ -432,7 +432,7 @@ export default function NoShowConfigPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save No-Show Configuration'}
         </button>

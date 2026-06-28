@@ -22,8 +22,8 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             id={checkboxId}
             ref={ref}
             className={cn(
-              'h-5 w-5 rounded border-gray-300 text-blue-600',
-              'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+              'h-5 w-5 rounded border-border text-primary',
+              'focus:ring-2 focus:ring-primary focus:ring-offset-2',
               'disabled:cursor-not-allowed disabled:opacity-50',
               'transition-colors duration-200',
               error && 'border-red-500',
@@ -41,7 +41,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                 htmlFor={checkboxId}
                 className={cn(
                   'text-sm font-medium',
-                  error ? 'text-red-700' : 'text-gray-700',
+                  error ? 'text-red-400' : 'text-foreground',
                   props.disabled && 'opacity-50 cursor-not-allowed',
                 )}
               >
@@ -49,7 +49,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               </label>
             )}
             {description && (
-              <p id={descriptionId} className="text-sm text-gray-500">
+              <p id={descriptionId} className="text-sm text-muted-foreground">
                 {description}
               </p>
             )}

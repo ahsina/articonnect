@@ -34,12 +34,12 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  NEGOTIATING: 'bg-blue-100 text-blue-800',
-  ACCEPTED: 'bg-green-100 text-green-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  COMPLETED: 'bg-gray-100 text-gray-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  NEGOTIATING: 'bg-primary/10 text-primary',
+  ACCEPTED: 'bg-green-500/15 text-green-400',
+  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+  COMPLETED: 'bg-muted text-foreground',
+  CANCELLED: 'bg-red-500/15 text-red-400',
 };
 
 type StatusFilter = 'all' | 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
@@ -88,19 +88,19 @@ export default function ClientMissionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('missions', 'myMissions')}</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">{t('missions', 'myMissions')}</h1>
+            <p className="text-muted-foreground mt-1">
               {missions.length} {missions.length > 1 ? 'missions' : 'mission'}
             </p>
           </div>
@@ -114,7 +114,7 @@ export default function ClientMissionsPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold">{missions.length}</div>
-              <div className="text-sm text-gray-600">{t('missions', 'total')}</div>
+              <div className="text-sm text-muted-foreground">{t('missions', 'total')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -122,7 +122,7 @@ export default function ClientMissionsPage() {
               <div className="text-2xl font-bold text-yellow-600">
                 {missions.filter((m) => m.status === 'PENDING').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'pending')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'pending')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -130,7 +130,7 @@ export default function ClientMissionsPage() {
               <div className="text-2xl font-bold text-purple-600">
                 {missions.filter((m) => m.status === 'IN_PROGRESS').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'inProgress')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'inProgress')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -138,7 +138,7 @@ export default function ClientMissionsPage() {
               <div className="text-2xl font-bold text-green-600">
                 {missions.filter((m) => m.status === 'COMPLETED').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'completed')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'completed')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -146,7 +146,7 @@ export default function ClientMissionsPage() {
               <div className="text-2xl font-bold text-red-600">
                 {missions.filter((m) => m.status === 'CANCELLED').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'cancelled')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'cancelled')}</div>
             </CardContent>
           </Card>
         </div>
@@ -181,10 +181,10 @@ export default function ClientMissionsPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('missions', 'noMissions')}
               </h3>
-              <p className="text-gray-600 mb-4">{t('missions', 'createFirstRequest')}</p>
+              <p className="text-muted-foreground mb-4">{t('missions', 'createFirstRequest')}</p>
               <Link href="/client/missions/new">
                 <Button>{t('missions', 'newRequest')}</Button>
               </Link>
@@ -202,13 +202,13 @@ export default function ClientMissionsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{mission.title}</h3>
+                        <h3 className="text-lg font-semibold text-foreground">{mission.title}</h3>
                         <Badge className={STATUS_COLORS[mission.status]}>
                           {translateMissionStatus(mission.status, t)}
                         </Badge>
                       </div>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">{mission.description}</p>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                      <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{mission.description}</p>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                         <span>{mission.category}</span>
                         <span>•</span>
                         <span>
@@ -228,7 +228,7 @@ export default function ClientMissionsPage() {
                             alt={mission.artisan.firstName}
                             className="w-8 h-8 rounded-full"
                           />
-                          <span className="text-sm text-gray-700">
+                          <span className="text-sm text-foreground">
                             {mission.artisan.firstName} {mission.artisan.lastName}
                           </span>
                         </div>
@@ -237,12 +237,12 @@ export default function ClientMissionsPage() {
 
                     <div className="text-right ml-4">
                       {mission.agreedPrice ? (
-                        <div className="text-xl font-bold text-gray-900">{mission.agreedPrice}€</div>
+                        <div className="text-xl font-bold text-foreground">{mission.agreedPrice}€</div>
                       ) : mission.clientBudget ? (
-                        <div className="text-lg text-gray-600">Budget: {mission.clientBudget}€</div>
+                        <div className="text-lg text-muted-foreground">Budget: {mission.clientBudget}€</div>
                       ) : null}
                       {mission.scheduledFor && (
-                        <div className="text-sm text-gray-500 mt-1">
+                        <div className="text-sm text-muted-foreground mt-1">
                           {formatDate(mission.scheduledFor)}
                         </div>
                       )}

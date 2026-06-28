@@ -113,11 +113,11 @@ export function Map({
 
   if (error) {
     return (
-      <div className={`bg-gray-100 rounded-lg flex items-center justify-center ${className}`}>
+      <div className={`bg-muted rounded-lg flex items-center justify-center ${className}`}>
         <div className="text-center p-8">
           <div className="text-4xl mb-4">🗺️</div>
-          <p className="text-sm text-gray-600">{error}</p>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-xs text-muted-foreground mt-2">
             Carte interactive disponible après configuration de l'API
           </p>
         </div>

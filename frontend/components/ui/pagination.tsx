@@ -98,7 +98,7 @@ const Pagination = ({
           return (
             <span
               key={`ellipsis-${index}`}
-              className="px-2 text-gray-500"
+              className="px-2 text-muted-foreground"
               aria-hidden="true"
             >
               ...

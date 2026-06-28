@@ -17,18 +17,18 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
 const ROLE_COLORS: Record<string, string> = {
-  OWNER: 'bg-purple-100 text-purple-800',
-  MANAGER: 'bg-blue-100 text-blue-800',
-  SUPERVISOR: 'bg-indigo-100 text-indigo-800',
-  TECHNICIAN: 'bg-green-100 text-green-800',
-  CONTRACTOR: 'bg-gray-100 text-gray-800',
+  OWNER: 'bg-purple-500/15 text-purple-400',
+  MANAGER: 'bg-primary/10 text-primary',
+  SUPERVISOR: 'bg-primary/15 text-primary',
+  TECHNICIAN: 'bg-green-500/15 text-green-400',
+  CONTRACTOR: 'bg-muted text-foreground',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-800',
-  INACTIVE: 'bg-gray-100 text-gray-800',
-  TERMINATED: 'bg-red-100 text-red-800',
-  PENDING_INVITATION: 'bg-yellow-100 text-yellow-800',
+  ACTIVE: 'bg-green-500/15 text-green-400',
+  INACTIVE: 'bg-muted text-foreground',
+  TERMINATED: 'bg-red-500/15 text-red-400',
+  PENDING_INVITATION: 'bg-yellow-500/15 text-yellow-400',
 };
 
 export default function EmployeesPage() {
@@ -157,7 +157,7 @@ export default function EmployeesPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -167,10 +167,10 @@ export default function EmployeesPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('company', 'employees') || 'Employees'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('company', 'manageTeam') || 'Manage your team members'}
           </p>
         </div>
@@ -183,13 +183,13 @@ export default function EmployeesPage() {
       <div className="grid md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">{t('company', 'totalEmployees') || 'Total'}</div>
-            <div className="text-2xl font-bold text-gray-900">{employees.length}</div>
+            <div className="text-sm text-muted-foreground">{t('company', 'totalEmployees') || 'Total'}</div>
+            <div className="text-2xl font-bold text-foreground">{employees.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('company', 'activeEmployees') || 'Active'}
             </div>
             <div className="text-2xl font-bold text-green-600">
@@ -199,7 +199,7 @@ export default function EmployeesPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('company', 'pendingInvitations') || 'Pending'}
             </div>
             <div className="text-2xl font-bold text-yellow-600">
@@ -209,8 +209,8 @@ export default function EmployeesPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">{t('company', 'managers') || 'Managers'}</div>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-sm text-muted-foreground">{t('company', 'managers') || 'Managers'}</div>
+            <div className="text-2xl font-bold text-primary">
               {employees.filter((e) => ['OWNER', 'MANAGER'].includes(e.role)).length}
             </div>
           </CardContent>
@@ -246,30 +246,30 @@ export default function EmployeesPage() {
       <Card>
         <CardContent className="p-0">
           {filteredEmployees.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('company', 'noEmployeesFound') || 'No employees found'}
             </div>
           ) : (
             <div className="divide-y">
               {filteredEmployees.map((employee) => (
-                <div key={employee.id} className="p-4 hover:bg-gray-50">
+                <div key={employee.id} className="p-4 hover:bg-accent">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                         {employee.user?.firstName?.[0]}
                         {employee.user?.lastName?.[0]}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {employee.user?.firstName} {employee.user?.lastName}
                         </div>
-                        <div className="text-sm text-gray-500">{employee.user?.email}</div>
+                        <div className="text-sm text-muted-foreground">{employee.user?.email}</div>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={ROLE_COLORS[employee.role]}>{employee.role}</Badge>
                           <Badge className={STATUS_COLORS[employee.status]}>
                             {employee.status.replace('_', ' ')}
                           </Badge>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {employee.paymentModel} • {employee.commissionRate}%
                           </span>
                         </div>
@@ -321,7 +321,7 @@ export default function EmployeesPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'email') || 'Email'} *
                 </label>
                 <Input
@@ -330,13 +330,13 @@ export default function EmployeesPage() {
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                   placeholder="employee@example.com"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {t('company', 'emailNote') || 'User must already have an artisan account'}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'role') || 'Role'} *
                 </label>
                 <select
@@ -344,7 +344,7 @@ export default function EmployeesPage() {
                   onChange={(e) =>
                     setInviteForm({ ...inviteForm, role: e.target.value as EmployeeRole })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="TECHNICIAN">{t('company', 'technician') || 'Technician'}</option>
                   <option value="SUPERVISOR">{t('company', 'supervisor') || 'Supervisor'}</option>
@@ -354,7 +354,7 @@ export default function EmployeesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'paymentModel') || 'Payment Model'} *
                 </label>
                 <select
@@ -362,7 +362,7 @@ export default function EmployeesPage() {
                   onChange={(e) =>
                     setInviteForm({ ...inviteForm, paymentModel: e.target.value as PaymentModel })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="COMMISSION">
                     {t('company', 'commission') || 'Commission Only'}
@@ -375,7 +375,7 @@ export default function EmployeesPage() {
               {(inviteForm.paymentModel === 'COMMISSION' ||
                 inviteForm.paymentModel === 'HYBRID') && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('company', 'commissionRate') || 'Commission Rate (%)'} *
                   </label>
                   <Input
@@ -392,7 +392,7 @@ export default function EmployeesPage() {
 
               {(inviteForm.paymentModel === 'SALARY' || inviteForm.paymentModel === 'HYBRID') && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('company', 'baseSalary') || 'Base Salary (€/month)'} *
                   </label>
                   <Input

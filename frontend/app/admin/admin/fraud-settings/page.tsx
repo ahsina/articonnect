@@ -213,18 +213,18 @@ export default function FraudSettingsPage() {
   };
 
   const getColorClasses = (color: string, enabled: boolean) => {
-    if (!enabled) return 'bg-gray-100 border-gray-200';
+    if (!enabled) return 'bg-muted border-border';
 
     const colors: Record<string, string> = {
-      blue: 'bg-blue-50 border-blue-200',
-      yellow: 'bg-yellow-50 border-yellow-200',
-      green: 'bg-green-50 border-green-200',
-      purple: 'bg-purple-50 border-purple-200',
-      red: 'bg-red-50 border-red-200',
-      indigo: 'bg-indigo-50 border-indigo-200',
-      teal: 'bg-teal-50 border-teal-200',
-      orange: 'bg-orange-50 border-orange-200',
-      gray: 'bg-gray-50 border-gray-300',
+      blue: 'bg-primary/10 border-primary/20',
+      yellow: 'bg-yellow-500/10 border-yellow-500/20',
+      green: 'bg-green-500/10 border-green-500/30',
+      purple: 'bg-purple-500/10 border-purple-500/20',
+      red: 'bg-red-500/10 border-red-500/20',
+      indigo: 'bg-primary/10 border-primary/20',
+      teal: 'bg-teal-500/10 border-teal-500/20',
+      orange: 'bg-orange-500/10 border-orange-500/20',
+      gray: 'bg-background border-border',
     };
 
     return colors[color] || colors.blue;
@@ -233,7 +233,7 @@ export default function FraudSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -247,20 +247,20 @@ export default function FraudSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Fraud Protection Settings</h1>
-              <p className="text-gray-600 mt-2">
+              <h1 className="text-3xl font-bold text-foreground">Fraud Protection Settings</h1>
+              <p className="text-muted-foreground mt-2">
                 Configure fraud detection features to protect the platform
               </p>
             </div>
@@ -269,7 +269,7 @@ export default function FraudSettingsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -280,7 +280,7 @@ export default function FraudSettingsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Features Enabled</p>
+                  <p className="text-sm text-muted-foreground">Features Enabled</p>
                   <p className="text-3xl font-bold text-green-600">
                     {fraudFeatures.filter((f) => config[f.key] as boolean).length}
                   </p>
@@ -293,8 +293,8 @@ export default function FraudSettingsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Features Disabled</p>
-                  <p className="text-3xl font-bold text-gray-400">
+                  <p className="text-sm text-muted-foreground">Features Disabled</p>
+                  <p className="text-3xl font-bold text-muted-foreground">
                     {fraudFeatures.filter((f) => !(config[f.key] as boolean)).length}
                   </p>
                 </div>
@@ -306,8 +306,8 @@ export default function FraudSettingsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Last Updated</p>
-                  <p className="text-lg font-semibold text-gray-700">
+                  <p className="text-sm text-muted-foreground">Last Updated</p>
+                  <p className="text-lg font-semibold text-foreground">
                     {new Date(config.updatedAt).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
@@ -339,7 +339,7 @@ export default function FraudSettingsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {isSaving && (
-                        <span className="text-sm text-gray-500 animate-pulse">Saving...</span>
+                        <span className="text-sm text-muted-foreground animate-pulse">Saving...</span>
                       )}
                       <Switch
                         checked={isEnabled}
@@ -352,10 +352,10 @@ export default function FraudSettingsPage() {
 
                 {isEnabled && (feature.thresholdKey || feature.autoActionKey) && (
                   <CardContent>
-                    <div className="space-y-4 pt-2 border-t border-gray-200">
+                    <div className="space-y-4 pt-2 border-t border-border">
                       {feature.thresholdKey && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                          <label className="block text-sm font-medium text-foreground mb-1">
                             {feature.thresholdLabel}
                           </label>
                           <Input
@@ -416,7 +416,7 @@ export default function FraudSettingsPage() {
 
               {config.fraudAlertEmailEnabled && (
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Alert Email Address
                   </label>
                   <Input

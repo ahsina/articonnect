@@ -99,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside
         className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-gray-900 text-white flex-shrink-0 transition-all duration-300 flex flex-col`}
@@ -129,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                         hasActiveChild(item.children)
                           ? 'bg-gray-800 text-white'
-                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                          : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
                       }`}
                     >
                       <span className="text-lg">{item.icon}</span>
@@ -148,8 +148,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                               onClick={() => router.push(child.href)}
                               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isActive(child.href)
-                                  ? 'bg-blue-600 text-white'
-                                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                  ? 'bg-primary text-white'
+                                  : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
                               }`}
                             >
                               <span>{child.icon}</span>
@@ -170,10 +170,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     onClick={() => router.push(linkItem.href)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isActive(linkItem.href)
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary text-white'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-blue-700 to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-600'
-                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                          ? 'bg-gradient-to-r from-primary to-orange-600 text-white hover:from-primary hover:to-orange-600'
+                          : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
                     }`}
                   >
                     <span className="text-lg">{linkItem.icon}</span>
@@ -190,7 +190,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Footer */}
         {sidebarOpen && (
           <div className="p-4 border-t border-gray-800">
-            <div className="text-xs text-gray-500">Admin Panel v1.0</div>
+            <div className="text-xs text-muted-foreground">Admin Panel v1.0</div>
           </div>
         )}
       </aside>

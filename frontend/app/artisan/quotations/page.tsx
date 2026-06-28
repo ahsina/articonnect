@@ -34,11 +34,11 @@ interface Quotation {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  ACCEPTED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  EXPIRED: 'bg-gray-100 text-gray-800',
-  SIGNED: 'bg-blue-100 text-blue-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  ACCEPTED: 'bg-green-500/15 text-green-400',
+  REJECTED: 'bg-red-500/15 text-red-400',
+  EXPIRED: 'bg-muted text-foreground',
+  SIGNED: 'bg-primary/10 text-primary',
 };
 
 export default function QuotationsPage() {
@@ -242,7 +242,7 @@ export default function QuotationsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -260,10 +260,10 @@ export default function QuotationsPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('artisan', 'quotations') || 'Quotations'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('artisan', 'manageQuotations') || 'Manage your quotations and proposals'}
         </p>
       </div>
@@ -272,30 +272,30 @@ export default function QuotationsPage() {
       <div className="grid md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('artisan', 'totalQuotations') || 'Total'}
             </div>
-            <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">{t('artisan', 'pending') || 'Pending'}</div>
+            <div className="text-sm text-muted-foreground">{t('artisan', 'pending') || 'Pending'}</div>
             <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">{t('artisan', 'accepted') || 'Accepted'}</div>
+            <div className="text-sm text-muted-foreground">{t('artisan', 'accepted') || 'Accepted'}</div>
             <div className="text-2xl font-bold text-green-600">{stats.accepted}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('artisan', 'totalValue') || 'Total Value'}
             </div>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-primary">
               {formatCurrency(stats.totalValue)}
             </div>
           </CardContent>
@@ -334,7 +334,7 @@ export default function QuotationsPage() {
         </CardHeader>
         <CardContent>
           {quotations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <div className="text-4xl mb-2">📄</div>
               <p>{t('artisan', 'noQuotations') || 'No quotations found'}</p>
               <p className="text-sm mt-2">
@@ -346,31 +346,31 @@ export default function QuotationsPage() {
               {quotations.map((quotation) => (
                 <div
                   key={quotation.id}
-                  className="p-4 border rounded-lg hover:bg-gray-50 transition"
+                  className="p-4 border rounded-lg hover:bg-accent transition"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-gray-900">
+                        <h4 className="font-medium text-foreground">
                           {quotation.mission?.title || `Quotation #${quotation.id.slice(0, 8)}`}
                         </h4>
                         <Badge className={STATUS_COLORS[quotation.status]}>
                           {translateQuotationStatus(quotation.status, t)}
                         </Badge>
                         {quotation.status === 'PENDING' && isExpiringSoon(quotation.validUntil) && (
-                          <Badge className="bg-orange-100 text-orange-800">
+                          <Badge className="bg-orange-500/15 text-orange-400">
                             ⏰ {t('artisan', 'expiringSoon') || 'Expiring Soon'}
                           </Badge>
                         )}
                       </div>
                       {quotation.mission?.client && (
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           {t('artisan', 'client') || 'Client'}: {quotation.mission.client.firstName}{' '}
                           {quotation.mission.client.lastName}
                         </p>
                       )}
-                      <p className="text-sm text-gray-500">{quotation.description}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">{quotation.description}</p>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <span>
                           {t('artisan', 'created') || 'Created'}: {formatDate(quotation.createdAt)}
                         </span>
@@ -381,7 +381,7 @@ export default function QuotationsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold text-gray-900">
+                      <div className="text-xl font-bold text-foreground">
                         {formatCurrency(quotation.amount)}
                       </div>
                       <div className="flex flex-col gap-2 mt-2">
@@ -395,7 +395,7 @@ export default function QuotationsPage() {
                         {quotation.status === 'ACCEPTED' && !quotation.signedByArtisan && (
                           <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-primary hover:bg-primary/90"
                             onClick={() => openSignatureModal(quotation)}
                           >
                             ✍️ {t('quotations', 'sign') || 'Sign'}
@@ -411,7 +411,7 @@ export default function QuotationsPage() {
                           </Button>
                         )}
                         {quotation.signedByArtisan && quotation.signedByClient && (
-                          <Badge className="bg-green-100 text-green-800 justify-center">
+                          <Badge className="bg-green-500/15 text-green-400 justify-center">
                             ✓ {t('quotations', 'fullySigned') || 'Fully Signed'}
                           </Badge>
                         )}
@@ -434,7 +434,7 @@ export default function QuotationsPage() {
               >
                 {t('common', 'previous') || 'Previous'}
               </Button>
-              <span className="py-2 px-4 text-sm text-gray-600">
+              <span className="py-2 px-4 text-sm text-muted-foreground">
                 {page} / {totalPages}
               </span>
               <Button
@@ -453,36 +453,36 @@ export default function QuotationsPage() {
       {/* Signature Modal */}
       {showSignatureModal && selectedQuotation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-lg w-full p-6">
+          <div className="bg-card rounded-lg max-w-lg w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-lg font-bold text-foreground">
                 {t('quotations', 'signQuote') || 'Sign Quotation'}
               </h3>
               <button
                 onClick={closeSignatureModal}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-muted-foreground hover:text-foreground"
               >
                 ✕
               </button>
             </div>
 
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">
+            <div className="mb-4 p-3 bg-background rounded-lg">
+              <div className="text-sm text-muted-foreground">
                 {t('quotations', 'quotationFor') || 'Quotation for'}:
               </div>
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-foreground">
                 {selectedQuotation.mission?.title || `#${selectedQuotation.id.slice(0, 8)}`}
               </div>
-              <div className="text-lg font-bold text-blue-600 mt-1">
+              <div className="text-lg font-bold text-primary mt-1">
                 {formatCurrency(selectedQuotation.amount)}
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 {t('quotations', 'drawSignature') || 'Draw your signature below'}:
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+              <div className="border-2 border-dashed border-border rounded-lg overflow-hidden">
                 <canvas
                   ref={canvasRef}
                   width={400}
@@ -507,7 +507,7 @@ export default function QuotationsPage() {
               </Button>
             </div>
 
-            <div className="p-3 bg-blue-50 rounded-lg mb-4 text-sm text-blue-800">
+            <div className="p-3 bg-primary/10 rounded-lg mb-4 text-sm text-primary">
               <p>
                 {t('quotations', 'signatureDisclaimer') ||
                   'By signing this quotation, you confirm that you agree to provide the services described at the specified price.'}
@@ -521,7 +521,7 @@ export default function QuotationsPage() {
               <Button
                 onClick={handleSignQuote}
                 disabled={signing}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
               >
                 {signing
                   ? t('quotations', 'signing') || 'Signing...'

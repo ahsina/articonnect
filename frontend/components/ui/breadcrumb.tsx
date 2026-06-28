@@ -15,7 +15,7 @@ export interface BreadcrumbProps {
 
 const ChevronIcon = () => (
   <svg
-    className="h-4 w-4 text-gray-400 flex-shrink-0"
+    className="h-4 w-4 text-muted-foreground flex-shrink-0"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -67,8 +67,8 @@ const Breadcrumb = ({
                   className={cn(
                     'text-sm',
                     isLast
-                      ? 'font-medium text-gray-900'
-                      : 'text-gray-500'
+                      ? 'font-medium text-foreground'
+                      : 'text-muted-foreground'
                   )}
                   aria-current={isLast ? 'page' : undefined}
                 >
@@ -85,9 +85,9 @@ const Breadcrumb = ({
                 <Link
                   href={item.href}
                   className={cn(
-                    'text-sm text-gray-500 hover:text-gray-700',
+                    'text-sm text-muted-foreground hover:text-foreground',
                     'transition-colors duration-200',
-                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded'
+                    'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded'
                   )}
                 >
                   {isFirst && item.label === 'Accueil' ? (

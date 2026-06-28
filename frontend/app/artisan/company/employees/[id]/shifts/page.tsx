@@ -138,18 +138,18 @@ export default function EmployeeShiftsPage() {
 
   const getShiftTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      REGULAR: 'bg-blue-100 text-blue-800 border-blue-200',
-      OVERTIME: 'bg-orange-100 text-orange-800 border-orange-200',
-      ON_CALL: 'bg-purple-100 text-purple-800 border-purple-200',
-      TRAINING: 'bg-green-100 text-green-800 border-green-200',
+      REGULAR: 'bg-primary/10 text-primary border-primary/20',
+      OVERTIME: 'bg-orange-500/15 text-orange-400 border-orange-500/20',
+      ON_CALL: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
+      TRAINING: 'bg-green-500/15 text-green-400 border-green-500/20',
     };
-    return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[type] || 'bg-muted text-foreground border-border';
   };
 
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -166,10 +166,10 @@ export default function EmployeeShiftsPage() {
             ← {t('common', 'back') || 'Back'}
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               {t('company', 'shiftSchedule') || 'Shift Schedule'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {employee?.user.firstName} {employee?.user.lastName}
             </p>
           </div>
@@ -190,7 +190,7 @@ export default function EmployeeShiftsPage() {
               <div className="font-semibold text-lg">
                 {selectedWeek.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 {selectedWeek.toLocaleDateString()} - {weekDates[6].toLocaleDateString()}
               </div>
             </div>
@@ -206,9 +206,9 @@ export default function EmployeeShiftsPage() {
         <CardContent className="p-0">
           <div className="grid grid-cols-7 border-b">
             {dayNames.map((day, index) => (
-              <div key={day} className="p-3 text-center border-r last:border-r-0 bg-gray-50">
-                <div className="font-medium text-gray-900">{day}</div>
-                <div className="text-sm text-gray-500">{weekDates[index].getDate()}</div>
+              <div key={day} className="p-3 text-center border-r last:border-r-0 bg-background">
+                <div className="font-medium text-foreground">{day}</div>
+                <div className="text-sm text-muted-foreground">{weekDates[index].getDate()}</div>
               </div>
             ))}
           </div>
@@ -221,7 +221,7 @@ export default function EmployeeShiftsPage() {
               return (
                 <div
                   key={index}
-                  className={`border-r last:border-r-0 p-2 ${isToday ? 'bg-blue-50' : isPast ? 'bg-gray-50' : ''}`}
+                  className={`border-r last:border-r-0 p-2 ${isToday ? 'bg-primary/10' : isPast ? 'bg-background' : ''}`}
                 >
                   {dateShifts.length > 0 ? (
                     <div className="space-y-2">
@@ -241,7 +241,7 @@ export default function EmployeeShiftsPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="h-full flex items-center justify-center text-gray-400 text-xs">
+                    <div className="h-full flex items-center justify-center text-muted-foreground text-xs">
                       {t('company', 'noShifts') || 'No shifts'}
                     </div>
                   )}
@@ -260,19 +260,19 @@ export default function EmployeeShiftsPage() {
         <CardContent>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-100 border border-blue-200" />
+              <div className="w-4 h-4 rounded bg-primary/10 border border-primary/20" />
               <span className="text-sm">{t('company', 'regular') || 'Regular'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-orange-100 border border-orange-200" />
+              <div className="w-4 h-4 rounded bg-orange-500/15 border border-orange-500/20" />
               <span className="text-sm">{t('company', 'overtime') || 'Overtime'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-purple-100 border border-purple-200" />
+              <div className="w-4 h-4 rounded bg-purple-500/15 border border-purple-500/20" />
               <span className="text-sm">{t('company', 'onCall') || 'On Call'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-100 border border-green-200" />
+              <div className="w-4 h-4 rounded bg-green-500/15 border border-green-500/20" />
               <span className="text-sm">{t('company', 'training') || 'Training'}</span>
             </div>
           </div>
@@ -282,12 +282,12 @@ export default function EmployeeShiftsPage() {
       {/* Add Shift Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-card rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{t('company', 'addShift') || 'Add Shift'}</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'date') || 'Date'} *
                 </label>
                 <Input
@@ -300,7 +300,7 @@ export default function EmployeeShiftsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('company', 'startTime') || 'Start Time'} *
                   </label>
                   <Input
@@ -310,7 +310,7 @@ export default function EmployeeShiftsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('company', 'endTime') || 'End Time'} *
                   </label>
                   <Input
@@ -322,13 +322,13 @@ export default function EmployeeShiftsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'shiftType') || 'Shift Type'}
                 </label>
                 <select
                   value={shiftForm.type}
                   onChange={(e) => setShiftForm({ ...shiftForm, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="REGULAR">{t('company', 'regular') || 'Regular'}</option>
                   <option value="OVERTIME">{t('company', 'overtime') || 'Overtime'}</option>
@@ -338,14 +338,14 @@ export default function EmployeeShiftsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'notes') || 'Notes'}
                 </label>
                 <textarea
                   value={shiftForm.notes}
                   onChange={(e) => setShiftForm({ ...shiftForm, notes: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder={
                     t('company', 'shiftNotesPlaceholder') || 'Optional notes about this shift...'
                   }

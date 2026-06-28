@@ -29,7 +29,7 @@ export function FormLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col">
       {/* Skip to content */}
       <a
         href="#main-content"
@@ -44,7 +44,7 @@ export function FormLayout({
       >
         <div
           className={cn(
-            'w-full bg-white rounded-2xl shadow-xl p-8 sm:p-10 fade-in',
+            'w-full bg-card rounded-2xl shadow-xl p-8 sm:p-10 fade-in',
             maxWidthClasses[maxWidth],
             className
           )}
@@ -53,7 +53,7 @@ export function FormLayout({
             <div className="text-center mb-8">
               <Link
                 href="/"
-                className="inline-block text-3xl font-bold text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                className="inline-block text-3xl font-bold text-primary hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
               >
                 Krafolt
               </Link>
@@ -63,12 +63,12 @@ export function FormLayout({
           {(title || subtitle) && (
             <div className="text-center mb-8">
               {title && (
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                   {title}
                 </h1>
               )}
               {subtitle && (
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   {subtitle}
                 </p>
               )}
@@ -80,7 +80,7 @@ export function FormLayout({
       </main>
 
       <footer className="py-6 text-center">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} Krafolt. Tous droits réservés.
         </p>
       </footer>

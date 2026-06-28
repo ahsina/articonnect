@@ -83,7 +83,7 @@ export default function ClientFavoritesPage() {
             ★
           </span>
         ))}
-        <span className="ml-1 text-sm text-gray-600">({rating.toFixed(1)})</span>
+        <span className="ml-1 text-sm text-muted-foreground">({rating.toFixed(1)})</span>
       </div>
     );
   };
@@ -91,13 +91,13 @@ export default function ClientFavoritesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           ← {t('common', 'back')}
@@ -105,8 +105,8 @@ export default function ClientFavoritesPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('favorites', 'title')}</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">{t('favorites', 'title')}</h1>
+            <p className="text-muted-foreground mt-1">
               {favorites.length} {t('favorites', 'savedArtisans')}
             </p>
           </div>
@@ -119,10 +119,10 @@ export default function ClientFavoritesPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">❤️</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('favorites', 'noFavorites')}
               </h3>
-              <p className="text-gray-600 mb-4">{t('favorites', 'noFavoritesDesc')}</p>
+              <p className="text-muted-foreground mb-4">{t('favorites', 'noFavoritesDesc')}</p>
               <Link href="/client/artisans">
                 <Button>{t('favorites', 'browseArtisans')}</Button>
               </Link>
@@ -145,10 +145,10 @@ export default function ClientFavoritesPage() {
                           className="w-14 h-14 rounded-full"
                         />
                         <div>
-                          <h3 className="font-semibold text-gray-900">
+                          <h3 className="font-semibold text-foreground">
                             {artisan.firstName} {artisan.lastName}
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             {artisan.artisanProfile.companyName}
                           </p>
                         </div>
@@ -164,13 +164,13 @@ export default function ClientFavoritesPage() {
 
                     <div className="mb-3">
                       {renderStars(artisan.artisanProfile.rating)}
-                      <span className="text-sm text-gray-500 ml-2">
+                      <span className="text-sm text-muted-foreground ml-2">
                         {artisan.artisanProfile.reviewCount} {t('common', 'reviews')}
                       </span>
                     </div>
 
                     {artisan.artisanProfile.verified && (
-                      <Badge className="bg-green-100 text-green-800 mb-3">
+                      <Badge className="bg-green-500/15 text-green-400 mb-3">
                         ✓ {t('artisan', 'verified')}
                       </Badge>
                     )}
@@ -189,10 +189,10 @@ export default function ClientFavoritesPage() {
                     </div>
 
                     <div className="flex items-center justify-between pt-3 border-t">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {artisan.artisanProfile.city}
                       </span>
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-primary">
                         {artisan.artisanProfile.hourlyRate}€/h
                       </span>
                     </div>

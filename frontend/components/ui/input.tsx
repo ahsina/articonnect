@@ -20,7 +20,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1">
             {label}
             {props.required && (
               <span className="text-red-500 ml-1" aria-hidden="true">
@@ -32,7 +32,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {leftIcon && (
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-400" aria-hidden="true">
+              <span className="text-muted-foreground" aria-hidden="true">
                 {leftIcon}
               </span>
             </div>
@@ -41,14 +41,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             id={inputId}
             className={cn(
-              'flex h-11 min-h-[44px] w-full rounded-md border bg-white px-3 py-2 text-sm',
-              'placeholder:text-gray-400',
+              'flex h-11 min-h-[44px] w-full rounded-md border bg-card px-3 py-2 text-sm',
+              'placeholder:text-muted-foreground',
               'focus:outline-none focus:ring-2 focus:border-transparent',
-              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50',
+              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-background',
               'transition-colors duration-200',
               error
-                ? 'border-red-500 focus:ring-red-500 text-red-900 placeholder:text-red-300'
-                : 'border-gray-300 focus:ring-blue-500',
+                ? 'border-red-500 focus:ring-red-500 text-red-300 placeholder:text-red-300'
+                : 'border-border focus:ring-primary',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               className,
@@ -60,7 +60,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
           {rightIcon && (
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="text-gray-400" aria-hidden="true">
+              <span className="text-muted-foreground" aria-hidden="true">
                 {rightIcon}
               </span>
             </div>
@@ -72,7 +72,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
         {hint && !error && (
-          <p id={hintId} className="mt-1 text-sm text-gray-500">
+          <p id={hintId} className="mt-1 text-sm text-muted-foreground">
             {hint}
           </p>
         )}

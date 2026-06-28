@@ -140,7 +140,7 @@ export default function MarketplacePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8" role="status" aria-label="Chargement du marketplace">
+      <div className="min-h-screen bg-background py-8" role="status" aria-label="Chargement du marketplace">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header skeleton */}
           <div className="mb-8">
@@ -176,12 +176,12 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Marketplace</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
+          <p className="text-muted-foreground mt-2">
             Découvrez les produits proposés par nos artisans locaux
           </p>
         </div>
@@ -207,7 +207,7 @@ export default function MarketplacePage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as MarketplaceSortOption)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="newest">Plus récents</option>
               <option value="price-asc">Prix croissant</option>
@@ -223,8 +223,8 @@ export default function MarketplacePage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-primary text-white'
+                    : 'bg-card text-foreground hover:bg-accent'
                 }`}
               >
                 <span>{category.icon}</span>
@@ -240,10 +240,10 @@ export default function MarketplacePage() {
                 {/* Price Range Filter */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-gray-900">
+                    <label className="text-sm font-medium text-foreground">
                       Prix
                     </label>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {priceRange[0].toFixed(0)}€ - {priceRange[1].toFixed(0)}€
                     </span>
                   </div>
@@ -255,7 +255,7 @@ export default function MarketplacePage() {
                     onValueChange={(value) => setPriceRange(value as [number, number])}
                     className="w-full"
                   />
-                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                     <span>0€</span>
                     <span>{maxPrice}€</span>
                   </div>
@@ -263,7 +263,7 @@ export default function MarketplacePage() {
 
                 {/* Rating Filter */}
                 <div>
-                  <label className="text-sm font-medium text-gray-900 mb-3 block">
+                  <label className="text-sm font-medium text-foreground mb-3 block">
                     Note minimum
                   </label>
                   <div className="flex gap-2">
@@ -273,8 +273,8 @@ export default function MarketplacePage() {
                         onClick={() => setMinRating(rating)}
                         className={`flex items-center gap-1 px-3 py-2 rounded-lg border transition-colors ${
                           minRating === rating
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            ? 'bg-primary text-white border-blue-600'
+                            : 'bg-card text-foreground border-border hover:bg-accent'
                         }`}
                       >
                         <span className="text-sm font-medium">
@@ -308,7 +308,7 @@ export default function MarketplacePage() {
 
         {/* Results Info */}
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {pagination.total > 0
               ? `${pagination.total} produit${pagination.total > 1 ? 's' : ''} trouvé${pagination.total > 1 ? 's' : ''} - Page ${currentPage} sur ${pagination.totalPages}`
               : 'Aucun produit trouvé'}
@@ -319,7 +319,7 @@ export default function MarketplacePage() {
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value={6}>6 par page</option>
             <option value={12}>12 par page</option>
@@ -332,7 +332,7 @@ export default function MarketplacePage() {
         {products.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">Aucun produit trouvé</p>
+              <p className="text-muted-foreground mb-4">Aucun produit trouvé</p>
               <Button onClick={resetFilters}>
                 Réinitialiser les filtres
               </Button>
@@ -364,27 +364,27 @@ export default function MarketplacePage() {
 
                   <div className="p-4">
                     {/* Product Name */}
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                    <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
                       {product.name}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                       {product.description}
                     </p>
 
                     {/* Artisan */}
-                    <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
                       <span>👤</span>
                       <span className="truncate">{product.artisan?.companyName || 'Artisan'}</span>
                     </div>
 
                     {/* Price & Stock */}
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-2xl font-bold text-blue-600">
+                      <span className="text-2xl font-bold text-primary">
                         {product.price.toFixed(2)}€
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                         {product.stock} en stock
                       </span>
                     </div>
@@ -433,7 +433,7 @@ export default function MarketplacePage() {
 
                     return (
                       <div key={page} className="flex items-center gap-1">
-                        {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                        {showEllipsis && <span className="px-2 text-muted-foreground">...</span>}
                         <Button
                           variant={currentPage === page ? 'default' : 'outline'}
                           onClick={() => setCurrentPage(page)}

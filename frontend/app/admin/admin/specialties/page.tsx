@@ -160,38 +160,38 @@ export default function SpecialtiesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Specialty Management</h1>
-              <p className="text-gray-600 mt-1">Manage service categories and specialties</p>
+              <h1 className="text-3xl font-bold text-foreground">Specialty Management</h1>
+              <p className="text-muted-foreground mt-1">Manage service categories and specialties</p>
             </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={loadData}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
             >
               Refresh
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
             >
               + Add Specialty
             </button>
@@ -200,9 +200,9 @@ export default function SpecialtiesPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
-            <button onClick={() => setError(null)} className="ml-4 text-red-900 font-medium">
+            <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
               Dismiss
             </button>
           </div>
@@ -214,8 +214,8 @@ export default function SpecialtiesPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Specialties</p>
-                  <p className="text-3xl font-bold text-blue-600">{specialties.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Specialties</p>
+                  <p className="text-3xl font-bold text-primary">{specialties.length}</p>
                 </div>
                 <span className="text-4xl">🛠️</span>
               </div>
@@ -226,7 +226,7 @@ export default function SpecialtiesPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Categories</p>
+                  <p className="text-sm text-muted-foreground">Categories</p>
                   <p className="text-3xl font-bold text-purple-600">{categories.length}</p>
                 </div>
                 <span className="text-4xl">📁</span>
@@ -238,7 +238,7 @@ export default function SpecialtiesPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Active</p>
+                  <p className="text-sm text-muted-foreground">Active</p>
                   <p className="text-3xl font-bold text-green-600">
                     {specialties.filter((s) => s.isActive).length}
                   </p>
@@ -255,8 +255,8 @@ export default function SpecialtiesPage() {
             onClick={() => setSelectedCategory('')}
             className={`px-4 py-2 rounded-lg ${
               selectedCategory === ''
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary text-white'
+                : 'bg-muted text-foreground hover:bg-accent'
             }`}
           >
             All Categories
@@ -267,8 +267,8 @@ export default function SpecialtiesPage() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-lg ${
                 selectedCategory === cat
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary text-white'
+                  : 'bg-muted text-foreground hover:bg-accent'
               }`}
             >
               {cat}
@@ -290,20 +290,20 @@ export default function SpecialtiesPage() {
                     key={specialty.id}
                     className={`p-4 border rounded-lg ${
                       specialty.isActive
-                        ? 'border-gray-200 bg-white'
-                        : 'border-gray-300 bg-gray-50 opacity-60'
+                        ? 'border-border bg-card'
+                        : 'border-border bg-background opacity-60'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{specialty.icon || '🔧'}</span>
                         <div>
-                          <h4 className="font-medium text-gray-900">{specialty.name}</h4>
+                          <h4 className="font-medium text-foreground">{specialty.name}</h4>
                           {specialty.description && (
-                            <p className="text-sm text-gray-500 mt-1">{specialty.description}</p>
+                            <p className="text-sm text-muted-foreground mt-1">{specialty.description}</p>
                           )}
                           {specialty._count?.artisans !== undefined && (
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {specialty._count.artisans} artisans
                             </p>
                           )}
@@ -312,7 +312,7 @@ export default function SpecialtiesPage() {
                       <div className="flex gap-1">
                         <button
                           onClick={() => openEditModal(specialty)}
-                          className="p-1 text-blue-600 hover:text-blue-800"
+                          className="p-1 text-primary hover:text-primary"
                           title="Edit"
                         >
                           ✏️
@@ -322,20 +322,20 @@ export default function SpecialtiesPage() {
                             setSelectedSpecialty(specialty);
                             setShowDeleteModal(true);
                           }}
-                          className="p-1 text-red-600 hover:text-red-800"
+                          className="p-1 text-red-600 hover:text-red-400"
                           title="Delete"
                         >
                           🗑️
                         </button>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                       <span>Created: {formatDate(specialty.createdAt)}</span>
                       <span
                         className={`px-2 py-0.5 rounded ${
                           specialty.isActive
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-200 text-gray-600'
+                            ? 'bg-green-500/15 text-green-400'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {specialty.isActive ? 'Active' : 'Inactive'}
@@ -350,7 +350,7 @@ export default function SpecialtiesPage() {
 
         {filteredSpecialties.length === 0 && (
           <Card>
-            <CardContent className="p-8 text-center text-gray-500">
+            <CardContent className="p-8 text-center text-muted-foreground">
               <span className="text-4xl block mb-2">🛠️</span>
               <p>No specialties found</p>
             </CardContent>
@@ -360,22 +360,22 @@ export default function SpecialtiesPage() {
         {/* Create Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Add New Specialty</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Add New Specialty</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g., Plomberie"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Category *
                     </label>
                     <input
@@ -384,7 +384,7 @@ export default function SpecialtiesPage() {
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       placeholder="e.g., Building & Construction"
                       list="categories"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                     <datalist id="categories">
                       {categories.map((cat) => (
@@ -393,7 +393,7 @@ export default function SpecialtiesPage() {
                     </datalist>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Description
                     </label>
                     <textarea
@@ -401,11 +401,11 @@ export default function SpecialtiesPage() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Brief description..."
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Icon (emoji)
                     </label>
                     <input
@@ -413,7 +413,7 @@ export default function SpecialtiesPage() {
                       value={formData.icon}
                       onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                       placeholder="e.g., 🔧"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                 </div>
@@ -423,14 +423,14 @@ export default function SpecialtiesPage() {
                       setShowCreateModal(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreate}
                     disabled={processingId === 'create'}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {processingId === 'create' ? 'Creating...' : 'Create'}
                   </button>
@@ -443,21 +443,21 @@ export default function SpecialtiesPage() {
         {/* Edit Modal */}
         {showEditModal && selectedSpecialty && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Specialty</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Edit Specialty</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Category *
                     </label>
                     <input
@@ -465,7 +465,7 @@ export default function SpecialtiesPage() {
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       list="categories-edit"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                     <datalist id="categories-edit">
                       {categories.map((cat) => (
@@ -474,25 +474,25 @@ export default function SpecialtiesPage() {
                     </datalist>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Description
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Icon (emoji)
                     </label>
                     <input
                       type="text"
                       value={formData.icon}
                       onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                 </div>
@@ -503,14 +503,14 @@ export default function SpecialtiesPage() {
                       setSelectedSpecialty(null);
                       resetForm();
                     }}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleUpdate}
                     disabled={processingId === selectedSpecialty.id}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {processingId === selectedSpecialty.id ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -523,16 +523,16 @@ export default function SpecialtiesPage() {
         {/* Delete Confirmation Modal */}
         {showDeleteModal && selectedSpecialty && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Delete Specialty</h2>
-                <p className="text-gray-600 mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-4">Delete Specialty</h2>
+                <p className="text-muted-foreground mb-4">
                   Are you sure you want to delete <strong>{selectedSpecialty.name}</strong>? This
                   action cannot be undone.
                 </p>
                 {selectedSpecialty._count?.artisans && selectedSpecialty._count.artisans > 0 && (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
-                    <p className="text-yellow-700">
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-4">
+                    <p className="text-yellow-400">
                       Warning: {selectedSpecialty._count.artisans} artisans are using this
                       specialty.
                     </p>
@@ -544,7 +544,7 @@ export default function SpecialtiesPage() {
                       setShowDeleteModal(false);
                       setSelectedSpecialty(null);
                     }}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
                     Cancel
                   </button>

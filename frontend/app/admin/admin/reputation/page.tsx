@@ -88,7 +88,7 @@ export default function ReputationPage() {
 
   const getReputationColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-blue-600';
+    if (score >= 60) return 'text-primary';
     if (score >= 40) return 'text-yellow-600';
     if (score >= 20) return 'text-orange-600';
     return 'text-red-600';
@@ -96,14 +96,14 @@ export default function ReputationPage() {
 
   const getLevelBadge = (level: string) => {
     const colors: Record<string, string> = {
-      GOLD: 'bg-yellow-100 text-yellow-700',
-      SILVER: 'bg-gray-100 text-gray-700',
-      BRONZE: 'bg-orange-100 text-orange-700',
-      NEW: 'bg-blue-100 text-blue-700',
-      TRUSTED: 'bg-green-100 text-green-700',
-      WARNING: 'bg-red-100 text-red-700',
+      GOLD: 'bg-yellow-500/15 text-yellow-400',
+      SILVER: 'bg-muted text-foreground',
+      BRONZE: 'bg-orange-500/15 text-orange-400',
+      NEW: 'bg-primary/10 text-primary',
+      TRUSTED: 'bg-green-500/15 text-green-400',
+      WARNING: 'bg-red-500/15 text-red-400',
     };
-    return colors[level] || 'bg-gray-100 text-gray-700';
+    return colors[level] || 'bg-muted text-foreground';
   };
 
   const formatDate = (dateString: string) => {
@@ -140,37 +140,37 @@ export default function ReputationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Reputation Management</h1>
-              <p className="text-gray-600 mt-1">Look up and adjust user reputation scores</p>
+              <h1 className="text-3xl font-bold text-foreground">Reputation Management</h1>
+              <p className="text-muted-foreground mt-1">Look up and adjust user reputation scores</p>
             </div>
           </div>
         </div>
 
         {/* Alerts */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
-            <button onClick={() => setError(null)} className="ml-4 text-red-900 font-medium">
+            <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
               Dismiss
             </button>
           </div>
         )}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
             {success}
-            <button onClick={() => setSuccess(null)} className="ml-4 text-green-900 font-medium">
+            <button onClick={() => setSuccess(null)} className="ml-4 text-green-300 font-medium">
               Dismiss
             </button>
           </div>
@@ -190,13 +190,13 @@ export default function ReputationPage() {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   placeholder="Enter User ID"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                 />
                 <button
                   onClick={handleLookup}
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
                   {loading ? 'Loading...' : 'Lookup'}
                 </button>
@@ -206,8 +206,8 @@ export default function ReputationPage() {
               {reputation && (
                 <div className="space-y-6">
                   {/* Score */}
-                  <div className="text-center p-6 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-2">Reputation Score</p>
+                  <div className="text-center p-6 bg-background rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Reputation Score</p>
                     <p className={`text-5xl font-bold ${getReputationColor(reputation.score)}`}>
                       {reputation.score}
                     </p>
@@ -220,39 +220,39 @@ export default function ReputationPage() {
 
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Total Missions</p>
-                      <p className="text-xl font-bold text-gray-900">{reputation.totalMissions}</p>
+                    <div className="p-4 bg-background rounded-lg">
+                      <p className="text-sm text-muted-foreground">Total Missions</p>
+                      <p className="text-xl font-bold text-foreground">{reputation.totalMissions}</p>
                     </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Completed</p>
+                    <div className="p-4 bg-green-500/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Completed</p>
                       <p className="text-xl font-bold text-green-600">
                         {reputation.completedMissions}
                       </p>
                     </div>
-                    <div className="p-4 bg-red-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Cancelled</p>
+                    <div className="p-4 bg-red-500/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Cancelled</p>
                       <p className="text-xl font-bold text-red-600">
                         {reputation.cancelledMissions}
                       </p>
                     </div>
-                    <div className="p-4 bg-orange-50 rounded-lg">
-                      <p className="text-sm text-gray-600">No-Shows</p>
+                    <div className="p-4 bg-orange-500/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">No-Shows</p>
                       <p className="text-xl font-bold text-orange-600">{reputation.noShowCount}</p>
                     </div>
-                    <div className="p-4 bg-yellow-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Avg Rating</p>
+                    <div className="p-4 bg-yellow-500/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Avg Rating</p>
                       <p className="text-xl font-bold text-yellow-600">
                         {reputation.averageRating.toFixed(1)} / 5
                       </p>
                     </div>
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-600">Reviews</p>
-                      <p className="text-xl font-bold text-blue-600">{reputation.reviewCount}</p>
+                    <div className="p-4 bg-primary/10 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Reviews</p>
+                      <p className="text-xl font-bold text-primary">{reputation.reviewCount}</p>
                     </div>
                   </div>
 
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     Last updated: {formatDate(reputation.lastUpdated)}
                   </p>
                 </div>
@@ -268,7 +268,7 @@ export default function ReputationPage() {
             </CardHeader>
             <CardContent>
               {!reputation ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <span className="text-4xl block mb-2">🔍</span>
                   <p>Look up a user first to adjust their reputation</p>
                 </div>
@@ -276,7 +276,7 @@ export default function ReputationPage() {
                 <div className="space-y-6">
                   {/* Quick Presets */}
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Quick Presets</p>
+                    <p className="text-sm font-medium text-foreground mb-2">Quick Presets</p>
                     <div className="flex flex-wrap gap-2">
                       {presetReasons.map((preset, idx) => (
                         <button
@@ -287,8 +287,8 @@ export default function ReputationPage() {
                           }}
                           className={`px-3 py-1 text-xs rounded-full ${
                             preset.value > 0
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              ? 'bg-green-500/15 text-green-400 hover:bg-green-200'
+                              : 'bg-red-500/15 text-red-400 hover:bg-red-200'
                           }`}
                         >
                           {preset.label} ({preset.value > 0 ? '+' : ''}
@@ -300,19 +300,19 @@ export default function ReputationPage() {
 
                   {/* Manual Adjustment */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Adjustment Amount
                     </label>
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev - 5)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                        className="px-3 py-1 bg-red-500/15 text-red-400 rounded hover:bg-red-200"
                       >
                         -5
                       </button>
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev - 1)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                        className="px-3 py-1 bg-red-500/15 text-red-400 rounded hover:bg-red-200"
                       >
                         -1
                       </button>
@@ -320,22 +320,22 @@ export default function ReputationPage() {
                         type="number"
                         value={adjustmentAmount}
                         onChange={(e) => setAdjustmentAmount(parseInt(e.target.value) || 0)}
-                        className="w-24 text-center px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-24 text-center px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev + 1)}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                        className="px-3 py-1 bg-green-500/15 text-green-400 rounded hover:bg-green-200"
                       >
                         +1
                       </button>
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev + 5)}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                        className="px-3 py-1 bg-green-500/15 text-green-400 rounded hover:bg-green-200"
                       >
                         +5
                       </button>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       New score will be:{' '}
                       <strong className={getReputationColor(reputation.score + adjustmentAmount)}>
                         {Math.max(0, Math.min(100, reputation.score + adjustmentAmount))}
@@ -344,20 +344,20 @@ export default function ReputationPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">Reason *</label>
                     <textarea
                       value={adjustmentReason}
                       onChange={(e) => setAdjustmentReason(e.target.value)}
                       placeholder="Explain why you are adjusting this user's reputation..."
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
 
                   <button
                     onClick={handleAdjust}
                     disabled={processing || adjustmentAmount === 0 || !adjustmentReason.trim()}
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {processing ? 'Applying...' : 'Apply Adjustment'}
                   </button>
@@ -375,43 +375,43 @@ export default function ReputationPage() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-background">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         User ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Adjustment
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Reason
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Time
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-card divide-y divide-border">
                     {recentAdjustments.map((adj, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-gray-900">
+                      <tr key={idx} className="hover:bg-accent">
+                        <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-foreground">
                           {adj.userId}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 py-1 text-sm font-medium rounded ${
                               adj.adjustment > 0
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
+                                ? 'bg-green-500/15 text-green-400'
+                                : 'bg-red-500/15 text-red-400'
                             }`}
                           >
                             {adj.adjustment > 0 ? '+' : ''}
                             {adj.adjustment}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{adj.reason}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-muted-foreground">{adj.reason}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {formatDate(adj.timestamp)}
                         </td>
                       </tr>

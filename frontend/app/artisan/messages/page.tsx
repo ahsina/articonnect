@@ -182,26 +182,26 @@ export default function ArtisanMessagesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] bg-gray-50 flex flex-col">
+    <div className="h-[calc(100vh-4rem)] bg-background flex flex-col">
       {/* Page Header */}
-      <div className="bg-white border-b px-6 py-4">
+      <div className="bg-card border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               {t('messages', 'title') || 'Messages'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {t('messages', 'subtitle') || 'Communicate with your clients'}
             </p>
           </div>
           {totalUnread > 0 && (
-            <Badge className="bg-blue-600">
+            <Badge className="bg-primary">
               {totalUnread} {t('messages', 'unread') || 'unread'}
             </Badge>
           )}
@@ -210,7 +210,7 @@ export default function ArtisanMessagesPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Conversations Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-80 bg-card border-r border-border flex flex-col">
           {/* Search */}
           <div className="p-4 border-b">
             <Input
@@ -222,9 +222,9 @@ export default function ArtisanMessagesPage() {
           </div>
 
           {/* Connection Status */}
-          <div className="px-4 py-2 border-b bg-gray-50 flex items-center gap-2">
+          <div className="px-4 py-2 border-b bg-background flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-gray-400'}`} />
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-muted-foreground">
               {connected ? t('common', 'connected') || 'Connected' : t('common', 'connecting') || 'Connecting...'}
             </span>
           </div>
@@ -232,7 +232,7 @@ export default function ArtisanMessagesPage() {
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-muted-foreground">
                 {searchQuery
                   ? t('messages', 'noResults') || 'No conversations found'
                   : t('messages', 'noConversations') || 'No conversations yet'}
@@ -242,8 +242,8 @@ export default function ArtisanMessagesPage() {
                 <button
                   key={conv.userId}
                   onClick={() => setSelectedConversation(conv.userId)}
-                  className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 border-b border-gray-100 transition-colors text-left ${
-                    selectedConversation === conv.userId ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                  className={`w-full p-4 flex items-start gap-3 hover:bg-accent border-b border-border transition-colors text-left ${
+                    selectedConversation === conv.userId ? 'bg-primary/10 border-l-4 border-l-blue-600' : ''
                   }`}
                 >
                   <div className="relative">
@@ -253,29 +253,29 @@ export default function ArtisanMessagesPage() {
                       className="w-12 h-12 rounded-full flex-shrink-0"
                     />
                     {conv.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {conv.unreadCount}
                       </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-gray-900 truncate">
+                      <span className="font-semibold text-foreground truncate">
                         {conv.user.firstName} {conv.user.lastName}
                       </span>
                       {conv.lastMessage && (
-                        <span className="text-xs text-gray-500 flex-shrink-0">
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
                           {formatDate(conv.lastMessage.createdAt)}
                         </span>
                       )}
                     </div>
                     {conv.missionTitle && (
-                      <div className="text-xs text-blue-600 truncate mb-1">
+                      <div className="text-xs text-primary truncate mb-1">
                         {conv.missionTitle}
                       </div>
                     )}
                     {conv.lastMessage && (
-                      <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                      <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                         {conv.lastMessage.senderId === user?.id ? 'Vous: ' : ''}
                         {conv.lastMessage.content}
                       </p>
@@ -288,11 +288,11 @@ export default function ArtisanMessagesPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-gray-50">
+        <div className="flex-1 flex flex-col bg-background">
           {selectedConv ? (
             <>
               {/* Chat Header */}
-              <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <div className="bg-card border-b border-border p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
                     src={selectedConv.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConv.user.id}`}
@@ -300,10 +300,10 @@ export default function ArtisanMessagesPage() {
                     className="w-10 h-10 rounded-full"
                   />
                   <div>
-                    <h2 className="font-semibold text-gray-900">
+                    <h2 className="font-semibold text-foreground">
                       {selectedConv.user.firstName} {selectedConv.user.lastName}
                     </h2>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {t('auth', 'client') || 'Client'}
                       {selectedConv.missionTitle && ` - ${selectedConv.missionTitle}`}
                     </p>
@@ -324,7 +324,7 @@ export default function ArtisanMessagesPage() {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
                     {t('messages', 'startConversation') || 'Start the conversation by sending a message'}
                   </div>
                 ) : (
@@ -335,12 +335,12 @@ export default function ArtisanMessagesPage() {
                         <div
                           className={`max-w-[70%] rounded-lg px-4 py-2 ${
                             isOwn
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
+                              ? 'bg-primary text-white'
+                              : 'bg-card text-foreground border border-border shadow-sm'
                           }`}
                         >
                           <p className="break-words whitespace-pre-wrap">{message.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+                          <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-muted-foreground'}`}>
                             {formatTime(message.createdAt)}
                             {isOwn && message.read && ' ✓✓'}
                           </p>
@@ -353,7 +353,7 @@ export default function ArtisanMessagesPage() {
               </div>
 
               {/* Message Input */}
-              <div className="bg-white border-t border-gray-200 p-4">
+              <div className="bg-card border-t border-border p-4">
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                   <Input
                     type="text"
@@ -374,7 +374,7 @@ export default function ArtisanMessagesPage() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
                 <div className="text-6xl mb-4">💬</div>
                 <p>{t('messages', 'selectConversation') || 'Select a conversation to start messaging'}</p>

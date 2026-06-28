@@ -76,21 +76,21 @@ export default function AuditLogsPage() {
   const getActionColor = (action: string) => {
     const actionLower = action.toLowerCase();
     if (actionLower.includes('create') || actionLower.includes('register')) {
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-500/15 text-green-400';
     }
     if (actionLower.includes('delete') || actionLower.includes('remove')) {
-      return 'bg-red-100 text-red-700';
+      return 'bg-red-500/15 text-red-400';
     }
     if (actionLower.includes('update') || actionLower.includes('edit')) {
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-primary/10 text-primary';
     }
     if (actionLower.includes('login') || actionLower.includes('auth')) {
-      return 'bg-purple-100 text-purple-700';
+      return 'bg-purple-500/15 text-purple-400';
     }
     if (actionLower.includes('suspend') || actionLower.includes('block')) {
-      return 'bg-orange-100 text-orange-700';
+      return 'bg-orange-500/15 text-orange-400';
     }
-    return 'bg-gray-100 text-gray-700';
+    return 'bg-muted text-foreground';
   };
 
   const getResourceIcon = (resource: string) => {
@@ -109,32 +109,32 @@ export default function AuditLogsPage() {
   if (loading && !response) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
-              <p className="text-gray-600 mt-1">Track all system activities and user actions</p>
+              <h1 className="text-3xl font-bold text-foreground">Audit Logs</h1>
+              <p className="text-muted-foreground mt-1">Track all system activities and user actions</p>
             </div>
           </div>
           <button
             onClick={loadLogs}
             disabled={loading}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -142,7 +142,7 @@ export default function AuditLogsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -185,13 +185,13 @@ export default function AuditLogsPage() {
             <div className="flex gap-4 mt-4">
               <button
                 onClick={handleSearch}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
               >
                 Search
               </button>
               <button
                 onClick={handleClearFilters}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
               >
                 Clear Filters
               </button>
@@ -206,8 +206,8 @@ export default function AuditLogsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Total Logs</p>
-                    <p className="text-3xl font-bold text-gray-900">{response.meta.total}</p>
+                    <p className="text-sm text-muted-foreground">Total Logs</p>
+                    <p className="text-3xl font-bold text-foreground">{response.meta.total}</p>
                   </div>
                   <span className="text-3xl">📊</span>
                 </div>
@@ -217,8 +217,8 @@ export default function AuditLogsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Current Page</p>
-                    <p className="text-3xl font-bold text-blue-600">
+                    <p className="text-sm text-muted-foreground">Current Page</p>
+                    <p className="text-3xl font-bold text-primary">
                       {response.meta.page} / {response.meta.totalPages}
                     </p>
                   </div>
@@ -230,8 +230,8 @@ export default function AuditLogsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Per Page</p>
-                    <p className="text-3xl font-bold text-gray-600">{response.meta.limit}</p>
+                    <p className="text-sm text-muted-foreground">Per Page</p>
+                    <p className="text-3xl font-bold text-muted-foreground">{response.meta.limit}</p>
                   </div>
                   <span className="text-3xl">📋</span>
                 </div>
@@ -251,31 +251,31 @@ export default function AuditLogsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                         Timestamp
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                         Action
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                         Resource
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                         User ID
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                         IP Address
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                         Details
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {response.data.map((log) => (
-                      <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm text-gray-600">
+                      <tr key={log.id} className="border-b border-border hover:bg-accent">
+                        <td className="py-3 px-4 text-sm text-muted-foreground">
                           {new Date(log.createdAt).toLocaleString('fr-FR')}
                         </td>
                         <td className="py-3 px-4">
@@ -288,19 +288,19 @@ export default function AuditLogsPage() {
                         <td className="py-3 px-4 text-sm">
                           <span className="flex items-center gap-2">
                             <span>{getResourceIcon(log.resource)}</span>
-                            <span className="text-gray-700">{log.resource}</span>
+                            <span className="text-foreground">{log.resource}</span>
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-600 font-mono">
+                        <td className="py-3 px-4 text-sm text-muted-foreground font-mono">
                           {log.userId ? log.userId.slice(0, 8) + '...' : '-'}
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-600 font-mono">
+                        <td className="py-3 px-4 text-sm text-muted-foreground font-mono">
                           {log.ipAddress}
                         </td>
                         <td className="py-3 px-4">
                           <button
                             onClick={() => setSelectedLog(log)}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
+                            className="text-primary hover:text-primary text-sm"
                           >
                             View Details
                           </button>
@@ -311,7 +311,7 @@ export default function AuditLogsPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-muted-foreground">
                 <span className="text-6xl block mb-4">📋</span>
                 <p>No audit logs found</p>
                 <p className="text-sm mt-2">Try adjusting your filters</p>
@@ -326,17 +326,17 @@ export default function AuditLogsPage() {
             <button
               onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
               disabled={filters.page <= 1}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="px-4 py-2 text-gray-600">
+            <span className="px-4 py-2 text-muted-foreground">
               Page {response.meta.page} of {response.meta.totalPages}
             </span>
             <button
               onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
               disabled={filters.page >= response.meta.totalPages}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -346,12 +346,12 @@ export default function AuditLogsPage() {
         {/* Detail Modal */}
         {selectedLog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+            <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+              <div className="p-6 border-b border-border flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Audit Log Details</h2>
                 <button
                   onClick={() => setSelectedLog(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   ✕
                 </button>
@@ -359,52 +359,52 @@ export default function AuditLogsPage() {
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">ID</p>
+                    <p className="text-sm text-muted-foreground">ID</p>
                     <p className="font-mono text-sm">{selectedLog.id}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Timestamp</p>
+                    <p className="text-sm text-muted-foreground">Timestamp</p>
                     <p>{new Date(selectedLog.createdAt).toLocaleString('fr-FR')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Action</p>
+                    <p className="text-sm text-muted-foreground">Action</p>
                     <span className={`px-2 py-1 text-xs font-medium rounded ${getActionColor(selectedLog.action)}`}>
                       {selectedLog.action}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Resource</p>
+                    <p className="text-sm text-muted-foreground">Resource</p>
                     <p className="flex items-center gap-2">
                       <span>{getResourceIcon(selectedLog.resource)}</span>
                       {selectedLog.resource}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">User ID</p>
+                    <p className="text-sm text-muted-foreground">User ID</p>
                     <p className="font-mono text-sm">{selectedLog.userId || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">IP Address</p>
+                    <p className="text-sm text-muted-foreground">IP Address</p>
                     <p className="font-mono text-sm">{selectedLog.ipAddress}</p>
                   </div>
                 </div>
                 {selectedLog.userAgent && (
                   <div>
-                    <p className="text-sm text-gray-500">User Agent</p>
-                    <p className="text-sm text-gray-700 break-all">{selectedLog.userAgent}</p>
+                    <p className="text-sm text-muted-foreground">User Agent</p>
+                    <p className="text-sm text-foreground break-all">{selectedLog.userAgent}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-gray-500 mb-2">Details</p>
-                  <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-x-auto">
+                  <p className="text-sm text-muted-foreground mb-2">Details</p>
+                  <pre className="bg-background p-4 rounded-lg text-sm overflow-x-auto">
                     {JSON.stringify(selectedLog.details, null, 2)}
                   </pre>
                 </div>
               </div>
-              <div className="p-6 border-t border-gray-200">
+              <div className="p-6 border-t border-border">
                 <button
                   onClick={() => setSelectedLog(null)}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  className="w-full px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
                 >
                   Close
                 </button>

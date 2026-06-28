@@ -73,7 +73,7 @@ export default function CronJobsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -87,27 +87,27 @@ export default function CronJobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">CRON Jobs Management</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">CRON Jobs Management</h1>
+              <p className="text-muted-foreground mt-1">
                 Monitor and manage scheduled tasks
               </p>
             </div>
           </div>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
             Refresh
           </button>
@@ -115,7 +115,7 @@ export default function CronJobsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -126,20 +126,20 @@ export default function CronJobsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div
-                  className={`px-4 py-2 rounded-lg ${health.status === 'healthy' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                  className={`px-4 py-2 rounded-lg ${health.status === 'healthy' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}
                 >
                   {health.status === 'healthy' ? '🟢 Healthy' : '🔴 Unhealthy'}
                 </div>
                 <div>
-                  <p className="text-gray-700">{health.message}</p>
-                  <p className="text-sm text-gray-500">Timezone: {health.timezone}</p>
+                  <p className="text-foreground">{health.message}</p>
+                  <p className="text-sm text-muted-foreground">Timezone: {health.timezone}</p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-foreground">
                   {health.activeJobs}/{health.totalJobs}
                 </div>
-                <div className="text-sm text-gray-500">Active Jobs</div>
+                <div className="text-sm text-muted-foreground">Active Jobs</div>
               </div>
             </div>
           </CardContent>
@@ -147,14 +147,14 @@ export default function CronJobsPage() {
 
         {/* Last Trigger Result */}
         {lastResult && (
-          <Card className="mb-8 border-green-200 bg-green-50">
+          <Card className="mb-8 border-green-500/20 bg-green-500/10">
             <CardHeader>
-              <CardTitle className="text-green-700">
+              <CardTitle className="text-green-400">
                 Auto-Validation Completed
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-green-700 mb-4">
+              <p className="text-green-400 mb-4">
                 Successfully auto-validated {lastResult.autoValidatedCount} mission(s)
               </p>
               {lastResult.missions.length > 0 && (
@@ -162,10 +162,10 @@ export default function CronJobsPage() {
                   {lastResult.missions.map((mission) => (
                     <div
                       key={mission.id}
-                      className="flex items-center justify-between p-3 bg-white rounded-lg"
+                      className="flex items-center justify-between p-3 bg-card rounded-lg"
                     >
                       <span className="font-medium">{mission.title}</span>
-                      <span className="text-sm text-gray-500">{mission.id.slice(0, 8)}...</span>
+                      <span className="text-sm text-muted-foreground">{mission.id.slice(0, 8)}...</span>
                     </div>
                   ))}
                 </div>
@@ -187,26 +187,26 @@ export default function CronJobsPage() {
               {status.jobs.map((job, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-lg border ${job.enabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100'}`}
+                  className={`p-4 rounded-lg border ${job.enabled ? 'bg-card border-border' : 'bg-background border-border'}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <span className="text-2xl">{getJobIcon(job.name)}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{job.name}</h3>
+                          <h3 className="font-semibold text-foreground">{job.name}</h3>
                           {job.enabled ? (
-                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-green-500/15 text-green-400 rounded">
                               Active
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-500 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">
                               Disabled
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{job.description}</p>
-                        <p className="text-sm text-gray-500 mt-2">
+                        <p className="text-sm text-muted-foreground mt-1">{job.description}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
                           <span className="font-medium">Schedule:</span> {job.schedule}
                         </p>
                       </div>
@@ -215,7 +215,7 @@ export default function CronJobsPage() {
                       <button
                         onClick={handleTriggerAutoValidation}
                         disabled={triggering === 'auto-validate'}
-                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {triggering === 'auto-validate' ? 'Running...' : 'Trigger Now'}
                       </button>
@@ -240,22 +240,22 @@ export default function CronJobsPage() {
               {Object.entries(status.nextExecutions).map(([jobName, nextTime]) => (
                 <div
                   key={jobName}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-background rounded-lg"
                 >
                   <div>
-                    <div className="font-medium text-gray-900 capitalize">
+                    <div className="font-medium text-foreground capitalize">
                       {jobName.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
-                    <div className="text-sm text-gray-500">Next execution</div>
+                    <div className="text-sm text-muted-foreground">Next execution</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-mono text-sm text-gray-700">
+                    <div className="font-mono text-sm text-foreground">
                       {new Date(nextTime).toLocaleString('fr-FR', {
                         dateStyle: 'short',
                         timeStyle: 'short',
                       })}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {getTimeUntil(new Date(nextTime))}
                     </div>
                   </div>
@@ -285,14 +285,14 @@ export default function CronJobsPage() {
               </button>
               <button
                 disabled
-                className="flex items-center gap-2 px-4 py-3 bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed"
               >
                 <span>🧹</span>
                 <span>Run Cleanup (Coming Soon)</span>
               </button>
               <button
                 disabled
-                className="flex items-center gap-2 px-4 py-3 bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed"
               >
                 <span>📊</span>
                 <span>Generate Reports (Coming Soon)</span>

@@ -10,9 +10,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  APPROVED: 'bg-green-500/15 text-green-400',
+  REJECTED: 'bg-red-500/15 text-red-400',
 };
 
 export default function TimeOffPage() {
@@ -120,7 +120,7 @@ export default function TimeOffPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -135,10 +135,10 @@ export default function TimeOffPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('artisan', 'timeOff') || 'Time Off'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('artisan', 'timeOffDesc') || 'Manage your time off and vacation days'}
           </p>
         </div>
@@ -154,7 +154,7 @@ export default function TimeOffPage() {
         </CardHeader>
         <CardContent>
           {upcomingTimeOffs.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('artisan', 'noUpcomingTimeOff') || 'No upcoming time off scheduled'}
             </div>
           ) : (
@@ -162,17 +162,17 @@ export default function TimeOffPage() {
               {upcomingTimeOffs.map((timeOff) => (
                 <div
                   key={timeOff.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-background rounded-lg"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-2xl">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
                       🏖️
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-foreground">
                         {formatDate(timeOff.startDate)} - {formatDate(timeOff.endDate)}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {calculateDays(timeOff.startDate, timeOff.endDate)} day(s)
                         {timeOff.reason && <span> • {timeOff.reason}</span>}
                       </div>
@@ -208,17 +208,17 @@ export default function TimeOffPage() {
               {pastTimeOffs.map((timeOff) => (
                 <div
                   key={timeOff.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg opacity-60"
+                  className="flex items-center justify-between p-4 bg-background rounded-lg opacity-60"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-2xl">
+                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-2xl">
                       📅
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-foreground">
                         {formatDate(timeOff.startDate)} - {formatDate(timeOff.endDate)}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {calculateDays(timeOff.startDate, timeOff.endDate)} day(s)
                         {timeOff.reason && <span> • {timeOff.reason}</span>}
                       </div>
@@ -241,7 +241,7 @@ export default function TimeOffPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'startDate') || 'Start Date'}
                 </label>
                 <Input
@@ -253,7 +253,7 @@ export default function TimeOffPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'endDate') || 'End Date'}
                 </label>
                 <Input
@@ -265,14 +265,14 @@ export default function TimeOffPage() {
               </div>
 
               {newRequest.startDate && newRequest.endDate && (
-                <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <div className="p-3 bg-primary/10 rounded-lg text-sm text-primary">
                   {t('artisan', 'duration') || 'Duration'}:{' '}
                   {calculateDays(newRequest.startDate, newRequest.endDate)} day(s)
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'reason') || 'Reason'} ({t('common', 'optional') || 'optional'})
                 </label>
                 <Input

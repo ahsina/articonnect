@@ -50,6 +50,14 @@ module.exports = {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
+  			success: {
+  				DEFAULT: 'hsl(var(--success))',
+  				foreground: 'hsl(0 0% 100%)'
+  			},
+  			warning: {
+  				DEFAULT: 'hsl(var(--warning))',
+  				foreground: 'hsl(228 14% 8%)'
+  			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -59,9 +67,21 @@ module.exports = {
   			}
   		},
   		borderRadius: {
+  			xl: 'calc(var(--radius) + 4px)',
   			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			md: 'calc(var(--radius) - 4px)',
+  			sm: 'calc(var(--radius) - 8px)'
+  		},
+  		fontFamily: {
+  			sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+  		},
+  		boxShadow: {
+  			sm: '0 1px 2px 0 rgb(0 0 0 / 0.4)',
+  			DEFAULT: '0 4px 12px -2px rgb(0 0 0 / 0.5)',
+  			md: '0 8px 24px -4px rgb(0 0 0 / 0.55)',
+  			lg: '0 16px 40px -8px rgb(0 0 0 / 0.6)',
+  			glow: '0 0 0 1px hsl(18 100% 58% / 0.4), 0 8px 30px -6px hsl(18 100% 58% / 0.35)',
   		},
   		keyframes: {
   			'accordion-down': {

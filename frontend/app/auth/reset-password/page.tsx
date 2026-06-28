@@ -88,12 +88,12 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">AC</span>
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-2xl font-bold text-primary-foreground">K</span>
             </div>
           </div>
           <CardTitle className="text-2xl text-center">{t('auth', 'newPassword')}</CardTitle>
@@ -104,7 +104,7 @@ function ResetPasswordForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'newPasswordMinLength')}
               </label>
               <Input
@@ -118,7 +118,7 @@ function ResetPasswordForm() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'confirmPassword')} *
               </label>
               <Input
@@ -142,7 +142,7 @@ function ResetPasswordForm() {
             <div className="text-center text-sm">
               <Link
                 href="/auth/login"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
+                className="text-primary hover:text-primary hover:underline"
               >
                 {t('auth', 'backToLogin')}
               </Link>
@@ -157,8 +157,8 @@ function ResetPasswordForm() {
 function LoadingFallback() {
   const { t } = useLanguage();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-gray-500">{t('common', 'loading')}</div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-muted-foreground">{t('common', 'loading')}</div>
     </div>
   );
 }

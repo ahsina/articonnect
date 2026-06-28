@@ -86,12 +86,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">AC</span>
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-2xl font-bold text-primary-foreground">K</span>
             </div>
           </div>
           <CardTitle className="text-2xl text-center">{t('auth', 'registerTitle')}</CardTitle>
@@ -103,7 +103,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Role Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'iAm')}
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -112,26 +112,26 @@ export default function RegisterPage() {
                   onClick={() => setFormData({ ...formData, role: 'CLIENT' })}
                   className={`p-4 border-2 rounded-lg text-center transition-colors ${
                     formData.role === 'CLIENT'
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-blue-600 bg-primary/10'
+                      : 'border-border hover:border-gray-400'
                   }`}
                 >
                   <div className="text-2xl mb-1">👤</div>
                   <div className="font-medium">{t('auth', 'client')}</div>
-                  <div className="text-xs text-gray-600">{t('auth', 'clientDescription')}</div>
+                  <div className="text-xs text-muted-foreground">{t('auth', 'clientDescription')}</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, role: 'ARTISAN' })}
                   className={`p-4 border-2 rounded-lg text-center transition-colors ${
                     formData.role === 'ARTISAN'
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-blue-600 bg-primary/10'
+                      : 'border-border hover:border-gray-400'
                   }`}
                 >
                   <div className="text-2xl mb-1">🔨</div>
                   <div className="font-medium">{t('auth', 'artisan')}</div>
-                  <div className="text-xs text-gray-600">{t('auth', 'artisanDescription')}</div>
+                  <div className="text-xs text-muted-foreground">{t('auth', 'artisanDescription')}</div>
                 </button>
               </div>
             </div>
@@ -139,7 +139,7 @@ export default function RegisterPage() {
             {/* Personal Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-foreground">
                   {t('auth', 'firstName')} *
                 </label>
                 <Input
@@ -152,7 +152,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-foreground">
                   {t('auth', 'lastName')} *
                 </label>
                 <Input
@@ -166,7 +166,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'email')} *
               </label>
               <Input
@@ -180,7 +180,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'phone')}
               </label>
               <Input
@@ -192,7 +192,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'passwordMinLength')}
               </label>
               <Input
@@ -206,7 +206,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'confirmPassword')} *
               </label>
               <Input
@@ -226,13 +226,13 @@ export default function RegisterPage() {
                 required
                 className="mt-1"
               />
-              <label htmlFor="terms" className="text-sm text-gray-600">
+              <label htmlFor="terms" className="text-sm text-muted-foreground">
                 {t('auth', 'acceptTerms')}{' '}
-                <Link href="/terms" className="text-blue-600 hover:underline">
+                <Link href="/terms" className="text-primary hover:underline">
                   {t('auth', 'termsOfService')}
                 </Link>{' '}
                 et la{' '}
-                <Link href="/privacy" className="text-blue-600 hover:underline">
+                <Link href="/privacy" className="text-primary hover:underline">
                   {t('auth', 'privacyPolicy')}
                 </Link>
               </label>
@@ -248,10 +248,10 @@ export default function RegisterPage() {
 
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+                <span className="px-2 bg-card text-muted-foreground">
                   {t('auth', 'alreadyHaveAccount')}
                 </span>
               </div>

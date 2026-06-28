@@ -161,7 +161,7 @@ export default function ArtisanTimeTrackingPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -171,21 +171,21 @@ export default function ArtisanTimeTrackingPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('timeTracking', 'title') || 'Time Tracking'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('timeTracking', 'subtitle') || 'Track your working hours and earnings'}
           </p>
         </div>
       </div>
 
       {/* Active Timer Card */}
-      <Card className={`${activeEntry ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+      <Card className={`${activeEntry ? 'bg-green-500/10 border-green-500/30' : 'bg-background'}`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-foreground">
                 {activeEntry
                   ? t('timeTracking', 'currentlyTracking') || 'Currently Tracking'
                   : t('timeTracking', 'startTracking') || 'Start Tracking'}
@@ -195,12 +195,12 @@ export default function ArtisanTimeTrackingPage() {
                   <div className="text-4xl font-mono font-bold text-green-600">
                     {getElapsedTime()}
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {t('timeTracking', 'startedAt') || 'Started at'}: {activeEntry.startTime}
                   </p>
                 </div>
               ) : (
-                <p className="text-gray-600 mt-1">
+                <p className="text-muted-foreground mt-1">
                   {t('timeTracking', 'clickToStart') || 'Click the button to start tracking your time'}
                 </p>
               )}
@@ -231,30 +231,30 @@ export default function ArtisanTimeTrackingPage() {
 
       {/* Summary Cards */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="p-4">
-            <div className="text-sm text-blue-600">{t('timeTracking', 'todayHours') || "Today's Hours"}</div>
-            <div className="text-2xl font-bold text-blue-800">
+            <div className="text-sm text-primary">{t('timeTracking', 'todayHours') || "Today's Hours"}</div>
+            <div className="text-2xl font-bold text-primary">
               {formatDuration(summary.find(s => s.date === new Date().toISOString().split('T')[0])?.totalHours || 0)}
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
           <CardContent className="p-4">
             <div className="text-sm text-green-600">{t('timeTracking', 'weekHours') || 'This Week'}</div>
-            <div className="text-2xl font-bold text-green-800">{formatDuration(totalWeekHours)}</div>
+            <div className="text-2xl font-bold text-green-400">{formatDuration(totalWeekHours)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
           <CardContent className="p-4">
             <div className="text-sm text-purple-600">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
-            <div className="text-2xl font-bold text-purple-800">{totalWeekEarnings.toFixed(2)}EUR</div>
+            <div className="text-2xl font-bold text-purple-400">{totalWeekEarnings.toFixed(2)}EUR</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-yellow-500/5 border-orange-500/20">
           <CardContent className="p-4">
             <div className="text-sm text-orange-600">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
-            <div className="text-2xl font-bold text-orange-800">
+            <div className="text-2xl font-bold text-orange-400">
               {totalWeekHours > 0 ? (totalWeekEarnings / totalWeekHours).toFixed(2) : 0}EUR/h
             </div>
           </CardContent>
@@ -265,7 +265,7 @@ export default function ArtisanTimeTrackingPage() {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {t('timeTracking', 'dateRange') || 'Date Range'}:
             </span>
             <Input
@@ -274,7 +274,7 @@ export default function ArtisanTimeTrackingPage() {
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
               className="w-40"
             />
-            <span className="text-gray-500">-</span>
+            <span className="text-muted-foreground">-</span>
             <Input
               type="date"
               value={dateRange.end}
@@ -295,7 +295,7 @@ export default function ArtisanTimeTrackingPage() {
         </CardHeader>
         <CardContent>
           {entries.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('timeTracking', 'noEntries') || 'No time entries found for this period'}
             </div>
           ) : (
@@ -303,63 +303,63 @@ export default function ArtisanTimeTrackingPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                       {t('timeTracking', 'date') || 'Date'}
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                       {t('timeTracking', 'mission') || 'Mission'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-600">
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
                       {t('timeTracking', 'time') || 'Time'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-600">
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
                       {t('timeTracking', 'break') || 'Break'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-600">
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
                       {t('timeTracking', 'total') || 'Total'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-600">
+                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
                       {t('timeTracking', 'status') || 'Status'}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {entries.map((entry) => (
-                    <tr key={entry.id} className="border-b hover:bg-gray-50">
+                    <tr key={entry.id} className="border-b hover:bg-accent">
                       <td className="py-3 px-4">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         {entry.missionTitle ? (
                           <div>
-                            <div className="font-medium text-gray-900">{entry.missionTitle}</div>
+                            <div className="font-medium text-foreground">{entry.missionTitle}</div>
                             {entry.clientName && (
-                              <div className="text-sm text-gray-500">{entry.clientName}</div>
+                              <div className="text-sm text-muted-foreground">{entry.clientName}</div>
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-500">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center text-gray-900">
+                      <td className="py-3 px-4 text-center text-foreground">
                         {entry.startTime} - {entry.endTime || 'In progress'}
                       </td>
-                      <td className="py-3 px-4 text-center text-gray-600">
+                      <td className="py-3 px-4 text-center text-muted-foreground">
                         {entry.breakMinutes}min
                       </td>
-                      <td className="py-3 px-4 text-center font-bold text-gray-900">
+                      <td className="py-3 px-4 text-center font-bold text-foreground">
                         {formatDuration(entry.totalHours)}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <Badge
                           className={
                             entry.status === 'APPROVED'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-green-500/15 text-green-400'
                               : entry.status === 'COMPLETED'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-yellow-500/15 text-yellow-400'
                           }
                         >
                           {translateTimeEntryStatus(entry.status, t)}

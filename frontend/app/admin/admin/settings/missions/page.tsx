@@ -136,7 +136,7 @@ export default function MissionSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -144,7 +144,7 @@ export default function MissionSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -158,7 +158,7 @@ export default function MissionSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Min Mission Value (cents)
               </label>
               <input
@@ -166,14 +166,14 @@ export default function MissionSettingsPage() {
                 value={settings.minMissionValue}
                 onChange={(e) => updateSetting('minMissionValue', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.minMissionValue)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Mission Value (cents)
               </label>
               <input
@@ -181,14 +181,14 @@ export default function MissionSettingsPage() {
                 value={settings.maxMissionValue}
                 onChange={(e) => updateSetting('maxMissionValue', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.maxMissionValue)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Active Per Client
               </label>
               <input
@@ -198,11 +198,11 @@ export default function MissionSettingsPage() {
                   updateSetting('maxActiveMissionsPerClient', parseInt(e.target.value))
                 }
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Active Per Artisan
               </label>
               <input
@@ -212,7 +212,7 @@ export default function MissionSettingsPage() {
                   updateSetting('maxActiveMissionsPerArtisan', parseInt(e.target.value))
                 }
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -231,15 +231,15 @@ export default function MissionSettingsPage() {
               type="checkbox"
               checked={settings.autoMatchingEnabled}
               onChange={(e) => updateSetting('autoMatchingEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable auto-matching</span>
+            <span className="text-sm font-medium text-foreground">Enable auto-matching</span>
           </label>
 
           {settings.autoMatchingEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Search Radius (km)
                 </label>
                 <input
@@ -247,11 +247,11 @@ export default function MissionSettingsPage() {
                   value={settings.autoMatchingRadius}
                   onChange={(e) => updateSetting('autoMatchingRadius', parseInt(e.target.value))}
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Max Candidates
                 </label>
                 <input
@@ -261,7 +261,7 @@ export default function MissionSettingsPage() {
                     updateSetting('autoMatchingMaxCandidates', parseInt(e.target.value))
                   }
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -278,7 +278,7 @@ export default function MissionSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Quotation Validity (days)
               </label>
               <input
@@ -286,21 +286,21 @@ export default function MissionSettingsPage() {
                 value={settings.quotationValidityDays}
                 onChange={(e) => updateSetting('quotationValidityDays', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Revisions</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Max Revisions</label>
               <input
                 type="number"
                 value={settings.quotationMaxRevisions}
                 onChange={(e) => updateSetting('quotationMaxRevisions', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Negotiation Timeout (hours)
               </label>
               <input
@@ -308,7 +308,7 @@ export default function MissionSettingsPage() {
                 value={settings.negotiationTimeoutHours}
                 onChange={(e) => updateSetting('negotiationTimeoutHours', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -319,20 +319,20 @@ export default function MissionSettingsPage() {
                 type="checkbox"
                 checked={settings.negotiationEnabled}
                 onChange={(e) => updateSetting('negotiationEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable negotiation</span>
+              <span className="text-sm text-foreground">Enable negotiation</span>
             </label>
             {settings.negotiationEnabled && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Max rounds:</span>
+                <span className="text-sm text-muted-foreground">Max rounds:</span>
                 <input
                   type="number"
                   value={settings.maxNegotiationRounds}
                   onChange={(e) => updateSetting('maxNegotiationRounds', parseInt(e.target.value))}
                   min="1"
                   max="20"
-                  className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                 />
               </div>
             )}
@@ -353,24 +353,24 @@ export default function MissionSettingsPage() {
                 type="checkbox"
                 checked={settings.autoValidationEnabled}
                 onChange={(e) => updateSetting('autoValidationEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Enable auto-validation</span>
+              <span className="text-sm font-medium text-foreground">Enable auto-validation</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.depositRequired}
                 onChange={(e) => updateSetting('depositRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require deposit</span>
+              <span className="text-sm text-foreground">Require deposit</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Auto-validation Delay (hours)
               </label>
               <input
@@ -380,11 +380,11 @@ export default function MissionSettingsPage() {
                   updateSetting('autoValidationDelayHours', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Client Validation Window (hours)
               </label>
               <input
@@ -394,11 +394,11 @@ export default function MissionSettingsPage() {
                   updateSetting('clientValidationWindowHours', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Deposit Refundable Until (hours)
               </label>
               <input
@@ -408,7 +408,7 @@ export default function MissionSettingsPage() {
                   updateSetting('depositRefundableUntilHours', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -428,15 +428,15 @@ export default function MissionSettingsPage() {
                 type="checkbox"
                 checked={settings.allowRescheduling}
                 onChange={(e) => updateSetting('allowRescheduling', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Allow rescheduling</span>
+              <span className="text-sm font-medium text-foreground">Allow rescheduling</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Reschedules Per Mission
               </label>
               <input
@@ -446,11 +446,11 @@ export default function MissionSettingsPage() {
                   updateSetting('maxReschedulesPerMission', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Rescheduling Deadline (hours)
               </label>
               <input
@@ -460,11 +460,11 @@ export default function MissionSettingsPage() {
                   updateSetting('reschedulingDeadlineHours', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Cancellation Policy
               </label>
               <select
@@ -475,7 +475,7 @@ export default function MissionSettingsPage() {
                     e.target.value as 'FLEXIBLE' | 'MODERATE' | 'STRICT',
                   )
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               >
                 <option value="FLEXIBLE">Flexible</option>
                 <option value="MODERATE">Moderate</option>
@@ -495,21 +495,21 @@ export default function MissionSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Start Time</label>
               <input
                 type="time"
                 value={settings.workingHoursStart}
                 onChange={(e) => updateSetting('workingHoursStart', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <label className="block text-sm font-medium text-foreground mb-1">End Time</label>
               <input
                 type="time"
                 value={settings.workingHoursEnd}
                 onChange={(e) => updateSetting('workingHoursEnd', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -520,18 +520,18 @@ export default function MissionSettingsPage() {
                 type="checkbox"
                 checked={settings.weekendMissionsAllowed}
                 onChange={(e) => updateSetting('weekendMissionsAllowed', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Allow weekend missions</span>
+              <span className="text-sm text-foreground">Allow weekend missions</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.holidayMissionsAllowed}
                 onChange={(e) => updateSetting('holidayMissionsAllowed', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Allow holiday missions</span>
+              <span className="text-sm text-foreground">Allow holiday missions</span>
             </label>
           </div>
         </CardContent>
@@ -548,12 +548,12 @@ export default function MissionSettingsPage() {
             {settings.categories.map((category) => (
               <span
                 key={category}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
               >
                 {category}
                 <button
                   onClick={() => removeCategory(category)}
-                  className="text-blue-500 hover:text-blue-700"
+                  className="text-primary hover:text-primary"
                 >
                   x
                 </button>
@@ -566,7 +566,7 @@ export default function MissionSettingsPage() {
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               placeholder="New category name"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               onKeyDown={(e) => e.key === 'Enter' && addCategory()}
             />
             <button
@@ -588,16 +588,16 @@ export default function MissionSettingsPage() {
         <CardContent>
           <div className="space-y-4">
             {settings.urgencyLevels.map((level, index) => (
-              <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <div key={index} className="flex items-center gap-4 p-4 bg-background rounded-lg">
                 <input
                   type="text"
                   value={level.name}
                   onChange={(e) => updateUrgencyLevel(index, 'name', e.target.value)}
                   placeholder="Level name"
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-32 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
                 <div>
-                  <label className="block text-xs text-gray-500">Multiplier</label>
+                  <label className="block text-xs text-muted-foreground">Multiplier</label>
                   <input
                     type="number"
                     value={level.multiplier}
@@ -606,11 +606,11 @@ export default function MissionSettingsPage() {
                     }
                     min="1"
                     step="0.1"
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-24 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500">Max Response (hours)</label>
+                  <label className="block text-xs text-muted-foreground">Max Response (hours)</label>
                   <input
                     type="number"
                     value={level.maxResponseHours}
@@ -618,7 +618,7 @@ export default function MissionSettingsPage() {
                       updateUrgencyLevel(index, 'maxResponseHours', parseInt(e.target.value))
                     }
                     min="1"
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-24 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -632,7 +632,7 @@ export default function MissionSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Mission Settings'}
         </button>

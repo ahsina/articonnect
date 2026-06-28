@@ -134,19 +134,19 @@ export default function ClientSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           ← {t('common', 'back')}
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">{t('settings', 'title')}</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-6">{t('settings', 'title')}</h1>
 
         <div className="space-y-6">
           {/* Account Type Card */}
@@ -164,35 +164,35 @@ export default function ClientSettingsPage() {
                   onClick={() => setClientProfile({ ...clientProfile, clientType: 'INDIVIDUAL' })}
                   className={`p-4 border-2 rounded-lg text-left transition-colors ${
                     clientProfile.clientType === 'INDIVIDUAL'
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-600 bg-primary/10'
+                      : 'border-border hover:border-border'
                   }`}
                 >
                   <div className="text-2xl mb-2">👤</div>
                   <div className="font-semibold">{t('settings', 'individual')}</div>
-                  <div className="text-sm text-gray-600">{t('settings', 'individualDescription')}</div>
+                  <div className="text-sm text-muted-foreground">{t('settings', 'individualDescription')}</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setClientProfile({ ...clientProfile, clientType: 'PROFESSIONAL' })}
                   className={`p-4 border-2 rounded-lg text-left transition-colors ${
                     clientProfile.clientType === 'PROFESSIONAL'
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-600 bg-primary/10'
+                      : 'border-border hover:border-border'
                   }`}
                 >
                   <div className="text-2xl mb-2">🏢</div>
                   <div className="font-semibold">{t('settings', 'professional')}</div>
-                  <div className="text-sm text-gray-600">{t('settings', 'professionalDescription')}</div>
+                  <div className="text-sm text-muted-foreground">{t('settings', 'professionalDescription')}</div>
                 </button>
               </div>
 
               {clientProfile.clientType === 'PROFESSIONAL' && (
                 <div className="space-y-4 pt-4 border-t">
-                  <h4 className="font-semibold text-gray-900">{t('settings', 'companyInfo')}</h4>
+                  <h4 className="font-semibold text-foreground">{t('settings', 'companyInfo')}</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         {t('settings', 'companyName')} *
                       </label>
                       <Input
@@ -205,7 +205,7 @@ export default function ClientSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         {t('settings', 'siret')} *
                       </label>
                       <Input
@@ -222,7 +222,7 @@ export default function ClientSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         {t('settings', 'vatNumber')}
                       </label>
                       <Input
@@ -235,7 +235,7 @@ export default function ClientSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         {t('settings', 'industry')}
                       </label>
                       <select
@@ -243,7 +243,7 @@ export default function ClientSettingsPage() {
                         onChange={(e) =>
                           setClientProfile({ ...clientProfile, industry: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">{t('common', 'select')}</option>
                         {INDUSTRIES.map((ind) => (
@@ -276,7 +276,7 @@ export default function ClientSettingsPage() {
                 <div className="flex items-center justify-between py-3 border-b">
                   <div>
                     <div className="font-medium">{t('settings', 'emailNotifications')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'emailNotificationsDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'emailNotificationsDesc')}</div>
                   </div>
                   <input
                     type="checkbox"
@@ -284,14 +284,14 @@ export default function ClientSettingsPage() {
                     onChange={(e) =>
                       setNotifications({ ...notifications, emailNotifications: e.target.checked })
                     }
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
                   />
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-b">
                   <div>
                     <div className="font-medium">{t('settings', 'pushNotifications')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'pushNotificationsDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'pushNotificationsDesc')}</div>
                   </div>
                   <input
                     type="checkbox"
@@ -299,14 +299,14 @@ export default function ClientSettingsPage() {
                     onChange={(e) =>
                       setNotifications({ ...notifications, pushNotifications: e.target.checked })
                     }
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
                   />
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-b">
                   <div>
                     <div className="font-medium">{t('settings', 'smsNotifications')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'smsNotificationsDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'smsNotificationsDesc')}</div>
                   </div>
                   <input
                     type="checkbox"
@@ -314,14 +314,14 @@ export default function ClientSettingsPage() {
                     onChange={(e) =>
                       setNotifications({ ...notifications, smsNotifications: e.target.checked })
                     }
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
                   />
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-b">
                   <div>
                     <div className="font-medium">{t('settings', 'missionUpdates')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'missionUpdatesDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'missionUpdatesDesc')}</div>
                   </div>
                   <input
                     type="checkbox"
@@ -329,14 +329,14 @@ export default function ClientSettingsPage() {
                     onChange={(e) =>
                       setNotifications({ ...notifications, missionUpdates: e.target.checked })
                     }
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
                   />
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-b">
                   <div>
                     <div className="font-medium">{t('settings', 'marketplaceAlerts')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'marketplaceAlertsDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'marketplaceAlertsDesc')}</div>
                   </div>
                   <input
                     type="checkbox"
@@ -344,14 +344,14 @@ export default function ClientSettingsPage() {
                     onChange={(e) =>
                       setNotifications({ ...notifications, marketplaceAlerts: e.target.checked })
                     }
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
                   />
                 </div>
 
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <div className="font-medium">{t('settings', 'promotions')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'promotionsDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'promotionsDesc')}</div>
                   </div>
                   <input
                     type="checkbox"
@@ -359,7 +359,7 @@ export default function ClientSettingsPage() {
                     onChange={(e) =>
                       setNotifications({ ...notifications, promotions: e.target.checked })
                     }
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
                   />
                 </div>
               </div>
@@ -380,22 +380,22 @@ export default function ClientSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Link href="/client/settings/2fa">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer">
                   <div>
                     <div className="font-medium">{t('settings', 'twoFactorAuth')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'twoFactorAuthDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'twoFactorAuthDesc')}</div>
                   </div>
-                  <span className="text-gray-400">→</span>
+                  <span className="text-muted-foreground">→</span>
                 </div>
               </Link>
 
               <Link href="/client/profile">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer">
                   <div>
                     <div className="font-medium">{t('settings', 'changePassword')}</div>
-                    <div className="text-sm text-gray-500">{t('settings', 'changePasswordDesc')}</div>
+                    <div className="text-sm text-muted-foreground">{t('settings', 'changePasswordDesc')}</div>
                   </div>
-                  <span className="text-gray-400">→</span>
+                  <span className="text-muted-foreground">→</span>
                 </div>
               </Link>
             </CardContent>
@@ -408,7 +408,7 @@ export default function ClientSettingsPage() {
             </CardHeader>
             <CardContent>
               <select
-                className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full md:w-64 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 defaultValue="fr"
               >
                 <option value="fr">Français</option>

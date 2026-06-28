@@ -109,7 +109,7 @@ export default function WorkingHoursPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -118,10 +118,10 @@ export default function WorkingHoursPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('artisan', 'workingHours') || 'Working Hours'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('artisan', 'workingHoursDesc') ||
             'Set your regular working hours for each day of the week'}
         </p>
@@ -206,25 +206,25 @@ export default function WorkingHoursPage() {
                 <div
                   key={day.value}
                   className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
-                    hours.isEnabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100'
+                    hours.isEnabled ? 'bg-card border-border' : 'bg-background border-border'
                   }`}
                 >
                   {/* Toggle */}
                   <button
                     onClick={() => handleToggleDay(day.value)}
                     className={`w-12 h-6 rounded-full transition-colors ${
-                      hours.isEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                      hours.isEnabled ? 'bg-primary' : 'bg-gray-300'
                     }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform ${
+                      className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${
                         hours.isEnabled ? 'translate-x-6' : 'translate-x-0.5'
                       }`}
                     />
                   </button>
 
                   {/* Day Name */}
-                  <div className="w-24 font-medium text-gray-900">{day.label}</div>
+                  <div className="w-24 font-medium text-foreground">{day.label}</div>
 
                   {/* Time Inputs */}
                   {hours.isEnabled ? (
@@ -235,7 +235,7 @@ export default function WorkingHoursPage() {
                         onChange={(e) => handleTimeChange(day.value, 'startTime', e.target.value)}
                         className="w-32"
                       />
-                      <span className="text-gray-500">to</span>
+                      <span className="text-muted-foreground">to</span>
                       <Input
                         type="time"
                         value={hours.endTime}
@@ -252,7 +252,7 @@ export default function WorkingHoursPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex-1 text-gray-400">
+                    <div className="flex-1 text-muted-foreground">
                       {t('artisan', 'notWorking') || 'Not working'}
                     </div>
                   )}
@@ -277,8 +277,8 @@ export default function WorkingHoursPage() {
           <div className="flex items-start gap-3">
             <span className="text-2xl">💡</span>
             <div>
-              <h4 className="font-medium text-gray-900">{t('artisan', 'tip') || 'Tip'}</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-medium text-foreground">{t('artisan', 'tip') || 'Tip'}</h4>
+              <p className="text-sm text-muted-foreground">
                 {t('artisan', 'workingHoursTip') ||
                   'Setting accurate working hours helps clients book appointments at convenient times and improves your visibility in search results.'}
               </p>

@@ -37,7 +37,7 @@ export function SidebarLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar user={user} />
 
       <div className="flex pt-16">
@@ -53,15 +53,15 @@ export function SidebarLayout({
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed lg:sticky top-16 left-0 z-30 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 transition-transform duration-300 lg:translate-x-0',
+            'fixed lg:sticky top-16 left-0 z-30 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border transition-transform duration-300 lg:translate-x-0',
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
           role="navigation"
           aria-label="Navigation secondaire"
         >
           <div className="flex flex-col h-full">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">{sidebarTitle}</h2>
+            <div className="p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">{sidebarTitle}</h2>
             </div>
 
             <nav className="flex-1 overflow-y-auto p-4">
@@ -75,8 +75,8 @@ export function SidebarLayout({
                         className={cn(
                           'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px]',
                           isActive
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-foreground hover:bg-accent'
                         )}
                         onClick={() => setIsSidebarOpen(false)}
                         aria-current={isActive ? 'page' : undefined}
@@ -88,8 +88,8 @@ export function SidebarLayout({
                             className={cn(
                               'px-2 py-0.5 text-xs font-medium rounded-full',
                               isActive
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-700'
+                                ? 'bg-primary text-white'
+                                : 'bg-muted text-foreground'
                             )}
                           >
                             {item.badge}
@@ -108,7 +108,7 @@ export function SidebarLayout({
         <button
           type="button"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="fixed bottom-4 left-4 z-40 lg:hidden flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="fixed bottom-4 left-4 z-40 lg:hidden flex items-center justify-center w-12 h-12 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           aria-label={isSidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={isSidebarOpen}
         >

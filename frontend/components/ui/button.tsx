@@ -61,16 +61,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         className={cn(
           'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
           'disabled:opacity-50 disabled:pointer-events-none',
           'active:scale-[0.98] transition-transform duration-100',
           {
-            'bg-blue-600 text-white hover:bg-blue-700 shadow-sm': variant === 'default',
-            'border border-gray-300 bg-white hover:bg-gray-50 text-gray-700':
+            'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-glow font-semibold': variant === 'default',
+            'border border-border bg-card hover:bg-accent text-foreground':
               variant === 'outline',
-            'hover:bg-gray-100 text-gray-700': variant === 'ghost',
+            'hover:bg-accent text-foreground': variant === 'ghost',
             'bg-red-600 text-white hover:bg-red-700 shadow-sm': variant === 'destructive',
-            'text-blue-600 underline-offset-4 hover:underline': variant === 'link',
+            'text-primary underline-offset-4 hover:underline': variant === 'link',
           },
           {
             // Updated sizes with 44px minimum for touch targets

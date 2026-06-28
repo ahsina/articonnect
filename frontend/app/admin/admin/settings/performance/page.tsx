@@ -92,7 +92,7 @@ export default function PerformanceSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -100,7 +100,7 @@ export default function PerformanceSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -117,15 +117,15 @@ export default function PerformanceSettingsPage() {
               type="checkbox"
               checked={settings.cacheEnabled}
               onChange={(e) => updateSetting('cacheEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable Caching</span>
+            <span className="text-sm font-medium text-foreground">Enable Caching</span>
           </label>
 
           {settings.cacheEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Cache TTL (seconds)
                 </label>
                 <input
@@ -133,14 +133,14 @@ export default function PerformanceSettingsPage() {
                   value={settings.cacheTtlSeconds}
                   onChange={(e) => updateSetting('cacheTtlSeconds', parseInt(e.target.value))}
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {Math.round(settings.cacheTtlSeconds / 60)} minutes
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Max Cache Size (MB)
                 </label>
                 <input
@@ -148,7 +148,7 @@ export default function PerformanceSettingsPage() {
                   value={settings.cacheMaxSize}
                   onChange={(e) => updateSetting('cacheMaxSize', parseInt(e.target.value))}
                   min="16"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -168,20 +168,20 @@ export default function PerformanceSettingsPage() {
               type="checkbox"
               checked={settings.cdnEnabled}
               onChange={(e) => updateSetting('cdnEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable CDN</span>
+            <span className="text-sm font-medium text-foreground">Enable CDN</span>
           </label>
 
           {settings.cdnEnabled && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">CDN URL</label>
+              <label className="block text-sm font-medium text-foreground mb-1">CDN URL</label>
               <input
                 type="text"
                 value={settings.cdnUrl || ''}
                 onChange={(e) => updateSetting('cdnUrl', e.target.value)}
                 placeholder="https://cdn.example.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -200,15 +200,15 @@ export default function PerformanceSettingsPage() {
               type="checkbox"
               checked={settings.imageOptimizationEnabled}
               onChange={(e) => updateSetting('imageOptimizationEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable Image Optimization</span>
+            <span className="text-sm font-medium text-foreground">Enable Image Optimization</span>
           </label>
 
           {settings.imageOptimizationEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Max Width (px)
                 </label>
                 <input
@@ -216,11 +216,11 @@ export default function PerformanceSettingsPage() {
                   value={settings.imageMaxWidth}
                   onChange={(e) => updateSetting('imageMaxWidth', parseInt(e.target.value))}
                   min="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Max Height (px)
                 </label>
                 <input
@@ -228,11 +228,11 @@ export default function PerformanceSettingsPage() {
                   value={settings.imageMaxHeight}
                   onChange={(e) => updateSetting('imageMaxHeight', parseInt(e.target.value))}
                   min="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Quality (1-100)
                 </label>
                 <input
@@ -241,7 +241,7 @@ export default function PerformanceSettingsPage() {
                   onChange={(e) => updateSetting('imageQuality', parseInt(e.target.value))}
                   min="1"
                   max="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -252,9 +252,9 @@ export default function PerformanceSettingsPage() {
               type="checkbox"
               checked={settings.lazyLoadingEnabled}
               onChange={(e) => updateSetting('lazyLoadingEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm text-gray-700">Enable lazy loading</span>
+            <span className="text-sm text-foreground">Enable lazy loading</span>
           </label>
         </CardContent>
       </Card>
@@ -268,7 +268,7 @@ export default function PerformanceSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Default Page Size
               </label>
               <input
@@ -277,11 +277,11 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('paginationDefaultLimit', parseInt(e.target.value))}
                 min="5"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Maximum Page Size
               </label>
               <input
@@ -290,7 +290,7 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('paginationMaxLimit', parseInt(e.target.value))}
                 min="10"
                 max="1000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -309,14 +309,14 @@ export default function PerformanceSettingsPage() {
               type="checkbox"
               checked={settings.searchIndexEnabled}
               onChange={(e) => updateSetting('searchIndexEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable Search Index</span>
+            <span className="text-sm font-medium text-foreground">Enable Search Index</span>
           </label>
 
           {settings.searchIndexEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Refresh Interval (minutes)
               </label>
               <input
@@ -326,7 +326,7 @@ export default function PerformanceSettingsPage() {
                   updateSetting('searchIndexRefreshMinutes', parseInt(e.target.value))
                 }
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -342,7 +342,7 @@ export default function PerformanceSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Connection Pool Size
               </label>
               <input
@@ -353,11 +353,11 @@ export default function PerformanceSettingsPage() {
                 }
                 min="5"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Query Timeout (ms)
               </label>
               <input
@@ -365,9 +365,9 @@ export default function PerformanceSettingsPage() {
                 value={settings.databaseQueryTimeout}
                 onChange={(e) => updateSetting('databaseQueryTimeout', parseInt(e.target.value))}
                 min="1000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {Math.round(settings.databaseQueryTimeout / 1000)} seconds
               </p>
             </div>
@@ -387,14 +387,14 @@ export default function PerformanceSettingsPage() {
               type="checkbox"
               checked={settings.backgroundJobsEnabled}
               onChange={(e) => updateSetting('backgroundJobsEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable Background Jobs</span>
+            <span className="text-sm font-medium text-foreground">Enable Background Jobs</span>
           </label>
 
           {settings.backgroundJobsEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Concurrency</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Concurrency</label>
               <input
                 type="number"
                 value={settings.backgroundJobConcurrency}
@@ -403,7 +403,7 @@ export default function PerformanceSettingsPage() {
                 }
                 min="1"
                 max="20"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -419,7 +419,7 @@ export default function PerformanceSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Request Timeout (ms)
               </label>
               <input
@@ -427,14 +427,14 @@ export default function PerformanceSettingsPage() {
                 value={settings.requestTimeoutMs}
                 onChange={(e) => updateSetting('requestTimeoutMs', parseInt(e.target.value))}
                 min="1000"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {Math.round(settings.requestTimeoutMs / 1000)} seconds
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Compression Level (1-9)
               </label>
               <input
@@ -443,7 +443,7 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('compressionLevel', parseInt(e.target.value))}
                 min="1"
                 max="9"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -454,18 +454,18 @@ export default function PerformanceSettingsPage() {
                 type="checkbox"
                 checked={settings.rateLimitingEnabled}
                 onChange={(e) => updateSetting('rateLimitingEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable rate limiting</span>
+              <span className="text-sm text-foreground">Enable rate limiting</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.enableCompression}
                 onChange={(e) => updateSetting('enableCompression', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable compression</span>
+              <span className="text-sm text-foreground">Enable compression</span>
             </label>
           </div>
         </CardContent>
@@ -480,13 +480,13 @@ export default function PerformanceSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Log Level</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Log Level</label>
               <select
                 value={settings.logLevel}
                 onChange={(e) =>
                   updateSetting('logLevel', e.target.value as 'DEBUG' | 'INFO' | 'WARN' | 'ERROR')
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               >
                 <option value="DEBUG">Debug</option>
                 <option value="INFO">Info</option>
@@ -495,7 +495,7 @@ export default function PerformanceSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Log Retention (days)
               </label>
               <input
@@ -503,11 +503,11 @@ export default function PerformanceSettingsPage() {
                 value={settings.logRetentionDays}
                 onChange={(e) => updateSetting('logRetentionDays', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Metrics Interval (seconds)
               </label>
               <input
@@ -517,7 +517,7 @@ export default function PerformanceSettingsPage() {
                   updateSetting('metricsCollectionInterval', parseInt(e.target.value))
                 }
                 min="10"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -528,24 +528,24 @@ export default function PerformanceSettingsPage() {
                 type="checkbox"
                 checked={settings.metricsEnabled}
                 onChange={(e) => updateSetting('metricsEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable metrics collection</span>
+              <span className="text-sm text-foreground">Enable metrics collection</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.healthCheckEnabled}
                 onChange={(e) => updateSetting('healthCheckEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable health checks</span>
+              <span className="text-sm text-foreground">Enable health checks</span>
             </label>
           </div>
 
           {settings.healthCheckEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Health Check Interval (seconds)
               </label>
               <input
@@ -553,7 +553,7 @@ export default function PerformanceSettingsPage() {
                 value={settings.healthCheckInterval}
                 onChange={(e) => updateSetting('healthCheckInterval', parseInt(e.target.value))}
                 min="10"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -565,7 +565,7 @@ export default function PerformanceSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Performance Settings'}
         </button>

@@ -138,7 +138,7 @@ export default function UserSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -146,7 +146,7 @@ export default function UserSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -164,18 +164,18 @@ export default function UserSettingsPage() {
                 type="checkbox"
                 checked={settings.requireEmailVerification}
                 onChange={(e) => updateSetting('requireEmailVerification', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require email verification</span>
+              <span className="text-sm text-foreground">Require email verification</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.requirePhoneVerification}
                 onChange={(e) => updateSetting('requirePhoneVerification', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require phone verification</span>
+              <span className="text-sm text-foreground">Require phone verification</span>
             </label>
           </div>
         </CardContent>
@@ -190,7 +190,7 @@ export default function UserSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Display Name Max Length
               </label>
               <input
@@ -198,21 +198,21 @@ export default function UserSettingsPage() {
                 value={settings.displayNameMaxLength}
                 onChange={(e) => updateSetting('displayNameMaxLength', parseInt(e.target.value))}
                 min="10"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bio Max Length</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Bio Max Length</label>
               <input
                 type="number"
                 value={settings.bioMaxLength}
                 onChange={(e) => updateSetting('bioMaxLength', parseInt(e.target.value))}
                 min="50"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Username Changes/Year
               </label>
               <input
@@ -220,7 +220,7 @@ export default function UserSettingsPage() {
                 value={settings.usernameChangeLimit}
                 onChange={(e) => updateSetting('usernameChangeLimit', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -231,27 +231,27 @@ export default function UserSettingsPage() {
                 type="checkbox"
                 checked={settings.allowUsernameChange}
                 onChange={(e) => updateSetting('allowUsernameChange', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Allow username changes</span>
+              <span className="text-sm text-foreground">Allow username changes</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.profilePhotoRequired}
                 onChange={(e) => updateSetting('profilePhotoRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require profile photo</span>
+              <span className="text-sm text-foreground">Require profile photo</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.profilePhotoModeration}
                 onChange={(e) => updateSetting('profilePhotoModeration', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Moderate profile photos</span>
+              <span className="text-sm text-foreground">Moderate profile photos</span>
             </label>
           </div>
 
@@ -261,36 +261,36 @@ export default function UserSettingsPage() {
                 type="checkbox"
                 checked={settings.showOnlineStatus}
                 onChange={(e) => updateSetting('showOnlineStatus', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Show online status</span>
+              <span className="text-sm text-foreground">Show online status</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.showLastActive}
                 onChange={(e) => updateSetting('showLastActive', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Show last active</span>
+              <span className="text-sm text-foreground">Show last active</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.allowAnonymousProfiles}
                 onChange={(e) => updateSetting('allowAnonymousProfiles', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Allow anonymous profiles</span>
+              <span className="text-sm text-foreground">Allow anonymous profiles</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.allowProfileHiding}
                 onChange={(e) => updateSetting('allowProfileHiding', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Allow profile hiding</span>
+              <span className="text-sm text-foreground">Allow profile hiding</span>
             </label>
           </div>
         </CardContent>
@@ -309,33 +309,33 @@ export default function UserSettingsPage() {
                 type="checkbox"
                 checked={settings.artisanRequirements.businessVerificationRequired}
                 onChange={(e) => updateArtisanReq('businessVerificationRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Business verification required</span>
+              <span className="text-sm text-foreground">Business verification required</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.artisanRequirements.insuranceRequired}
                 onChange={(e) => updateArtisanReq('insuranceRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Insurance required</span>
+              <span className="text-sm text-foreground">Insurance required</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.artisanRequirements.portfolioRequired}
                 onChange={(e) => updateArtisanReq('portfolioRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Portfolio required</span>
+              <span className="text-sm text-foreground">Portfolio required</span>
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Minimum Certifications
               </label>
               <input
@@ -343,11 +343,11 @@ export default function UserSettingsPage() {
                 value={settings.artisanRequirements.minCertifications}
                 onChange={(e) => updateArtisanReq('minCertifications', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Minimum Portfolio Items
               </label>
               <input
@@ -355,7 +355,7 @@ export default function UserSettingsPage() {
                 value={settings.artisanRequirements.minPortfolioItems}
                 onChange={(e) => updateArtisanReq('minPortfolioItems', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -375,27 +375,27 @@ export default function UserSettingsPage() {
                 type="checkbox"
                 checked={settings.clientRequirements.addressRequired}
                 onChange={(e) => updateClientReq('addressRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Address required</span>
+              <span className="text-sm text-foreground">Address required</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.clientRequirements.phoneRequired}
                 onChange={(e) => updateClientReq('phoneRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Phone required</span>
+              <span className="text-sm text-foreground">Phone required</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.clientRequirements.identityVerificationRequired}
                 onChange={(e) => updateClientReq('identityVerificationRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Identity verification required</span>
+              <span className="text-sm text-foreground">Identity verification required</span>
             </label>
           </div>
         </CardContent>
@@ -410,18 +410,18 @@ export default function UserSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Length</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Minimum Length</label>
               <input
                 type="number"
                 value={settings.passwordMinLength}
                 onChange={(e) => updateSetting('passwordMinLength', parseInt(e.target.value))}
                 min="6"
                 max="32"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Password Expiry (days, 0 = never)
               </label>
               <input
@@ -429,7 +429,7 @@ export default function UserSettingsPage() {
                 value={settings.passwordExpiryDays}
                 onChange={(e) => updateSetting('passwordExpiryDays', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -440,36 +440,36 @@ export default function UserSettingsPage() {
                 type="checkbox"
                 checked={settings.passwordRequireUppercase}
                 onChange={(e) => updateSetting('passwordRequireUppercase', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require uppercase</span>
+              <span className="text-sm text-foreground">Require uppercase</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.passwordRequireLowercase}
                 onChange={(e) => updateSetting('passwordRequireLowercase', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require lowercase</span>
+              <span className="text-sm text-foreground">Require lowercase</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.passwordRequireNumbers}
                 onChange={(e) => updateSetting('passwordRequireNumbers', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require numbers</span>
+              <span className="text-sm text-foreground">Require numbers</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.passwordRequireSymbols}
                 onChange={(e) => updateSetting('passwordRequireSymbols', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require symbols</span>
+              <span className="text-sm text-foreground">Require symbols</span>
             </label>
           </div>
         </CardContent>
@@ -484,7 +484,7 @@ export default function UserSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Session Timeout (minutes)
               </label>
               <input
@@ -492,11 +492,11 @@ export default function UserSettingsPage() {
                 value={settings.sessionTimeoutMinutes}
                 onChange={(e) => updateSetting('sessionTimeoutMinutes', parseInt(e.target.value))}
                 min="5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Concurrent Sessions
               </label>
               <input
@@ -504,20 +504,20 @@ export default function UserSettingsPage() {
                 value={settings.maxConcurrentSessions}
                 onChange={(e) => updateSetting('maxConcurrentSessions', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-background rounded-lg">
             <label className="flex items-center gap-2 mb-4">
               <input
                 type="checkbox"
                 checked={settings.twoFactorAuthRequired}
                 onChange={(e) => updateSetting('twoFactorAuthRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-foreground">
                 Require Two-Factor Authentication
               </span>
             </label>
@@ -529,9 +529,9 @@ export default function UserSettingsPage() {
                     type="checkbox"
                     checked={settings.twoFactorAuthMethods.includes(method)}
                     onChange={() => toggle2FAMethod(method)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700 capitalize">{method}</span>
+                  <span className="text-sm text-foreground capitalize">{method}</span>
                 </label>
               ))}
             </div>
@@ -551,14 +551,14 @@ export default function UserSettingsPage() {
               type="checkbox"
               checked={settings.accountDeletionEnabled}
               onChange={(e) => updateSetting('accountDeletionEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Allow account deletion</span>
+            <span className="text-sm font-medium text-foreground">Allow account deletion</span>
           </label>
 
           {settings.accountDeletionEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Cooldown Period (days)
               </label>
               <input
@@ -568,9 +568,9 @@ export default function UserSettingsPage() {
                   updateSetting('accountDeletionCooldownDays', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">Time before deletion is permanent</p>
+              <p className="mt-1 text-xs text-muted-foreground">Time before deletion is permanent</p>
             </div>
           )}
         </CardContent>
@@ -581,7 +581,7 @@ export default function UserSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save User Settings'}
         </button>

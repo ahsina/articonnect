@@ -69,49 +69,49 @@ export default function CreateCompanyPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('company', 'createCompany') || 'Create Company'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('company', 'createCompanyDesc') ||
             'Transform your solo practice into a company to hire employees'}
         </p>
       </div>
 
       {/* Benefits Card */}
-      <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <Card className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
         <CardHeader>
-          <CardTitle className="text-blue-800">
+          <CardTitle className="text-primary">
             {t('company', 'whyCreateCompany') || 'Why Create a Company?'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-4 bg-white rounded-lg">
+            <div className="p-4 bg-card rounded-lg">
               <div className="text-2xl mb-2">👥</div>
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-medium text-foreground">
                 {t('company', 'hireEmployees') || 'Hire Employees'}
               </h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {t('company', 'hireEmployeesDesc') ||
                   'Add technicians, managers, and contractors to your team'}
               </p>
             </div>
-            <div className="p-4 bg-white rounded-lg">
+            <div className="p-4 bg-card rounded-lg">
               <div className="text-2xl mb-2">📈</div>
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-medium text-foreground">
                 {t('company', 'scaleUp') || 'Scale Your Business'}
               </h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {t('company', 'scaleUpDesc') || 'Take on more missions and grow your revenue'}
               </p>
             </div>
-            <div className="p-4 bg-white rounded-lg">
+            <div className="p-4 bg-card rounded-lg">
               <div className="text-2xl mb-2">💼</div>
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-medium text-foreground">
                 {t('company', 'professionalProfile') || 'Professional Profile'}
               </h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {t('company', 'professionalProfileDesc') ||
                   'Build credibility with a company presence'}
               </p>
@@ -132,7 +132,7 @@ export default function CreateCompanyPage() {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'companyName') || 'Company Name'} *
                 </label>
                 <Input
@@ -143,7 +143,7 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'siret') || 'SIRET / RCS / KBO Number'} *
                 </label>
                 <Input
@@ -157,7 +157,7 @@ export default function CreateCompanyPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'vatNumber') || 'VAT Number'}
                 </label>
                 <Input
@@ -167,7 +167,7 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'website') || 'Website'}
                 </label>
                 <Input
@@ -180,14 +180,14 @@ export default function CreateCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'description') || 'Description'}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder={
                   t('company', 'descriptionPlaceholder') || 'Describe your company services...'
                 }
@@ -205,7 +205,7 @@ export default function CreateCompanyPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'address') || 'Address'} *
               </label>
               <Input
@@ -218,7 +218,7 @@ export default function CreateCompanyPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'city') || 'City'} *
                 </label>
                 <Input
@@ -229,7 +229,7 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'postalCode') || 'Postal Code'} *
                 </label>
                 <Input
@@ -240,13 +240,13 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'country') || 'Country'} *
                 </label>
                 <select
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 >
                   <option value="LU">Luxembourg</option>
@@ -257,7 +257,7 @@ export default function CreateCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'serviceRadius') || 'Service Radius (km)'} *
               </label>
               <Input
@@ -269,7 +269,7 @@ export default function CreateCompanyPage() {
                 min="1"
                 max="100"
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {t('company', 'serviceRadiusDesc') || 'Maximum distance your company serves'}
               </p>
             </div>

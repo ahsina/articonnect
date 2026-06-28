@@ -151,7 +151,7 @@ export default function AvailabilityCalendarPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -160,10 +160,10 @@ export default function AvailabilityCalendarPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('artisan', 'availabilityCalendar') || 'Availability Calendar'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('artisan', 'manageAvailabilityDesc') || 'Manage your availability for missions'}
         </p>
       </div>
@@ -185,7 +185,7 @@ export default function AvailabilityCalendarPage() {
           {/* Days of week header */}
           <div className="grid grid-cols-7 gap-1 mb-2">
             {DAYS_OF_WEEK.map((day) => (
-              <div key={day} className="text-center text-sm font-medium text-gray-600 py-2">
+              <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
                 {day}
               </div>
             ))}
@@ -195,7 +195,7 @@ export default function AvailabilityCalendarPage() {
           <div className="grid grid-cols-7 gap-1">
             {getDaysInMonth().map((date, index) => {
               if (!date) {
-                return <div key={`empty-${index}`} className="h-24 bg-gray-50 rounded-lg" />;
+                return <div key={`empty-${index}`} className="h-24 bg-background rounded-lg" />;
               }
 
               const daySlots = getSlotsForDate(date);
@@ -208,13 +208,13 @@ export default function AvailabilityCalendarPage() {
                   onClick={() => !isPast(date) && handleDateClick(date)}
                   className={`h-24 p-2 rounded-lg border transition-colors ${
                     isPast(date)
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-muted text-muted-foreground cursor-not-allowed'
                       : isToday(date)
-                        ? 'border-blue-500 bg-blue-50 cursor-pointer hover:bg-blue-100'
-                        : 'border-gray-200 bg-white cursor-pointer hover:bg-gray-50'
+                        ? 'border-primary bg-primary/10 cursor-pointer hover:bg-primary/10'
+                        : 'border-border bg-card cursor-pointer hover:bg-accent'
                   }`}
                 >
-                  <div className={`text-sm font-medium ${isToday(date) ? 'text-blue-600' : ''}`}>
+                  <div className={`text-sm font-medium ${isToday(date) ? 'text-primary' : ''}`}>
                     {date.getDate()}
                   </div>
                   <div className="mt-1 space-y-1">
@@ -225,7 +225,7 @@ export default function AvailabilityCalendarPage() {
                       <div className="w-full h-1 bg-red-400 rounded" title="Unavailable" />
                     )}
                     {daySlots.length > 0 && (
-                      <div className="text-xs text-gray-500">{daySlots.length} slot(s)</div>
+                      <div className="text-xs text-muted-foreground">{daySlots.length} slot(s)</div>
                     )}
                   </div>
                 </div>
@@ -237,11 +237,11 @@ export default function AvailabilityCalendarPage() {
           <div className="mt-4 flex gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-2 bg-green-400 rounded" />
-              <span className="text-gray-600">{t('artisan', 'available') || 'Available'}</span>
+              <span className="text-muted-foreground">{t('artisan', 'available') || 'Available'}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-2 bg-red-400 rounded" />
-              <span className="text-gray-600">{t('artisan', 'unavailable') || 'Unavailable'}</span>
+              <span className="text-muted-foreground">{t('artisan', 'unavailable') || 'Unavailable'}</span>
             </div>
           </div>
         </CardContent>
@@ -261,7 +261,7 @@ export default function AvailabilityCalendarPage() {
           </CardHeader>
           <CardContent>
             {getSlotsForDate(selectedDate).length === 0 ? (
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 {t('artisan', 'noSlotsForDate') || 'No availability slots for this date'}
               </p>
             ) : (
@@ -269,14 +269,14 @@ export default function AvailabilityCalendarPage() {
                 {getSlotsForDate(selectedDate).map((slot) => (
                   <div
                     key={slot.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-background rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       <Badge
                         className={
                           slot.isAvailable
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-green-500/15 text-green-400'
+                            : 'bg-red-500/15 text-red-400'
                         }
                       >
                         {slot.isAvailable ? 'Available' : 'Unavailable'}
@@ -284,7 +284,7 @@ export default function AvailabilityCalendarPage() {
                       <span className="font-medium">
                         {slot.startTime} - {slot.endTime}
                       </span>
-                      {slot.notes && <span className="text-sm text-gray-500">({slot.notes})</span>}
+                      {slot.notes && <span className="text-sm text-muted-foreground">({slot.notes})</span>}
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => handleDeleteSlot(slot.id)}>
                       🗑️
@@ -303,7 +303,7 @@ export default function AvailabilityCalendarPage() {
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle>{t('artisan', 'addAvailability') || 'Add Availability'}</CardTitle>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {selectedDate.toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'long',
@@ -314,7 +314,7 @@ export default function AvailabilityCalendarPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('artisan', 'startTime') || 'Start Time'}
                   </label>
                   <Input
@@ -324,7 +324,7 @@ export default function AvailabilityCalendarPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('artisan', 'endTime') || 'End Time'}
                   </label>
                   <Input
@@ -336,7 +336,7 @@ export default function AvailabilityCalendarPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'status') || 'Status'}
                 </label>
                 <div className="flex gap-2">
@@ -358,7 +358,7 @@ export default function AvailabilityCalendarPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'notes') || 'Notes'} ({t('common', 'optional') || 'optional'})
                 </label>
                 <Input

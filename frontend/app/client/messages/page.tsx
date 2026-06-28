@@ -183,19 +183,19 @@ export default function MessagesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-background flex flex-col">
       <div className="flex-1 flex overflow-hidden">
         {/* Conversations List */}
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
+        <div className="w-80 bg-card border-r border-border flex flex-col">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-900">{t('common', 'messages')}</h1>
+              <h1 className="text-xl font-bold text-foreground">{t('common', 'messages')}</h1>
               <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
@@ -203,7 +203,7 @@ export default function MessagesPage() {
                   }`}
                   title={connected ? t('common', 'connected') : t('common', 'disconnected')}
                 />
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {connected ? t('common', 'online') : t('common', 'offline')}
                 </span>
               </div>
@@ -212,7 +212,7 @@ export default function MessagesPage() {
 
           <div className="flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-muted-foreground">
                 {t('common', 'noConversations')}
               </div>
             ) : (
@@ -221,8 +221,8 @@ export default function MessagesPage() {
                   <button
                     key={conv.userId}
                     onClick={() => setSelectedConversation(conv.userId)}
-                    className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 border-b border-gray-100 transition-colors ${
-                      selectedConversation === conv.userId ? 'bg-blue-50' : ''
+                    className={`w-full p-4 flex items-start gap-3 hover:bg-accent border-b border-border transition-colors ${
+                      selectedConversation === conv.userId ? 'bg-primary/10' : ''
                     }`}
                   >
                     <img
@@ -232,21 +232,21 @@ export default function MessagesPage() {
                     />
                     <div className="flex-1 text-left min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-gray-900 truncate">
+                        <span className="font-semibold text-foreground truncate">
                           {conv.user.firstName} {conv.user.lastName}
                         </span>
                         {conv.unreadCount > 0 && (
-                          <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
+                          <span className="bg-primary text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
                             {conv.unreadCount}
                           </span>
                         )}
                       </div>
                       {conv.lastMessage && (
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="text-sm text-muted-foreground truncate">
                             {conv.lastMessage.content}
                           </p>
-                          <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                          <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                             {formatDate(conv.lastMessage.createdAt)}
                           </span>
                         </div>
@@ -260,21 +260,21 @@ export default function MessagesPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-gray-50">
+        <div className="flex-1 flex flex-col bg-background">
           {selectedConv ? (
             <>
               {/* Chat Header */}
-              <div className="bg-white border-b border-gray-200 p-4 flex items-center gap-3">
+              <div className="bg-card border-b border-border p-4 flex items-center gap-3">
                 <img
                   src={selectedConv.user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
                   alt={selectedConv.user.firstName}
                   className="w-10 h-10 rounded-full"
                 />
                 <div>
-                  <h2 className="font-semibold text-gray-900">
+                  <h2 className="font-semibold text-foreground">
                     {selectedConv.user.firstName} {selectedConv.user.lastName}
                   </h2>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {selectedConv.user.role === 'ARTISAN' ? t('auth', 'artisan') : t('auth', 'client')}
                   </p>
                 </div>
@@ -292,14 +292,14 @@ export default function MessagesPage() {
                       <div
                         className={`max-w-[70%] rounded-lg px-4 py-2 ${
                           isOwn
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-900 border border-gray-200'
+                            ? 'bg-primary text-white'
+                            : 'bg-card text-foreground border border-border'
                         }`}
                       >
                         <p className="break-words">{message.content}</p>
                         <p
                           className={`text-xs mt-1 ${
-                            isOwn ? 'text-blue-100' : 'text-gray-500'
+                            isOwn ? 'text-blue-100' : 'text-muted-foreground'
                           }`}
                         >
                           {formatTime(message.createdAt)}
@@ -312,7 +312,7 @@ export default function MessagesPage() {
               </div>
 
               {/* Message Input */}
-              <div className="bg-white border-t border-gray-200 p-4">
+              <div className="bg-card border-t border-border p-4">
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                   <Input
                     type="text"
@@ -328,7 +328,7 @@ export default function MessagesPage() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
               {t('common', 'selectConversation')}
             </div>
           )}

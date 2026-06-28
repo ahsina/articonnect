@@ -41,11 +41,11 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center">
                 <span className="text-3xl">✓</span>
               </div>
             </div>
@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 text-center">
+            <p className="text-sm text-muted-foreground text-center">
               {t('auth', 'checkInbox')}
             </p>
             <Link href="/auth/login" className="block">
@@ -70,12 +70,12 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">AC</span>
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-2xl font-bold text-primary-foreground">K</span>
             </div>
           </div>
           <CardTitle className="text-2xl text-center">{t('auth', 'forgotPasswordTitle')}</CardTitle>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'email')}
               </label>
               <Input
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center text-sm">
               <Link
                 href="/auth/login"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
+                className="text-primary hover:text-primary hover:underline"
               >
                 {t('auth', 'backToLogin')}
               </Link>

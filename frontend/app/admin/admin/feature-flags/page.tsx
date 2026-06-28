@@ -167,13 +167,13 @@ export default function FeatureFlagsPage() {
   const getStatusColor = (status: FeatureFlagStatus) => {
     switch (status) {
       case FeatureFlagStatus.ACTIVE:
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-500/15 text-green-400';
       case FeatureFlagStatus.INACTIVE:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-muted text-muted-foreground';
       case FeatureFlagStatus.ARCHIVED:
-        return 'bg-red-100 text-red-600';
+        return 'bg-red-500/15 text-red-600';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -195,33 +195,33 @@ export default function FeatureFlagsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Feature Flags</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">Feature Flags</h1>
+              <p className="text-muted-foreground mt-1">
                 Manage feature flags and rollout configurations
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
           >
             + New Flag
           </button>
@@ -229,7 +229,7 @@ export default function FeatureFlagsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -240,8 +240,8 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Flags</p>
-                  <p className="text-3xl font-bold text-gray-900">{flags.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Flags</p>
+                  <p className="text-3xl font-bold text-foreground">{flags.length}</p>
                 </div>
                 <span className="text-3xl">🏳️</span>
               </div>
@@ -251,7 +251,7 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Enabled</p>
+                  <p className="text-sm text-muted-foreground">Enabled</p>
                   <p className="text-3xl font-bold text-green-600">
                     {flags.filter((f) => f.value.enabled).length}
                   </p>
@@ -264,8 +264,8 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Disabled</p>
-                  <p className="text-3xl font-bold text-gray-500">
+                  <p className="text-sm text-muted-foreground">Disabled</p>
+                  <p className="text-3xl font-bold text-muted-foreground">
                     {flags.filter((f) => !f.value.enabled).length}
                   </p>
                 </div>
@@ -277,7 +277,7 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Percentage Rollouts</p>
+                  <p className="text-sm text-muted-foreground">Percentage Rollouts</p>
                   <p className="text-3xl font-bold text-purple-600">
                     {flags.filter((f) => f.type === FeatureFlagType.PERCENTAGE).length}
                   </p>
@@ -295,19 +295,19 @@ export default function FeatureFlagsPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-primary text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
                   All ({flags.length})
                 </button>
                 <button
                   onClick={() => setFilter('active')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
                   Enabled ({flags.filter((f) => f.value.enabled).length})
                 </button>
                 <button
                   onClick={() => setFilter('inactive')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'inactive' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg ${filter === 'inactive' ? 'bg-gray-600 text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
                   Disabled ({flags.filter((f) => !f.value.enabled).length})
                 </button>
@@ -328,15 +328,15 @@ export default function FeatureFlagsPage() {
             <Card>
               <CardContent className="p-12 text-center">
                 <span className="text-6xl mb-4 block">🏳️</span>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No feature flags found</h3>
-                <p className="text-gray-500">Create your first feature flag to get started.</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">No feature flags found</h3>
+                <p className="text-muted-foreground">Create your first feature flag to get started.</p>
               </CardContent>
             </Card>
           ) : (
             filteredFlags.map((flag) => (
               <Card
                 key={flag.key}
-                className={`${flag.value.enabled ? 'border-green-200' : 'border-gray-200'}`}
+                className={`${flag.value.enabled ? 'border-green-500/20' : 'border-border'}`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -344,45 +344,45 @@ export default function FeatureFlagsPage() {
                       <span className="text-3xl">{getTypeIcon(flag.type)}</span>
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
-                          <h3 className="font-semibold text-gray-900">{flag.name}</h3>
+                          <h3 className="font-semibold text-foreground">{flag.name}</h3>
                           <span
                             className={`px-2 py-0.5 text-xs rounded ${getStatusColor(flag.status)}`}
                           >
                             {flag.status}
                           </span>
-                          <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">
+                          <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded">
                             {flag.type}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          <code className="bg-gray-100 px-2 py-0.5 rounded">{flag.key}</code>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          <code className="bg-muted px-2 py-0.5 rounded">{flag.key}</code>
                         </p>
                         {flag.description && (
-                          <p className="text-sm text-gray-500">{flag.description}</p>
+                          <p className="text-sm text-muted-foreground">{flag.description}</p>
                         )}
                         <div className="mt-3 flex flex-wrap gap-2">
                           {flag.type === FeatureFlagType.PERCENTAGE && (
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                            <span className="text-xs bg-purple-500/15 text-purple-400 px-2 py-1 rounded">
                               {flag.value.percentage}% rollout
                             </span>
                           )}
                           {flag.type === FeatureFlagType.USER_LIST &&
                             flag.value.allowedUsers &&
                             flag.value.allowedUsers.length > 0 && (
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                                 {flag.value.allowedUsers.length} users allowed
                               </span>
                             )}
                           {flag.metadata?.tags?.map((tag) => (
                             <span
                               key={tag}
-                              className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                              className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded"
                             >
                               #{tag}
                             </span>
                           ))}
                         </div>
-                        <p className="text-xs text-gray-400 mt-3">
+                        <p className="text-xs text-muted-foreground mt-3">
                           Updated: {new Date(flag.updatedAt).toLocaleString('fr-FR')}
                           {flag.updatedBy && ` by ${flag.updatedBy.slice(0, 8)}...`}
                         </p>
@@ -397,7 +397,7 @@ export default function FeatureFlagsPage() {
                       <button
                         onClick={() => handleDelete(flag.key)}
                         disabled={actionLoading === flag.key}
-                        className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                        className="text-red-600 hover:text-red-400 disabled:opacity-50"
                       >
                         Delete
                       </button>
@@ -412,8 +412,8 @@ export default function FeatureFlagsPage() {
         {/* Create Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-border">
                 <h2 className="text-xl font-semibold">Create Feature Flag</h2>
               </div>
               <div className="p-6 space-y-4">
@@ -437,13 +437,13 @@ export default function FeatureFlagsPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Type</label>
                   <select
                     value={formData.type}
                     onChange={(e) =>
                       setFormData({ ...formData, type: e.target.value as FeatureFlagType })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value={FeatureFlagType.BOOLEAN}>Boolean (On/Off)</option>
                     <option value={FeatureFlagType.PERCENTAGE}>Percentage Rollout</option>
@@ -460,7 +460,7 @@ export default function FeatureFlagsPage() {
 
                 {formData.type === FeatureFlagType.PERCENTAGE && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Rollout Percentage
                     </label>
                     <input
@@ -473,7 +473,7 @@ export default function FeatureFlagsPage() {
                       }
                       className="w-full"
                     />
-                    <span className="text-sm text-gray-600">{formData.percentage}%</span>
+                    <span className="text-sm text-muted-foreground">{formData.percentage}%</span>
                   </div>
                 )}
 
@@ -516,20 +516,20 @@ export default function FeatureFlagsPage() {
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </div>
-              <div className="p-6 border-t border-gray-200 flex justify-end gap-4">
+              <div className="p-6 border-t border-border flex justify-end gap-4">
                 <button
                   onClick={() => {
                     setShowCreateModal(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  className="px-4 py-2 text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateFlag}
                   disabled={!formData.key || !formData.name || actionLoading === 'create'}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
                   {actionLoading === 'create' ? 'Creating...' : 'Create Flag'}
                 </button>

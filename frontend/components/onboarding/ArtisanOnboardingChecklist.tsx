@@ -155,16 +155,16 @@ export default function ArtisanOnboardingChecklist({
 
   if (compact) {
     return (
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="text-3xl">🚀</div>
               <div>
-                <h3 className="font-medium text-gray-900">
+                <h3 className="font-medium text-foreground">
                   {t('onboarding', 'completeProfile') || 'Complete Your Profile'}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   {progress}% {t('onboarding', 'complete') || 'complete'}
                 </p>
               </div>
@@ -182,7 +182,7 @@ export default function ArtisanOnboardingChecklist({
   }
 
   return (
-    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+    <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function ArtisanOnboardingChecklist({
               <CardTitle className="text-xl">
                 {t('onboarding', 'welcomeArtisan') || 'Welcome to Krafolt!'}
               </CardTitle>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {t('onboarding', 'completeSetup') || 'Complete your profile to start receiving missions'}
               </p>
             </div>
@@ -208,7 +208,7 @@ export default function ArtisanOnboardingChecklist({
 
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">
+            <span className="text-muted-foreground">
               {t('onboarding', 'overallProgress') || 'Overall Progress'}
             </span>
             <span className="font-medium">{progress}%</span>
@@ -230,7 +230,7 @@ export default function ArtisanOnboardingChecklist({
           {/* Required Steps */}
           {requiredSteps.filter(s => !s.completed || showAll).length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 <span className="text-red-500">●</span>
                 {t('onboarding', 'required') || 'Required'}
               </h4>
@@ -245,7 +245,7 @@ export default function ArtisanOnboardingChecklist({
           {/* Recommended Steps */}
           {(showAll || requiredProgress === 100) && recommendedSteps.filter(s => !s.completed || showAll).length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 <span className="text-yellow-500">●</span>
                 {t('onboarding', 'recommended') || 'Recommended'}
               </h4>
@@ -260,8 +260,8 @@ export default function ArtisanOnboardingChecklist({
           {/* Optional Steps */}
           {showAll && optionalSteps.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <span className="text-gray-400">●</span>
+              <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                <span className="text-muted-foreground">●</span>
                 {t('onboarding', 'optional') || 'Optional'}
               </h4>
               <div className="space-y-2">
@@ -285,7 +285,7 @@ export default function ArtisanOnboardingChecklist({
           </Button>
 
           {requiredProgress === 100 && (
-            <Badge className="bg-green-100 text-green-800">
+            <Badge className="bg-green-500/15 text-green-400">
               ✓ {t('onboarding', 'readyToWork') || 'Ready to receive missions!'}
             </Badge>
           )}
@@ -302,21 +302,21 @@ function StepItem({ step }: { step: OnboardingStep }) {
       className={`
         flex items-center gap-3 p-3 rounded-lg border transition-all
         ${step.completed
-          ? 'bg-green-50 border-green-200'
-          : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm'}
+          ? 'bg-green-500/10 border-green-500/30'
+          : 'bg-card border-border hover:border-blue-300 hover:shadow-sm'}
       `}
     >
       <div className="text-2xl">{step.icon}</div>
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <span className={`font-medium ${step.completed ? 'text-green-700' : 'text-gray-900'}`}>
+          <span className={`font-medium ${step.completed ? 'text-green-400' : 'text-foreground'}`}>
             {step.title}
           </span>
           {step.completed && (
-            <Badge className="bg-green-100 text-green-800 text-xs">✓</Badge>
+            <Badge className="bg-green-500/15 text-green-400 text-xs">✓</Badge>
           )}
         </div>
-        <p className="text-sm text-gray-600">{step.description}</p>
+        <p className="text-sm text-muted-foreground">{step.description}</p>
       </div>
       {!step.completed && (
         <Button size="sm" variant="outline">

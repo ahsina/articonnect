@@ -177,7 +177,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside
         className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-gradient-to-b from-blue-900 to-blue-800 text-white flex-shrink-0 transition-all duration-300 flex flex-col`}
@@ -191,7 +191,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-primary/90 transition-colors"
           >
             {sidebarOpen ? '◀' : '▶'}
           </button>
@@ -201,7 +201,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
         {sidebarOpen && user && (
           <div className="px-4 py-3 border-b border-blue-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-lg font-bold">
                 {user.firstName?.[0]}
                 {user.lastName?.[0]}
               </div>
@@ -228,8 +228,8 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                       onClick={() => toggleGroup(item.label)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                         hasActiveChild(item.children)
-                          ? 'bg-blue-700 text-white'
-                          : 'text-blue-200 hover:bg-blue-700 hover:text-white'
+                          ? 'bg-primary text-white'
+                          : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                       }`}
                     >
                       <span className="text-lg">{item.icon}</span>
@@ -248,8 +248,8 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                               onClick={() => router.push(child.href)}
                               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isActive(child.href)
-                                  ? 'bg-blue-600 text-white'
-                                  : 'text-blue-200 hover:bg-blue-700 hover:text-white'
+                                  ? 'bg-primary text-white'
+                                  : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                               }`}
                             >
                               <span>{child.icon}</span>
@@ -270,10 +270,10 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                     onClick={() => router.push(linkItem.href)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isActive(linkItem.href)
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary text-white'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500'
-                          : 'text-blue-200 hover:bg-blue-700 hover:text-white'
+                          ? 'bg-gradient-to-r from-primary to-orange-600 text-white hover:from-primary hover:to-orange-600'
+                          : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                     }`}
                   >
                     <span className="text-lg">{linkItem.icon}</span>
@@ -294,7 +294,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-blue-700">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 text-blue-200 hover:bg-blue-700 hover:text-white rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 text-blue-200 hover:bg-primary/90 hover:text-white rounded-lg transition-colors"
           >
             <span className="text-lg">🚪</span>
             {sidebarOpen && (

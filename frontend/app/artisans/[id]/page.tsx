@@ -109,17 +109,17 @@ export default function ArtisanPublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">
+          <p className="text-muted-foreground mb-4">
             {t('artisan', 'profileNotFound') || 'Artisan profile not found'}
           </p>
           <Button onClick={() => router.push('/')}>
@@ -131,9 +131,9 @@ export default function ArtisanPublicProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      <div className="bg-gradient-to-r from-primary to-orange-600 text-white">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Button
             variant="ghost"
@@ -201,7 +201,7 @@ export default function ArtisanPublicProfilePage() {
             <div className="w-full md:w-auto">
               <Button
                 size="lg"
-                className="w-full md:w-auto bg-white text-blue-600 hover:bg-blue-50"
+                className="w-full md:w-auto bg-card text-primary hover:bg-primary/10"
                 onClick={() => router.push(`/client/request?artisan=${artisanId}`)}
               >
                 {t('artisan', 'requestQuote') || 'Request a Quote'}
@@ -217,10 +217,10 @@ export default function ArtisanPublicProfilePage() {
         <div className="grid md:grid-cols-3 gap-4 -mt-12 mb-8">
           <Card className="shadow-lg">
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-primary">
                 {profile.hourlyRate ? `EUR ${profile.hourlyRate}` : 'N/A'}
               </div>
-              <div className="text-gray-500">{t('artisan', 'perHour') || 'per hour'}</div>
+              <div className="text-muted-foreground">{t('artisan', 'perHour') || 'per hour'}</div>
             </CardContent>
           </Card>
           <Card className="shadow-lg">
@@ -228,7 +228,7 @@ export default function ArtisanPublicProfilePage() {
               <div className="text-3xl font-bold text-orange-600">
                 {profile.emergencyRate ? `EUR ${profile.emergencyRate}` : 'N/A'}
               </div>
-              <div className="text-gray-500">
+              <div className="text-muted-foreground">
                 {t('artisan', 'emergencyRate') || 'emergency rate'}
               </div>
             </CardContent>
@@ -236,7 +236,7 @@ export default function ArtisanPublicProfilePage() {
           <Card className="shadow-lg">
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-green-600">{profile.serviceRadius} km</div>
-              <div className="text-gray-500">{t('artisan', 'serviceArea') || 'service area'}</div>
+              <div className="text-muted-foreground">{t('artisan', 'serviceArea') || 'service area'}</div>
             </CardContent>
           </Card>
         </div>
@@ -245,20 +245,20 @@ export default function ArtisanPublicProfilePage() {
         <div className="flex gap-2 mb-6 border-b">
           <button
             onClick={() => setActiveTab('about')}
-            className={`px-4 py-2 font-medium ${activeTab === 'about' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+            className={`px-4 py-2 font-medium ${activeTab === 'about' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
           >
             {t('artisan', 'about') || 'About'}
           </button>
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`px-4 py-2 font-medium ${activeTab === 'reviews' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+            className={`px-4 py-2 font-medium ${activeTab === 'reviews' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
           >
             {t('artisan', 'reviews') || 'Reviews'} ({profile.reviewCount})
           </button>
           {profile.portfolio && profile.portfolio.length > 0 && (
             <button
               onClick={() => setActiveTab('portfolio')}
-              className={`px-4 py-2 font-medium ${activeTab === 'portfolio' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+              className={`px-4 py-2 font-medium ${activeTab === 'portfolio' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
             >
               {t('artisan', 'portfolio') || 'Portfolio'}
             </button>
@@ -276,9 +276,9 @@ export default function ArtisanPublicProfilePage() {
                 </CardHeader>
                 <CardContent>
                   {profile.description ? (
-                    <p className="text-gray-700 whitespace-pre-wrap">{profile.description}</p>
+                    <p className="text-foreground whitespace-pre-wrap">{profile.description}</p>
                   ) : (
-                    <p className="text-gray-500 italic">
+                    <p className="text-muted-foreground italic">
                       {t('artisan', 'noDescription') || 'No description provided'}
                     </p>
                   )}
@@ -295,12 +295,12 @@ export default function ArtisanPublicProfilePage() {
                     {profile.specialties.map((specialty) => (
                       <div
                         key={specialty.id}
-                        className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center gap-2 p-3 bg-background rounded-lg"
                       >
                         {specialty.icon && <span className="text-2xl">{specialty.icon}</span>}
                         <div>
                           <div className="font-medium">{specialty.name}</div>
-                          <div className="text-xs text-gray-500">{specialty.category}</div>
+                          <div className="text-xs text-muted-foreground">{specialty.category}</div>
                         </div>
                       </div>
                     ))}
@@ -321,18 +321,18 @@ export default function ArtisanPublicProfilePage() {
                     <div className="space-y-3">
                       {profile.certifications.map((cert) => (
                         <div key={cert.id} className="flex items-start gap-2">
-                          <span className={cert.verified ? 'text-green-600' : 'text-gray-400'}>
+                          <span className={cert.verified ? 'text-green-600' : 'text-muted-foreground'}>
                             {cert.verified ? '✓' : '○'}
                           </span>
                           <div>
                             <div className="font-medium">{cert.name}</div>
-                            <div className="text-sm text-gray-500">{cert.issuer}</div>
+                            <div className="text-sm text-muted-foreground">{cert.issuer}</div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-4">
+                    <p className="text-muted-foreground text-center py-4">
                       {t('artisan', 'noCertifications') || 'No certifications listed'}
                     </p>
                   )}
@@ -351,7 +351,7 @@ export default function ArtisanPublicProfilePage() {
                   >
                     {t('artisan', 'requestQuote') || 'Request a Quote'}
                   </Button>
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     {t('artisan', 'freeQuote') || 'Get a free quote with no obligation'}
                   </p>
                 </CardContent>
@@ -368,11 +368,11 @@ export default function ArtisanPublicProfilePage() {
               <CardContent className="py-6">
                 <div className="flex items-center gap-8">
                   <div className="text-center">
-                    <div className="text-5xl font-bold text-gray-900">
+                    <div className="text-5xl font-bold text-foreground">
                       {profile.rating.toFixed(1)}
                     </div>
                     <div className="text-2xl">{renderStars(profile.rating)}</div>
-                    <div className="text-gray-500">
+                    <div className="text-muted-foreground">
                       {profile.reviewCount} {t('artisan', 'reviews') || 'reviews'}
                     </div>
                   </div>
@@ -381,8 +381,8 @@ export default function ArtisanPublicProfilePage() {
                     <div className="space-y-2">
                       {[5, 4, 3, 2, 1].map((star) => (
                         <div key={star} className="flex items-center gap-2">
-                          <span className="w-8 text-sm text-gray-600">{star} ★</span>
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <span className="w-8 text-sm text-muted-foreground">{star} ★</span>
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                             <div
                               className="h-full bg-yellow-400 rounded-full"
                               style={{ width: `${star === 5 ? 70 : star === 4 ? 20 : 10}%` }}
@@ -403,7 +403,7 @@ export default function ArtisanPublicProfilePage() {
                   <Card key={review.id}>
                     <CardContent className="py-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold">
                           {review.reviewer.firstName[0]}
                           {review.reviewer.lastName[0]}
                         </div>
@@ -412,12 +412,12 @@ export default function ArtisanPublicProfilePage() {
                             <div className="font-medium">
                               {review.reviewer.firstName} {review.reviewer.lastName[0]}.
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                               {new Date(review.createdAt).toLocaleDateString()}
                             </div>
                           </div>
                           <div className="text-yellow-400 mb-2">{renderStars(review.rating)}</div>
-                          {review.comment && <p className="text-gray-700">{review.comment}</p>}
+                          {review.comment && <p className="text-foreground">{review.comment}</p>}
                         </div>
                       </div>
                     </CardContent>
@@ -427,7 +427,7 @@ export default function ArtisanPublicProfilePage() {
             ) : (
               <Card>
                 <CardContent className="py-12 text-center">
-                  <p className="text-gray-500">{t('artisan', 'noReviews') || 'No reviews yet'}</p>
+                  <p className="text-muted-foreground">{t('artisan', 'noReviews') || 'No reviews yet'}</p>
                 </CardContent>
               </Card>
             )}
@@ -459,12 +459,12 @@ export default function ArtisanPublicProfilePage() {
       </div>
 
       {/* Footer CTA */}
-      <div className="bg-gray-100 py-12">
+      <div className="bg-muted py-12">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
             {t('artisan', 'readyToStart') || 'Ready to start your project?'}
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             {t('artisan', 'contactArtisan') ||
               'Contact this artisan to discuss your needs and get a personalized quote.'}
           </p>

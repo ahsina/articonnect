@@ -51,17 +51,17 @@ function ClientHeader() {
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header className="bg-card shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Company Name */}
           <div className="flex items-center gap-4">
-            <Link href="/client/dashboard" className="text-2xl font-bold text-blue-600">
+            <Link href="/client/dashboard" className="text-2xl font-bold text-primary">
               Krafolt
             </Link>
             {isProfessional && clientProfile?.companyName && (
               <div className="hidden md:flex items-center gap-2 pl-4 border-l">
-                <Badge variant="outline" className="text-blue-600 border-blue-300">
+                <Badge variant="outline" className="text-primary border-blue-300">
                   🏢 {clientProfile.companyName}
                 </Badge>
               </div>
@@ -94,7 +94,7 @@ function ClientHeader() {
                 ⚙️
               </Button>
             </Link>
-            <div className="hidden md:block text-sm text-gray-600">
+            <div className="hidden md:block text-sm text-muted-foreground">
               {user?.firstName}
             </div>
             <Button variant="outline" size="sm" onClick={() => logout()}>
@@ -106,7 +106,7 @@ function ClientHeader() {
         {/* Mobile Company Badge */}
         {isProfessional && clientProfile?.companyName && (
           <div className="md:hidden pb-2">
-            <Badge variant="outline" className="text-blue-600 border-blue-300">
+            <Badge variant="outline" className="text-primary border-blue-300">
               🏢 {clientProfile.companyName}
             </Badge>
           </div>
@@ -123,7 +123,7 @@ export default function ClientLayout({
 }) {
   return (
     <ProtectedRoute requiredRole="CLIENT">
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <ClientHeader />
         {children}
       </div>

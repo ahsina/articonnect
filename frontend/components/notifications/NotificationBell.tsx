@@ -75,7 +75,7 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="relative p-2 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} non lues)` : ''}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -103,16 +103,16 @@ export function NotificationBell() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-full max-w-[90vw] sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
+          className="absolute right-0 mt-2 w-full max-w-[90vw] sm:w-96 bg-card rounded-lg shadow-xl border border-border z-50"
           role="dialog"
           aria-label="Panneau de notifications"
         >
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-primary hover:text-primary"
               >
                 Tout marquer comme lu
               </button>
@@ -123,17 +123,17 @@ export function NotificationBell() {
             {loading ? (
               <NotificationSkeleton />
             ) : notifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-muted-foreground">
                 <p className="text-2xl mb-2">🔔</p>
                 <p>Aucune notification</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.read ? 'bg-blue-50' : ''
+                    className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
+                      !notification.read ? 'bg-primary/10' : ''
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -143,7 +143,7 @@ export function NotificationBell() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-semibold text-gray-900 text-sm">
+                          <p className="font-semibold text-foreground text-sm">
                             {notification.title}
                           </p>
                           <button
@@ -151,7 +151,7 @@ export function NotificationBell() {
                               e.stopPropagation();
                               deleteNotification(notification.id);
                             }}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-muted-foreground hover:text-muted-foreground"
                           >
                             <svg
                               className="w-4 h-4"
@@ -168,11 +168,11 @@ export function NotificationBell() {
                             </svg>
                           </button>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {notification.message}
                         </p>
                         <div className="flex items-center justify-between mt-2">
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             {formatTime(notification.createdAt)}
                           </p>
                           {!notification.read && (
@@ -190,13 +190,13 @@ export function NotificationBell() {
           </div>
 
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200 text-center">
+            <div className="p-3 border-t border-border text-center">
               <button
                 onClick={() => {
                   setIsOpen(false);
                   router.push('/notifications');
                 }}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm text-primary hover:text-primary font-medium"
               >
                 Voir toutes les notifications
               </button>

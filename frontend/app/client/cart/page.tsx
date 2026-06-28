@@ -72,15 +72,15 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-8">
             {t('cart', 'title')}
           </h1>
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">🛒</div>
-              <p className="text-xl text-gray-600 mb-6">
+              <p className="text-xl text-muted-foreground mb-6">
                 {t('cart', 'emptyCart')}
               </p>
               <Button onClick={() => router.push('/client/marketplace')}>
@@ -94,10 +94,10 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {t('cart', 'title')} ({items.length} {items.length > 1 ? t('cart', 'items') : t('cart', 'item')})
           </h1>
           <Button variant="outline" onClick={clearCart}>
@@ -124,16 +124,16 @@ export default function CartPage() {
 
                     {/* Product Details */}
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                      <h3 className="text-lg font-semibold text-foreground mb-1">
                         {item.productName}
                       </h3>
                       {item.variantName && (
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           {t('cart', 'variant')}: {item.variantName}
                         </p>
                       )}
                       {item.artisan && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           {t('cart', 'seller')}: {item.artisan.name}
                         </p>
                       )}
@@ -183,7 +183,7 @@ export default function CartPage() {
                         </div>
 
                         {/* Price */}
-                        <div className="text-lg font-semibold text-gray-900">
+                        <div className="text-lg font-semibold text-foreground">
                           {(item.price * item.quantity).toFixed(2)}€
                         </div>
 
@@ -192,7 +192,7 @@ export default function CartPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeItem(item.productId, item.variantId)}
-                          className="ml-auto text-red-600 hover:text-red-700"
+                          className="ml-auto text-red-600 hover:text-red-400"
                         >
                           {t('cart', 'remove')}
                         </Button>
@@ -208,7 +208,7 @@ export default function CartPage() {
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                <h2 className="text-xl font-bold text-foreground mb-4">
                   {t('cart', 'summary')}
                 </h2>
 
@@ -216,7 +216,7 @@ export default function CartPage() {
                 <div className="mb-6">
                   <label
                     htmlFor="shippingAddress"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     {t('cart', 'shippingAddress')} *
                   </label>
@@ -225,23 +225,23 @@ export default function CartPage() {
                     value={shippingAddress}
                     onChange={(e) => setShippingAddress(e.target.value)}
                     placeholder={t('cart', 'shippingAddressPlaceholder')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                     rows={3}
                     required
                   />
                 </div>
 
                 <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-foreground">
                     <span>{t('cart', 'subtotal')}</span>
                     <span>{getTotalPrice().toFixed(2)}€</span>
                   </div>
-                  <div className="flex justify-between text-gray-700">
+                  <div className="flex justify-between text-foreground">
                     <span>{t('cart', 'shipping')}</span>
                     <span>{t('cart', 'free')}</span>
                   </div>
                   <div className="border-t pt-3">
-                    <div className="flex justify-between text-xl font-bold text-gray-900">
+                    <div className="flex justify-between text-xl font-bold text-foreground">
                       <span>{t('cart', 'total')}</span>
                       <span>{getTotalPrice().toFixed(2)}€</span>
                     </div>
@@ -265,8 +265,8 @@ export default function CartPage() {
                   {t('cart', 'continueShopping')}
                 </Button>
 
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
+                <div className="mt-4 p-4 bg-primary/10 rounded-lg">
+                  <p className="text-sm text-primary">
                     <strong>{t('cart', 'securePayment')}</strong> via Stripe
                   </p>
                 </div>

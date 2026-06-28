@@ -97,11 +97,11 @@ function TwoFactorVerifyForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-2xl font-bold text-white">🔐</span>
             </div>
           </div>
@@ -113,7 +113,7 @@ function TwoFactorVerifyForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 {t('auth', 'twoFactorCode')}
               </label>
               <Input
@@ -129,7 +129,7 @@ function TwoFactorVerifyForm() {
                 className="text-center text-2xl tracking-widest"
                 autoFocus
               />
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 {t('auth', 'useTotpApp')}
               </p>
             </div>
@@ -152,10 +152,10 @@ function TwoFactorVerifyForm() {
             </Button>
 
             <div className="text-center text-sm">
-              <p className="text-gray-600 mb-2">{t('auth', 'noAccessToApp')}</p>
+              <p className="text-muted-foreground mb-2">{t('auth', 'noAccessToApp')}</p>
               <Link
                 href="/auth/2fa-recovery"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
+                className="text-primary hover:text-primary hover:underline"
               >
                 {t('auth', 'useRecoveryCode')}
               </Link>
@@ -170,8 +170,8 @@ function TwoFactorVerifyForm() {
 function LoadingFallback() {
   const { t } = useLanguage();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-gray-500">{t('common', 'loading')}</div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-muted-foreground">{t('common', 'loading')}</div>
     </div>
   );
 }

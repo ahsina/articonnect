@@ -29,10 +29,10 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  ACCEPTED: 'bg-blue-100 text-blue-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  COMPLETED: 'bg-green-100 text-green-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  ACCEPTED: 'bg-primary/10 text-primary',
+  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+  COMPLETED: 'bg-green-500/15 text-green-400',
 };
 
 export default function MissionAssignmentsPage() {
@@ -110,7 +110,7 @@ export default function MissionAssignmentsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -119,10 +119,10 @@ export default function MissionAssignmentsPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('company', 'missionAssignments') || 'Mission Assignments'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('company', 'assignMissionsDesc') || 'Assign missions to your team members'}
         </p>
       </div>
@@ -131,7 +131,7 @@ export default function MissionAssignmentsPage() {
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('company', 'unassignedMissions') || 'Unassigned'}
             </div>
             <div className="text-2xl font-bold text-yellow-600">
@@ -145,17 +145,17 @@ export default function MissionAssignmentsPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('company', 'assignedMissions') || 'Assigned'}
             </div>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-primary">
               {missions.filter((m) => m.assignedToId).length}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {t('company', 'availableEmployees') || 'Available Employees'}
             </div>
             <div className="text-2xl font-bold text-green-600">{employees.length}</div>
@@ -195,21 +195,21 @@ export default function MissionAssignmentsPage() {
         </CardHeader>
         <CardContent>
           {filteredMissions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('company', 'noMissionsFound') || 'No missions found'}
             </div>
           ) : (
             <div className="space-y-3">
               {filteredMissions.map((mission) => (
-                <div key={mission.id} className="p-4 border rounded-lg hover:bg-gray-50">
+                <div key={mission.id} className="p-4 border rounded-lg hover:bg-accent">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-gray-900">{mission.title}</h4>
+                        <h4 className="font-medium text-foreground">{mission.title}</h4>
                         <Badge className={STATUS_COLORS[mission.status]}>{translateMissionStatus(mission.status, t)}</Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{mission.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground mb-2">{mission.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>📍 {mission.city}</span>
                         <span>🏷️ {mission.category}</span>
                         {mission.scheduledDate && (
@@ -222,7 +222,7 @@ export default function MissionAssignmentsPage() {
                         )}
                       </div>
                       {mission.client && (
-                        <div className="mt-2 text-sm text-gray-600">
+                        <div className="mt-2 text-sm text-muted-foreground">
                           {t('company', 'client') || 'Client'}: {mission.client.firstName}{' '}
                           {mission.client.lastName}
                         </div>
@@ -251,15 +251,15 @@ export default function MissionAssignmentsPage() {
           <Card className="w-full max-w-lg">
             <CardHeader>
               <CardTitle>{t('company', 'assignMission') || 'Assign Mission'}</CardTitle>
-              <p className="text-sm text-gray-500">{selectedMission.title}</p>
+              <p className="text-sm text-muted-foreground">{selectedMission.title}</p>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 {t('company', 'selectEmployee') || 'Select an employee to assign this mission to:'}
               </p>
 
               {employees.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-4 text-muted-foreground">
                   {t('company', 'noAvailableEmployees') || 'No available employees'}
                 </div>
               ) : (
@@ -268,18 +268,18 @@ export default function MissionAssignmentsPage() {
                     <button
                       key={employee.id}
                       onClick={() => handleAssign(selectedMission.id, employee.id)}
-                      className="w-full p-3 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition text-left"
+                      className="w-full p-3 border rounded-lg hover:bg-primary/10 hover:border-primary transition text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-medium">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
                           {employee.user?.firstName?.[0]}
                           {employee.user?.lastName?.[0]}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-foreground">
                             {employee.user?.firstName} {employee.user?.lastName}
                           </div>
-                          <div className="text-sm text-gray-500">{translateEmployeeRole(employee.role, t)}</div>
+                          <div className="text-sm text-muted-foreground">{translateEmployeeRole(employee.role, t)}</div>
                         </div>
                       </div>
                     </button>

@@ -8,11 +8,11 @@ export default function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-white">
       {/* Hero Section */}
       <nav className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-blue-600">Krafolt</h1>
+          <h1 className="text-2xl font-bold text-primary">Krafolt</h1>
           <div className="space-x-4">
             <Link href="/login">
               <Button variant="ghost">{t('nav.login')}</Button>
@@ -26,10 +26,10 @@ export default function HomePage() {
 
       <main className="container mx-auto px-4 py-20">
         <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-5xl font-bold text-foreground mb-6">
             {t('home.heroTitle')}
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             {t('home.heroSubtitle')}
           </p>
           <div className="flex gap-4 justify-center">
@@ -49,21 +49,21 @@ export default function HomePage() {
           <div className="text-center p-6">
             <div className="text-4xl mb-4">📍</div>
             <h3 className="text-xl font-semibold mb-2">{t('home.geolocation')}</h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {t('home.geolocationDesc')}
             </p>
           </div>
           <div className="text-center p-6">
             <div className="text-4xl mb-4">💬</div>
             <h3 className="text-xl font-semibold mb-2">{t('home.negotiation')}</h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {t('home.negotiationDesc')}
             </p>
           </div>
           <div className="text-center p-6">
             <div className="text-4xl mb-4">⭐</div>
             <h3 className="text-xl font-semibold mb-2">{t('home.verifiedReviews')}</h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {t('home.verifiedReviewsDesc')}
             </p>
           </div>

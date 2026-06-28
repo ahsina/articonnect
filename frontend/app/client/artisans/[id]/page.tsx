@@ -169,7 +169,7 @@ export default function ArtisanDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function ArtisanDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{t('artisans', 'artisanNotFound')}</p>
+          <p className="text-muted-foreground mb-4">{t('artisans', 'artisanNotFound')}</p>
           <Button onClick={() => router.push('/client/artisans')}>
             {t('artisans', 'backToList')}
           </Button>
@@ -190,7 +190,7 @@ export default function ArtisanDetailsPage() {
   const { artisanProfile } = artisan;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
@@ -214,15 +214,15 @@ export default function ArtisanDetailsPage() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
+                        <h1 className="text-3xl font-bold text-foreground">
                           {artisanProfile.companyName}
                         </h1>
-                        <p className="text-gray-600">
+                        <p className="text-muted-foreground">
                           {artisan.firstName} {artisan.lastName}
                         </p>
                       </div>
                       {artisanProfile.verified && (
-                        <Badge variant="default" className="bg-blue-600">
+                        <Badge variant="default" className="bg-primary">
                           ✓ {t('artisans', 'verified')}
                         </Badge>
                       )}
@@ -234,12 +234,12 @@ export default function ArtisanDetailsPage() {
                         <span className="text-2xl font-bold text-yellow-500">
                           ★ {artisanProfile.rating.toFixed(1)}
                         </span>
-                        <span className="text-gray-600 ml-2">
+                        <span className="text-muted-foreground ml-2">
                           ({artisanProfile.reviewCount} {t('artisans', 'reviews')})
                         </span>
                       </div>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-600">
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
                         {artisanProfile.completedMissions} {t('artisans', 'completedMissions')}
                       </span>
                     </div>
@@ -257,19 +257,19 @@ export default function ArtisanDetailsPage() {
                     {/* Quick Info */}
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-600">{t('artisans', 'hourlyRate')}:</span>
+                        <span className="text-muted-foreground">{t('artisans', 'hourlyRate')}:</span>
                         <span className="font-semibold ml-2">{artisanProfile.hourlyRate}€/h</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">{t('artisans', 'responseTime')}:</span>
+                        <span className="text-muted-foreground">{t('artisans', 'responseTime')}:</span>
                         <span className="font-semibold ml-2">{artisanProfile.responseTime}</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">{t('common', 'serviceRadius')}:</span>
+                        <span className="text-muted-foreground">{t('common', 'serviceRadius')}:</span>
                         <span className="font-semibold ml-2">{artisanProfile.serviceRadius} km</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">SIRET:</span>
+                        <span className="text-muted-foreground">SIRET:</span>
                         <span className="font-semibold ml-2">{artisanProfile.siret}</span>
                       </div>
                     </div>
@@ -284,7 +284,7 @@ export default function ArtisanDetailsPage() {
                 <CardTitle>{t('artisans', 'about')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                <p className="text-foreground leading-relaxed whitespace-pre-line">
                   {artisanProfile.description}
                 </p>
               </CardContent>
@@ -333,7 +333,7 @@ export default function ArtisanDetailsPage() {
                               <p className="font-semibold">
                                 {review.client.firstName} {review.client.lastName}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-muted-foreground">
                                 {new Date(review.createdAt).toLocaleDateString('fr-FR', {
                                   year: 'numeric',
                                   month: 'long',
@@ -349,11 +349,11 @@ export default function ArtisanDetailsPage() {
                             </div>
                           </div>
                           {review.mission && (
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p className="text-sm text-muted-foreground mb-2">
                               {t('artisans', 'mission')}: {review.mission.title}
                             </p>
                           )}
-                          <p className="text-gray-700">{review.comment}</p>
+                          <p className="text-foreground">{review.comment}</p>
                         </div>
                       </div>
                     </div>
@@ -379,23 +379,23 @@ export default function ArtisanDetailsPage() {
                     variant="outline"
                     onClick={handleToggleFavorite}
                     disabled={favoriteLoading}
-                    className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-50' : ''}
+                    className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-500/10' : ''}
                   >
                     {favoriteLoading ? '...' : isFavorite ? '❤️' : '🤍'} {t('favorites', isFavorite ? 'saved' : 'save')}
                   </Button>
                 </div>
                 <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <span>📍</span>
                     <span>
                       {artisanProfile.address}, {artisanProfile.postalCode} {artisanProfile.city}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <span>📞</span>
                     <span>{artisan.phone}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <span>✉️</span>
                     <span>{artisan.email}</span>
                   </div>
@@ -412,10 +412,10 @@ export default function ArtisanDetailsPage() {
                 <div className="space-y-2">
                   {Object.entries(artisan.availability).map(([day, available]) => (
                     <div key={day} className="flex items-center justify-between text-sm">
-                      <span className={available ? 'text-gray-900' : 'text-gray-400'}>
+                      <span className={available ? 'text-foreground' : 'text-muted-foreground'}>
                         {getDayName(day)}
                       </span>
-                      <span className={available ? 'text-green-600 font-semibold' : 'text-gray-400'}>
+                      <span className={available ? 'text-green-600 font-semibold' : 'text-muted-foreground'}>
                         {available ? `✓ ${t('artisans', 'availableDay')}` : t('artisans', 'closed')}
                       </span>
                     </div>
@@ -448,7 +448,7 @@ export default function ArtisanDetailsPage() {
                   ]}
                   className="h-64"
                 />
-                <p className="text-sm text-gray-600 mt-3">
+                <p className="text-sm text-muted-foreground mt-3">
                   {t('artisans', 'radiusAround')} {artisanProfile.serviceRadius} km {t('artisans', 'aroundCity')} {artisanProfile.city}
                 </p>
               </CardContent>

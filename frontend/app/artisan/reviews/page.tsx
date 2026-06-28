@@ -99,7 +99,7 @@ export default function ReviewsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -108,8 +108,8 @@ export default function ReviewsPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('artisan', 'reviews') || 'Reviews'}</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold text-foreground">{t('artisan', 'reviews') || 'Reviews'}</h1>
+        <p className="text-muted-foreground">
           {t('artisan', 'reviewsDesc') || 'See what clients say about your work'}
         </p>
       </div>
@@ -124,7 +124,7 @@ export default function ReviewsPage() {
                 <div className="text-2xl text-yellow-500">
                   {renderStars(Math.round(stats.average))}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {stats.total} {t('artisan', 'reviews') || 'reviews'}
                 </div>
               </div>
@@ -133,7 +133,7 @@ export default function ReviewsPage() {
                   <div key={star} className="flex items-center gap-2">
                     <span className="text-sm w-4">{star}</span>
                     <span className="text-yellow-500">⭐</span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="flex-1 bg-muted rounded-full h-2">
                       <div
                         className="bg-yellow-500 rounded-full h-2"
                         style={{
@@ -141,7 +141,7 @@ export default function ReviewsPage() {
                         }}
                       />
                     </div>
-                    <span className="text-sm text-gray-500 w-8">
+                    <span className="text-sm text-muted-foreground w-8">
                       {stats.distribution[star as keyof typeof stats.distribution]}
                     </span>
                   </div>
@@ -153,24 +153,24 @@ export default function ReviewsPage() {
 
         <Card>
           <CardContent className="p-6">
-            <h3 className="font-medium text-gray-900 mb-4">
+            <h3 className="font-medium text-foreground mb-4">
               {t('artisan', 'quickStats') || 'Quick Stats'}
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {t('artisan', 'totalReviews') || 'Total Reviews'}
                 </span>
                 <span className="font-bold">{stats.total}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {t('artisan', 'fiveStarReviews') || '5-Star Reviews'}
                 </span>
                 <span className="font-bold text-green-600">{stats.distribution[5]}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {t('artisan', 'responseRate') || 'Response Rate'}
                 </span>
                 <span className="font-bold">
@@ -192,7 +192,7 @@ export default function ReviewsPage() {
         </CardHeader>
         <CardContent>
           {reviews.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('artisan', 'noReviews') || 'No reviews yet'}
             </div>
           ) : (
@@ -201,7 +201,7 @@ export default function ReviewsPage() {
                 <div key={review.id} className="p-4 border rounded-lg">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                         {review.reviewer.avatar ? (
                           <img
                             src={review.reviewer.avatar}
@@ -209,36 +209,36 @@ export default function ReviewsPage() {
                             className="w-10 h-10 rounded-full"
                           />
                         ) : (
-                          <span className="text-gray-500 font-medium">
+                          <span className="text-muted-foreground font-medium">
                             {review.reviewer.firstName[0]}
                             {review.reviewer.lastName[0]}
                           </span>
                         )}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {review.reviewer.firstName} {review.reviewer.lastName}
                         </div>
-                        <div className="text-sm text-gray-500">{formatDate(review.createdAt)}</div>
+                        <div className="text-sm text-muted-foreground">{formatDate(review.createdAt)}</div>
                       </div>
                     </div>
                     <div className="text-yellow-500 text-lg">{renderStars(review.rating)}</div>
                   </div>
 
-                  {review.comment && <p className="text-gray-700 mb-3">{review.comment}</p>}
+                  {review.comment && <p className="text-foreground mb-3">{review.comment}</p>}
 
-                  <div className="text-sm text-gray-500 mb-3">
+                  <div className="text-sm text-muted-foreground mb-3">
                     {t('artisan', 'forMission') || 'For'}: {review.mission.title}
                   </div>
 
                   {/* Response */}
                   {review.response ? (
-                    <div className="bg-blue-50 p-3 rounded-lg mt-3">
-                      <div className="text-sm font-medium text-blue-800 mb-1">
+                    <div className="bg-primary/10 p-3 rounded-lg mt-3">
+                      <div className="text-sm font-medium text-primary mb-1">
                         {t('artisan', 'yourResponse') || 'Your Response'}
                       </div>
-                      <p className="text-sm text-blue-700">{review.response.content}</p>
-                      <div className="text-xs text-blue-500 mt-1">
+                      <p className="text-sm text-primary">{review.response.content}</p>
+                      <div className="text-xs text-primary mt-1">
                         {formatDate(review.response.createdAt)}
                       </div>
                     </div>
@@ -281,7 +281,7 @@ export default function ReviewsPage() {
               >
                 {t('common', 'previous') || 'Previous'}
               </Button>
-              <span className="py-2 px-4 text-sm text-gray-600">
+              <span className="py-2 px-4 text-sm text-muted-foreground">
                 {page} / {totalPages}
               </span>
               <Button

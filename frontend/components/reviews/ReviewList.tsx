@@ -70,7 +70,7 @@ export function ReviewList({ artisanId }: ReviewListProps) {
     return (
       <div className="space-y-6" role="status" aria-label="Chargement des avis">
         {/* Stats skeleton */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-card rounded-lg border border-border p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="text-center md:text-left space-y-2">
               <Skeleton className="h-12 w-20 mx-auto md:mx-0" />
@@ -96,9 +96,9 @@ export function ReviewList({ artisanId }: ReviewListProps) {
 
   if (reviews.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <p className="text-gray-500 mb-2">Aucun avis pour le moment</p>
-        <p className="text-sm text-gray-400">
+      <div className="text-center py-12 bg-background rounded-lg">
+        <p className="text-muted-foreground mb-2">Aucun avis pour le moment</p>
+        <p className="text-sm text-muted-foreground">
           Soyez le premier à laisser un avis sur cet artisan
         </p>
       </div>
@@ -108,18 +108,18 @@ export function ReviewList({ artisanId }: ReviewListProps) {
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-card rounded-lg border border-border p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Average Rating */}
           <div className="text-center md:text-left">
             <div className="flex items-baseline gap-2 justify-center md:justify-start mb-2">
-              <span className="text-5xl font-bold text-gray-900">
+              <span className="text-5xl font-bold text-foreground">
                 {stats.average.toFixed(1)}
               </span>
-              <span className="text-2xl text-gray-500">/5</span>
+              <span className="text-2xl text-muted-foreground">/5</span>
             </div>
             <StarRating rating={stats.average} readonly size="lg" />
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Basé sur {stats.total} avis
             </p>
           </div>
@@ -128,10 +128,10 @@ export function ReviewList({ artisanId }: ReviewListProps) {
           <div className="space-y-2">
             {[5, 4, 3, 2, 1].map((rating) => (
               <div key={rating} className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700 w-8">
+                <span className="text-sm font-medium text-foreground w-8">
                   {rating} ★
                 </span>
-                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-yellow-400 transition-all"
                     style={{
@@ -139,7 +139,7 @@ export function ReviewList({ artisanId }: ReviewListProps) {
                     }}
                   />
                 </div>
-                <span className="text-sm text-gray-600 w-12">
+                <span className="text-sm text-muted-foreground w-12">
                   {getPercentage(stats.distribution[rating as keyof typeof stats.distribution])}%
                 </span>
               </div>
@@ -150,7 +150,7 @@ export function ReviewList({ artisanId }: ReviewListProps) {
 
       {/* Reviews List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           Tous les avis ({stats.total})
         </h3>
         {reviews.map((review) => (

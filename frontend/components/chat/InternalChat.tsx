@@ -245,16 +245,16 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-200px)] min-h-[500px] bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="flex h-[calc(100vh-200px)] min-h-[500px] bg-card rounded-xl shadow-lg overflow-hidden">
       {/* Sidebar - Room List */}
-      <div className="w-80 border-r border-gray-200 flex flex-col">
+      <div className="w-80 border-r border-border flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+            <h2 className="text-lg font-semibold text-foreground">Messages</h2>
             <button
               onClick={() => setShowNewChatModal(true)}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -266,11 +266,11 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
         {/* Room List */}
         <div className="flex-1 overflow-y-auto">
           {rooms.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-muted-foreground">
               <p>Aucune conversation</p>
               <button
                 onClick={() => setShowNewChatModal(true)}
-                className="mt-2 text-blue-600 hover:underline"
+                className="mt-2 text-primary hover:underline"
               >
                 Commencer une conversation
               </button>
@@ -280,11 +280,11 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
               <button
                 key={room.id}
                 onClick={() => setSelectedRoom(room)}
-                className={`w-full p-3 flex items-start gap-3 hover:bg-gray-50 transition-colors ${
-                  selectedRoom?.id === room.id ? 'bg-blue-50' : ''
+                className={`w-full p-3 flex items-start gap-3 hover:bg-accent transition-colors ${
+                  selectedRoom?.id === room.id ? 'bg-primary/10' : ''
                 }`}
               >
-                <div className="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600">
+                <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
                   {room.avatar ? (
                     <img src={room.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
@@ -293,13 +293,13 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                 </div>
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-gray-900 truncate">{room.name}</p>
+                    <p className="font-medium text-foreground truncate">{room.name}</p>
                     {room.lastMessageAt && (
-                      <span className="text-xs text-gray-500">{formatTime(room.lastMessageAt)}</span>
+                      <span className="text-xs text-muted-foreground">{formatTime(room.lastMessageAt)}</span>
                     )}
                   </div>
                   {room.lastMessage && (
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {room.lastMessage.type === 'SYSTEM' ? (
                         <em>{room.lastMessage.content}</em>
                       ) : (
@@ -312,7 +312,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                   )}
                 </div>
                 {room.unreadCount && room.unreadCount > 0 && (
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="flex-shrink-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
                     {room.unreadCount > 9 ? '9+' : room.unreadCount}
                   </span>
                 )}
@@ -327,25 +327,25 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
         {selectedRoom ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600">
+                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
                   {getRoomIcon(selectedRoom.type)}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{selectedRoom.name}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-semibold text-foreground">{selectedRoom.name}</h3>
+                  <p className="text-sm text-muted-foreground">
                     {selectedRoom.members.length} membre{selectedRoom.members.length > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <button className="p-2 text-muted-foreground hover:bg-accent rounded-lg">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
-                <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                <button className="p-2 text-muted-foreground hover:bg-accent rounded-lg">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                   </svg>
@@ -361,13 +361,13 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                   className={`flex ${message.sender.id === currentUserId ? 'justify-end' : 'justify-start'}`}
                 >
                   {message.type === 'SYSTEM' ? (
-                    <div className="text-center text-sm text-gray-500 italic w-full">
+                    <div className="text-center text-sm text-muted-foreground italic w-full">
                       {message.content}
                     </div>
                   ) : (
                     <div className={`flex items-end gap-2 max-w-[70%] ${message.sender.id === currentUserId ? 'flex-row-reverse' : ''}`}>
                       {message.sender.id !== currentUserId && (
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium text-gray-600">
+                        <div className="w-8 h-8 bg-muted rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
                           {message.sender.avatar ? (
                             <img src={message.sender.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                           ) : (
@@ -377,20 +377,20 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                       )}
                       <div>
                         {message.sender.id !== currentUserId && (
-                          <p className="text-xs text-gray-500 mb-1">
+                          <p className="text-xs text-muted-foreground mb-1">
                             {message.sender.firstName} {message.sender.lastName}
                           </p>
                         )}
                         <div
                           className={`px-4 py-2 rounded-2xl ${
                             message.sender.id === currentUserId
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-900'
+                              ? 'bg-primary text-white'
+                              : 'bg-muted text-foreground'
                           }`}
                         >
                           <p className="whitespace-pre-wrap break-words">{message.content}</p>
                         </div>
-                        <div className={`flex items-center gap-2 mt-1 text-xs text-gray-400 ${message.sender.id === currentUserId ? 'justify-end' : ''}`}>
+                        <div className={`flex items-center gap-2 mt-1 text-xs text-muted-foreground ${message.sender.id === currentUserId ? 'justify-end' : ''}`}>
                           <span>{formatTime(message.createdAt)}</span>
                           {message.isEdited && <span>(modifie)</span>}
                         </div>
@@ -404,7 +404,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
 
             {/* Message Input */}
             {selectedRoom.myRole !== 'VIEWER' && (
-              <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-border">
                 <div className="flex items-end gap-2">
                   <div className="flex-1 relative">
                     <textarea
@@ -419,14 +419,14 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                       }}
                       placeholder="Ecrivez votre message..."
                       rows={1}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       style={{ minHeight: '48px', maxHeight: '120px' }}
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={!newMessage.trim() || sendingMessage}
-                    className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {sendingMessage ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -441,7 +441,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <svg className="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -495,10 +495,10 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-md">
+        <div className="p-4 border-b border-border flex items-center justify-between">
           <h3 className="text-lg font-semibold">Nouvelle conversation</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -512,7 +512,7 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
             placeholder="Rechercher un membre..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
 
           {/* Group name (if multiple members selected) */}
@@ -522,7 +522,7 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
               placeholder="Nom du groupe"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="w-full mt-3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full mt-3 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           )}
 
@@ -534,10 +534,10 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
                 return (
                   <span
                     key={memberId}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                   >
                     {member?.firstName} {member?.lastName}
-                    <button onClick={() => toggleMember(memberId)} className="hover:text-blue-600">
+                    <button onClick={() => toggleMember(memberId)} className="hover:text-primary">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -556,11 +556,11 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
                 onClick={() => toggleMember(member.id)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
                   selectedMembers.includes(member.id)
-                    ? 'bg-blue-50'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-primary/10'
+                    : 'hover:bg-accent'
                 }`}
               >
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
+                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-sm font-medium">
                   {member.avatar ? (
                     <img src={member.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
@@ -568,13 +568,13 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
                   )}
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-foreground">
                     {member.firstName} {member.lastName}
                   </p>
-                  <p className="text-sm text-gray-500">{member.employeeRole}</p>
+                  <p className="text-sm text-muted-foreground">{member.employeeRole}</p>
                 </div>
                 {selectedMembers.includes(member.id) && (
-                  <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -583,17 +583,17 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-200 flex gap-3">
+        <div className="p-4 border-t border-border flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
           >
             Annuler
           </button>
           <button
             onClick={handleCreate}
             disabled={selectedMembers.length === 0}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Creer
           </button>

@@ -23,7 +23,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={textareaId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={textareaId} className="block text-sm font-medium text-foreground mb-1">
             {label}
             {props.required && (
               <span className="text-red-500 ml-1" aria-hidden="true">
@@ -35,14 +35,14 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           id={textareaId}
           className={cn(
-            'flex min-h-[80px] w-full rounded-md border bg-white px-3 py-2 text-sm',
-            'placeholder:text-gray-400',
+            'flex min-h-[80px] w-full rounded-md border bg-card px-3 py-2 text-sm',
+            'placeholder:text-muted-foreground',
             'focus:outline-none focus:ring-2 focus:border-transparent',
-            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50',
+            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-background',
             'transition-colors duration-200 resize-y',
             error
-              ? 'border-red-500 focus:ring-red-500 text-red-900 placeholder:text-red-300'
-              : 'border-gray-300 focus:ring-blue-500',
+              ? 'border-red-500 focus:ring-red-500 text-red-300 placeholder:text-red-300'
+              : 'border-border focus:ring-primary',
             className,
           )}
           ref={ref}
@@ -60,7 +60,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
               </p>
             )}
             {hint && !error && (
-              <p id={hintId} className="text-sm text-gray-500">
+              <p id={hintId} className="text-sm text-muted-foreground">
                 {hint}
               </p>
             )}
@@ -69,7 +69,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             <p
               className={cn(
                 'text-sm',
-                charCount > maxLength * 0.9 ? 'text-orange-500' : 'text-gray-400',
+                charCount > maxLength * 0.9 ? 'text-orange-500' : 'text-muted-foreground',
               )}
             >
               {charCount}/{maxLength}

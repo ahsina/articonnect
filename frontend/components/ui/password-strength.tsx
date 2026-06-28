@@ -22,7 +22,7 @@ const requirements: PasswordRequirement[] = [
 
 const getStrength = (password: string): { score: number; label: string; color: string } => {
   if (!password) {
-    return { score: 0, label: '', color: 'bg-gray-200' };
+    return { score: 0, label: '', color: 'bg-muted' };
   }
 
   const passedRequirements = requirements.filter((req) => req.test(password)).length;
@@ -56,7 +56,7 @@ const PasswordStrength = ({
       {/* Strength bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs">
-          <span className="text-gray-600">Force du mot de passe</span>
+          <span className="text-muted-foreground">Force du mot de passe</span>
           <span
             className={cn(
               'font-medium',
@@ -74,7 +74,7 @@ const PasswordStrength = ({
               key={index}
               className={cn(
                 'h-1.5 flex-1 rounded-full transition-colors duration-300',
-                index < strength.score ? strength.color : 'bg-gray-200'
+                index < strength.score ? strength.color : 'bg-muted'
               )}
             />
           ))}
@@ -91,7 +91,7 @@ const PasswordStrength = ({
                 key={index}
                 className={cn(
                   'flex items-center gap-2 transition-colors duration-200',
-                  passed ? 'text-green-600' : 'text-gray-500'
+                  passed ? 'text-green-600' : 'text-muted-foreground'
                 )}
               >
                 {passed ? (

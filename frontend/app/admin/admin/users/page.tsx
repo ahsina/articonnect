@@ -99,14 +99,14 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {t('admin', 'userManagement')}
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             {t('admin', 'manageModerateAccounts')}
           </p>
         </div>
@@ -124,7 +124,7 @@ export default function AdminUsersPage() {
               />
 
               <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 value={filters.role}
                 onChange={(e) =>
                   setFilters({ ...filters, role: e.target.value })
@@ -137,7 +137,7 @@ export default function AdminUsersPage() {
               </select>
 
               <select
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 value={
                   filters.suspended === undefined
                     ? ''
@@ -167,18 +167,18 @@ export default function AdminUsersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-foreground">
                 {users.length}
               </div>
-              <div className="text-sm text-gray-600">{t('admin', 'users')}</div>
+              <div className="text-sm text-muted-foreground">{t('admin', 'users')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-primary">
                 {users.filter((u) => u.role === 'CLIENT').length}
               </div>
-              <div className="text-sm text-gray-600">{t('admin', 'clients')}</div>
+              <div className="text-sm text-muted-foreground">{t('admin', 'clients')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -186,7 +186,7 @@ export default function AdminUsersPage() {
               <div className="text-2xl font-bold text-yellow-600">
                 {users.filter((u) => u.role === 'ARTISAN').length}
               </div>
-              <div className="text-sm text-gray-600">{t('admin', 'artisans')}</div>
+              <div className="text-sm text-muted-foreground">{t('admin', 'artisans')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -194,7 +194,7 @@ export default function AdminUsersPage() {
               <div className="text-2xl font-bold text-red-600">
                 {users.filter((u) => u.suspended).length}
               </div>
-              <div className="text-sm text-gray-600">{t('admin', 'suspended')}</div>
+              <div className="text-sm text-muted-foreground">{t('admin', 'suspended')}</div>
             </CardContent>
           </Card>
         </div>
@@ -206,55 +206,55 @@ export default function AdminUsersPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {t('common', 'loading')}
               </div>
             ) : users.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {t('admin', 'noUsersFound')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-background border-b border-border">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         {t('admin', 'user')}
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         {t('admin', 'email')}
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         {t('admin', 'role')}
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         {t('admin', 'status')}
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         {t('admin', 'registration')}
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         {t('admin', 'actions')}
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border">
                     {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
+                      <tr key={user.id} className="hover:bg-accent">
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
                               {user.firstName[0]}
                               {user.lastName[0]}
                             </div>
                             <div className="ml-3">
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-foreground">
                                 {user.firstName} {user.lastName}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {user.email}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
@@ -271,7 +271,7 @@ export default function AdminUsersPage() {
                             <Badge variant="warning">{t('admin', 'notVerifiedStatus')}</Badge>
                           )}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {formatDate(user.createdAt)}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm">

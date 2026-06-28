@@ -118,7 +118,7 @@ export default function CompanySettingsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -127,10 +127,10 @@ export default function CompanySettingsPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t('company', 'companySettings') || 'Company Settings'}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           {t('company', 'manageSettings') || 'Manage your company configuration'}
         </p>
       </div>
@@ -139,19 +139,19 @@ export default function CompanySettingsPage() {
       <div className="flex gap-2 mb-6 border-b">
         <button
           onClick={() => setActiveTab('general')}
-          className={`px-4 py-2 font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'general') || 'General'}
         </button>
         <button
           onClick={() => setActiveTab('commission')}
-          className={`px-4 py-2 font-medium ${activeTab === 'commission' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'commission' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'commission') || 'Commission & Payouts'}
         </button>
         <button
           onClick={() => setActiveTab('notifications')}
-          className={`px-4 py-2 font-medium ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'notifications') || 'Notifications'}
         </button>
@@ -168,7 +168,7 @@ export default function CompanySettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'companyName') || 'Company Name'}
               </label>
               <Input
@@ -178,19 +178,19 @@ export default function CompanySettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'description') || 'Description'}
               </label>
               <textarea
                 value={generalForm.description || ''}
                 onChange={(e) => setGeneralForm({ ...generalForm, description: e.target.value })}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'website') || 'Website'}
               </label>
               <Input
@@ -202,7 +202,7 @@ export default function CompanySettingsPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'city') || 'City'}
                 </label>
                 <Input
@@ -211,7 +211,7 @@ export default function CompanySettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'postalCode') || 'Postal Code'}
                 </label>
                 <Input
@@ -220,7 +220,7 @@ export default function CompanySettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'serviceRadius') || 'Service Radius (km)'}
                 </label>
                 <Input
@@ -259,7 +259,7 @@ export default function CompanySettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'defaultCommissionRate') || 'Default Commission Rate (%)'}
                 </label>
                 <Input
@@ -274,12 +274,12 @@ export default function CompanySettingsPage() {
                   min="0"
                   max="100"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {t('company', 'defaultCommissionDesc') || 'Applied to new employees'}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'minimumPayout') || 'Minimum Payout (€)'}
                 </label>
                 <Input
@@ -294,7 +294,7 @@ export default function CompanySettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('company', 'payoutFrequency') || 'Payout Frequency'}
               </label>
               <select
@@ -302,7 +302,7 @@ export default function CompanySettingsPage() {
                 onChange={(e) =>
                   setSettingsForm({ ...settingsForm, payoutFrequency: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="DAILY">{t('company', 'daily') || 'Daily'}</option>
                 <option value="WEEKLY">{t('company', 'weekly') || 'Weekly'}</option>
@@ -312,7 +312,7 @@ export default function CompanySettingsPage() {
             </div>
 
             <div className="space-y-3 pt-4">
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-medium text-foreground">
                 {t('company', 'missionAssignment') || 'Mission Assignment'}
               </h4>
 
@@ -323,9 +323,9 @@ export default function CompanySettingsPage() {
                   onChange={(e) =>
                     setSettingsForm({ ...settingsForm, autoAssignMissions: e.target.checked })
                   }
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-foreground">
                   {t('company', 'autoAssign') || 'Auto-assign missions based on availability'}
                 </span>
               </label>
@@ -337,9 +337,9 @@ export default function CompanySettingsPage() {
                   onChange={(e) =>
                     setSettingsForm({ ...settingsForm, requireManagerApproval: e.target.checked })
                   }
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-foreground">
                   {t('company', 'requireApproval') ||
                     'Require manager approval for mission acceptance'}
                 </span>
@@ -355,9 +355,9 @@ export default function CompanySettingsPage() {
                       allowEmployeeSelfAssignment: e.target.checked,
                     })
                   }
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-foreground">
                   {t('company', 'selfAssignment') || 'Allow employees to claim unassigned missions'}
                 </span>
               </label>
@@ -393,9 +393,9 @@ export default function CompanySettingsPage() {
                   onChange={(e) =>
                     setSettingsForm({ ...settingsForm, notifyOwnerOnNewMission: e.target.checked })
                   }
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-foreground">
                   {t('company', 'notifyOwner') || 'Notify owner on new missions'}
                 </span>
               </label>
@@ -410,9 +410,9 @@ export default function CompanySettingsPage() {
                       notifyManagerOnNewMission: e.target.checked,
                     })
                   }
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-foreground">
                   {t('company', 'notifyManager') || 'Notify managers on new missions'}
                 </span>
               </label>
@@ -427,9 +427,9 @@ export default function CompanySettingsPage() {
                       notifyEmployeeOnAssignment: e.target.checked,
                     })
                   }
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-foreground">
                   {t('company', 'notifyEmployee') || 'Notify employees when assigned to missions'}
                 </span>
               </label>
@@ -437,7 +437,7 @@ export default function CompanySettingsPage() {
 
             <div className="grid md:grid-cols-2 gap-4 pt-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'defaultWorkStart') || 'Default Working Hours Start'}
                 </label>
                 <Input
@@ -449,7 +449,7 @@ export default function CompanySettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'defaultWorkEnd') || 'Default Working Hours End'}
                 </label>
                 <Input

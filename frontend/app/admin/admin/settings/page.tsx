@@ -124,8 +124,8 @@ export default function SettingsOverviewPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">13</p>
-              <p className="text-sm text-gray-500">Configuration Areas</p>
+              <p className="text-3xl font-bold text-primary">13</p>
+              <p className="text-sm text-muted-foreground">Configuration Areas</p>
             </div>
           </CardContent>
         </Card>
@@ -133,7 +133,7 @@ export default function SettingsOverviewPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-green-600">200+</p>
-              <p className="text-sm text-gray-500">Configurable Settings</p>
+              <p className="text-sm text-muted-foreground">Configurable Settings</p>
             </div>
           </CardContent>
         </Card>
@@ -141,7 +141,7 @@ export default function SettingsOverviewPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-purple-600">Active</p>
-              <p className="text-sm text-gray-500">Platform Status</p>
+              <p className="text-sm text-muted-foreground">Platform Status</p>
             </div>
           </CardContent>
         </Card>
@@ -149,7 +149,7 @@ export default function SettingsOverviewPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-orange-600">v1.0</p>
-              <p className="text-sm text-gray-500">Config Version</p>
+              <p className="text-sm text-muted-foreground">Config Version</p>
             </div>
           </CardContent>
         </Card>
@@ -158,8 +158,8 @@ export default function SettingsOverviewPage() {
       {/* Settings Categories */}
       {settingsCategories.map((category) => (
         <div key={category.title}>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">{category.title}</h2>
-          <p className="text-sm text-gray-500 mb-4">{category.description}</p>
+          <h2 className="text-lg font-semibold text-foreground mb-2">{category.title}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{category.description}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {category.items.map((item) => (
               <Card
@@ -229,17 +229,17 @@ export default function SettingsOverviewPage() {
             ].map((change, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-background rounded-lg"
               >
                 <div>
-                  <p className="font-medium text-gray-900">{change.setting}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-foreground">{change.setting}</p>
+                  <p className="text-sm text-muted-foreground">
                     <span className="text-red-500">{change.oldValue}</span>
                     <span className="mx-2">→</span>
                     <span className="text-green-500">{change.newValue}</span>
                   </p>
                 </div>
-                <div className="text-right text-sm text-gray-500">
+                <div className="text-right text-sm text-muted-foreground">
                   <p>{change.changedBy}</p>
                   <p>{change.timestamp}</p>
                 </div>

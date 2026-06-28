@@ -81,7 +81,7 @@ export default function PaymentSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -89,7 +89,7 @@ export default function PaymentSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -112,8 +112,8 @@ export default function PaymentSettingsPage() {
                 key={provider.key}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-colors ${
                   settings[provider.key]
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'border-green-500 bg-green-500/10'
+                    : 'border-border bg-background'
                 }`}
                 onClick={() => updateSetting(provider.key, !settings[provider.key])}
               >
@@ -121,7 +121,7 @@ export default function PaymentSettingsPage() {
                   <span className="text-2xl">{provider.icon}</span>
                   <div>
                     <p className="font-medium">{provider.label}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {settings[provider.key] ? 'Enabled' : 'Disabled'}
                     </p>
                   </div>
@@ -141,7 +141,7 @@ export default function PaymentSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Minimum Payment (cents)
               </label>
               <input
@@ -149,14 +149,14 @@ export default function PaymentSettingsPage() {
                 value={settings.minPaymentAmount}
                 onChange={(e) => updateSetting('minPaymentAmount', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.minPaymentAmount)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Maximum Payment (cents)
               </label>
               <input
@@ -164,9 +164,9 @@ export default function PaymentSettingsPage() {
                 value={settings.maxPaymentAmount}
                 onChange={(e) => updateSetting('maxPaymentAmount', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.maxPaymentAmount)}
               </p>
             </div>
@@ -183,7 +183,7 @@ export default function PaymentSettingsPage() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Payout Delay (days)
               </label>
               <input
@@ -191,12 +191,12 @@ export default function PaymentSettingsPage() {
                 value={settings.payoutDelayDays}
                 onChange={(e) => updateSetting('payoutDelayDays', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">Days after mission completion</p>
+              <p className="mt-1 text-xs text-muted-foreground">Days after mission completion</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Auto-Payout Threshold (cents)
               </label>
               <input
@@ -204,14 +204,14 @@ export default function PaymentSettingsPage() {
                 value={settings.autoPayoutThreshold}
                 onChange={(e) => updateSetting('autoPayoutThreshold', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatCurrency(settings.autoPayoutThreshold)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Escrow Duration (hours)
               </label>
               <input
@@ -219,7 +219,7 @@ export default function PaymentSettingsPage() {
                 value={settings.escrowDurationHours}
                 onChange={(e) => updateSetting('escrowDurationHours', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -230,18 +230,18 @@ export default function PaymentSettingsPage() {
                 type="checkbox"
                 checked={settings.autoPayoutEnabled}
                 onChange={(e) => updateSetting('autoPayoutEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable auto-payouts</span>
+              <span className="text-sm text-foreground">Enable auto-payouts</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.holdFundsForDisputes}
                 onChange={(e) => updateSetting('holdFundsForDisputes', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Hold funds during disputes</span>
+              <span className="text-sm text-foreground">Hold funds during disputes</span>
             </label>
           </div>
         </CardContent>
@@ -260,14 +260,14 @@ export default function PaymentSettingsPage() {
                 type="checkbox"
                 checked={settings.instantPayoutEnabled}
                 onChange={(e) => updateSetting('instantPayoutEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Enable instant payouts</span>
+              <span className="text-sm text-foreground">Enable instant payouts</span>
             </label>
           </div>
           {settings.instantPayoutEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Instant Payout Fee (%)
               </label>
               <input
@@ -279,7 +279,7 @@ export default function PaymentSettingsPage() {
                 min="0"
                 max="10"
                 step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -295,7 +295,7 @@ export default function PaymentSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Refund Window (days)
               </label>
               <input
@@ -303,9 +303,9 @@ export default function PaymentSettingsPage() {
                 value={settings.refundWindowDays}
                 onChange={(e) => updateSetting('refundWindowDays', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Days after payment for refund eligibility
               </p>
             </div>
@@ -315,9 +315,9 @@ export default function PaymentSettingsPage() {
                   type="checkbox"
                   checked={settings.partialRefundEnabled}
                   onChange={(e) => updateSetting('partialRefundEnabled', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">Allow partial refunds</span>
+                <span className="text-sm text-foreground">Allow partial refunds</span>
               </label>
             </div>
           </div>
@@ -333,18 +333,18 @@ export default function PaymentSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Retry Attempts</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Retry Attempts</label>
               <input
                 type="number"
                 value={settings.paymentRetryAttempts}
                 onChange={(e) => updateSetting('paymentRetryAttempts', parseInt(e.target.value))}
                 min="0"
                 max="10"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Retry Delay (minutes)
               </label>
               <input
@@ -354,7 +354,7 @@ export default function PaymentSettingsPage() {
                   updateSetting('paymentRetryDelayMinutes', parseInt(e.target.value))
                 }
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="flex items-center">
@@ -363,9 +363,9 @@ export default function PaymentSettingsPage() {
                   type="checkbox"
                   checked={settings.failedPaymentNotification}
                   onChange={(e) => updateSetting('failedPaymentNotification', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded"
+                  className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-gray-700">Notify on failed payments</span>
+                <span className="text-sm text-foreground">Notify on failed payments</span>
               </label>
             </div>
           </div>
@@ -377,7 +377,7 @@ export default function PaymentSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Payment Settings'}
         </button>

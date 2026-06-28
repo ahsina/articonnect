@@ -12,7 +12,7 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       <label
         ref={ref}
         className={cn(
-          'text-sm font-medium text-gray-700 leading-none',
+          'text-sm font-medium text-foreground leading-none',
           'peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
           className
         )}
@@ -25,7 +25,7 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
           </span>
         )}
         {optional && (
-          <span className="text-gray-400 font-normal ml-1">(optionnel)</span>
+          <span className="text-muted-foreground font-normal ml-1">(optionnel)</span>
         )}
       </label>
     );

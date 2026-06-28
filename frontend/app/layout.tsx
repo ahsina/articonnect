@@ -1,12 +1,21 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Inter, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Krafolt - Trouvez des artisans locaux',
   description: 'Plateforme de mise en relation entre clients et artisans',
   manifest: '/manifest.json',
-  themeColor: '#2563EB',
+  themeColor: '#0E0F12',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -25,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: 'https://articonnect.app',
+    url: 'https://krafolt.com',
     title: 'Krafolt - Trouvez des artisans locaux',
     description: 'Plateforme de mise en relation entre clients et artisans',
     siteName: 'Krafolt',
@@ -52,8 +61,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className="font-sans antialiased">
+    <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable} dark`} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-background text-foreground">
         <Providers>{children}</Providers>
       </body>
     </html>

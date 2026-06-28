@@ -374,15 +374,15 @@ export default function MissionDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      NEGOTIATING: 'bg-blue-100 text-blue-800',
-      ACCEPTED: 'bg-green-100 text-green-800',
-      IN_PROGRESS: 'bg-purple-100 text-purple-800',
-      COMPLETED: 'bg-gray-100 text-gray-800',
-      CANCELLED: 'bg-red-100 text-red-800',
+      PENDING: 'bg-yellow-500/15 text-yellow-400',
+      NEGOTIATING: 'bg-primary/10 text-primary',
+      ACCEPTED: 'bg-green-500/15 text-green-400',
+      IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+      COMPLETED: 'bg-muted text-foreground',
+      CANCELLED: 'bg-red-500/15 text-red-400',
     };
     return (
-      <Badge className={colors[status] || 'bg-gray-100 text-gray-800'}>
+      <Badge className={colors[status] || 'bg-muted text-foreground'}>
         {translateMissionStatus(status, t)}
       </Badge>
     );
@@ -403,7 +403,7 @@ export default function MissionDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -418,7 +418,7 @@ export default function MissionDetailsPage() {
 
   if (showReviewForm && mission.artisan) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-background py-8">
         <div className="max-w-3xl mx-auto px-4">
           <ReviewForm
             missionId={missionId}
@@ -435,7 +435,7 @@ export default function MissionDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
@@ -445,14 +445,14 @@ export default function MissionDetailsPage() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{mission.title}</h1>
+                <h1 className="text-3xl font-bold text-foreground">{mission.title}</h1>
                 {isProfessional && (
-                  <Badge variant="outline" className="text-blue-600 border-blue-300">
+                  <Badge variant="outline" className="text-primary border-blue-300">
                     🏢 Pro
                   </Badge>
                 )}
               </div>
-              <p className="text-gray-600">Réf: {mission.id.slice(0, 8).toUpperCase()}</p>
+              <p className="text-muted-foreground">Réf: {mission.id.slice(0, 8).toUpperCase()}</p>
             </div>
             {getStatusBadge(mission.status)}
           </div>
@@ -467,7 +467,7 @@ export default function MissionDetailsPage() {
                 <CardTitle>{t('common', 'description')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap">{mission.description}</p>
+                <p className="text-foreground whitespace-pre-wrap">{mission.description}</p>
               </CardContent>
             </Card>
 
@@ -484,7 +484,7 @@ export default function MissionDetailsPage() {
                   {/* Before Photos */}
                   {mission.beforePhotos && mission.beforePhotos.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full bg-orange-400"></span>
                         {t('missions', 'beforePhotos') || 'Avant travaux'}
                       </h4>
@@ -505,7 +505,7 @@ export default function MissionDetailsPage() {
                   {/* After Photos */}
                   {mission.afterPhotos && mission.afterPhotos.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full bg-green-500"></span>
                         {t('missions', 'afterPhotos') || 'Après travaux'}
                       </h4>
@@ -526,7 +526,7 @@ export default function MissionDetailsPage() {
                   {/* Comparison hint */}
                   {mission.beforePhotos && mission.beforePhotos.length > 0 &&
                     mission.afterPhotos && mission.afterPhotos.length > 0 && (
-                    <p className="text-sm text-gray-500 text-center italic">
+                    <p className="text-sm text-muted-foreground text-center italic">
                       {t('missions', 'comparePhotosHint') || 'Cliquez sur une photo pour l\'agrandir'}
                     </p>
                   )}
@@ -536,44 +536,44 @@ export default function MissionDetailsPage() {
 
             {/* B2B Info Card - Only shown if B2B data exists */}
             {hasB2BInfo && (
-              <Card className="border-blue-200 bg-blue-50/50">
+              <Card className="border-primary/20 bg-primary/10/50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-blue-900">
+                  <CardTitle className="flex items-center gap-2 text-primary">
                     🏢 {t('missions', 'professionalInfo') || 'Informations professionnelles'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {mission.purchaseOrderNumber && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {t('missions', 'purchaseOrderNumber') || 'N° Bon de commande'}
                       </span>
-                      <span className="font-semibold text-blue-900">
+                      <span className="font-semibold text-primary">
                         {mission.purchaseOrderNumber}
                       </span>
                     </div>
                   )}
                   {mission.internalReference && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {t('missions', 'internalReference') || 'Référence interne'}
                       </span>
-                      <span className="font-semibold text-blue-900">
+                      <span className="font-semibold text-primary">
                         {mission.internalReference}
                       </span>
                     </div>
                   )}
                   {mission.billingCompanyName && (
                     <div className="border-t pt-3 mt-3">
-                      <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-sm text-muted-foreground mb-1">
                         {t('missions', 'billingInfo') || 'Facturation'}
                       </p>
                       <p className="font-semibold">{mission.billingCompanyName}</p>
                       {mission.billingAddress && (
-                        <p className="text-sm text-gray-600">{mission.billingAddress}</p>
+                        <p className="text-sm text-muted-foreground">{mission.billingAddress}</p>
                       )}
                       {mission.billingVatNumber && (
-                        <p className="text-sm text-gray-600">TVA: {mission.billingVatNumber}</p>
+                        <p className="text-sm text-muted-foreground">TVA: {mission.billingVatNumber}</p>
                       )}
                     </div>
                   )}
@@ -589,32 +589,32 @@ export default function MissionDetailsPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       {t('common', 'category')}
                     </p>
-                    <p className="text-gray-900">{mission.category}</p>
+                    <p className="text-foreground">{mission.category}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">{t('common', 'type')}</p>
-                    <p className="text-gray-900">
+                    <p className="text-sm font-medium text-muted-foreground">{t('common', 'type')}</p>
+                    <p className="text-foreground">
                       {mission.type === 'EMERGENCY'
                         ? t('missions', 'emergency') || 'Urgence'
                         : t('missions', 'scheduled') || 'Programmée'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       {t('missions', 'clientBudget') || 'Budget client'}
                     </p>
-                    <p className="text-gray-900 font-semibold">
+                    <p className="text-foreground font-semibold">
                       {mission.clientBudget ? `${mission.clientBudget}€` : '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       {t('missions', 'agreedPrice') || 'Prix final'}
                     </p>
-                    <p className="text-gray-900 font-semibold">
+                    <p className="text-foreground font-semibold">
                       {mission.agreedPrice ? `${mission.agreedPrice}€` : '-'}
                     </p>
                   </div>
@@ -622,18 +622,18 @@ export default function MissionDetailsPage() {
 
                 {mission.scheduledFor && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       {t('missions', 'scheduledDate') || 'Date programmée'}
                     </p>
-                    <p className="text-gray-900">{formatDate(mission.scheduledFor)}</p>
+                    <p className="text-foreground">{formatDate(mission.scheduledFor)}</p>
                   </div>
                 )}
 
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
                     {t('common', 'address')}
                   </p>
-                  <p className="text-gray-900">
+                  <p className="text-foreground">
                     {mission.address}
                     <br />
                     {mission.postalCode} {mission.city}
@@ -652,17 +652,17 @@ export default function MissionDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-semibold">
+                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-semibold">
                       {mission.artisan.firstName[0]}
                       {mission.artisan.lastName[0]}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-gray-900">
+                      <h3 className="font-semibold text-lg text-foreground">
                         {mission.artisan.firstName} {mission.artisan.lastName}
                       </h3>
-                      <p className="text-gray-600">{mission.artisan.email}</p>
+                      <p className="text-muted-foreground">{mission.artisan.email}</p>
                       {mission.artisan.artisanProfile && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {mission.artisan.artisanProfile.companyName}
                         </p>
                       )}
@@ -677,7 +677,7 @@ export default function MissionDetailsPage() {
 
             {/* Negotiation Section */}
             {(mission.status === 'PENDING' || mission.status === 'NEGOTIATING' || negotiations.length > 0) && (
-              <Card className="border-orange-200">
+              <Card className="border-orange-500/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -688,9 +688,9 @@ export default function MissionDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Current Budget */}
-                  <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="p-3 bg-background rounded-lg">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {t('missions', 'yourBudget') || 'Votre budget'}
                       </span>
                       <span className="font-semibold text-lg">
@@ -712,7 +712,7 @@ export default function MissionDetailsPage() {
                   {/* Negotiations List */}
                   {negotiations.length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-gray-700">
+                      <h4 className="text-sm font-medium text-foreground">
                         {t('negotiations', 'history') || 'Historique des offres'} ({negotiations.length}/5)
                       </h4>
                       <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -727,15 +727,15 @@ export default function MissionDetailsPage() {
                               key={neg.id}
                               className={`p-3 rounded-lg border ${
                                 isFromMe
-                                  ? 'bg-blue-50 border-blue-200 ml-4'
-                                  : 'bg-orange-50 border-orange-200 mr-4'
+                                  ? 'bg-primary/10 border-primary/20 ml-4'
+                                  : 'bg-orange-500/10 border-orange-500/20 mr-4'
                               } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
                                 neg.accepted === false ? 'opacity-60' : ''
                               }`}
                             >
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-muted-foreground">
                                     {isFromMe
                                       ? t('negotiations', 'yourOffer') || 'Votre offre'
                                       : t('negotiations', 'artisanOffer') || "Offre de l'artisan"}
@@ -744,22 +744,22 @@ export default function MissionDetailsPage() {
                                 </div>
                                 <div className="text-right">
                                   {neg.accepted === true && (
-                                    <Badge className="bg-green-100 text-green-800">
+                                    <Badge className="bg-green-500/15 text-green-400">
                                       {t('negotiations', 'accepted') || 'Acceptée'}
                                     </Badge>
                                   )}
                                   {neg.accepted === false && (
-                                    <Badge className="bg-red-100 text-red-800">
+                                    <Badge className="bg-red-500/15 text-red-400">
                                       {t('negotiations', 'rejected') || 'Refusée'}
                                     </Badge>
                                   )}
                                   {isPending && isExpired && (
-                                    <Badge className="bg-gray-100 text-gray-800">
+                                    <Badge className="bg-muted text-foreground">
                                       {t('negotiations', 'expired') || 'Expirée'}
                                     </Badge>
                                   )}
                                   {isPending && !isExpired && (
-                                    <Badge className="bg-yellow-100 text-yellow-800">
+                                    <Badge className="bg-yellow-500/15 text-yellow-400">
                                       {t('negotiations', 'pending') || 'En attente'}
                                     </Badge>
                                   )}
@@ -767,7 +767,7 @@ export default function MissionDetailsPage() {
                               </div>
 
                               {neg.message && (
-                                <p className="text-sm text-gray-600 mt-2 italic">"{neg.message}"</p>
+                                <p className="text-sm text-muted-foreground mt-2 italic">"{neg.message}"</p>
                               )}
 
                               {neg.rejectedReason && (
@@ -777,7 +777,7 @@ export default function MissionDetailsPage() {
                               )}
 
                               {neg.expiresAt && isPending && !isExpired && (
-                                <p className="text-xs text-gray-400 mt-2">
+                                <p className="text-xs text-muted-foreground mt-2">
                                   {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
                                   {new Date(neg.expiresAt).toLocaleString('fr-FR')}
                                 </p>
@@ -826,9 +826,9 @@ export default function MissionDetailsPage() {
                   )}
 
                   {showNegotiationForm && (
-                    <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                    <div className="p-4 bg-background rounded-lg space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'yourPrice') || 'Votre prix proposé'} (€) *
                         </label>
                         <Input
@@ -843,7 +843,7 @@ export default function MissionDetailsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           {t('negotiations', 'message') || 'Message (optionnel)'}
                         </label>
                         <textarea
@@ -851,7 +851,7 @@ export default function MissionDetailsPage() {
                           onChange={(e) =>
                             setNegotiationForm({ ...negotiationForm, message: e.target.value })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                           rows={2}
                           placeholder={
                             t('negotiations', 'messagePlaceholder') ||
@@ -895,9 +895,9 @@ export default function MissionDetailsPage() {
           <div className="space-y-6">
             {/* Validation Section - shown when mission is completed but not validated */}
             {needsValidation && (
-              <Card className="border-green-200 bg-green-50/50">
+              <Card className="border-green-500/20 bg-green-500/10/50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-800">
+                  <CardTitle className="flex items-center gap-2 text-green-400">
                     ✅ {t('validation', 'workCompleted') || 'Travail terminé'}
                   </CardTitle>
                   <CardDescription>
@@ -908,7 +908,7 @@ export default function MissionDetailsPage() {
                   {/* After Photos Preview */}
                   {mission.afterPhotos && mission.afterPhotos.length > 0 && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">
+                      <p className="text-sm font-medium text-foreground mb-2">
                         {t('missions', 'afterPhotos') || 'Photos après travaux'}
                       </p>
                       <div className="grid grid-cols-3 gap-2">
@@ -925,8 +925,8 @@ export default function MissionDetailsPage() {
                     </div>
                   )}
 
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <p className="text-sm text-yellow-400">
                       {t('validation', 'autoValidateWarning') ||
                         'Si vous ne validez pas dans les 7 jours, la mission sera automatiquement validée.'}
                     </p>
@@ -942,7 +942,7 @@ export default function MissionDetailsPage() {
                     <Button
                       onClick={handleDispute}
                       variant="outline"
-                      className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                      className="flex-1 text-red-600 border-red-500/30 hover:bg-red-500/10"
                     >
                       {t('validation', 'reportProblem') || 'Signaler un problème'}
                     </Button>
@@ -1005,41 +1005,41 @@ export default function MissionDetailsPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       ✓
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-foreground">
                         {t('missions', 'created') || 'Mission créée'}
                       </p>
-                      <p className="text-sm text-gray-500">{formatDate(mission.createdAt)}</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(mission.createdAt)}</p>
                     </div>
                   </div>
 
                   {mission.acceptedAt && (
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                      <div className="w-8 h-8 rounded-full bg-green-500/15 flex items-center justify-center text-green-600">
                         ✓
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {t('missions', 'accepted') || 'Mission acceptée'}
                         </p>
-                        <p className="text-sm text-gray-500">{formatDate(mission.acceptedAt)}</p>
+                        <p className="text-sm text-muted-foreground">{formatDate(mission.acceptedAt)}</p>
                       </div>
                     </div>
                   )}
 
                   {mission.completedAt && (
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                      <div className="w-8 h-8 rounded-full bg-purple-500/15 flex items-center justify-center text-purple-600">
                         ✓
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {t('missions', 'completed') || 'Mission terminée'}
                         </p>
-                        <p className="text-sm text-gray-500">{formatDate(mission.completedAt)}</p>
+                        <p className="text-sm text-muted-foreground">{formatDate(mission.completedAt)}</p>
                       </div>
                     </div>
                   )}
@@ -1068,29 +1068,29 @@ export default function MissionDetailsPage() {
               <div
                 className={`p-4 rounded-lg ${
                   (cancellationFees?.fee || 0) > 0
-                    ? 'bg-yellow-50 border border-yellow-200'
-                    : 'bg-green-50 border border-green-200'
+                    ? 'bg-yellow-500/10 border border-yellow-500/20'
+                    : 'bg-green-500/10 border border-green-500/20'
                 }`}
               >
-                <p className="font-medium text-gray-900 mb-2">
+                <p className="font-medium text-foreground mb-2">
                   {t('cancellation', 'fees') || 'Frais d\'annulation'}
                 </p>
                 <p
                   className={`text-lg font-bold ${
-                    (cancellationFees?.fee || 0) > 0 ? 'text-yellow-700' : 'text-green-700'
+                    (cancellationFees?.fee || 0) > 0 ? 'text-yellow-400' : 'text-green-400'
                   }`}
                 >
                   {(cancellationFees?.fee || 0) > 0
                     ? `${cancellationFees?.fee}€ (${cancellationFees?.feePercentage}%)`
                     : t('cancellation', 'noFees') || 'Gratuit'}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {cancellationFees?.reason || getCancellationFeeReason()}
                 </p>
               </div>
 
               {/* Fee Details by Status */}
-              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+              <div className="text-sm text-muted-foreground bg-background p-3 rounded-lg">
                 <p className="font-medium mb-2">
                   {t('cancellation', 'feeSchedule') || 'Barème des frais:'}
                 </p>
@@ -1104,13 +1104,13 @@ export default function MissionDetailsPage() {
 
               {/* Reason Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('cancellation', 'reason') || 'Raison de l\'annulation (optionnel)'}
                 </label>
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                   rows={2}
                   placeholder={
                     t('cancellation', 'reasonPlaceholder') ||

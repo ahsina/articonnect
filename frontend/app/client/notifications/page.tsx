@@ -103,13 +103,13 @@ export default function ClientNotificationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           ← {t('common', 'back')}
@@ -117,9 +117,9 @@ export default function ClientNotificationsPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('notifications', 'title')}</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('notifications', 'title')}</h1>
             {unreadCount > 0 && (
-              <p className="text-gray-600 mt-1">
+              <p className="text-muted-foreground mt-1">
                 {unreadCount} {t('notifications', 'unread')}
               </p>
             )}
@@ -154,10 +154,10 @@ export default function ClientNotificationsPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">🔔</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('notifications', 'noNotifications')}
               </h3>
-              <p className="text-gray-600">{t('notifications', 'noNotificationsDesc')}</p>
+              <p className="text-muted-foreground">{t('notifications', 'noNotificationsDesc')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -166,7 +166,7 @@ export default function ClientNotificationsPage() {
               <Card
                 key={notification.id}
                 className={`cursor-pointer transition-colors ${
-                  !notification.read ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                  !notification.read ? 'bg-primary/10 border-primary/20' : 'hover:bg-accent'
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -179,18 +179,18 @@ export default function ClientNotificationsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <h4
                           className={`font-medium ${
-                            !notification.read ? 'text-gray-900' : 'text-gray-700'
+                            !notification.read ? 'text-foreground' : 'text-foreground'
                           }`}
                         >
                           {notification.title}
                         </h4>
-                        <span className="text-sm text-gray-500 whitespace-nowrap">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
                           {formatDate(notification.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
                       {!notification.read && (
-                        <Badge className="mt-2 bg-blue-600">{t('notifications', 'new')}</Badge>
+                        <Badge className="mt-2 bg-primary">{t('notifications', 'new')}</Badge>
                       )}
                     </div>
                   </div>

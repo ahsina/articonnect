@@ -73,7 +73,7 @@ export function StarRating({
         </button>
       ))}
       {showValue && (
-        <span className="ml-2 text-sm font-medium text-gray-700">
+        <span className="ml-2 text-sm font-medium text-foreground">
           {rating.toFixed(1)}
         </span>
       )}

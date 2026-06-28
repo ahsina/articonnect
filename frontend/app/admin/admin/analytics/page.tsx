@@ -65,7 +65,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -106,15 +106,15 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               {t('admin', 'detailedAnalytics')}
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-muted-foreground mt-2">
               {t('admin', 'platformInsights')}
             </p>
           </div>
@@ -124,8 +124,8 @@ export default function AnalyticsPage() {
               onClick={() => setDays(7)}
               className={`px-4 py-2 rounded-lg ${
                 days === 7
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border'
+                  ? 'bg-primary text-white'
+                  : 'bg-card text-foreground border'
               }`}
             >
               {t('admin', 'lastDays').replace('{days}', '7')}
@@ -134,8 +134,8 @@ export default function AnalyticsPage() {
               onClick={() => setDays(30)}
               className={`px-4 py-2 rounded-lg ${
                 days === 30
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border'
+                  ? 'bg-primary text-white'
+                  : 'bg-card text-foreground border'
               }`}
             >
               {t('admin', 'lastDays').replace('{days}', '30')}
@@ -144,8 +144,8 @@ export default function AnalyticsPage() {
               onClick={() => setDays(90)}
               className={`px-4 py-2 rounded-lg ${
                 days === 90
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border'
+                  ? 'bg-primary text-white'
+                  : 'bg-card text-foreground border'
               }`}
             >
               {t('admin', 'lastDays').replace('{days}', '90')}
@@ -249,13 +249,13 @@ export default function AnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-4 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Taux de complétion:{' '}
                   <span className="font-bold text-green-600">
                     {metrics.missions.completionRate}%
                   </span>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Valeur moyenne:{' '}
                   <span className="font-bold">
                     {metrics.missions.averageValue.toLocaleString('fr-FR')}€
@@ -291,17 +291,17 @@ export default function AnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-4 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Total utilisateurs:{' '}
                   <span className="font-bold">{metrics.users.total}</span>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Nouveaux aujourd'hui:{' '}
-                  <span className="font-bold text-blue-600">
+                  <span className="font-bold text-primary">
                     {metrics.users.newToday}
                   </span>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Actifs (30j):{' '}
                   <span className="font-bold text-purple-600">
                     {metrics.users.activeUsers}
@@ -331,16 +331,16 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">Taux de résolution</p>
+                  <p className="text-sm text-muted-foreground">Taux de résolution</p>
                   <p className="text-2xl font-bold text-green-600">
                     {metrics.disputes.resolutionRate}%
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Temps moyen résolution
                   </p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-primary">
                     {metrics.disputes.averageResolutionTime.toFixed(1)}h
                   </p>
                 </div>
@@ -364,11 +364,11 @@ export default function AnalyticsPage() {
                 </BarChart>
               </ResponsiveContainer>
               <div className="mt-4 text-center">
-                <p className="text-sm text-gray-600">Taux de validation</p>
+                <p className="text-sm text-muted-foreground">Taux de validation</p>
                 <p className="text-2xl font-bold text-green-600">
                   {metrics.noShows.validationRate}%
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {metrics.noShows.total} cas au total
                 </p>
               </div>
@@ -384,7 +384,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   Taux de succès
                 </p>
                 <p className="text-3xl font-bold text-green-600">
@@ -392,21 +392,21 @@ export default function AnalyticsPage() {
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   Total transactions
                 </p>
-                <p className="text-3xl font-bold text-blue-600">
+                <p className="text-3xl font-bold text-primary">
                   {metrics.payments.totalTransactions}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">Transaction moyenne</p>
+                <p className="text-sm text-muted-foreground mb-2">Transaction moyenne</p>
                 <p className="text-3xl font-bold text-purple-600">
                   {metrics.payments.averageTransaction.toLocaleString('fr-FR')}€
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-muted-foreground mb-2">
                   Transactions échouées
                 </p>
                 <p className="text-3xl font-bold text-red-600">
@@ -437,17 +437,17 @@ export default function AnalyticsPage() {
                 </thead>
                 <tbody>
                   {topArtisans.map((artisan, index) => (
-                    <tr key={artisan.id} className="border-b hover:bg-gray-50">
+                    <tr key={artisan.id} className="border-b hover:bg-accent">
                       <td className="py-3 px-4">
                         <span
                           className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${
                             index === 0
-                              ? 'bg-yellow-100 text-yellow-700'
+                              ? 'bg-yellow-500/15 text-yellow-400'
                               : index === 1
-                              ? 'bg-gray-200 text-gray-700'
+                              ? 'bg-muted text-foreground'
                               : index === 2
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-orange-500/15 text-orange-400'
+                              : 'bg-muted text-muted-foreground'
                           }`}
                         >
                           {index + 1}
@@ -489,18 +489,18 @@ function MetricCard({
   color?: string;
 }) {
   const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-50 border-blue-200',
-    green: 'bg-green-50 border-green-200',
-    yellow: 'bg-yellow-50 border-yellow-200',
-    purple: 'bg-purple-50 border-purple-200',
-    red: 'bg-red-50 border-red-200',
+    blue: 'bg-primary/10 border-primary/20',
+    green: 'bg-green-500/10 border-green-500/30',
+    yellow: 'bg-yellow-500/10 border-yellow-500/20',
+    purple: 'bg-purple-500/10 border-purple-500/20',
+    red: 'bg-red-500/10 border-red-500/20',
   };
 
   return (
     <Card className={`${colorClasses[color]} border-2`}>
       <CardContent className="p-6">
-        <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
+        <p className="text-sm font-medium text-muted-foreground mb-2">{title}</p>
+        <p className="text-3xl font-bold text-foreground">{value}</p>
         {trend !== undefined && (
           <p
             className={`text-sm mt-2 flex items-center gap-1 ${

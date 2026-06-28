@@ -73,32 +73,32 @@ export default function MissionPaymentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
+    <div className="min-h-screen bg-background py-10">
       <div className="max-w-lg mx-auto px-4">
-        <button onClick={() => router.back()} className="text-sm text-gray-500 mb-4">← Retour</button>
-        <div className="bg-white rounded-xl shadow p-6">
+        <button onClick={() => router.back()} className="text-sm text-muted-foreground mb-4">← Retour</button>
+        <div className="bg-card rounded-xl shadow p-6">
           <h1 className="text-2xl font-bold mb-1">Paiement de la mission</h1>
-          <p className="text-gray-500 mb-6">Paiement sécurisé par Stripe.</p>
+          <p className="text-muted-foreground mb-6">Paiement sécurisé par Stripe.</p>
 
-          {loading && <div className="py-10 text-center text-gray-500" role="status">Préparation du paiement…</div>}
+          {loading && <div className="py-10 text-center text-muted-foreground" role="status">Préparation du paiement…</div>}
 
           {success ? (
             <div className="py-8 text-center">
               <div className="text-green-600 text-4xl mb-2">✓</div>
-              <p className="font-semibold text-gray-900">Paiement effectué !</p>
-              <p className="text-gray-500 text-sm">Redirection…</p>
+              <p className="font-semibold text-foreground">Paiement effectué !</p>
+              <p className="text-muted-foreground text-sm">Redirection…</p>
             </div>
           ) : (
             <>
               <div id="payment-element" className={loading ? 'hidden' : ''} />
-              {error && <div className="mt-4 bg-red-50 text-red-700 text-sm rounded-lg p-3" role="alert">{error}</div>}
+              {error && <div className="mt-4 bg-red-500/10 text-red-400 text-sm rounded-lg p-3" role="alert">{error}</div>}
               {!loading && !error && (
                 <Button className="w-full mt-6" onClick={handlePay} disabled={submitting}>
                   {submitting ? 'Paiement en cours…' : 'Payer maintenant'}
                 </Button>
               )}
               {!loading && (
-                <p className="text-xs text-gray-400 mt-3 text-center">
+                <p className="text-xs text-muted-foreground mt-3 text-center">
                   Carte de test : 4242 4242 4242 4242 · date future · CVC quelconque
                 </p>
               )}

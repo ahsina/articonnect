@@ -108,7 +108,7 @@ export default function ComplianceSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -116,7 +116,7 @@ export default function ComplianceSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -133,11 +133,11 @@ export default function ComplianceSettingsPage() {
               type="checkbox"
               checked={settings.gdprEnabled}
               onChange={(e) => updateSetting('gdprEnabled', e.target.checked)}
-              className="w-5 h-5 text-blue-600 rounded"
+              className="w-5 h-5 text-primary rounded"
             />
             <div>
-              <span className="text-sm font-medium text-gray-700">Enable GDPR Compliance</span>
-              <p className="text-xs text-gray-500">Enforce GDPR requirements for EU users</p>
+              <span className="text-sm font-medium text-foreground">Enable GDPR Compliance</span>
+              <p className="text-xs text-muted-foreground">Enforce GDPR requirements for EU users</p>
             </div>
           </label>
 
@@ -145,7 +145,7 @@ export default function ComplianceSettingsPage() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Data Retention Period (days)
                   </label>
                   <input
@@ -155,9 +155,9 @@ export default function ComplianceSettingsPage() {
                       updateSetting('gdprDataRetentionDays', parseInt(e.target.value))
                     }
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     ~{Math.round(settings.gdprDataRetentionDays / 365)} years
                   </p>
                 </div>
@@ -169,36 +169,36 @@ export default function ComplianceSettingsPage() {
                     type="checkbox"
                     checked={settings.gdprRightToErasure}
                     onChange={(e) => updateSetting('gdprRightToErasure', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">Right to erasure</span>
+                  <span className="text-sm text-foreground">Right to erasure</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={settings.gdprDataPortability}
                     onChange={(e) => updateSetting('gdprDataPortability', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">Data portability</span>
+                  <span className="text-sm text-foreground">Data portability</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={settings.gdprConsentRequired}
                     onChange={(e) => updateSetting('gdprConsentRequired', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">Require explicit consent</span>
+                  <span className="text-sm text-foreground">Require explicit consent</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={settings.gdprCookieConsentRequired}
                     onChange={(e) => updateSetting('gdprCookieConsentRequired', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">Cookie consent required</span>
+                  <span className="text-sm text-foreground">Cookie consent required</span>
                 </label>
               </div>
             </>
@@ -218,9 +218,9 @@ export default function ComplianceSettingsPage() {
               type="checkbox"
               checked={settings.ccpaEnabled}
               onChange={(e) => updateSetting('ccpaEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable CCPA Compliance</span>
+            <span className="text-sm font-medium text-foreground">Enable CCPA Compliance</span>
           </label>
 
           {settings.ccpaEnabled && (
@@ -229,9 +229,9 @@ export default function ComplianceSettingsPage() {
                 type="checkbox"
                 checked={settings.ccpaDoNotSellEnabled}
                 onChange={(e) => updateSetting('ccpaDoNotSellEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-foreground">
                 Enable &quot;Do Not Sell My Personal Information&quot; option
               </span>
             </label>
@@ -251,21 +251,21 @@ export default function ComplianceSettingsPage() {
               type="checkbox"
               checked={settings.ageVerificationRequired}
               onChange={(e) => updateSetting('ageVerificationRequired', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Require Age Verification</span>
+            <span className="text-sm font-medium text-foreground">Require Age Verification</span>
           </label>
 
           {settings.ageVerificationRequired && (
             <div className="w-32">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Age</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Minimum Age</label>
               <input
                 type="number"
                 value={settings.minimumAge}
                 onChange={(e) => updateSetting('minimumAge', parseInt(e.target.value))}
                 min="13"
                 max="21"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -280,48 +280,48 @@ export default function ComplianceSettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-700 mb-3">Terms of Service</h4>
+            <div className="p-4 bg-background rounded-lg">
+              <h4 className="font-medium text-foreground mb-3">Terms of Service</h4>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Version</label>
+                  <label className="block text-sm text-muted-foreground mb-1">Version</label>
                   <input
                     type="text"
                     value={settings.termsVersion}
                     onChange={(e) => updateSetting('termsVersion', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Last Updated</label>
+                  <label className="block text-sm text-muted-foreground mb-1">Last Updated</label>
                   <input
                     type="date"
                     value={settings.termsLastUpdated}
                     onChange={(e) => updateSetting('termsLastUpdated', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-700 mb-3">Privacy Policy</h4>
+            <div className="p-4 bg-background rounded-lg">
+              <h4 className="font-medium text-foreground mb-3">Privacy Policy</h4>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Version</label>
+                  <label className="block text-sm text-muted-foreground mb-1">Version</label>
                   <input
                     type="text"
                     value={settings.privacyPolicyVersion}
                     onChange={(e) => updateSetting('privacyPolicyVersion', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Last Updated</label>
+                  <label className="block text-sm text-muted-foreground mb-1">Last Updated</label>
                   <input
                     type="date"
                     value={settings.privacyPolicyLastUpdated}
                     onChange={(e) => updateSetting('privacyPolicyLastUpdated', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -338,19 +338,19 @@ export default function ComplianceSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Required Documents
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {settings.requiredDocuments.map((doc) => (
                 <span
                   key={doc}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                 >
                   {doc}
                   <button
                     onClick={() => removeDocument(doc)}
-                    className="text-blue-500 hover:text-blue-700"
+                    className="text-primary hover:text-primary"
                   >
                     x
                   </button>
@@ -363,12 +363,12 @@ export default function ComplianceSettingsPage() {
                 value={newDocument}
                 onChange={(e) => setNewDocument(e.target.value)}
                 placeholder="Document type"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 onKeyDown={(e) => e.key === 'Enter' && addDocument()}
               />
               <button
                 onClick={addDocument}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
               >
                 Add
               </button>
@@ -381,13 +381,13 @@ export default function ComplianceSettingsPage() {
                 type="checkbox"
                 checked={settings.documentExpiryCheckEnabled}
                 onChange={(e) => updateSetting('documentExpiryCheckEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Check document expiry</span>
+              <span className="text-sm text-foreground">Check document expiry</span>
             </label>
             {settings.documentExpiryCheckEnabled && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Remind</span>
+                <span className="text-sm text-muted-foreground">Remind</span>
                 <input
                   type="number"
                   value={settings.documentExpiryReminderDays}
@@ -395,9 +395,9 @@ export default function ComplianceSettingsPage() {
                     updateSetting('documentExpiryReminderDays', parseInt(e.target.value))
                   }
                   min="1"
-                  className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                 />
-                <span className="text-sm text-gray-500">days before expiry</span>
+                <span className="text-sm text-muted-foreground">days before expiry</span>
               </div>
             )}
           </div>
@@ -417,40 +417,40 @@ export default function ComplianceSettingsPage() {
                 type="checkbox"
                 checked={settings.amlCheckRequired}
                 onChange={(e) => updateSetting('amlCheckRequired', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Enable AML Checks</span>
+              <span className="text-sm font-medium text-foreground">Enable AML Checks</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.pep_screening_enabled}
                 onChange={(e) => updateSetting('pep_screening_enabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">PEP Screening</span>
+              <span className="text-sm text-foreground">PEP Screening</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.sanctionsListCheckEnabled}
                 onChange={(e) => updateSetting('sanctionsListCheckEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Sanctions List Check</span>
+              <span className="text-sm text-foreground">Sanctions List Check</span>
             </label>
           </div>
 
           {settings.amlCheckRequired && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   AML Check Provider
                 </label>
                 <select
                   value={settings.amlCheckProvider || ''}
                   onChange={(e) => updateSetting('amlCheckProvider', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Select provider</option>
                   <option value="onfido">Onfido</option>
@@ -460,7 +460,7 @@ export default function ComplianceSettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   AML Check Threshold (cents)
                 </label>
                 <input
@@ -468,9 +468,9 @@ export default function ComplianceSettingsPage() {
                   value={settings.amlCheckThreshold}
                   onChange={(e) => updateSetting('amlCheckThreshold', parseInt(e.target.value))}
                   min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {(settings.amlCheckThreshold / 100).toFixed(2)} EUR threshold for AML checks
                 </p>
               </div>
@@ -492,33 +492,33 @@ export default function ComplianceSettingsPage() {
                 type="checkbox"
                 checked={settings.dataEncryptionAtRest}
                 onChange={(e) => updateSetting('dataEncryptionAtRest', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Encryption at rest</span>
+              <span className="text-sm text-foreground">Encryption at rest</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.dataEncryptionInTransit}
                 onChange={(e) => updateSetting('dataEncryptionInTransit', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Encryption in transit</span>
+              <span className="text-sm text-foreground">Encryption in transit</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.auditLoggingEnabled}
                 onChange={(e) => updateSetting('auditLoggingEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Audit logging</span>
+              <span className="text-sm text-foreground">Audit logging</span>
             </label>
           </div>
 
           {settings.auditLoggingEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Audit Log Retention (days)
               </label>
               <input
@@ -526,7 +526,7 @@ export default function ComplianceSettingsPage() {
                 value={settings.auditLogRetentionDays}
                 onChange={(e) => updateSetting('auditLogRetentionDays', parseInt(e.target.value))}
                 min="30"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
@@ -538,7 +538,7 @@ export default function ComplianceSettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Compliance Settings'}
         </button>

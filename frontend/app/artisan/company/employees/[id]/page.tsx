@@ -121,29 +121,29 @@ export default function EmployeeDetailPage() {
 
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
-      OWNER: 'bg-purple-100 text-purple-800',
-      MANAGER: 'bg-blue-100 text-blue-800',
-      SUPERVISOR: 'bg-green-100 text-green-800',
-      TECHNICIAN: 'bg-gray-100 text-gray-800',
-      CONTRACTOR: 'bg-orange-100 text-orange-800',
+      OWNER: 'bg-purple-500/15 text-purple-400',
+      MANAGER: 'bg-primary/10 text-primary',
+      SUPERVISOR: 'bg-green-500/15 text-green-400',
+      TECHNICIAN: 'bg-muted text-foreground',
+      CONTRACTOR: 'bg-orange-500/15 text-orange-400',
     };
-    return colors[role] || 'bg-gray-100 text-gray-800';
+    return colors[role] || 'bg-muted text-foreground';
   };
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800',
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      INACTIVE: 'bg-gray-100 text-gray-800',
-      TERMINATED: 'bg-red-100 text-red-800',
+      ACTIVE: 'bg-green-500/15 text-green-400',
+      PENDING: 'bg-yellow-500/15 text-yellow-400',
+      INACTIVE: 'bg-muted text-foreground',
+      TERMINATED: 'bg-red-500/15 text-red-400',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-muted text-foreground';
   };
 
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -152,7 +152,7 @@ export default function EmployeeDetailPage() {
     return (
       <div className="p-6">
         <div className="text-center py-12">
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             {t('company', 'employeeNotFound') || 'Employee not found'}
           </p>
           <Button onClick={() => router.push('/artisan/company/employees')} className="mt-4">
@@ -172,10 +172,10 @@ export default function EmployeeDetailPage() {
             ← {t('common', 'back') || 'Back'}
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               {employee.user.firstName} {employee.user.lastName}
             </h1>
-            <p className="text-gray-600">{employee.user.email}</p>
+            <p className="text-muted-foreground">{employee.user.email}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -188,25 +188,25 @@ export default function EmployeeDetailPage() {
       <div className="flex gap-2 mb-6 border-b">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-medium ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'overview') || 'Overview'}
         </button>
         <button
           onClick={() => setActiveTab('edit')}
-          className={`px-4 py-2 font-medium ${activeTab === 'edit' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'edit' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'edit') || 'Edit'}
         </button>
         <button
           onClick={() => setActiveTab('earnings')}
-          className={`px-4 py-2 font-medium ${activeTab === 'earnings' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'earnings' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'earnings') || 'Earnings'}
         </button>
         <button
           onClick={() => setActiveTab('shifts')}
-          className={`px-4 py-2 font-medium ${activeTab === 'shifts' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'shifts' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('company', 'shifts') || 'Shifts'}
         </button>
@@ -222,33 +222,33 @@ export default function EmployeeDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
                     {stats?.totalMissions || 0}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     {t('company', 'totalMissions') || 'Total Missions'}
                   </div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-green-500/10 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
                     {stats?.completedMissions || 0}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     {t('company', 'completed') || 'Completed'}
                   </div>
                 </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
+                <div className="bg-yellow-500/10 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-yellow-600">
                     {stats?.activeMissions || 0}
                   </div>
-                  <div className="text-sm text-gray-600">{t('company', 'active') || 'Active'}</div>
+                  <div className="text-sm text-muted-foreground">{t('company', 'active') || 'Active'}</div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="bg-purple-500/10 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
                     {stats?.averageRating ? stats.averageRating.toFixed(1) : 'N/A'}
                   </div>
-                  <div className="text-sm text-gray-600">{t('company', 'rating') || 'Rating'}</div>
+                  <div className="text-sm text-muted-foreground">{t('company', 'rating') || 'Rating'}</div>
                 </div>
               </div>
             </CardContent>
@@ -262,7 +262,7 @@ export default function EmployeeDetailPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'totalEarnings') || 'Total Earnings'}
                   </span>
                   <span className="font-semibold">
@@ -270,7 +270,7 @@ export default function EmployeeDetailPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'pendingPayment') || 'Pending Payment'}
                   </span>
                   <span className="font-semibold">
@@ -278,13 +278,13 @@ export default function EmployeeDetailPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'paymentModel') || 'Payment Model'}
                   </span>
                   <Badge variant="outline">{employee.paymentModel}</Badge>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'commissionRate') || 'Commission Rate'}
                   </span>
                   <span className="font-semibold">{employee.commissionRate || 0}%</span>
@@ -301,18 +301,18 @@ export default function EmployeeDetailPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'joinedDate') || 'Joined Date'}
                   </span>
                   <span>{new Date(employee.joinedAt).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">{t('company', 'phone') || 'Phone'}</span>
+                  <span className="text-muted-foreground">{t('company', 'phone') || 'Phone'}</span>
                   <span>{employee.user.phone || 'N/A'}</span>
                 </div>
                 {employee.baseSalary && (
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'baseSalary') || 'Base Salary'}
                     </span>
                     <span>€{employee.baseSalary.toLocaleString()}/month</span>
@@ -330,7 +330,7 @@ export default function EmployeeDetailPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'canAcceptMissions') || 'Can Accept Missions'}
                   </span>
                   <span className={employee.canAcceptMissions ? 'text-green-600' : 'text-red-600'}>
@@ -338,7 +338,7 @@ export default function EmployeeDetailPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'canViewFinancials') || 'Can View Financials'}
                   </span>
                   <span className={employee.canViewFinancials ? 'text-green-600' : 'text-red-600'}>
@@ -346,7 +346,7 @@ export default function EmployeeDetailPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600">
+                  <span className="text-muted-foreground">
                     {t('company', 'canManageTeam') || 'Can Manage Team'}
                   </span>
                   <span className={employee.canManageTeam ? 'text-green-600' : 'text-red-600'}>
@@ -371,7 +371,7 @@ export default function EmployeeDetailPage() {
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'role') || 'Role'}
                 </label>
                 <select
@@ -387,7 +387,7 @@ export default function EmployeeDetailPage() {
                         | 'CONTRACTOR',
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="TECHNICIAN">Technician</option>
                   <option value="SUPERVISOR">Supervisor</option>
@@ -397,7 +397,7 @@ export default function EmployeeDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'paymentModel') || 'Payment Model'}
                 </label>
                 <select
@@ -408,7 +408,7 @@ export default function EmployeeDetailPage() {
                       paymentModel: e.target.value as 'SALARY' | 'COMMISSION' | 'HYBRID',
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="COMMISSION">Commission Only</option>
                   <option value="SALARY">Salary Only</option>
@@ -417,7 +417,7 @@ export default function EmployeeDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'commissionRate') || 'Commission Rate (%)'}
                 </label>
                 <Input
@@ -432,7 +432,7 @@ export default function EmployeeDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('company', 'baseSalary') || 'Base Salary (€/month)'}
                 </label>
                 <Input
@@ -447,7 +447,7 @@ export default function EmployeeDetailPage() {
             </div>
 
             <div className="border-t pt-4">
-              <h4 className="font-medium text-gray-900 mb-3">
+              <h4 className="font-medium text-foreground mb-3">
                 {t('company', 'permissions') || 'Permissions'}
               </h4>
               <div className="space-y-3">
@@ -458,9 +458,9 @@ export default function EmployeeDetailPage() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, canAcceptMissions: e.target.checked })
                     }
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     {t('company', 'canAcceptMissions') || 'Can accept and manage missions'}
                   </span>
                 </label>
@@ -472,9 +472,9 @@ export default function EmployeeDetailPage() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, canViewFinancials: e.target.checked })
                     }
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     {t('company', 'canViewFinancials') || 'Can view financial reports'}
                   </span>
                 </label>
@@ -484,9 +484,9 @@ export default function EmployeeDetailPage() {
                     type="checkbox"
                     checked={editForm.canManageTeam ?? employee.canManageTeam ?? false}
                     onChange={(e) => setEditForm({ ...editForm, canManageTeam: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-foreground">
                     {t('company', 'canManageTeam') || 'Can manage team members'}
                   </span>
                 </label>
@@ -518,7 +518,7 @@ export default function EmployeeDetailPage() {
           </CardHeader>
           <CardContent>
             {earnings.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {t('company', 'noEarnings') || 'No earnings recorded yet'}
               </div>
             ) : (
@@ -541,7 +541,7 @@ export default function EmployeeDetailPage() {
                   </thead>
                   <tbody>
                     {earnings.map((earning) => (
-                      <tr key={earning.id} className="border-b hover:bg-gray-50">
+                      <tr key={earning.id} className="border-b hover:bg-accent">
                         <td className="py-3 px-4">
                           {new Date(earning.createdAt).toLocaleDateString()}
                         </td>
@@ -556,10 +556,10 @@ export default function EmployeeDetailPage() {
                           <Badge
                             className={
                               earning.status === 'PAID'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-500/15 text-green-400'
                                 : earning.status === 'PENDING'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-yellow-500/15 text-yellow-400'
+                                  : 'bg-muted text-foreground'
                             }
                           >
                             {earning.status}
@@ -594,7 +594,7 @@ export default function EmployeeDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {t('company', 'viewShiftsPage') ||
                 'Click "Manage Shifts" to view and edit the shift schedule'}
             </div>

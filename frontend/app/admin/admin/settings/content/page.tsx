@@ -123,7 +123,7 @@ export default function ContentModerationPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             Dismiss
@@ -131,7 +131,7 @@ export default function ContentModerationPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
           {success}
         </div>
       )}
@@ -148,11 +148,11 @@ export default function ContentModerationPage() {
               type="checkbox"
               checked={settings.autoModerationEnabled}
               onChange={(e) => updateSetting('autoModerationEnabled', e.target.checked)}
-              className="w-5 h-5 text-blue-600 rounded"
+              className="w-5 h-5 text-primary rounded"
             />
             <div>
-              <span className="text-sm font-medium text-gray-700">Enable Auto-Moderation</span>
-              <p className="text-xs text-gray-500">
+              <span className="text-sm font-medium text-foreground">Enable Auto-Moderation</span>
+              <p className="text-xs text-muted-foreground">
                 Automatically scan and moderate user-generated content
               </p>
             </div>
@@ -172,15 +172,15 @@ export default function ContentModerationPage() {
               type="checkbox"
               checked={settings.profanityFilterEnabled}
               onChange={(e) => updateSetting('profanityFilterEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable Profanity Filter</span>
+            <span className="text-sm font-medium text-foreground">Enable Profanity Filter</span>
           </label>
 
           {settings.profanityFilterEnabled && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Filter Strength
                 </label>
                 <select
@@ -191,7 +191,7 @@ export default function ContentModerationPage() {
                       e.target.value as 'LOW' | 'MEDIUM' | 'HIGH',
                     )
                   }
-                  className="w-48 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-48 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 >
                   <option value="LOW">Low - Only severe profanity</option>
                   <option value="MEDIUM">Medium - Common profanity</option>
@@ -200,26 +200,26 @@ export default function ContentModerationPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Custom Banned Words
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {settings.customBannedWords.map((word) => (
                     <span
                       key={word}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/15 text-red-400 rounded-full text-sm"
                     >
                       {word}
                       <button
                         onClick={() => removeBannedWord(word)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-400"
                       >
                         x
                       </button>
                     </span>
                   ))}
                   {settings.customBannedWords.length === 0 && (
-                    <span className="text-sm text-gray-500">No custom banned words</span>
+                    <span className="text-sm text-muted-foreground">No custom banned words</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -228,7 +228,7 @@ export default function ContentModerationPage() {
                     value={newBannedWord}
                     onChange={(e) => setNewBannedWord(e.target.value)}
                     placeholder="Add banned word"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                     onKeyDown={(e) => e.key === 'Enter' && addBannedWord()}
                   />
                   <button
@@ -257,24 +257,24 @@ export default function ContentModerationPage() {
                 type="checkbox"
                 checked={settings.spamDetectionEnabled}
                 onChange={(e) => updateSetting('spamDetectionEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Enable Spam Detection</span>
+              <span className="text-sm font-medium text-foreground">Enable Spam Detection</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.duplicateContentCheck}
                 onChange={(e) => updateSetting('duplicateContentCheck', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Check for duplicate content</span>
+              <span className="text-sm text-foreground">Check for duplicate content</span>
             </label>
           </div>
 
           {settings.spamDetectionEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Spam Score Threshold
               </label>
               <input
@@ -283,9 +283,9 @@ export default function ContentModerationPage() {
                 onChange={(e) => updateSetting('spamScoreThreshold', parseInt(e.target.value))}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Content with score &gt;= {settings.spamScoreThreshold} flagged as spam
               </p>
             </div>
@@ -305,18 +305,18 @@ export default function ContentModerationPage() {
               type="checkbox"
               checked={settings.imagesModerationEnabled}
               onChange={(e) => updateSetting('imagesModerationEnabled', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-gray-700">Enable Image Moderation</span>
+            <span className="text-sm font-medium text-foreground">Enable Image Moderation</span>
           </label>
 
           {settings.imagesModerationEnabled && (
             <div className="w-64">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Provider</label>
               <select
                 value={settings.imagesModerationProvider}
                 onChange={(e) => updateSetting('imagesModerationProvider', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               >
                 <option value="aws-rekognition">AWS Rekognition</option>
                 <option value="google-vision">Google Cloud Vision</option>
@@ -340,19 +340,19 @@ export default function ContentModerationPage() {
                 type="checkbox"
                 checked={settings.linkFilterEnabled}
                 onChange={(e) => updateSetting('linkFilterEnabled', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Enable Link Filter</span>
+              <span className="text-sm font-medium text-foreground">Enable Link Filter</span>
             </label>
             {settings.linkFilterEnabled && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Max links per message:</span>
+                <span className="text-sm text-muted-foreground">Max links per message:</span>
                 <input
                   type="number"
                   value={settings.maxLinksPerMessage}
                   onChange={(e) => updateSetting('maxLinksPerMessage', parseInt(e.target.value))}
                   min="0"
-                  className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                 />
               </div>
             )}
@@ -360,26 +360,26 @@ export default function ContentModerationPage() {
 
           {settings.linkFilterEnabled && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Allowed Domains (whitelist)
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {settings.allowedDomains.map((domain) => (
                   <span
                     key={domain}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/15 text-green-400 rounded-full text-sm"
                   >
                     {domain}
                     <button
                       onClick={() => removeAllowedDomain(domain)}
-                      className="text-green-500 hover:text-green-700"
+                      className="text-green-500 hover:text-green-400"
                     >
                       x
                     </button>
                   </span>
                 ))}
                 {settings.allowedDomains.length === 0 && (
-                  <span className="text-sm text-gray-500">All domains allowed</span>
+                  <span className="text-sm text-muted-foreground">All domains allowed</span>
                 )}
               </div>
               <div className="flex gap-2">
@@ -388,7 +388,7 @@ export default function ContentModerationPage() {
                   value={newAllowedDomain}
                   onChange={(e) => setNewAllowedDomain(e.target.value)}
                   placeholder="example.com"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   onKeyDown={(e) => e.key === 'Enter' && addAllowedDomain()}
                 />
                 <button
@@ -412,7 +412,7 @@ export default function ContentModerationPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Min Review Length
               </label>
               <input
@@ -420,11 +420,11 @@ export default function ContentModerationPage() {
                 value={settings.minReviewLength}
                 onChange={(e) => updateSetting('minReviewLength', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Review Length
               </label>
               <input
@@ -432,11 +432,11 @@ export default function ContentModerationPage() {
                 value={settings.maxReviewLength}
                 onChange={(e) => updateSetting('maxReviewLength', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Min Description
               </label>
               <input
@@ -444,11 +444,11 @@ export default function ContentModerationPage() {
                 value={settings.minDescriptionLength}
                 onChange={(e) => updateSetting('minDescriptionLength', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Max Description
               </label>
               <input
@@ -456,7 +456,7 @@ export default function ContentModerationPage() {
                 value={settings.maxDescriptionLength}
                 onChange={(e) => updateSetting('maxDescriptionLength', parseInt(e.target.value))}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -476,24 +476,24 @@ export default function ContentModerationPage() {
                 type="checkbox"
                 checked={settings.requireReviewForPublish}
                 onChange={(e) => updateSetting('requireReviewForPublish', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Require manual review for publishing</span>
+              <span className="text-sm text-foreground">Require manual review for publishing</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={settings.autoApproveVerifiedUsers}
                 onChange={(e) => updateSetting('autoApproveVerifiedUsers', e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded"
+                className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-gray-700">Auto-approve verified users</span>
+              <span className="text-sm text-foreground">Auto-approve verified users</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Flags to Trigger Review
               </label>
               <input
@@ -501,11 +501,11 @@ export default function ContentModerationPage() {
                 value={settings.flagThresholdForReview}
                 onChange={(e) => updateSetting('flagThresholdForReview', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Flags to Auto-Hide
               </label>
               <input
@@ -513,11 +513,11 @@ export default function ContentModerationPage() {
                 value={settings.autoHideAfterFlags}
                 onChange={(e) => updateSetting('autoHideAfterFlags', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Appeal Window (days)
               </label>
               <input
@@ -525,7 +525,7 @@ export default function ContentModerationPage() {
                 value={settings.appealWindowDays}
                 onChange={(e) => updateSetting('appealWindowDays', parseInt(e.target.value))}
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -537,7 +537,7 @@ export default function ContentModerationPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Content Moderation Settings'}
         </button>

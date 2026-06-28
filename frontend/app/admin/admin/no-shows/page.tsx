@@ -72,13 +72,13 @@ export default function NoShowsPage() {
   const getStatusColor = (status: NoShowStatus) => {
     switch (status) {
       case NoShowStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-yellow-500/15 text-yellow-400';
       case NoShowStatus.VALIDATED:
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-500/15 text-green-400';
       case NoShowStatus.REJECTED:
-        return 'bg-red-100 text-red-700';
+        return 'bg-red-500/15 text-red-400';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -104,7 +104,7 @@ export default function NoShowsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
@@ -113,25 +113,25 @@ export default function NoShowsPage() {
   const pendingCount = noShows.filter((n) => n.status === NoShowStatus.PENDING).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/admin/dashboard')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-muted-foreground hover:text-foreground"
             >
               Back
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">No-Show Management</h1>
-              <p className="text-gray-600 mt-1">Review and validate artisan no-show reports</p>
+              <h1 className="text-3xl font-bold text-foreground">No-Show Management</h1>
+              <p className="text-muted-foreground mt-1">Review and validate artisan no-show reports</p>
             </div>
           </div>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
             Refresh
           </button>
@@ -139,7 +139,7 @@ export default function NoShowsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
           </div>
         )}
@@ -150,7 +150,7 @@ export default function NoShowsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Pending Review</p>
+                  <p className="text-sm text-muted-foreground">Pending Review</p>
                   <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
@@ -162,8 +162,8 @@ export default function NoShowsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Reports</p>
-                  <p className="text-3xl font-bold text-blue-600">{noShows.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Reports</p>
+                  <p className="text-3xl font-bold text-primary">{noShows.length}</p>
                 </div>
                 <span className="text-4xl">📋</span>
               </div>
@@ -174,7 +174,7 @@ export default function NoShowsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Action Required</p>
+                  <p className="text-sm text-muted-foreground">Action Required</p>
                   <p className="text-3xl font-bold text-red-600">
                     {pendingCount > 0 ? 'Yes' : 'No'}
                   </p>
@@ -194,86 +194,86 @@ export default function NoShowsPage() {
           <CardContent>
             {noShows.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-background">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Mission
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Artisan
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Client
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Evidence
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Reported
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-card divide-y divide-border">
                     {noShows.map((noShow) => (
-                      <tr key={noShow.id} className="hover:bg-gray-50">
+                      <tr key={noShow.id} className="hover:bg-accent">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {noShow.mission?.title || 'Unknown Mission'}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                               {noShow.mission?.address?.city || 'N/A'}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {noShow.artisan?.firstName} {noShow.artisan?.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">{noShow.artisan?.email}</div>
+                            <div className="text-sm text-muted-foreground">{noShow.artisan?.email}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {noShow.client?.firstName} {noShow.client?.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">{noShow.client?.email}</div>
+                            <div className="text-sm text-muted-foreground">{noShow.client?.email}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex gap-2">
                             {noShow.evidence.gpsVerified && (
                               <span
-                                className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded"
+                                className="px-2 py-1 text-xs bg-green-500/15 text-green-400 rounded"
                                 title="GPS Verified"
                               >
                                 GPS
                               </span>
                             )}
                             <span
-                              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded"
+                              className="px-2 py-1 text-xs bg-primary/10 text-primary rounded"
                               title="Wait Time"
                             >
                               {noShow.evidence.waitTime}min
                             </span>
                             <span
-                              className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded"
+                              className="px-2 py-1 text-xs bg-purple-500/15 text-purple-400 rounded"
                               title="Contact Attempts"
                             >
                               {noShow.evidence.contactAttempts} calls
                             </span>
                             {noShow.evidence.photos && noShow.evidence.photos.length > 0 && (
                               <span
-                                className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded"
+                                className="px-2 py-1 text-xs bg-orange-500/15 text-orange-400 rounded"
                                 title="Photos"
                               >
                                 {noShow.evidence.photos.length} pics
@@ -281,7 +281,7 @@ export default function NoShowsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                           {formatDate(noShow.reportedAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -297,7 +297,7 @@ export default function NoShowsPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => setSelectedNoShow(noShow)}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-primary hover:text-primary"
                             >
                               Review
                             </button>
@@ -306,7 +306,7 @@ export default function NoShowsPage() {
                                 <button
                                   onClick={() => handleValidate(noShow.id)}
                                   disabled={processingId === noShow.id}
-                                  className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                  className="text-green-600 hover:text-green-400 disabled:opacity-50"
                                 >
                                   Validate
                                 </button>
@@ -316,7 +316,7 @@ export default function NoShowsPage() {
                                     setShowRejectModal(true);
                                   }}
                                   disabled={processingId === noShow.id}
-                                  className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                                  className="text-red-600 hover:text-red-400 disabled:opacity-50"
                                 >
                                   Reject
                                 </button>
@@ -330,7 +330,7 @@ export default function NoShowsPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <span className="text-4xl block mb-2">✅</span>
                 <p>No pending no-show reports</p>
               </div>
@@ -341,13 +341,13 @@ export default function NoShowsPage() {
         {/* Review Modal */}
         {selectedNoShow && !showRejectModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-card rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">No-Show Details</h2>
+                  <h2 className="text-xl font-semibold text-foreground">No-Show Details</h2>
                   <button
                     onClick={() => setSelectedNoShow(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-muted-foreground hover:text-muted-foreground"
                   >
                     X
                   </button>
@@ -355,21 +355,21 @@ export default function NoShowsPage() {
 
                 <div className="space-y-6">
                   {/* Mission Info */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Mission Information</h3>
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Mission Information</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-600">Title</p>
+                        <p className="text-sm text-muted-foreground">Title</p>
                         <p className="font-medium">{selectedNoShow.mission?.title || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Scheduled Date</p>
+                        <p className="text-sm text-muted-foreground">Scheduled Date</p>
                         <p className="font-medium">
                           {formatDate(selectedNoShow.mission?.scheduledDate)}
                         </p>
                       </div>
                       <div className="col-span-2">
-                        <p className="text-sm text-gray-600">Address</p>
+                        <p className="text-sm text-muted-foreground">Address</p>
                         <p className="font-medium">
                           {selectedNoShow.mission?.address
                             ? `${selectedNoShow.mission.address.street}, ${selectedNoShow.mission.address.postalCode} ${selectedNoShow.mission.address.city}`
@@ -380,79 +380,79 @@ export default function NoShowsPage() {
                   </div>
 
                   {/* Parties */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Parties Involved</h3>
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Parties Involved</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-600 font-medium">Artisan (Reporter)</p>
-                        <p className="font-medium text-gray-900">
+                      <div className="p-4 bg-primary/10 rounded-lg">
+                        <p className="text-sm text-primary font-medium">Artisan (Reporter)</p>
+                        <p className="font-medium text-foreground">
                           {selectedNoShow.artisan?.firstName} {selectedNoShow.artisan?.lastName}
                         </p>
-                        <p className="text-sm text-gray-600">{selectedNoShow.artisan?.email}</p>
+                        <p className="text-sm text-muted-foreground">{selectedNoShow.artisan?.email}</p>
                       </div>
-                      <div className="p-4 bg-orange-50 rounded-lg">
+                      <div className="p-4 bg-orange-500/10 rounded-lg">
                         <p className="text-sm text-orange-600 font-medium">Client (No-Show)</p>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {selectedNoShow.client?.firstName} {selectedNoShow.client?.lastName}
                         </p>
-                        <p className="text-sm text-gray-600">{selectedNoShow.client?.email}</p>
+                        <p className="text-sm text-muted-foreground">{selectedNoShow.client?.email}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Evidence */}
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-gray-900 mb-3">Evidence Submitted</h3>
+                  <div className="border-b border-border pb-4">
+                    <h3 className="font-medium text-foreground mb-3">Evidence Submitted</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="p-4 bg-background rounded-lg text-center">
+                        <p className="text-2xl font-bold text-foreground">
                           {selectedNoShow.evidence.waitTime}
                         </p>
-                        <p className="text-sm text-gray-600">Minutes Waited</p>
+                        <p className="text-sm text-muted-foreground">Minutes Waited</p>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="p-4 bg-background rounded-lg text-center">
+                        <p className="text-2xl font-bold text-foreground">
                           {selectedNoShow.evidence.contactAttempts}
                         </p>
-                        <p className="text-sm text-gray-600">Contact Attempts</p>
+                        <p className="text-sm text-muted-foreground">Contact Attempts</p>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
+                      <div className="p-4 bg-background rounded-lg text-center">
                         <p className="text-2xl">
                           {selectedNoShow.evidence.gpsVerified ? '✅' : '❌'}
                         </p>
-                        <p className="text-sm text-gray-600">GPS Verified</p>
+                        <p className="text-sm text-muted-foreground">GPS Verified</p>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="p-4 bg-background rounded-lg text-center">
+                        <p className="text-2xl font-bold text-foreground">
                           {selectedNoShow.evidence.photos?.length || 0}
                         </p>
-                        <p className="text-sm text-gray-600">Photos</p>
+                        <p className="text-sm text-muted-foreground">Photos</p>
                       </div>
                     </div>
                     {selectedNoShow.evidence.notes && (
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">Notes</p>
-                        <p className="text-gray-900">{selectedNoShow.evidence.notes}</p>
+                      <div className="mt-4 p-4 bg-background rounded-lg">
+                        <p className="text-sm text-muted-foreground">Notes</p>
+                        <p className="text-foreground">{selectedNoShow.evidence.notes}</p>
                       </div>
                     )}
                   </div>
 
                   {/* Compensation Preview */}
                   {selectedNoShow.compensation && (
-                    <div className="border-b border-gray-200 pb-4">
-                      <h3 className="font-medium text-gray-900 mb-3">
+                    <div className="border-b border-border pb-4">
+                      <h3 className="font-medium text-foreground mb-3">
                         Compensation (if validated)
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-green-50 rounded-lg">
+                        <div className="p-4 bg-green-500/10 rounded-lg">
                           <p className="text-sm text-green-600">Artisan Compensation</p>
-                          <p className="text-xl font-bold text-green-700">
+                          <p className="text-xl font-bold text-green-400">
                             {formatCurrency(selectedNoShow.compensation.artisanAmount)}
                           </p>
                         </div>
-                        <div className="p-4 bg-red-50 rounded-lg">
+                        <div className="p-4 bg-red-500/10 rounded-lg">
                           <p className="text-sm text-red-600">Client Penalty</p>
-                          <p className="text-xl font-bold text-red-700">
+                          <p className="text-xl font-bold text-red-400">
                             {formatCurrency(selectedNoShow.compensation.clientPenalty)}
                           </p>
                         </div>
@@ -465,7 +465,7 @@ export default function NoShowsPage() {
                     <div className="flex justify-end gap-3 pt-4">
                       <button
                         onClick={() => setSelectedNoShow(null)}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                        className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                       >
                         Close
                       </button>
@@ -494,17 +494,17 @@ export default function NoShowsPage() {
         {/* Reject Modal */}
         {showRejectModal && selectedNoShow && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Reject No-Show Report</h2>
-                <p className="text-gray-600 mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-4">Reject No-Show Report</h2>
+                <p className="text-muted-foreground mb-4">
                   Please provide a reason for rejecting this no-show report.
                 </p>
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Enter rejection reason..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   rows={4}
                 />
                 <div className="flex justify-end gap-3 mt-4">
@@ -513,7 +513,7 @@ export default function NoShowsPage() {
                       setShowRejectModal(false);
                       setRejectReason('');
                     }}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
                     Cancel
                   </button>

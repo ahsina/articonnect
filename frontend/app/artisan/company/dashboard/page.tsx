@@ -46,7 +46,7 @@ export default function CompanyDashboardPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -57,10 +57,10 @@ export default function CompanyDashboardPage() {
         <Card>
           <CardContent className="p-8 text-center">
             <div className="text-5xl mb-4">🏢</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl font-bold text-foreground mb-2">
               {t('company', 'noCompany') || 'No Company Found'}
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {t('company', 'noCompanyDesc') || 'You have not created a company yet.'}
             </p>
             <Link href="/artisan/company/create">
@@ -77,16 +77,16 @@ export default function CompanyDashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{company.companyName}</h1>
-          <p className="text-gray-600">{t('company', 'companyDashboard') || 'Company Dashboard'}</p>
+          <h1 className="text-2xl font-bold text-foreground">{company.companyName}</h1>
+          <p className="text-muted-foreground">{t('company', 'companyDashboard') || 'Company Dashboard'}</p>
         </div>
         <div className="flex gap-2">
           {company.businessVerified ? (
-            <Badge className="bg-green-100 text-green-800">
+            <Badge className="bg-green-500/15 text-green-400">
               ✓ {t('company', 'verified') || 'Verified'}
             </Badge>
           ) : (
-            <Badge className="bg-yellow-100 text-yellow-800">
+            <Badge className="bg-yellow-500/15 text-yellow-400">
               {t('company', 'pendingVerification') || 'Pending Verification'}
             </Badge>
           )}
@@ -96,38 +96,38 @@ export default function CompanyDashboardPage() {
       {/* Stats Grid */}
       {stats && (
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="p-4">
-              <div className="text-sm text-blue-600">
+              <div className="text-sm text-primary">
                 {t('company', 'totalMissions') || 'Total Missions'}
               </div>
-              <div className="text-2xl font-bold text-blue-800">{stats.totalMissions}</div>
+              <div className="text-2xl font-bold text-primary">{stats.totalMissions}</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
             <CardContent className="p-4">
               <div className="text-sm text-green-600">
                 {t('company', 'completedMissions') || 'Completed'}
               </div>
-              <div className="text-2xl font-bold text-green-800">{stats.completedMissions}</div>
+              <div className="text-2xl font-bold text-green-400">{stats.completedMissions}</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
             <CardContent className="p-4">
               <div className="text-sm text-purple-600">
                 {t('company', 'totalRevenue') || 'Total Revenue'}
               </div>
-              <div className="text-2xl font-bold text-purple-800">
+              <div className="text-2xl font-bold text-purple-400">
                 {formatCurrency(stats.totalRevenue)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
             <CardContent className="p-4">
               <div className="text-sm text-yellow-600">
                 {t('company', 'employees') || 'Employees'}
               </div>
-              <div className="text-2xl font-bold text-yellow-800">{stats.employeeCount}</div>
+              <div className="text-2xl font-bold text-yellow-400">{stats.employeeCount}</div>
             </CardContent>
           </Card>
         </div>
@@ -138,15 +138,15 @@ export default function CompanyDashboardPage() {
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('company', 'activeMissions') || 'Active Missions'}
               </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.activeMissions}</div>
+              <div className="text-2xl font-bold text-foreground">{stats.activeMissions}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('company', 'averageRating') || 'Average Rating'}
               </div>
               <div className="text-2xl font-bold text-yellow-600">
@@ -156,10 +156,10 @@ export default function CompanyDashboardPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {t('company', 'totalReviews') || 'Total Reviews'}
               </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalReviews}</div>
+              <div className="text-2xl font-bold text-foreground">{stats.totalReviews}</div>
             </CardContent>
           </Card>
         </div>
@@ -203,31 +203,31 @@ export default function CompanyDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">{t('company', 'siret') || 'SIRET/RCS'}</span>
+              <span className="text-muted-foreground">{t('company', 'siret') || 'SIRET/RCS'}</span>
               <span className="font-medium">{company.siret}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">{t('company', 'location') || 'Location'}</span>
+              <span className="text-muted-foreground">{t('company', 'location') || 'Location'}</span>
               <span className="font-medium">
                 {company.city}, {company.country}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">
+              <span className="text-muted-foreground">
                 {t('company', 'serviceRadius') || 'Service Radius'}
               </span>
               <span className="font-medium">{company.serviceRadius} km</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">
+              <span className="text-muted-foreground">
                 {t('company', 'stripeStatus') || 'Stripe Status'}
               </span>
               {company.stripeOnboarded ? (
-                <Badge className="bg-green-100 text-green-800">
+                <Badge className="bg-green-500/15 text-green-400">
                   {t('company', 'connected') || 'Connected'}
                 </Badge>
               ) : (
-                <Badge className="bg-yellow-100 text-yellow-800">
+                <Badge className="bg-yellow-500/15 text-yellow-400">
                   {t('company', 'notConnected') || 'Not Connected'}
                 </Badge>
               )}
@@ -252,18 +252,18 @@ export default function CompanyDashboardPage() {
               {company.employees.slice(0, 5).map((employee) => (
                 <div
                   key={employee.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-background rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-medium">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
                       {employee.user?.firstName?.[0]}
                       {employee.user?.lastName?.[0]}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-foreground">
                         {employee.user?.firstName} {employee.user?.lastName}
                       </div>
-                      <div className="text-sm text-gray-500">{employee.user?.email}</div>
+                      <div className="text-sm text-muted-foreground">{employee.user?.email}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -271,8 +271,8 @@ export default function CompanyDashboardPage() {
                     <Badge
                       className={
                         employee.status === 'ACTIVE'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-green-500/15 text-green-400'
+                          : 'bg-yellow-500/15 text-yellow-400'
                       }
                     >
                       {employee.status === 'ACTIVE' ? t('status', 'active') || 'Actif' : t('status', 'inactive') || 'Inactif'}
@@ -282,7 +282,7 @@ export default function CompanyDashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p className="mb-4">{t('company', 'noEmployees') || 'No employees yet'}</p>
               <Link href="/artisan/company/employees">
                 <Button>{t('company', 'inviteEmployee') || 'Invite First Employee'}</Button>

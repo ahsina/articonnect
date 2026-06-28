@@ -188,9 +188,9 @@ export function ElectronicSignature({
     : "Je certifie que ce devis reflete fidelement les prestations proposees et les prix indiques. Cette signature electronique engage ma responsabilite professionnelle conformement au reglement eIDAS.";
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-lg mx-auto">
+    <div className="bg-card rounded-xl shadow-lg overflow-hidden max-w-lg mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
+      <div className="bg-gradient-to-r from-primary to-blue-800 px-6 py-4">
         <h2 className="text-xl font-bold text-white">
           Signature electronique
         </h2>
@@ -201,13 +201,13 @@ export function ElectronicSignature({
 
       <div className="p-6">
         {/* Mode Toggle */}
-        <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+        <div className="flex rounded-lg bg-muted p-1 mb-6">
           <button
             onClick={() => setMode('draw')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
               mode === 'draw'
-                ? 'bg-white shadow text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-card shadow text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Dessiner
@@ -216,8 +216,8 @@ export function ElectronicSignature({
             onClick={() => setMode('type')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
               mode === 'type'
-                ? 'bg-white shadow text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-card shadow text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Taper
@@ -230,7 +230,7 @@ export function ElectronicSignature({
             <div className="relative">
               <canvas
                 ref={canvasRef}
-                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-crosshair touch-none"
+                className="w-full h-32 border-2 border-dashed border-border rounded-lg cursor-crosshair touch-none"
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
@@ -241,13 +241,13 @@ export function ElectronicSignature({
               />
               {!hasDrawn && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-gray-400">Signez ici</span>
+                  <span className="text-muted-foreground">Signez ici</span>
                 </div>
               )}
             </div>
             <button
               onClick={clearCanvas}
-              className="mt-2 text-sm text-gray-500 hover:text-gray-700"
+              className="mt-2 text-sm text-muted-foreground hover:text-foreground"
             >
               Effacer
             </button>
@@ -259,25 +259,25 @@ export function ElectronicSignature({
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
               placeholder="Votre nom complet"
-              className="w-full px-4 py-3 text-2xl font-serif italic text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="w-full px-4 py-3 text-2xl font-serif italic text-center border-2 border-border rounded-lg focus:border-primary focus:ring-2 focus:ring-blue-200"
               style={{ fontFamily: '"Brush Script MT", cursive' }}
             />
-            <p className="mt-2 text-sm text-gray-500 text-center">
+            <p className="mt-2 text-sm text-muted-foreground text-center">
               Cette signature manuscrite sera utilisee
             </p>
           </div>
         )}
 
         {/* Legal Consent */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-6 p-4 bg-background rounded-lg">
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={consentChecked}
               onChange={(e) => setConsentChecked(e.target.checked)}
-              className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="mt-1 w-5 h-5 text-primary border-border rounded focus:ring-primary"
             />
-            <span className="text-sm text-gray-600 leading-relaxed">
+            <span className="text-sm text-muted-foreground leading-relaxed">
               {legalText}
             </span>
           </label>
@@ -285,8 +285,8 @@ export function ElectronicSignature({
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
 
@@ -296,7 +296,7 @@ export function ElectronicSignature({
             <button
               onClick={onCancel}
               disabled={loading}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
             >
               Annuler
             </button>
@@ -304,7 +304,7 @@ export function ElectronicSignature({
           <button
             onClick={handleSign}
             disabled={!isValid() || loading}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -326,8 +326,8 @@ export function ElectronicSignature({
         </div>
 
         {/* Security Info */}
-        <div className="mt-6 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="mt-6 pt-4 border-t border-border">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>

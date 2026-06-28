@@ -20,12 +20,12 @@ interface ClientProfile {
 }
 
 const STATUS_BADGES: Record<MissionStatus, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  NEGOTIATING: 'bg-blue-100 text-blue-800',
-  ACCEPTED: 'bg-green-100 text-green-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  COMPLETED: 'bg-gray-100 text-gray-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  NEGOTIATING: 'bg-primary/10 text-primary',
+  ACCEPTED: 'bg-green-500/15 text-green-400',
+  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+  COMPLETED: 'bg-muted text-foreground',
+  CANCELLED: 'bg-red-500/15 text-red-400',
 };
 
 export default function ClientDashboard() {
@@ -58,7 +58,7 @@ export default function ClientDashboard() {
   const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
 
   const getStatusBadge = (status: MissionStatus): string => {
-    return STATUS_BADGES[status] || 'bg-gray-100 text-gray-800';
+    return STATUS_BADGES[status] || 'bg-muted text-foreground';
   };
 
   const handleLogout = async () => {
@@ -69,19 +69,19 @@ export default function ClientDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white shadow">
+      <nav className="bg-card shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-600">
+              <Link href="/" className="text-2xl font-bold text-primary">
                 Krafolt
               </Link>
             </div>
@@ -109,30 +109,30 @@ export default function ClientDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Welcome Section */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="bg-card shadow rounded-lg p-6 mb-6">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-foreground">
                   {t('missions', 'welcomeClient')}, {user?.firstName || 'Client'} !
                 </h1>
                 {isProfessional && (
-                  <Badge variant="default" className="bg-blue-600">
+                  <Badge variant="default" className="bg-primary">
                     🏢 {t('client', 'professional') || 'Professionnel'}
                   </Badge>
                 )}
               </div>
               {isProfessional && clientProfile?.companyName && (
                 <div className="mb-2">
-                  <p className="text-lg font-semibold text-blue-600">
+                  <p className="text-lg font-semibold text-primary">
                     {clientProfile.companyName}
                   </p>
                   {clientProfile.industry && (
-                    <p className="text-sm text-gray-500">{clientProfile.industry}</p>
+                    <p className="text-sm text-muted-foreground">{clientProfile.industry}</p>
                   )}
                 </div>
               )}
-              <p className="text-gray-600">{t('missions', 'manageRequests')}</p>
+              <p className="text-muted-foreground">{t('missions', 'manageRequests')}</p>
             </div>
             {isProfessional && (
               <Link href="/client/settings">
@@ -148,7 +148,7 @@ export default function ClientDashboard() {
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <Link
             href="/client/missions/new"
-            className="bg-blue-600 text-white p-6 rounded-lg hover:bg-blue-700 transition"
+            className="bg-primary text-white p-6 rounded-lg hover:bg-primary/90 transition"
           >
             <div className="text-3xl mb-2">🔧</div>
             <h3 className="text-xl font-semibold mb-2">Nouvelle Demande</h3>
@@ -175,16 +175,16 @@ export default function ClientDashboard() {
         </div>
 
         {/* Recent Missions */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Mes Missions Récentes</h2>
+        <div className="bg-card shadow rounded-lg p-6">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Mes Missions Récentes</h2>
 
           {missions.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Aucune mission pour le moment
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Créez votre première demande d'intervention
               </p>
               <Link href="/client/missions/new">
@@ -197,18 +197,18 @@ export default function ClientDashboard() {
                 <Link
                   key={mission.id}
                   href={`/client/missions/${mission.id}`}
-                  className="block border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition"
+                  className="block border border-border rounded-lg p-4 hover:border-primary transition"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-foreground">
                         {mission.title}
                       </h3>
-                      <p className="text-gray-600 text-sm mt-1">
+                      <p className="text-muted-foreground text-sm mt-1">
                         {mission.city} • {mission.category}
                       </p>
                       {mission.artisan && (
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-muted-foreground text-sm">
                           Artisan: {mission.artisan.firstName} {mission.artisan.lastName}
                         </p>
                       )}
@@ -222,7 +222,7 @@ export default function ClientDashboard() {
                         {mission.status}
                       </span>
                       {mission.agreedPrice && (
-                        <div className="text-lg font-bold text-gray-900 mt-2">
+                        <div className="text-lg font-bold text-foreground mt-2">
                           {mission.agreedPrice}€
                         </div>
                       )}

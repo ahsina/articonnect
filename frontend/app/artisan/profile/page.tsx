@@ -236,7 +236,7 @@ function ArtisanProfileContent() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -244,20 +244,20 @@ function ArtisanProfileContent() {
   // Setup mode for new artisans
   if (isSetup || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-background py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             {isSetup && (
-              <Badge variant="secondary" className="mb-4 bg-blue-100 text-blue-800">
+              <Badge variant="secondary" className="mb-4 bg-primary/10 text-primary">
                 {t('artisan', 'initialSetup') || 'Initial Setup'}
               </Badge>
             )}
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               {isSetup
                 ? t('artisan', 'completeProfile') || 'Complete Your Profile'
                 : t('artisan', 'myProfile') || 'My Profile'}
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-muted-foreground mt-2">
               {isSetup
                 ? t('artisan', 'setupDescription') ||
                   'Set up your artisan profile to start receiving missions'
@@ -273,7 +273,7 @@ function ArtisanProfileContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('artisan', 'companyName') || 'Company Name'} *
                   </label>
                   <Input
@@ -286,7 +286,7 @@ function ArtisanProfileContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('artisan', 'siret') || 'SIRET / Business ID'} *
                     </label>
                     <Input
@@ -297,7 +297,7 @@ function ArtisanProfileContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('auth', 'phone') || 'Phone'}
                     </label>
                     <Input
@@ -309,14 +309,14 @@ function ArtisanProfileContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('artisan', 'businessDescription') || 'Business Description'}
                   </label>
                   <textarea
                     value={setupForm.description}
                     onChange={(e) => setSetupForm({ ...setupForm, description: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Describe your business and experience..."
                   />
                 </div>
@@ -337,12 +337,12 @@ function ArtisanProfileContent() {
                       onClick={() => handleSpecialtyToggle(specialty.id)}
                       className={`p-4 rounded-lg border-2 transition-all ${
                         setupForm.specialties.includes(specialty.id)
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-600 bg-primary/10'
+                          : 'border-border hover:border-border'
                       }`}
                     >
                       <div className="text-3xl mb-2">{specialty.icon}</div>
-                      <div className="text-sm font-medium text-gray-900">{specialty.name}</div>
+                      <div className="text-sm font-medium text-foreground">{specialty.name}</div>
                     </button>
                   ))}
                 </div>
@@ -357,7 +357,7 @@ function ArtisanProfileContent() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('artisan', 'city') || 'City'}
                     </label>
                     <Input
@@ -367,7 +367,7 @@ function ArtisanProfileContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('artisan', 'postalCode') || 'Postal Code'}
                     </label>
                     <Input
@@ -377,13 +377,13 @@ function ArtisanProfileContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       {t('artisan', 'country') || 'Country'}
                     </label>
                     <select
                       value={setupForm.country}
                       onChange={(e) => setSetupForm({ ...setupForm, country: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="Luxembourg">Luxembourg</option>
                       <option value="France">France</option>
@@ -393,7 +393,7 @@ function ArtisanProfileContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('artisan', 'serviceRadius') || 'Service Radius (km)'}
                   </label>
                   <Input
@@ -403,7 +403,7 @@ function ArtisanProfileContent() {
                     min="1"
                     max="100"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {t('artisan', 'maxDistance') || 'Maximum distance'}: {setupForm.serviceRadius}{' '}
                     km
                   </p>
@@ -418,7 +418,7 @@ function ArtisanProfileContent() {
               </CardHeader>
               <CardContent>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     {t('artisan', 'hourlyRate') || 'Hourly Rate (EUR)'}
                   </label>
                   <Input
@@ -428,7 +428,7 @@ function ArtisanProfileContent() {
                     placeholder="50"
                     min="0"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {t('artisan', 'rateNegotiable') ||
                       'This rate is indicative and can be adjusted per mission'}
                   </p>
@@ -437,7 +437,7 @@ function ArtisanProfileContent() {
             </Card>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -472,10 +472,10 @@ function ArtisanProfileContent() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('artisan', 'myProfile') || 'My Profile'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('artisan', 'manageProfile') || 'Manage your artisan profile and settings'}
           </p>
         </div>
@@ -495,9 +495,9 @@ function ArtisanProfileContent() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{profile.rating.toFixed(1)}</div>
-              <div className="text-sm text-gray-500">{t('artisan', 'rating') || 'Rating'}</div>
-              <div className="text-xs text-gray-400">{profile.reviewCount} reviews</div>
+              <div className="text-3xl font-bold text-primary">{profile.rating.toFixed(1)}</div>
+              <div className="text-sm text-muted-foreground">{t('artisan', 'rating') || 'Rating'}</div>
+              <div className="text-xs text-muted-foreground">{profile.reviewCount} reviews</div>
             </div>
           </CardContent>
         </Card>
@@ -505,7 +505,7 @@ function ArtisanProfileContent() {
           <CardContent className="pt-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">{profile.missionCount}</div>
-              <div className="text-sm text-gray-500">{t('artisan', 'missions') || 'Missions'}</div>
+              <div className="text-sm text-muted-foreground">{t('artisan', 'missions') || 'Missions'}</div>
             </div>
           </CardContent>
         </Card>
@@ -513,7 +513,7 @@ function ArtisanProfileContent() {
           <CardContent className="pt-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600">{profile.serviceRadius}km</div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'serviceRadius') || 'Service Area'}
               </div>
             </div>
@@ -525,7 +525,7 @@ function ArtisanProfileContent() {
               <div className="text-3xl font-bold text-orange-600">
                 {profile.certifications?.length || 0}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'certifications') || 'Certifications'}
               </div>
             </div>
@@ -537,25 +537,25 @@ function ArtisanProfileContent() {
       <div className="flex gap-2 mb-6 border-b">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-medium ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('artisan', 'overview') || 'Overview'}
         </button>
         <button
           onClick={() => setActiveTab('badges')}
-          className={`px-4 py-2 font-medium ${activeTab === 'badges' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'badges' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('artisan', 'badges') || 'Badges'} ({badges.length})
         </button>
         <button
           onClick={() => setActiveTab('edit')}
-          className={`px-4 py-2 font-medium ${activeTab === 'edit' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'edit' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('artisan', 'editProfile') || 'Edit Profile'}
         </button>
         <button
           onClick={() => setActiveTab('business')}
-          className={`px-4 py-2 font-medium ${activeTab === 'business' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+          className={`px-4 py-2 font-medium ${activeTab === 'business' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
         >
           {t('artisan', 'businessInfo') || 'Business Info'}
         </button>
@@ -570,35 +570,35 @@ function ArtisanProfileContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {t('artisan', 'businessName') || 'Business Name'}
                 </span>
                 <span className="font-medium">{profile.companyName}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {t('artisan', 'baseAddress') || 'Base Address'}
                 </span>
                 <span className="font-medium">{profile.baseAddress || 'Not set'}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t('artisan', 'hourlyRate') || 'Hourly Rate'}</span>
+                <span className="text-muted-foreground">{t('artisan', 'hourlyRate') || 'Hourly Rate'}</span>
                 <span className="font-medium">EUR {profile.hourlyRate || 0}/hr</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {t('artisan', 'emergencyRate') || 'Emergency Rate'}
                 </span>
                 <span className="font-medium">EUR {profile.emergencyRate || 0}/hr</span>
               </div>
               {profile.website && (
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">{t('artisan', 'website') || 'Website'}</span>
+                  <span className="text-muted-foreground">{t('artisan', 'website') || 'Website'}</span>
                   <a
                     href={profile.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {profile.website}
                   </a>
@@ -622,7 +622,7 @@ function ArtisanProfileContent() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">
+                <p className="text-muted-foreground text-center py-4">
                   {t('artisan', 'noSpecialties') || 'No specialties added yet'}
                 </p>
               )}
@@ -635,9 +635,9 @@ function ArtisanProfileContent() {
             </CardHeader>
             <CardContent>
               {profile.description ? (
-                <p className="text-gray-700 whitespace-pre-wrap">{profile.description}</p>
+                <p className="text-foreground whitespace-pre-wrap">{profile.description}</p>
               ) : (
-                <p className="text-gray-500 text-center py-4">
+                <p className="text-muted-foreground text-center py-4">
                   {t('artisan', 'noDescription') || 'No description added yet'}
                 </p>
               )}
@@ -651,7 +651,7 @@ function ArtisanProfileContent() {
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
                 <div
-                  className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}
+                  className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/20'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.businessVerified ? '✓' : '⏳'}</span>
@@ -659,7 +659,7 @@ function ArtisanProfileContent() {
                       <div className="font-medium">
                         {t('artisan', 'businessVerification') || 'Business Verification'}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {profile.businessVerified
                           ? t('artisan', 'verified') || 'Verified'
                           : profile.businessVerificationStatus || 'Pending'}
@@ -668,7 +668,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}
+                  className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/20'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.stripeOnboarded ? '✓' : '⏳'}</span>
@@ -676,7 +676,7 @@ function ArtisanProfileContent() {
                       <div className="font-medium">
                         {t('artisan', 'paymentSetup') || 'Payment Setup'}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {profile.stripeOnboarded
                           ? t('artisan', 'configured') || 'Configured'
                           : t('artisan', 'pendingSetup') || 'Pending Setup'}
@@ -685,7 +685,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border ${profile.certifications && profile.certifications.length > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}
+                  className={`p-4 rounded-lg border ${profile.certifications && profile.certifications.length > 0 ? 'bg-green-500/10 border-green-500/30' : 'bg-background border-border'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
@@ -695,7 +695,7 @@ function ArtisanProfileContent() {
                       <div className="font-medium">
                         {t('artisan', 'certifications') || 'Certifications'}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {profile.certifications?.length || 0}{' '}
                         {t('artisan', 'uploaded') || 'uploaded'}
                       </div>
@@ -720,7 +720,7 @@ function ArtisanProfileContent() {
             </CardHeader>
             <CardContent>
               {badges.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <div className="text-4xl mb-4">🏅</div>
                   <p>{t('artisan', 'noBadges') || 'No badges earned yet'}</p>
                   <p className="text-sm mt-2">
@@ -732,12 +732,12 @@ function ArtisanProfileContent() {
                   {badges.map((badge) => (
                     <div
                       key={badge.id}
-                      className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg text-center hover:shadow-md transition-shadow"
+                      className="p-4 bg-gradient-to-br from-yellow-500/10 to-orange-50 border border-yellow-500/20 rounded-lg text-center hover:shadow-md transition-shadow"
                     >
                       <div className="text-4xl mb-2">{badge.icon}</div>
-                      <div className="font-semibold text-gray-900">{badge.name}</div>
-                      <div className="text-xs text-gray-600 mt-1">{badge.description}</div>
-                      <div className="text-xs text-gray-400 mt-2">
+                      <div className="font-semibold text-foreground">{badge.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{badge.description}</div>
+                      <div className="text-xs text-muted-foreground mt-2">
                         {new Date(badge.earnedAt).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
                       </div>
                       <Badge className="mt-2 text-xs" variant="secondary">
@@ -760,36 +760,36 @@ function ArtisanProfileContent() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
                   <div className="text-3xl opacity-50">🌟</div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-700">50 Missions</div>
-                    <div className="text-sm text-gray-500">Complete 50 missions</div>
-                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-600 rounded-full" style={{ width: `${Math.min((profile?.missionCount || 0) / 50 * 100, 100)}%` }} />
+                    <div className="font-medium text-foreground">50 Missions</div>
+                    <div className="text-sm text-muted-foreground">Complete 50 missions</div>
+                    <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min((profile?.missionCount || 0) / 50 * 100, 100)}%` }} />
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">{profile?.missionCount || 0} / 50</div>
+                    <div className="text-xs text-muted-foreground mt-1">{profile?.missionCount || 0} / 50</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
                   <div className="text-3xl opacity-50">💎</div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-700">Perfect Rating</div>
-                    <div className="text-sm text-gray-500">Maintain 5.0 rating for 30 days</div>
-                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="font-medium text-foreground">Perfect Rating</div>
+                    <div className="text-sm text-muted-foreground">Maintain 5.0 rating for 30 days</div>
+                    <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-purple-600 rounded-full" style={{ width: profile?.rating === 5 ? '100%' : '0%' }} />
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
                   <div className="text-3xl opacity-50">🔥</div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-700">Verified Expert</div>
-                    <div className="text-sm text-gray-500">Upload 5 certifications</div>
-                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="font-medium text-foreground">Verified Expert</div>
+                    <div className="text-sm text-muted-foreground">Upload 5 certifications</div>
+                    <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-orange-600 rounded-full" style={{ width: `${Math.min((profile?.certifications?.length || 0) / 5 * 100, 100)}%` }} />
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">{profile?.certifications?.length || 0} / 5</div>
+                    <div className="text-xs text-muted-foreground mt-1">{profile?.certifications?.length || 0} / 5</div>
                   </div>
                 </div>
               </div>
@@ -810,7 +810,7 @@ function ArtisanProfileContent() {
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'businessName') || 'Business Name'}
                 </label>
                 <Input
@@ -819,7 +819,7 @@ function ArtisanProfileContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'website') || 'Website'}
                 </label>
                 <Input
@@ -832,14 +832,14 @@ function ArtisanProfileContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('artisan', 'description') || 'Description'}
               </label>
               <textarea
                 value={editForm.description || ''}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder={
                   t('artisan', 'descriptionPlaceholder') ||
                   'Tell clients about your experience and services...'
@@ -848,7 +848,7 @@ function ArtisanProfileContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('artisan', 'baseAddress') || 'Base Address'}
               </label>
               <Input
@@ -860,7 +860,7 @@ function ArtisanProfileContent() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'serviceRadius') || 'Service Radius (km)'}
                 </label>
                 <Input
@@ -874,7 +874,7 @@ function ArtisanProfileContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'hourlyRate') || 'Hourly Rate (EUR)'}
                 </label>
                 <Input
@@ -887,7 +887,7 @@ function ArtisanProfileContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {t('artisan', 'emergencyRate') || 'Emergency Rate (EUR)'}
                 </label>
                 <Input
@@ -924,31 +924,31 @@ function ArtisanProfileContent() {
           <CardContent>
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-sm text-gray-500">
+                <div className="p-4 bg-background rounded-lg">
+                  <div className="text-sm text-muted-foreground">
                     {t('artisan', 'siret') || 'SIRET Number'}
                   </div>
                   <div className="font-mono font-medium">{profile.siret}</div>
                 </div>
                 {profile.vatNumber && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-sm text-gray-500">
+                  <div className="p-4 bg-background rounded-lg">
+                    <div className="text-sm text-muted-foreground">
                       {t('artisan', 'vatNumber') || 'VAT Number'}
                     </div>
                     <div className="font-mono font-medium">{profile.vatNumber}</div>
                   </div>
                 )}
                 {profile.businessCountry && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-sm text-gray-500">
+                  <div className="p-4 bg-background rounded-lg">
+                    <div className="text-sm text-muted-foreground">
                       {t('artisan', 'country') || 'Country'}
                     </div>
                     <div className="font-medium">{profile.businessCountry}</div>
                   </div>
                 )}
                 {profile.insurance && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="text-sm text-gray-500">
+                  <div className="p-4 bg-background rounded-lg">
+                    <div className="text-sm text-muted-foreground">
                       {t('artisan', 'insurance') || 'Insurance'}
                     </div>
                     <div className="font-medium">{profile.insurance}</div>
@@ -956,14 +956,14 @@ function ArtisanProfileContent() {
                 )}
               </div>
 
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">ℹ️</span>
                   <div>
-                    <div className="font-medium text-blue-900">
+                    <div className="font-medium text-primary">
                       {t('artisan', 'updateBusinessInfo') || 'Need to update business information?'}
                     </div>
-                    <p className="text-sm text-blue-700 mt-1">
+                    <p className="text-sm text-primary mt-1">
                       {t('artisan', 'contactSupport') ||
                         'Contact our support team to make changes to your registered business details, SIRET, or VAT number.'}
                     </p>
@@ -986,7 +986,7 @@ export default function ArtisanProfilePage() {
     <Suspense
       fallback={
         <div className="p-6 flex items-center justify-center min-h-[400px]">
-          <div className="text-gray-600">Loading...</div>
+          <div className="text-muted-foreground">Loading...</div>
         </div>
       }
     >

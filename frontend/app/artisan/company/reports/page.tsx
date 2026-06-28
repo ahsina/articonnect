@@ -62,7 +62,7 @@ export default function CompanyReportsPage() {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-600">{t('common', 'loading') || 'Loading...'}</div>
+        <div className="text-muted-foreground">{t('common', 'loading') || 'Loading...'}</div>
       </div>
     );
   }
@@ -72,10 +72,10 @@ export default function CompanyReportsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t('company', 'reports') || 'Reports & Analytics'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t('company', 'reportsDesc') || 'View your company performance metrics'}
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function CompanyReportsPage() {
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {t('company', 'dateRange') || 'Date Range'}:
             </span>
             <Input
@@ -95,7 +95,7 @@ export default function CompanyReportsPage() {
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
               className="w-40"
             />
-            <span className="text-gray-500">to</span>
+            <span className="text-muted-foreground">to</span>
             <Input
               type="date"
               value={dateRange.end}
@@ -111,40 +111,40 @@ export default function CompanyReportsPage() {
       {stats && (
         <>
           <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
               <CardContent className="p-4">
-                <div className="text-sm text-blue-600">
+                <div className="text-sm text-primary">
                   {t('company', 'totalRevenue') || 'Total Revenue'}
                 </div>
-                <div className="text-2xl font-bold text-blue-800">
+                <div className="text-2xl font-bold text-primary">
                   {formatCurrency(stats.totalRevenue)}
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+            <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
               <CardContent className="p-4">
                 <div className="text-sm text-green-600">
                   {t('company', 'completedMissions') || 'Completed Missions'}
                 </div>
-                <div className="text-2xl font-bold text-green-800">{stats.completedMissions}</div>
+                <div className="text-2xl font-bold text-green-400">{stats.completedMissions}</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
+            <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
               <CardContent className="p-4">
                 <div className="text-sm text-yellow-600">
                   {t('company', 'averageRating') || 'Average Rating'}
                 </div>
-                <div className="text-2xl font-bold text-yellow-800">
+                <div className="text-2xl font-bold text-yellow-400">
                   ⭐ {Number(stats.averageRating).toFixed(1)}
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+            <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
               <CardContent className="p-4">
                 <div className="text-sm text-purple-600">
                   {t('company', 'totalReviews') || 'Total Reviews'}
                 </div>
-                <div className="text-2xl font-bold text-purple-800">{stats.totalReviews}</div>
+                <div className="text-2xl font-bold text-purple-400">{stats.totalReviews}</div>
               </CardContent>
             </Card>
           </div>
@@ -158,28 +158,28 @@ export default function CompanyReportsPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'totalMissions') || 'Total Missions'}
                     </span>
-                    <span className="font-bold text-gray-900">{stats.totalMissions}</span>
+                    <span className="font-bold text-foreground">{stats.totalMissions}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'completedMissions') || 'Completed'}
                     </span>
                     <span className="font-bold text-green-600">{stats.completedMissions}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'activeMissions') || 'Active'}
                     </span>
-                    <span className="font-bold text-blue-600">{stats.activeMissions}</span>
+                    <span className="font-bold text-primary">{stats.activeMissions}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'completionRate') || 'Completion Rate'}
                     </span>
-                    <span className="font-bold text-gray-900">
+                    <span className="font-bold text-foreground">
                       {stats.totalMissions > 0
                         ? ((stats.completedMissions / stats.totalMissions) * 100).toFixed(1)
                         : 0}
@@ -197,18 +197,18 @@ export default function CompanyReportsPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'totalRevenue') || 'Total Revenue'}
                     </span>
-                    <span className="font-bold text-gray-900">
+                    <span className="font-bold text-foreground">
                       {formatCurrency(stats.totalRevenue)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'avgPerMission') || 'Avg per Mission'}
                     </span>
-                    <span className="font-bold text-gray-900">
+                    <span className="font-bold text-foreground">
                       {formatCurrency(
                         stats.completedMissions > 0
                           ? stats.totalRevenue / stats.completedMissions
@@ -217,16 +217,16 @@ export default function CompanyReportsPage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'employees') || 'Employees'}
                     </span>
-                    <span className="font-bold text-gray-900">{stats.employeeCount}</span>
+                    <span className="font-bold text-foreground">{stats.employeeCount}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">
+                    <span className="text-muted-foreground">
                       {t('company', 'revenuePerEmployee') || 'Revenue per Employee'}
                     </span>
-                    <span className="font-bold text-gray-900">
+                    <span className="font-bold text-foreground">
                       {formatCurrency(
                         stats.employeeCount > 0 ? stats.totalRevenue / stats.employeeCount : 0,
                       )}
@@ -243,8 +243,8 @@ export default function CompanyReportsPage() {
               <CardTitle>{t('company', 'revenueChart') || 'Revenue Over Time'}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500">
+              <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
                   <div className="text-4xl mb-2">📊</div>
                   <p>
                     {t('company', 'chartPlaceholder') || 'Chart visualization would appear here'}

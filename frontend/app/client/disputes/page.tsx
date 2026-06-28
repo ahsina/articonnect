@@ -30,11 +30,11 @@ interface Dispute {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'bg-yellow-100 text-yellow-800',
-  UNDER_REVIEW: 'bg-blue-100 text-blue-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  ESCALATED: 'bg-red-100 text-red-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
+  OPEN: 'bg-yellow-500/15 text-yellow-400',
+  UNDER_REVIEW: 'bg-primary/10 text-primary',
+  RESOLVED: 'bg-green-500/15 text-green-400',
+  ESCALATED: 'bg-red-500/15 text-red-400',
+  CLOSED: 'bg-muted text-foreground',
 };
 
 const DISPUTE_TYPES = [
@@ -159,13 +159,13 @@ export default function ClientDisputesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           ← {t('common', 'back')}
@@ -173,8 +173,8 @@ export default function ClientDisputesPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('disputes', 'title')}</h1>
-            <p className="text-gray-600 mt-1">{t('disputes', 'subtitle')}</p>
+            <h1 className="text-3xl font-bold text-foreground">{t('disputes', 'title')}</h1>
+            <p className="text-muted-foreground mt-1">{t('disputes', 'subtitle')}</p>
           </div>
           <Button onClick={() => setShowNewDispute(true)}>
             {t('disputes', 'newDispute')}
@@ -190,7 +190,7 @@ export default function ClientDisputesPage() {
             <CardContent>
               <form onSubmit={handleCreateDispute} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('disputes', 'selectMission')} *
                   </label>
                   <select
@@ -198,7 +198,7 @@ export default function ClientDisputesPage() {
                     onChange={(e) =>
                       setNewDispute({ ...newDispute, missionId: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   >
                     <option value="">{t('common', 'select')}</option>
@@ -211,13 +211,13 @@ export default function ClientDisputesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('disputes', 'type')} *
                   </label>
                   <select
                     value={newDispute.type}
                     onChange={(e) => setNewDispute({ ...newDispute, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     required
                   >
                     <option value="">{t('common', 'select')}</option>
@@ -230,7 +230,7 @@ export default function ClientDisputesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     {t('disputes', 'description')} *
                   </label>
                   <textarea
@@ -238,7 +238,7 @@ export default function ClientDisputesPage() {
                     onChange={(e) =>
                       setNewDispute({ ...newDispute, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
                     placeholder={t('disputes', 'descriptionPlaceholder')}
                     required
                   />
@@ -266,7 +266,7 @@ export default function ClientDisputesPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold">{disputes.length}</div>
-              <div className="text-sm text-gray-600">{t('disputes', 'total')}</div>
+              <div className="text-sm text-muted-foreground">{t('disputes', 'total')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -274,15 +274,15 @@ export default function ClientDisputesPage() {
               <div className="text-2xl font-bold text-yellow-600">
                 {disputes.filter((d) => d.status === 'OPEN').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'open')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'open')}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-primary">
                 {disputes.filter((d) => d.status === 'UNDER_REVIEW').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'underReview')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'underReview')}</div>
             </CardContent>
           </Card>
           <Card>
@@ -290,7 +290,7 @@ export default function ClientDisputesPage() {
               <div className="text-2xl font-bold text-green-600">
                 {disputes.filter((d) => d.status === 'RESOLVED').length}
               </div>
-              <div className="text-sm text-gray-600">{t('status', 'resolved')}</div>
+              <div className="text-sm text-muted-foreground">{t('status', 'resolved')}</div>
             </CardContent>
           </Card>
         </div>
@@ -300,10 +300,10 @@ export default function ClientDisputesPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">⚖️</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('disputes', 'noDisputes')}
               </h3>
-              <p className="text-gray-600">{t('disputes', 'noDisputesDesc')}</p>
+              <p className="text-muted-foreground">{t('disputes', 'noDisputesDesc')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -314,7 +314,7 @@ export default function ClientDisputesPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-foreground">
                           {dispute.mission.title}
                         </h3>
                         <Badge className={STATUS_COLORS[dispute.status]}>
@@ -322,35 +322,35 @@ export default function ClientDisputesPage() {
                         </Badge>
                       </div>
                       {dispute.mission.artisan && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Artisan: {dispute.mission.artisan.firstName}{' '}
                           {dispute.mission.artisan.lastName}
                         </p>
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {formatDate(dispute.createdAt)}
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                    <div className="text-sm text-gray-600 mb-1">
+                  <div className="bg-background p-4 rounded-lg mb-4">
+                    <div className="text-sm text-muted-foreground mb-1">
                       Type:{' '}
                       <span className="font-medium">
                         {DISPUTE_TYPES.find((t) => t.id === dispute.type)?.label || dispute.type}
                       </span>
                     </div>
-                    <p className="text-gray-800">{dispute.description}</p>
+                    <p className="text-foreground">{dispute.description}</p>
                   </div>
 
                   {dispute.resolution && (
-                    <div className="bg-green-50 border border-green-200 p-4 rounded-lg mb-4">
-                      <div className="text-sm font-medium text-green-800 mb-1">
+                    <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg mb-4">
+                      <div className="text-sm font-medium text-green-400 mb-1">
                         {t('disputes', 'resolution')}
                       </div>
-                      <p className="text-green-700">{dispute.resolution}</p>
+                      <p className="text-green-400">{dispute.resolution}</p>
                       {dispute.resolvedAt && (
                         <p className="text-xs text-green-600 mt-2">
                           {t('disputes', 'resolvedOn')} {formatDate(dispute.resolvedAt)}

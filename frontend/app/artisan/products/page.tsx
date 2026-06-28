@@ -78,19 +78,19 @@ export default function ArtisanProductsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">{t('common', 'loading')}</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('artisan', 'myProducts')}</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('artisan', 'myProducts')}</h1>
+            <p className="text-muted-foreground">
               {t('artisan', 'manageProducts')}
             </p>
           </div>
@@ -103,13 +103,13 @@ export default function ArtisanProductsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('artisan', 'totalProducts')}</div>
+              <div className="text-sm text-muted-foreground">{t('artisan', 'totalProducts')}</div>
               <div className="text-2xl font-bold">{products.length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('artisan', 'active')}</div>
+              <div className="text-sm text-muted-foreground">{t('artisan', 'active')}</div>
               <div className="text-2xl font-bold text-green-600">
                 {products.filter((p) => p.status === 'ACTIVE').length}
               </div>
@@ -117,7 +117,7 @@ export default function ArtisanProductsPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('artisan', 'outOfStock')}</div>
+              <div className="text-sm text-muted-foreground">{t('artisan', 'outOfStock')}</div>
               <div className="text-2xl font-bold text-red-600">
                 {products.filter((p) => p.stock === 0).length}
               </div>
@@ -125,8 +125,8 @@ export default function ArtisanProductsPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">{t('artisan', 'stockValue')}</div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-sm text-muted-foreground">{t('artisan', 'stockValue')}</div>
+              <div className="text-2xl font-bold text-primary">
                 {products.reduce((sum, p) => sum + p.price * p.stock, 0).toFixed(0)}€
               </div>
             </CardContent>
@@ -139,7 +139,7 @@ export default function ArtisanProductsPage() {
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">📦</div>
-                <p className="text-gray-500 mb-4">
+                <p className="text-muted-foreground mb-4">
                   {t('artisan', 'noProducts')}
                 </p>
                 <Button onClick={() => setShowAddModal(true)}>
@@ -163,46 +163,46 @@ export default function ArtisanProductsPage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-xl font-semibold text-foreground">
                             {product.name}
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             {getCategoryName(product.category)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {product.status === 'ACTIVE' ? (
-                            <Badge variant="success" className="bg-green-100 text-green-800">
+                            <Badge variant="success" className="bg-green-500/15 text-green-400">
                               {t('artisan', 'activeStatus')}
                             </Badge>
                           ) : (
-                            <Badge variant="default" className="bg-gray-100 text-gray-800">
+                            <Badge variant="default" className="bg-muted text-foreground">
                               {t('artisan', 'inactiveStatus')}
                             </Badge>
                           )}
                           {product.stock === 0 && (
-                            <Badge variant="error" className="bg-red-100 text-red-800">
+                            <Badge variant="error" className="bg-red-500/15 text-red-400">
                               {t('artisan', 'outOfStockStatus')}
                             </Badge>
                           )}
                         </div>
                       </div>
 
-                      <p className="text-gray-700 mb-3 line-clamp-2">
+                      <p className="text-foreground mb-3 line-clamp-2">
                         {product.description}
                       </p>
 
                       <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                         <div>
-                          <span className="text-gray-600">{t('artisan', 'price')}:</span>
+                          <span className="text-muted-foreground">{t('artisan', 'price')}:</span>
                           <p className="font-semibold text-lg">{product.price}€</p>
                         </div>
                         <div>
-                          <span className="text-gray-600">{t('artisan', 'stock')}:</span>
+                          <span className="text-muted-foreground">{t('artisan', 'stock')}:</span>
                           <p className="font-semibold text-lg">{product.stock}</p>
                         </div>
                         <div>
-                          <span className="text-gray-600">{t('artisan', 'value')}:</span>
+                          <span className="text-muted-foreground">{t('artisan', 'value')}:</span>
                           <p className="font-semibold text-lg">
                             {(product.price * product.stock).toFixed(0)}€
                           </p>
@@ -236,7 +236,7 @@ export default function ArtisanProductsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-400"
                         >
                           🗑️ {t('common', 'delete')}
                         </Button>
@@ -259,7 +259,7 @@ export default function ArtisanProductsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Formulaire d'ajout/modification de produit à implémenter
                 </p>
                 <div className="flex justify-end gap-2">
