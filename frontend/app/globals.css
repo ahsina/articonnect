@@ -41,6 +41,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    color-scheme: dark; /* contrôles natifs (select, date, scrollbar) en sombre */
     font-feature-settings: "cv11", "ss01";
     /* halo orange très subtil en haut pour la profondeur */
     background-image:

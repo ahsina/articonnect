@@ -35,12 +35,18 @@ apiClient.interceptors.response.use(
         // Retry original request - new access token will be sent automatically via cookie
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh échoué : rediriger vers le login UNIQUEMENT si on n'y est pas déjà,
-        // sinon boucle infinie (la page login re-vérifie le profil → 401 → refresh → redirect…).
-        if (
-          typeof window !== 'undefined' &&
-          !window.location.pathname.startsWith('/auth')
-        ) {
+        // Refresh échoué : rediriger vers le login UNIQUEMENT depuis une page protégée.
+        // On NE redirige PAS depuis les pages publiques (landing, profils publics, signature
+        // de devis) ni depuis /auth — sinon la landing publique renvoie au login sur la 401
+        // du whoami d'un visiteur non connecté.
+        const p =
+          typeof window !== 'undefined' ? window.location.pathname : '';
+        const isPublicPath =
+          p === '/' ||
+          p.startsWith('/auth') ||
+          p.startsWith('/artisans') ||
+          p.startsWith('/quote');
+        if (typeof window !== 'undefined' && !isPublicPath) {
           window.location.href = '/auth/login';
         }
         return Promise.reject(refreshError);
