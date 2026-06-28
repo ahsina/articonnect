@@ -63,7 +63,7 @@ export const CacheTags = {
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
-  private readonly appPrefix = 'ac'; // ArtiConnect prefix
+  private readonly appPrefix = 'ac'; // Krafolt prefix
 
   constructor(private readonly redis: RedisService) {}
 

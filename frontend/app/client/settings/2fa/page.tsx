@@ -135,7 +135,7 @@ export default function TwoFactorAuthPage() {
   };
 
   const downloadBackupCodes = () => {
-    const content = `Codes de récupération ArtiConnect\n\nCompte: ${user?.email}\nDate: ${new Date().toLocaleDateString()}\n\n${backupCodes.join('\n')}\n\nConservez ces codes en lieu sûr. Chaque code ne peut être utilisé qu'une seule fois.`;
+    const content = `Codes de récupération Krafolt\n\nCompte: ${user?.email}\nDate: ${new Date().toLocaleDateString()}\n\n${backupCodes.join('\n')}\n\nConservez ces codes en lieu sûr. Chaque code ne peut être utilisé qu'une seule fois.`;
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -49,7 +49,7 @@ export interface GoogleCalendarTokens {
  * OAuth Flow:
  * 1. User clicks "Connect Google Calendar"
  * 2. Redirects to Google OAuth consent screen
- * 3. User authorizes ArtiConnect to access calendar
+ * 3. User authorizes Krafolt to access calendar
  * 4. Google redirects back with authorization code
  * 5. Exchange code for access + refresh tokens
  * 6. Store tokens securely in database

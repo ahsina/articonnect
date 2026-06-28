@@ -276,7 +276,7 @@ export default function SignQuotePage() {
             </span>
           </p>
           <p className="mt-2">
-            Propulsé par <span className="font-medium text-blue-600">ArtiConnect</span>
+            Propulsé par <span className="font-medium text-blue-600">Krafolt</span>
           </p>
         </div>
       </div>

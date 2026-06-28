@@ -97,7 +97,7 @@ async function main() {
       email: 'admin@articonnect.com',
       password: hashedPassword,
       firstName: 'Admin',
-      lastName: 'ArtiConnect',
+      lastName: 'Krafolt',
       role: UserRole.ADMIN,
       emailVerified: true,
       consents: {

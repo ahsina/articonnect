@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateCompanyDto {
-  @ApiProperty({ description: 'Company name', example: 'ArtiConnect SARL' })
+  @ApiProperty({ description: 'Company name', example: 'Krafolt SARL' })
   @IsString()
   @IsNotEmpty()
   @MinLength(2)

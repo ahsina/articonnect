@@ -721,7 +721,7 @@ export class NotificationService {
       await this.prisma.emailQueue.create({
         data: {
           to: user.email,
-          subject: `Votre resume ${frequency === 'DAILY' ? 'quotidien' : 'hebdomadaire'} ArtiConnect`,
+          subject: `Votre resume ${frequency === 'DAILY' ? 'quotidien' : 'hebdomadaire'} Krafolt`,
           template: 'notification_digest',
           variables: {
             firstName: user.firstName,

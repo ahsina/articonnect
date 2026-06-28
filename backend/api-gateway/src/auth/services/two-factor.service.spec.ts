@@ -60,7 +60,7 @@ describe('TwoFactorService', () => {
     it('should generate a new secret and QR code', async () => {
       const mockSecret = {
         base32: 'JBSWY3DPEHPK3PXP',
-        otpauth_url: 'otpauth://totp/ArtiConnect...',
+        otpauth_url: 'otpauth://totp/Krafolt...',
       };
 
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
@@ -74,8 +74,8 @@ describe('TwoFactorService', () => {
       expect(result).toHaveProperty('qrCode');
       expect(result.secret).toBe('JBSWY3DPEHPK3PXP');
       expect(speakeasy.generateSecret).toHaveBeenCalledWith({
-        name: `ArtiConnect (${mockUser.email})`,
-        issuer: 'ArtiConnect',
+        name: `Krafolt (${mockUser.email})`,
+        issuer: 'Krafolt',
       });
     });
   });

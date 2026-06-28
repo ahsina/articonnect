@@ -107,7 +107,7 @@ export class EmailService {
   async sendWelcomeEmail(to: string, userName: string) {
     const html = getWelcomeEmailTemplate(userName);
 
-    return this.sendEmail(to, 'Bienvenue sur ArtiConnect !', html);
+    return this.sendEmail(to, 'Bienvenue sur Krafolt !', html);
   }
 
   async sendEmailVerification(to: string, verificationToken: string, userName: string) {

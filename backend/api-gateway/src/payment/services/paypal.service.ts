@@ -156,12 +156,12 @@ export class PaypalService {
               currency_code: params.currency.toUpperCase(),
               value: (params.amount / 100).toFixed(2), // Convert cents to decimal
             },
-            description: params.description || 'ArtiConnect Mission Payment',
+            description: params.description || 'Krafolt Mission Payment',
             custom_id: params.metadata?.missionId || undefined,
           },
         ],
         application_context: {
-          brand_name: 'ArtiConnect',
+          brand_name: 'Krafolt',
           locale: 'fr-FR',
           landing_page: 'NO_PREFERENCE',
           shipping_preference: 'NO_SHIPPING',

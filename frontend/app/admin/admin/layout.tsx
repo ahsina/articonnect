@@ -106,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
-          {sidebarOpen && <span className="font-bold text-lg">ArtiConnect</span>}
+          {sidebarOpen && <span className="font-bold text-lg">Krafolt</span>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-lg hover:bg-gray-800 transition-colors"

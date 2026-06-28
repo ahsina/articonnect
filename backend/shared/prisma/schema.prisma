@@ -1,4 +1,4 @@
-// ArtiConnect - Prisma Schema
+// Krafolt - Prisma Schema
 
 generator client {
   provider = "prisma-client-js"

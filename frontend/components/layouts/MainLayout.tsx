@@ -44,7 +44,7 @@ export function MainLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              &copy; {new Date().getFullYear()} ArtiConnect. Tous droits réservés.
+              &copy; {new Date().getFullYear()} Krafolt. Tous droits réservés.
             </p>
             <nav className="flex gap-6" aria-label="Navigation du pied de page">
               <a

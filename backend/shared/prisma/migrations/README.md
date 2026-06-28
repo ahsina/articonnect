@@ -1,6 +1,6 @@
 # Database Migrations
 
-Ce dossier contient toutes les migrations Prisma pour la base de données ArtiConnect.
+Ce dossier contient toutes les migrations Prisma pour la base de données Krafolt.
 
 ## Appliquer les Migrations
 

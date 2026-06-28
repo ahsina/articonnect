@@ -12,7 +12,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <nav className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-blue-600">ArtiConnect</h1>
+          <h1 className="text-2xl font-bold text-blue-600">Krafolt</h1>
           <div className="space-x-4">
             <Link href="/login">
               <Button variant="ghost">{t('nav.login')}</Button>

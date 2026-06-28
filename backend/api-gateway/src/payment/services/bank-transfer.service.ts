@@ -100,7 +100,7 @@ export class BankTransferService {
     this.bankAccountIban = this.configService.get<string>('BANK_TRANSFER_IBAN') || '';
     this.bankAccountBic = this.configService.get<string>('BANK_TRANSFER_BIC') || '';
     this.bankAccountHolder =
-      this.configService.get<string>('BANK_TRANSFER_ACCOUNT_HOLDER') || 'ArtiConnect SAS';
+      this.configService.get<string>('BANK_TRANSFER_ACCOUNT_HOLDER') || 'Krafolt SAS';
     this.bankName = this.configService.get<string>('BANK_TRANSFER_BANK_NAME') || 'BNP Paribas';
     this.transferExpiryDays = parseInt(
       this.configService.get<string>('BANK_TRANSFER_EXPIRY_DAYS') || '7',

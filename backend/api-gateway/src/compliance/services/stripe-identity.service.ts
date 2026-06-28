@@ -288,7 +288,7 @@ export class StripeIdentityService {
     try {
       await this.emailService.sendEmail(
         user.email,
-        '✅ Votre identité a été vérifiée - ArtiConnect',
+        '✅ Votre identité a été vérifiée - Krafolt',
         this.getVerifiedEmailHtml(user.firstName || 'Artisan'),
       );
     } catch (error) {
@@ -407,7 +407,7 @@ export class StripeIdentityService {
       </a>
     </div>
     <div class="footer">
-      <p>ArtiConnect - La plateforme des artisans au Luxembourg</p>
+      <p>Krafolt - La plateforme des artisans au Luxembourg</p>
     </div>
   </div>
 </body>

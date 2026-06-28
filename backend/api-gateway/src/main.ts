@@ -147,9 +147,9 @@ async function bootstrap() {
   // Swagger API Documentation
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('ArtiConnect API')
+      .setTitle('Krafolt API')
       .setDescription(
-        'API complète de la plateforme ArtiConnect - Mise en relation artisans et clients\n\n' +
+        'API complète de la plateforme Krafolt - Mise en relation artisans et clients\n\n' +
         '## Fonctionnalités principales\n' +
         '- **Authentication**: Inscription, connexion, 2FA, gestion de sessions\n' +
         '- **Missions**: Recherche avancée, templates, négociations\n' +
@@ -190,11 +190,11 @@ async function bootstrap() {
       .addTag('Notifications', 'Notifications push')
       .addTag('Availability', 'Gestion de disponibilité artisans')
       .setContact(
-        'Support ArtiConnect',
-        'https://articonnect.fr',
-        'support@articonnect.fr',
+        'Support Krafolt',
+        'https://krafolt.com',
+        'support@krafolt.com',
       )
-      .setLicense('Proprietary', 'https://articonnect.fr/license')
+      .setLicense('Proprietary', 'https://krafolt.com/license')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
@@ -213,7 +213,7 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
 
-  logger.log(`🚀 ArtiConnect API running on http://localhost:${port}`);
+  logger.log(`🚀 Krafolt API running on http://localhost:${port}`);
   logger.log(`🔐 Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.log(`✅ Health check: http://localhost:${port}/health`);
 }

@@ -186,7 +186,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="h-16 flex items-center justify-between px-4 border-b border-blue-700">
           {sidebarOpen && (
             <button onClick={() => router.push('/artisan/dashboard')} className="font-bold text-lg">
-              ArtiConnect Pro
+              Krafolt Pro
             </button>
           )}
           <button
@@ -302,7 +302,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
             )}
           </button>
           {sidebarOpen && (
-            <div className="mt-2 text-xs text-blue-400 text-center">ArtiConnect Artisan v1.0</div>
+            <div className="mt-2 text-xs text-blue-400 text-center">Krafolt Artisan v1.0</div>
           )}
         </div>
       </aside>

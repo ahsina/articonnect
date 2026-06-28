@@ -380,7 +380,7 @@ describe('StripeService', () => {
       const config = service.getGooglePayConfig();
 
       expect(config.enabled).toBe(true);
-      expect(config.merchantName).toBe('ArtiConnect');
+      expect(config.merchantName).toBe('Krafolt');
     });
 
     it('should return Radar config', () => {

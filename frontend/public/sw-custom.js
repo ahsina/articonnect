@@ -1,5 +1,5 @@
 /**
- * ArtiConnect Custom Service Worker
+ * Krafolt Custom Service Worker
  * Provides offline capabilities and push notification handling
  */
 
@@ -291,4 +291,4 @@ async function updateMissionsCache() {
   }
 }
 
-console.log('[SW] ArtiConnect Service Worker loaded');
+console.log('[SW] Krafolt Service Worker loaded');

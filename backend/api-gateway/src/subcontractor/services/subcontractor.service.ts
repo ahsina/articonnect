@@ -72,7 +72,7 @@ export class SubcontractorService {
         });
 
         const artisanName = artisan ? `${artisan.firstName} ${artisan.lastName}` : 'Un artisan';
-        const artisanCompany = artisan?.artisanProfile?.companyName || 'ArtiConnect';
+        const artisanCompany = artisan?.artisanProfile?.companyName || 'Krafolt';
 
         await this.emailService.sendSubcontractorInvitationEmail(
           recipientEmail,

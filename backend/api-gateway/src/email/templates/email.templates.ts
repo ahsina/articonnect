@@ -65,13 +65,13 @@ export const getEmailLayout = (content: string): string => `
 <body>
   <div class="container">
     <div class="header">
-      <h1>ArtiConnect</h1>
+      <h1>Krafolt</h1>
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} ArtiConnect. Tous droits réservés.</p>
+      <p>© ${new Date().getFullYear()} Krafolt. Tous droits réservés.</p>
       <p>
         <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="color: #2563eb; text-decoration: none;">Visitez notre site web</a>
       </p>
@@ -84,7 +84,7 @@ export const getEmailLayout = (content: string): string => `
 export const getResetPasswordTemplate = (userName: string, resetUrl: string): string => {
   const content = `
     <p>Bonjour ${userName},</p>
-    <p>Vous avez demandé la réinitialisation de votre mot de passe ArtiConnect.</p>
+    <p>Vous avez demandé la réinitialisation de votre mot de passe Krafolt.</p>
     <p>Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe :</p>
     <div style="text-align: center;">
       <a href="${resetUrl}" class="button">Réinitialiser mon mot de passe</a>
@@ -105,8 +105,8 @@ export const getResetPasswordTemplate = (userName: string, resetUrl: string): st
 export const getWelcomeEmailTemplate = (userName: string): string => {
   const content = `
     <p>Bonjour ${userName},</p>
-    <p>Bienvenue sur <strong>ArtiConnect</strong> ! 🎉</p>
-    <p>Nous sommes ravis de vous compter parmi nous. ArtiConnect est la plateforme qui connecte les clients avec les meilleurs artisans de votre région.</p>
+    <p>Bienvenue sur <strong>Krafolt</strong> ! 🎉</p>
+    <p>Nous sommes ravis de vous compter parmi nous. Krafolt est la plateforme qui connecte les clients avec les meilleurs artisans de votre région.</p>
 
     <h3 style="color: #1f2937; margin-top: 30px;">Que pouvez-vous faire ?</h3>
     <ul style="line-height: 1.8;">
@@ -121,7 +121,7 @@ export const getWelcomeEmailTemplate = (userName: string): string => {
     </div>
 
     <p>Besoin d'aide ? Notre équipe est là pour vous accompagner.</p>
-    <p>À bientôt sur ArtiConnect !</p>
+    <p>À bientôt sur Krafolt !</p>
   `;
 
   return getEmailLayout(content);
@@ -130,7 +130,7 @@ export const getWelcomeEmailTemplate = (userName: string): string => {
 export const getEmailVerificationTemplate = (userName: string, verificationUrl: string): string => {
   const content = `
     <p>Bonjour ${userName},</p>
-    <p>Merci de vous être inscrit sur ArtiConnect !</p>
+    <p>Merci de vous être inscrit sur Krafolt !</p>
     <p>Pour activer votre compte, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
 
     <div style="text-align: center;">
@@ -138,7 +138,7 @@ export const getEmailVerificationTemplate = (userName: string, verificationUrl: 
     </div>
 
     <p style="color: #6b7280; font-size: 14px;">
-      Ce lien est valable pendant 24 heures. Si vous n'avez pas créé de compte ArtiConnect, ignorez cet email.
+      Ce lien est valable pendant 24 heures. Si vous n'avez pas créé de compte Krafolt, ignorez cet email.
     </p>
 
     <div class="divider"></div>

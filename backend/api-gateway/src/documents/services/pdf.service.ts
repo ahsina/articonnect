@@ -574,7 +574,7 @@ export class PdfService {
 
       const artisanProfile = payment.mission?.artisan?.artisanProfile;
       const companyInfo: CompanyInfo = {
-        name: artisanProfile?.companyName || `${payment.mission?.artisan?.firstName || ''} ${payment.mission?.artisan?.lastName || ''}`.trim() || 'ArtiConnect',
+        name: artisanProfile?.companyName || `${payment.mission?.artisan?.firstName || ''} ${payment.mission?.artisan?.lastName || ''}`.trim() || 'Krafolt',
         phone: payment.mission?.artisan?.phone || undefined,
         email: payment.mission?.artisan?.email || '',
         siret: artisanProfile?.siret || undefined,
@@ -613,7 +613,7 @@ export class PdfService {
 
       // Certification
       doc.fontSize(10)
-        .text('Ce reçu certifie le paiement effectué via la plateforme ArtiConnect.', 50, doc.y, { align: 'center', width: 495 });
+        .text('Ce reçu certifie le paiement effectué via la plateforme Krafolt.', 50, doc.y, { align: 'center', width: 495 });
 
       this.drawFooter(doc, companyInfo);
 

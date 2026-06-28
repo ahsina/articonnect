@@ -23,8 +23,8 @@ export const getEmailConfig = (): EmailConfig => {
       pass: process.env.SMTP_PASS || '',
     },
     from: {
-      name: process.env.SMTP_FROM_NAME || 'ArtiConnect',
-      email: process.env.SMTP_FROM_EMAIL || 'noreply@articonnect.com',
+      name: process.env.SMTP_FROM_NAME || 'Krafolt',
+      email: process.env.SMTP_FROM_EMAIL || 'noreply@krafolt.com',
     },
   };
 };

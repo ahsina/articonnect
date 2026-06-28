@@ -401,7 +401,7 @@ export class ExportService {
       doc
         .fontSize(8)
         .text(
-          `ArtiConnect - Export généré le ${new Date().toLocaleString('fr-FR')}`,
+          `Krafolt - Export généré le ${new Date().toLocaleString('fr-FR')}`,
           50,
           doc.page.height - 50,
           { align: 'center' },

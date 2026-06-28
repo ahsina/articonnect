@@ -189,7 +189,7 @@ export default function ArtisanOnboardingChecklist({
             <div className="text-4xl">🚀</div>
             <div>
               <CardTitle className="text-xl">
-                {t('onboarding', 'welcomeArtisan') || 'Welcome to ArtiConnect!'}
+                {t('onboarding', 'welcomeArtisan') || 'Welcome to Krafolt!'}
               </CardTitle>
               <p className="text-gray-600">
                 {t('onboarding', 'completeSetup') || 'Complete your profile to start receiving missions'}

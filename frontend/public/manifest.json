@@ -1,6 +1,6 @@
 {
-  "name": "ArtiConnect",
-  "short_name": "ArtiConnect",
+  "name": "Krafolt",
+  "short_name": "Krafolt",
   "description": "Plateforme de mise en relation entre clients et artisans",
   "start_url": "/",
   "display": "standalone",

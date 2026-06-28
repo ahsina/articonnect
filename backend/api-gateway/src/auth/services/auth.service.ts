@@ -573,7 +573,7 @@ export class AuthService {
 
     // Generate secret
     const secret = speakeasy.generateSecret({
-      name: `ArtiConnect (${user.email})`,
+      name: `Krafolt (${user.email})`,
       length: 32,
     });
 

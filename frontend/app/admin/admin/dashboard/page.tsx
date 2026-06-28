@@ -140,7 +140,7 @@ export default function AdminDashboardPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{t('admin', 'dashboard')}</h1>
-          <p className="text-gray-600 mt-2">{t('admin', 'platformOverviewArtiConnect')}</p>
+          <p className="text-gray-600 mt-2">{t('admin', 'platformOverviewKrafolt')}</p>
         </div>
 
         {/* Stats Grid */}

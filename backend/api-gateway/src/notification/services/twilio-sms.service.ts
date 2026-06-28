@@ -90,7 +90,7 @@ export class TwilioSmsService {
       'verification_code',
       {
         code: 'verification_code',
-        message: 'Votre code de vérification ArtiConnect: {code}. Valide 10 min.',
+        message: 'Votre code de vérification Krafolt: {code}. Valide 10 min.',
         variables: ['code'],
       },
     ],
@@ -279,7 +279,7 @@ export class TwilioSmsService {
     // Send confirmation
     if (this.twilioClient) {
       await this.twilioClient.messages.create({
-        body: 'Vous êtes désinscrit des SMS ArtiConnect. Envoyez START pour vous réabonner.',
+        body: 'Vous êtes désinscrit des SMS Krafolt. Envoyez START pour vous réabonner.',
         from: this.fromNumber,
         to: phoneNumber,
       });
@@ -297,7 +297,7 @@ export class TwilioSmsService {
     // Send confirmation
     if (this.twilioClient) {
       await this.twilioClient.messages.create({
-        body: 'Bienvenue ! Vous recevrez à nouveau les SMS ArtiConnect. Envoyez STOP pour vous désinscrire.',
+        body: 'Bienvenue ! Vous recevrez à nouveau les SMS Krafolt. Envoyez STOP pour vous désinscrire.',
         from: this.fromNumber,
         to: phoneNumber,
       });

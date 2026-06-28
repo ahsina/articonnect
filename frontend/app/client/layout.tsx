@@ -57,7 +57,7 @@ function ClientHeader() {
           {/* Logo & Company Name */}
           <div className="flex items-center gap-4">
             <Link href="/client/dashboard" className="text-2xl font-bold text-blue-600">
-              ArtiConnect
+              Krafolt
             </Link>
             {isProfessional && clientProfile?.companyName && (
               <div className="hidden md:flex items-center gap-2 pl-4 border-l">

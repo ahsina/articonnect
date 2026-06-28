@@ -37,7 +37,7 @@ export class ChatService {
     // Block message if HIGH severity violations detected
     if (filterResult.isBlocked) {
       throw new BadRequestException({
-        message: 'Votre message contient des informations de contact interdites. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via ArtiConnect.',
+        message: 'Votre message contient des informations de contact interdites. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via Krafolt.',
         detectedPatterns: filterResult.detectedPatterns,
         violationType: filterResult.violationType,
         code: 'CONTACT_INFO_BLOCKED'

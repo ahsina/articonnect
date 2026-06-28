@@ -41,7 +41,7 @@ export const ContactInfoWarning: React.FC<ContactInfoWarningProps> = ({
           </h3>
           <p className="text-sm">
             Pour votre sécurité et celle de nos utilisateurs, le partage d'informations
-            de contact (téléphone, email, réseaux sociaux) est interdit sur ArtiConnect.
+            de contact (téléphone, email, réseaux sociaux) est interdit sur Krafolt.
           </p>
           <div className="mt-2 text-xs">
             <strong>Pourquoi ?</strong>

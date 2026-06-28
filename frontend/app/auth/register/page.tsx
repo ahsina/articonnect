@@ -63,7 +63,7 @@ export default function RegisterPage() {
 
       toast({
         title: t('auth', 'accountCreated'),
-        description: t('auth', 'welcomeToArtiConnect'),
+        description: t('auth', 'welcomeToKrafolt'),
         variant: 'success',
       });
 

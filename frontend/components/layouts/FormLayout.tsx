@@ -55,7 +55,7 @@ export function FormLayout({
                 href="/"
                 className="inline-block text-3xl font-bold text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
               >
-                ArtiConnect
+                Krafolt
               </Link>
             </div>
           )}
@@ -81,7 +81,7 @@ export function FormLayout({
 
       <footer className="py-6 text-center">
         <p className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} ArtiConnect. Tous droits réservés.
+          &copy; {new Date().getFullYear()} Krafolt. Tous droits réservés.
         </p>
       </footer>
     </div>

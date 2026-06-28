@@ -16,8 +16,8 @@ jest.mock('../email.config', () => ({
       pass: 'test-password',
     },
     from: {
-      name: 'ArtiConnect',
-      email: 'noreply@articonnect.com',
+      name: 'Krafolt',
+      email: 'noreply@krafolt.com',
     },
   }),
 }));
@@ -126,7 +126,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to,
-          subject: 'Bienvenue sur ArtiConnect !',
+          subject: 'Bienvenue sur Krafolt !',
         }),
       );
     });
@@ -170,7 +170,7 @@ describe('EmailService', () => {
   describe('sendWelcomeClientEmail', () => {
     it('should send welcome email to new client', async () => {
       mockEmailTemplateService.welcomeClient.mockReturnValue({
-        subject: 'Welcome to ArtiConnect',
+        subject: 'Welcome to Krafolt',
         html: '<p>Welcome client!</p>',
       });
 
@@ -183,7 +183,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: email,
-          subject: 'Welcome to ArtiConnect',
+          subject: 'Welcome to Krafolt',
         }),
       );
     });

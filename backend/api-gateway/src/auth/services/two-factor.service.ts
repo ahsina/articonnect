@@ -14,8 +14,8 @@ export class TwoFactorService {
     });
 
     const secret = speakeasy.generateSecret({
-      name: `ArtiConnect (${user.email})`,
-      issuer: 'ArtiConnect',
+      name: `Krafolt (${user.email})`,
+      issuer: 'Krafolt',
     });
 
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);

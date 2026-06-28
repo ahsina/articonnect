@@ -190,7 +190,7 @@ export default function NewMissionPage() {
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&countrycodes=lu,fr,be&limit=1`,
         {
           headers: {
-            'User-Agent': 'ArtiConnect/1.0', // Required by Nominatim usage policy
+            'User-Agent': 'Krafolt/1.0', // Required by Nominatim usage policy
           },
         }
       );

@@ -82,7 +82,7 @@ export default function ClientDashboard() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold text-blue-600">
-                ArtiConnect
+                Krafolt
               </Link>
             </div>
             <div className="flex items-center space-x-4">

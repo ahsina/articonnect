@@ -592,7 +592,7 @@ export class ReturnService {
     // In production, this would integrate with shipping carriers (EasyPost, ShipStation, etc.)
     // For now, we generate a mock label URL
     const labelId = `RETURN_${returnId.slice(-8).toUpperCase()}_${Date.now()}`;
-    return `https://storage.articonnect.com/return-labels/${labelId}.pdf`;
+    return `https://storage.krafolt.com/return-labels/${labelId}.pdf`;
   }
 
   // Analytics

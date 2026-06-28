@@ -18,7 +18,7 @@ describe('EmailTemplateService', () => {
     it('should generate welcome email for client', () => {
       const result = service.welcomeClient('John', 'john@example.com');
 
-      expect(result.subject).toBe('Bienvenue sur ArtiConnect !');
+      expect(result.subject).toBe('Bienvenue sur Krafolt !');
       expect(result.html).toContain('John');
       expect(result.html).toContain('john@example.com');
       expect(result.html).toContain('client/dashboard');
@@ -30,7 +30,7 @@ describe('EmailTemplateService', () => {
 
       expect(result.html).toContain('<!DOCTYPE html>');
       expect(result.html).toContain('<html');
-      expect(result.html).toContain('ArtiConnect');
+      expect(result.html).toContain('Krafolt');
       expect(result.html).toContain('</html>');
     });
   });

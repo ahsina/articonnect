@@ -31,7 +31,7 @@ describe('BankTransferService', () => {
       const config: Record<string, string> = {
         BANK_TRANSFER_IBAN: 'LU12 3456 7890 1234 5678',
         BANK_TRANSFER_BIC: 'BGLLLULL',
-        BANK_TRANSFER_ACCOUNT_HOLDER: 'ArtiConnect SAS',
+        BANK_TRANSFER_ACCOUNT_HOLDER: 'Krafolt SAS',
         BANK_TRANSFER_BANK_NAME: 'BGL BNP Paribas',
         BANK_TRANSFER_EXPIRY_DAYS: '7',
       };
@@ -86,7 +86,7 @@ describe('BankTransferService', () => {
       const config: Record<string, string> = {
         BANK_TRANSFER_IBAN: 'LU12 3456 7890 1234 5678',
         BANK_TRANSFER_BIC: 'BGLLLULL',
-        BANK_TRANSFER_ACCOUNT_HOLDER: 'ArtiConnect SAS',
+        BANK_TRANSFER_ACCOUNT_HOLDER: 'Krafolt SAS',
         BANK_TRANSFER_BANK_NAME: 'BGL BNP Paribas',
         BANK_TRANSFER_EXPIRY_DAYS: '7',
       };
@@ -131,7 +131,7 @@ describe('BankTransferService', () => {
         amount: 250,
       });
 
-      expect(result.accountHolder).toBe('ArtiConnect SAS');
+      expect(result.accountHolder).toBe('Krafolt SAS');
       expect(result.iban).toBe('LU12 3456 7890 1234 5678');
       expect(result.bic).toBe('BGLLLULL');
       expect(result.amount).toBe(250);
@@ -445,7 +445,7 @@ describe('BankTransferService', () => {
     it('should return partially masked bank info', () => {
       const result = service.getBankAccountInfo();
 
-      expect(result.accountHolder).toBe('ArtiConnect SAS');
+      expect(result.accountHolder).toBe('Krafolt SAS');
       expect(result.bankName).toBe('BGL BNP Paribas');
       expect(result.bic).toBe('BGLLLULL');
       // IBAN should be partially masked

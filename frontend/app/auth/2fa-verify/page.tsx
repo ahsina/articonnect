@@ -66,7 +66,7 @@ function TwoFactorVerifyForm() {
 
       toast({
         title: t('auth', 'loginSuccess'),
-        description: t('auth', 'welcomeToArtiConnect'),
+        description: t('auth', 'welcomeToKrafolt'),
         variant: 'success',
       });
 

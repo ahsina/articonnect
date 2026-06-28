@@ -250,11 +250,11 @@ export class PdfGeneratorService {
     doc
       .fontSize(8)
       .fillColor('#666666')
-      .text('ArtiConnect - Plateforme de mise en relation artisans-clients', 50, footerY, {
+      .text('Krafolt - Plateforme de mise en relation artisans-clients', 50, footerY, {
         align: 'center',
         width: 500,
       })
-      .text('www.articonnect.com', 50, footerY + 12, { align: 'center', width: 500 });
+      .text('www.krafolt.com', 50, footerY + 12, { align: 'center', width: 500 });
   }
 
   private formatDate(date: Date): string {

@@ -25,7 +25,7 @@ export default function DesignSystemPage() {
         {/* Header */}
         <div className="mb-12 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold mb-2">ArtiConnect Design System</h1>
+            <h1 className="text-4xl font-bold mb-2">Krafolt Design System</h1>
             <p className="text-muted-foreground">
               Component library and design tokens documentation
             </p>

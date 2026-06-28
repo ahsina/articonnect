@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class UpdateCompanyDto {
-  @ApiPropertyOptional({ description: 'Company name', example: 'ArtiConnect SARL' })
+  @ApiPropertyOptional({ description: 'Company name', example: 'Krafolt SARL' })
   @IsOptional()
   @IsString()
   @MaxLength(100)

@@ -44,14 +44,14 @@ export class EmailTemplateService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>ArtiConnect</h1>
+            <h1>Krafolt</h1>
           </div>
           <div class="content">
             ${body}
           </div>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} ArtiConnect. Tous droits réservés.</p>
-            <p>Vous recevez cet email car vous avez un compte sur ArtiConnect.</p>
+            <p>© ${new Date().getFullYear()} Krafolt. Tous droits réservés.</p>
+            <p>Vous recevez cet email car vous avez un compte sur Krafolt.</p>
             <p><a href="#" style="color: #667eea;">Se désabonner</a> | <a href="#" style="color: #667eea;">Préférences de notification</a></p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export class EmailTemplateService {
 
   welcomeClient(firstName: string, email: string): EmailTemplate {
     const body = `
-      <h2>Bienvenue sur ArtiConnect, ${firstName} !</h2>
+      <h2>Bienvenue sur Krafolt, ${firstName} !</h2>
       <p>Nous sommes ravis de vous accueillir sur notre plateforme de mise en relation avec des artisans qualifiés.</p>
 
       <div class="info-box">
@@ -83,15 +83,15 @@ export class EmailTemplateService {
     `;
 
     return {
-      subject: 'Bienvenue sur ArtiConnect !',
+      subject: 'Bienvenue sur Krafolt !',
       html: this.wrapTemplate('Bienvenue', body),
-      text: `Bienvenue sur ArtiConnect, ${firstName} ! Votre compte ${email} a été créé avec succès. Visitez ${process.env.FRONTEND_URL}/client/dashboard pour commencer.`,
+      text: `Bienvenue sur Krafolt, ${firstName} ! Votre compte ${email} a été créé avec succès. Visitez ${process.env.FRONTEND_URL}/client/dashboard pour commencer.`,
     };
   }
 
   welcomeArtisan(firstName: string, companyName: string, email: string): EmailTemplate {
     const body = `
-      <h2>Bienvenue sur ArtiConnect, ${firstName} !</h2>
+      <h2>Bienvenue sur Krafolt, ${firstName} !</h2>
       <p>Félicitations ! Votre profil artisan <span class="highlight">${companyName}</span> a été créé avec succès.</p>
 
       <div class="success">
@@ -113,9 +113,9 @@ export class EmailTemplateService {
     `;
 
     return {
-      subject: 'Votre profil artisan ArtiConnect est actif !',
+      subject: 'Votre profil artisan Krafolt est actif !',
       html: this.wrapTemplate('Bienvenue Artisan', body),
-      text: `Bienvenue sur ArtiConnect, ${firstName} ! Votre profil artisan ${companyName} est maintenant actif. Visitez ${process.env.FRONTEND_URL}/artisan/dashboard pour compléter votre profil.`,
+      text: `Bienvenue sur Krafolt, ${firstName} ! Votre profil artisan ${companyName} est maintenant actif. Visitez ${process.env.FRONTEND_URL}/artisan/dashboard pour compléter votre profil.`,
     };
   }
 
@@ -241,7 +241,7 @@ export class EmailTemplateService {
         <li>Partagez votre expérience en quelques mots</li>
       </ul>
 
-      <p>Merci d'avoir utilisé ArtiConnect !</p>
+      <p>Merci d'avoir utilisé Krafolt !</p>
     `;
 
     return {
@@ -390,7 +390,7 @@ export class EmailTemplateService {
     const body = `
       <h2>Votre résumé hebdomadaire</h2>
       <p>Bonjour ${clientName},</p>
-      <p>Voici un récapitulatif de votre activité sur ArtiConnect cette semaine.</p>
+      <p>Voici un récapitulatif de votre activité sur Krafolt cette semaine.</p>
 
       <div class="mission-details">
         <dl>
@@ -417,11 +417,11 @@ export class EmailTemplateService {
         <a href="${process.env.FRONTEND_URL}/client/missions/new" class="button">Créer une mission</a>
       `}
 
-      <p>Merci de faire confiance à ArtiConnect pour vos projets !</p>
+      <p>Merci de faire confiance à Krafolt pour vos projets !</p>
     `;
 
     return {
-      subject: 'Votre résumé hebdomadaire ArtiConnect',
+      subject: 'Votre résumé hebdomadaire Krafolt',
       html: this.wrapTemplate('Résumé hebdomadaire', body),
       text: `Bonjour ${clientName}, cette semaine : ${activeMissions} missions actives, ${completedThisWeek} terminées, ${totalSpent}€ dépensés. Consultez ${process.env.FRONTEND_URL}/client/missions`,
     };
@@ -440,7 +440,7 @@ export class EmailTemplateService {
     const body = `
       <h2>Votre résumé hebdomadaire</h2>
       <p>Bonjour ${artisanName},</p>
-      <p>Voici vos performances sur ArtiConnect cette semaine.</p>
+      <p>Voici vos performances sur Krafolt cette semaine.</p>
 
       <div class="mission-details">
         <dl>
@@ -477,7 +477,7 @@ export class EmailTemplateService {
     `;
 
     return {
-      subject: 'Votre résumé hebdomadaire ArtiConnect',
+      subject: 'Votre résumé hebdomadaire Krafolt',
       html: this.wrapTemplate('Résumé hebdomadaire', body),
       text: `Bonjour ${artisanName}, cette semaine : ${completedThisWeek} missions terminées, ${totalEarned}€ gagnés, note moyenne ${averageRating.toFixed(1)}/5, ${newReviews} nouveaux avis. Consultez ${process.env.FRONTEND_URL}/artisan/dashboard`,
     };
@@ -525,7 +525,7 @@ export class EmailTemplateService {
     const body = `
       <h2>Réinitialisation de votre mot de passe</h2>
       <p>Bonjour ${userName},</p>
-      <p>Vous avez demandé à réinitialiser votre mot de passe ArtiConnect.</p>
+      <p>Vous avez demandé à réinitialiser votre mot de passe Krafolt.</p>
 
       <div class="info-box">
         <p><strong>Ce lien est valide pendant 1 heure</strong></p>
@@ -546,7 +546,7 @@ export class EmailTemplateService {
     return {
       subject: 'Réinitialisation de votre mot de passe',
       html: this.wrapTemplate('Réinitialisation mot de passe', body),
-      text: `Bonjour ${userName}, réinitialisez votre mot de passe ArtiConnect en cliquant ici : ${resetLink} (valide 1h). Si vous n'avez rien demandé, ignorez cet email.`,
+      text: `Bonjour ${userName}, réinitialisez votre mot de passe Krafolt en cliquant ici : ${resetLink} (valide 1h). Si vous n'avez rien demandé, ignorez cet email.`,
     };
   }
 
@@ -571,7 +571,7 @@ export class EmailTemplateService {
     const body = `
       <h2>Invitation à rejoindre ${companyName}</h2>
       <p>Bonjour ${employeeName},</p>
-      <p><span class="highlight">${inviterName}</span> vous invite à rejoindre l'équipe de <span class="highlight">${companyName}</span> sur ArtiConnect.</p>
+      <p><span class="highlight">${inviterName}</span> vous invite à rejoindre l'équipe de <span class="highlight">${companyName}</span> sur Krafolt.</p>
 
       <div class="success">
         <p><strong>Détails de l'invitation :</strong></p>
@@ -621,7 +621,7 @@ export class EmailTemplateService {
     const body = `
       <h2>Invitation à devenir sous-traitant</h2>
       <p>Bonjour ${subcontractorName},</p>
-      <p><span class="highlight">${artisanName}</span> de <span class="highlight">${artisanCompany}</span> souhaite vous ajouter comme sous-traitant sur ArtiConnect.</p>
+      <p><span class="highlight">${artisanName}</span> de <span class="highlight">${artisanCompany}</span> souhaite vous ajouter comme sous-traitant sur Krafolt.</p>
 
       <div class="success">
         <p><strong>Détails de la collaboration :</strong></p>

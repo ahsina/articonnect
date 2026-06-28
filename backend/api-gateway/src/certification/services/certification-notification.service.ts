@@ -299,7 +299,7 @@ export class CertificationNotificationService {
         <p><strong>Date d'expiration:</strong> ${formattedDate}</p>
       </div>
 
-      <p>Pour maintenir votre statut de professionnel certifié sur ArtiConnect, nous vous recommandons de renouveler cette certification avant son expiration.</p>
+      <p>Pour maintenir votre statut de professionnel certifié sur Krafolt, nous vous recommandons de renouveler cette certification avant son expiration.</p>
 
       <p><strong>Pourquoi c'est important ?</strong></p>
       <ul>
@@ -313,7 +313,7 @@ export class CertificationNotificationService {
       </a>
     </div>
     <div class="footer">
-      <p>ArtiConnect - La plateforme des artisans au Luxembourg</p>
+      <p>Krafolt - La plateforme des artisans au Luxembourg</p>
       <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
     </div>
   </div>
@@ -360,7 +360,7 @@ export class CertificationNotificationService {
       <ol>
         <li>Contactez l'organisme de certification pour le renouvellement</li>
         <li>Obtenez votre nouveau certificat</li>
-        <li>Téléchargez-le sur votre profil ArtiConnect</li>
+        <li>Téléchargez-le sur votre profil Krafolt</li>
       </ol>
 
       <p>Une fois votre nouvelle certification téléchargée, notre équipe la vérifiera rapidement pour rétablir votre badge.</p>
@@ -370,7 +370,7 @@ export class CertificationNotificationService {
       </a>
     </div>
     <div class="footer">
-      <p>ArtiConnect - La plateforme des artisans au Luxembourg</p>
+      <p>Krafolt - La plateforme des artisans au Luxembourg</p>
       <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
     </div>
   </div>

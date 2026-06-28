@@ -271,7 +271,7 @@ export class StripeService {
     return {
       enabled: true,
       merchantId: process.env.STRIPE_MERCHANT_ID || undefined,
-      merchantName: 'ArtiConnect',
+      merchantName: 'Krafolt',
       // Google Pay is automatically configured via automatic_payment_methods
       // Frontend can use Stripe.js Payment Request Button API
     };

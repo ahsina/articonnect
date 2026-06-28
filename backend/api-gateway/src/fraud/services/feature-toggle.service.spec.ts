@@ -35,7 +35,7 @@ describe('FeatureToggleService', () => {
     businessVerificationRequired: true,
     businessVerificationAutoReject: false,
     fraudAlertEmailEnabled: true,
-    fraudAlertEmail: 'fraud@articonnect.com',
+    fraudAlertEmail: 'fraud@krafolt.com',
     updatedBy: null,
   };
 
@@ -287,7 +287,7 @@ describe('FeatureToggleService', () => {
 
     it('should get fraud alert email', async () => {
       const result = await service.getFraudAlertEmail();
-      expect(result).toBe('fraud@articonnect.com');
+      expect(result).toBe('fraud@krafolt.com');
     });
   });
 

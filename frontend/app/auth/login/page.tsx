@@ -52,7 +52,7 @@ export default function LoginPage() {
 
       toast({
         title: t('auth', 'loginSuccess'),
-        description: t('common', 'welcome') + ' sur ArtiConnect !',
+        description: t('common', 'welcome') + ' sur Krafolt !',
         variant: 'success',
       });
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl text-center">{t('common', 'login')}</CardTitle>
           <CardDescription className="text-center">
-            Connectez-vous à votre compte ArtiConnect
+            Connectez-vous à votre compte Krafolt
           </CardDescription>
         </CardHeader>
         <CardContent>

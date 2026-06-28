@@ -121,7 +121,7 @@ export function Navbar({ user }: NavbarProps) {
                 href={getDashboardLink()}
                 className="text-2xl font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
               >
-                ArtiConnect
+                Krafolt
               </Link>
             </div>
 
