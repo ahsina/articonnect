@@ -114,8 +114,8 @@ function ClientHeader() {
         {/* Mobile Company Badge */}
         {isProfessional && clientProfile?.companyName && (
           <div className="md:hidden pb-2">
-            <Badge variant="outline" className="text-primary border-blue-300">
-              🏢 {clientProfile.companyName}
+            <Badge variant="outline" className="gap-1 text-primary">
+              <Building2 className="h-3.5 w-3.5" /> {clientProfile.companyName}
             </Badge>
           </div>
         )}
