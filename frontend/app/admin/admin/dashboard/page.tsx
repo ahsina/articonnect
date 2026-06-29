@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import { adminApi, DashboardStats, AuditLog } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  Users, User, Wrench, ClipboardList, CheckCircle2, Wallet, CreditCard, TrendingUp,
+  BarChart3, ShieldAlert, Activity, Flag, Timer, FileCheck, AlertTriangle, ScrollText,
+  Eye, Ban, Award, Tags, Star, Lock, FileText, Settings, ArrowRight, type LucideIcon,
+} from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { t } = useLanguage();
@@ -52,14 +57,14 @@ export default function AdminDashboardPage() {
     return 'bg-muted text-foreground';
   };
 
-  const getResourceIcon = (resource: string) => {
+  const getResourceIcon = (resource: string): LucideIcon => {
     const resourceLower = resource.toLowerCase();
-    if (resourceLower.includes('user')) return '👤';
-    if (resourceLower.includes('mission')) return '📋';
-    if (resourceLower.includes('payment')) return '💳';
-    if (resourceLower.includes('review')) return '⭐';
-    if (resourceLower.includes('auth') || resourceLower.includes('session')) return '🔐';
-    return '📄';
+    if (resourceLower.includes('user')) return User;
+    if (resourceLower.includes('mission')) return ClipboardList;
+    if (resourceLower.includes('payment')) return CreditCard;
+    if (resourceLower.includes('review')) return Star;
+    if (resourceLower.includes('auth') || resourceLower.includes('session')) return Lock;
+    return FileText;
   };
 
   const getTimeAgo = (date: string) => {
@@ -88,7 +93,7 @@ export default function AdminDashboardPage() {
   if (!stats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{t('admin', 'errorLoadingStats')}</div>
+        <div className="text-red-400">{t('admin', 'errorLoadingStats')}</div>
       </div>
     );
   }
@@ -97,21 +102,21 @@ export default function AdminDashboardPage() {
     title,
     value,
     subtitle,
-    icon,
+    icon: Icon,
     color = 'blue',
   }: {
     title: string;
     value: number | string;
     subtitle?: string;
-    icon: string;
+    icon: LucideIcon;
     color?: string;
   }) => {
-    const colorClasses: any = {
+    const colorClasses: Record<string, string> = {
       blue: 'bg-primary/10 text-primary',
-      green: 'bg-green-500/15 text-green-600',
-      yellow: 'bg-yellow-500/15 text-yellow-600',
-      purple: 'bg-purple-500/15 text-purple-600',
-      red: 'bg-red-500/15 text-red-600',
+      green: 'bg-green-500/15 text-green-400',
+      yellow: 'bg-yellow-500/15 text-yellow-400',
+      purple: 'bg-purple-500/15 text-purple-400',
+      red: 'bg-red-500/15 text-red-400',
     };
 
     return (
@@ -123,16 +128,29 @@ export default function AdminDashboardPage() {
               <p className="text-3xl font-bold text-foreground">{value}</p>
               {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
             </div>
-            <div
-              className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${colorClasses[color]}`}
-            >
-              {icon}
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+              <Icon className="h-6 w-6" />
             </div>
           </div>
         </CardContent>
       </Card>
     );
   };
+
+  const quickLinks: { href: string; label: string; icon: LucideIcon }[] = [
+    { href: '/admin/fraud-settings', label: 'Fraud Settings', icon: ShieldAlert },
+    { href: '/admin/monitoring', label: 'Monitoring', icon: Activity },
+    { href: '/admin/feature-flags', label: 'Feature Flags', icon: Flag },
+    { href: '/admin/cron', label: 'CRON Jobs', icon: Timer },
+    { href: '/admin/verifications', label: 'KYC & Verification', icon: FileCheck },
+    { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
+    { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
+    { href: '/admin/moderation', label: 'Moderation', icon: Eye },
+    { href: '/admin/no-shows', label: 'No-Shows', icon: Ban },
+    { href: '/admin/certifications', label: 'Certifications', icon: Award },
+    { href: '/admin/specialties', label: 'Specialties', icon: Tags },
+    { href: '/admin/reputation', label: 'Reputation', icon: Star },
+  ];
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -145,272 +163,123 @@ export default function AdminDashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title={t('admin', 'totalUsers')}
-            value={stats.totalUsers}
-            subtitle={`${stats.newUsers7d} ${t('admin', 'newUsers')} (7j)`}
-            icon="👥"
-            color="blue"
-          />
-          <StatCard
-            title={t('admin', 'clients')}
-            value={stats.totalClients}
-            subtitle={t('admin', 'clientUsers')}
-            icon="👤"
-            color="green"
-          />
-          <StatCard
-            title={t('admin', 'artisans')}
-            value={stats.totalArtisans}
-            subtitle={t('admin', 'activeProfessionals')}
-            icon="🔧"
-            color="purple"
-          />
-          <StatCard
-            title={t('admin', 'totalMissions')}
-            value={stats.totalMissions}
-            subtitle={`${stats.pendingMissions} ${t('admin', 'pending')}`}
-            icon="📋"
-            color="yellow"
-          />
+          <StatCard title={t('admin', 'totalUsers')} value={stats.totalUsers} subtitle={`${stats.newUsers7d} ${t('admin', 'newUsers')} (7j)`} icon={Users} color="blue" />
+          <StatCard title={t('admin', 'clients')} value={stats.totalClients} subtitle={t('admin', 'clientUsers')} icon={User} color="green" />
+          <StatCard title={t('admin', 'artisans')} value={stats.totalArtisans} subtitle={t('admin', 'activeProfessionals')} icon={Wrench} color="purple" />
+          <StatCard title={t('admin', 'totalMissions')} value={stats.totalMissions} subtitle={`${stats.pendingMissions} ${t('admin', 'pending')}`} icon={ClipboardList} color="yellow" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title={t('admin', 'completedMissions')}
-            value={stats.completedMissions}
-            subtitle={`${Math.round((stats.completedMissions / stats.totalMissions) * 100)}% ${t('admin', 'ofTotal')}`}
-            icon="✅"
-            color="green"
-          />
-          <StatCard
-            title={t('admin', 'totalRevenue')}
-            value={`${stats.totalRevenue.toLocaleString('fr-FR')}€`}
-            subtitle={t('admin', 'businessVolume')}
-            icon="💰"
-            color="green"
-          />
-          <StatCard
-            title={t('admin', 'platformCommission')}
-            value={`${stats.platformRevenue.toLocaleString('fr-FR')}€`}
-            subtitle={`${Math.round((stats.platformRevenue / stats.totalRevenue) * 100)}% ${t('admin', 'commission')}`}
-            icon="💳"
-            color="blue"
-          />
-          <StatCard
-            title={t('admin', 'activeUsers')}
-            value={stats.activeUsers30d}
-            subtitle={t('admin', 'last30Days')}
-            icon="📈"
-            color="purple"
-          />
+          <StatCard title={t('admin', 'completedMissions')} value={stats.completedMissions} subtitle={`${Math.round((stats.completedMissions / stats.totalMissions) * 100)}% ${t('admin', 'ofTotal')}`} icon={CheckCircle2} color="green" />
+          <StatCard title={t('admin', 'totalRevenue')} value={`${stats.totalRevenue.toLocaleString('fr-FR')}€`} subtitle={t('admin', 'businessVolume')} icon={Wallet} color="green" />
+          <StatCard title={t('admin', 'platformCommission')} value={`${stats.platformRevenue.toLocaleString('fr-FR')}€`} subtitle={`${Math.round((stats.platformRevenue / stats.totalRevenue) * 100)}% ${t('admin', 'commission')}`} icon={CreditCard} color="blue" />
+          <StatCard title={t('admin', 'activeUsers')} value={stats.activeUsers30d} subtitle={t('admin', 'last30Days')} icon={TrendingUp} color="purple" />
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader onClick={() => router.push('/admin/users')}>
-              <CardTitle className="flex items-center gap-3">
-                <span className="text-3xl">👥</span>
-                <div>
-                  <div className="text-lg">{t('admin', 'userManagement')}</div>
-                  <div className="text-sm font-normal text-muted-foreground">
-                    {t('admin', 'viewManageUsers')}
-                  </div>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader onClick={() => router.push('/admin/missions')}>
-              <CardTitle className="flex items-center gap-3">
-                <span className="text-3xl">📋</span>
-                <div>
-                  <div className="text-lg">{t('admin', 'missionManagement')}</div>
-                  <div className="text-sm font-normal text-muted-foreground">
-                    {t('admin', 'trackModerateMissions')}
-                  </div>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader onClick={() => router.push('/admin/analytics')}>
-              <CardTitle className="flex items-center gap-3">
-                <span className="text-3xl">📊</span>
-                <div>
-                  <div className="text-lg">{t('admin', 'analytics')}</div>
-                  <div className="text-sm font-normal text-muted-foreground">
-                    {t('admin', 'detailedReports')}
-                  </div>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
+          {[
+            { href: '/admin/users', icon: Users, title: t('admin', 'userManagement'), desc: t('admin', 'viewManageUsers') },
+            { href: '/admin/missions', icon: ClipboardList, title: t('admin', 'missionManagement'), desc: t('admin', 'trackModerateMissions') },
+            { href: '/admin/analytics', icon: BarChart3, title: t('admin', 'analytics'), desc: t('admin', 'detailedReports') },
+          ].map((a) => {
+            const Icon = a.icon;
+            return (
+              <Card key={a.href} className="hover:border-primary/40 transition-colors cursor-pointer">
+                <CardHeader onClick={() => router.push(a.href)}>
+                  <CardTitle className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="h-6 w-6" />
+                    </span>
+                    <div>
+                      <div className="text-lg">{a.title}</div>
+                      <div className="text-sm font-normal text-muted-foreground">{a.desc}</div>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Recent Activity */}
         <Card className="mt-8">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
-            <button
-              onClick={() => router.push('/admin/audit-logs')}
-              className="text-sm text-primary hover:text-primary"
-            >
+            <button onClick={() => router.push('/admin/audit-logs')} className="text-sm text-primary hover:underline">
               View All →
             </button>
           </CardHeader>
           <CardContent>
             {recentActivity.length > 0 ? (
               <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl">{getResourceIcon(activity.resource)}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-0.5 text-xs font-medium rounded ${getActionColor(activity.action)}`}
-                          >
-                            {activity.action}
-                          </span>
-                          <span className="text-foreground">{activity.resource}</span>
+                {recentActivity.map((activity) => {
+                  const ResourceIcon = getResourceIcon(activity.resource);
+                  return (
+                    <div key={activity.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-4">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                          <ResourceIcon className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${getActionColor(activity.action)}`}>
+                              {activity.action}
+                            </span>
+                            <span className="text-foreground">{activity.resource}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {activity.userId ? `User: ${activity.userId.slice(0, 8)}...` : 'System'} •{' '}
+                            {activity.ipAddress}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {activity.userId ? `User: ${activity.userId.slice(0, 8)}...` : 'System'} •{' '}
-                          {activity.ipAddress}
-                        </p>
                       </div>
+                      <span className="text-sm text-muted-foreground">{getTimeAgo(activity.createdAt)}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">{getTimeAgo(activity.createdAt)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <span className="text-4xl block mb-2">📋</span>
+                <ClipboardList className="h-9 w-9 mx-auto mb-2 opacity-50" />
                 <p>No recent activity</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Quick Links Row */}
+        {/* Quick Links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          <button
-            onClick={() => router.push('/admin/fraud-settings')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">🛡️</span>
-            <span className="font-medium text-foreground">Fraud Settings</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/monitoring')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">📊</span>
-            <span className="font-medium text-foreground">Monitoring</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/feature-flags')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">🏳️</span>
-            <span className="font-medium text-foreground">Feature Flags</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/cron')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">⚙️</span>
-            <span className="font-medium text-foreground">CRON Jobs</span>
-          </button>
-        </div>
-
-        {/* Additional Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <button
-            onClick={() => router.push('/admin/verifications')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">✅</span>
-            <span className="font-medium text-foreground">KYC & Verification</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/disputes')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">⚠️</span>
-            <span className="font-medium text-foreground">Disputes</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/audit-logs')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">📜</span>
-            <span className="font-medium text-foreground">Audit Logs</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/moderation')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">🔍</span>
-            <span className="font-medium text-foreground">Moderation</span>
-          </button>
-        </div>
-
-        {/* More Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <button
-            onClick={() => router.push('/admin/no-shows')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">🚫</span>
-            <span className="font-medium text-foreground">No-Shows</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/certifications')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">📜</span>
-            <span className="font-medium text-foreground">Certifications</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/specialties')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">🛠️</span>
-            <span className="font-medium text-foreground">Specialties</span>
-          </button>
-          <button
-            onClick={() => router.push('/admin/reputation')}
-            className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow text-left"
-          >
-            <span className="text-2xl block mb-2">⭐</span>
-            <span className="font-medium text-foreground">Reputation</span>
-          </button>
+          {quickLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <button
+                key={link.href}
+                onClick={() => router.push(link.href)}
+                className="p-4 bg-card border border-border rounded-xl hover:border-primary/40 transition-colors text-left"
+              >
+                <Icon className="h-6 w-6 mb-2 text-primary" />
+                <span className="font-medium text-foreground">{link.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Platform Settings - Prominent Link */}
         <div className="mt-8">
           <button
             onClick={() => router.push('/admin/settings')}
-            className="w-full p-6 bg-gradient-to-r from-primary to-yellow-600 rounded-xl hover:from-primary hover:to-yellow-600 transition-all shadow-lg hover:shadow-xl text-left"
+            className="w-full p-6 bg-gradient-to-r from-primary to-yellow-600 rounded-2xl hover:shadow-glow transition-all text-left"
           >
-            <div className="flex items-center gap-4">
-              <span className="text-4xl">⚙️</span>
+            <div className="flex items-center gap-4 text-primary-foreground">
+              <Settings className="h-9 w-9 flex-shrink-0" />
               <div>
-                <span className="text-xl font-semibold text-white block">Platform Settings</span>
-                <span className="text-blue-100 text-sm">
+                <span className="text-xl font-semibold block">Platform Settings</span>
+                <span className="text-sm opacity-80">
                   Configure fees, payments, limits, notifications, integrations, and more
                 </span>
               </div>
-              <span className="ml-auto text-white text-2xl">→</span>
+              <ArrowRight className="ml-auto h-6 w-6 flex-shrink-0" />
             </div>
           </button>
         </div>

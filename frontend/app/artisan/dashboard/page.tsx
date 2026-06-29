@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { missionsApi } from '@/lib/api/missions';
 import { artisanApi, EarningsSummary } from '@/lib/api/artisan';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Star, MapPin, AlertTriangle, Calendar, CalendarClock, User, CreditCard, FileText } from 'lucide-react';
 
 interface Mission {
   id: string;
@@ -170,7 +171,9 @@ export default function ArtisanDashboard() {
             <div className="text-sm text-muted-foreground mb-1">
               {t('artisan', 'averageRating') || 'Rating'}
             </div>
-            <div className="text-2xl font-bold text-yellow-600">⭐ {stats.rating}</div>
+            <div className="flex items-center gap-1.5 text-2xl font-bold text-foreground">
+              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" /> {stats.rating}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -260,7 +263,7 @@ export default function ArtisanDashboard() {
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground">{mission.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          📍 {mission.city} • {mission.category}
+                          <MapPin className="inline h-4 w-4 -mt-0.5" /> {mission.city} • {mission.category}
                         </p>
                         {mission.clientBudget && (
                           <p className="text-sm text-green-600 font-medium mt-1">
@@ -270,8 +273,8 @@ export default function ArtisanDashboard() {
                       </div>
                       <div className="text-right">
                         {mission.type === 'EMERGENCY' && (
-                          <Badge variant="destructive" className="text-xs">
-                            🚨 Urgent
+                          <Badge variant="destructive" className="text-xs gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Urgent
                           </Badge>
                         )}
                       </div>
@@ -317,7 +320,7 @@ export default function ArtisanDashboard() {
                           </p>
                           {mission.scheduledDate && (
                             <p className="text-sm text-muted-foreground mt-1">
-                              📅 {formatDate(mission.scheduledDate)}
+                              <CalendarClock className="inline h-4 w-4 -mt-0.5" /> {formatDate(mission.scheduledDate)}
                             </p>
                           )}
                         </div>
@@ -348,23 +351,23 @@ export default function ArtisanDashboard() {
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <Link href="/artisan/availability/calendar">
-              <Button variant="outline">
-                📅 {t('artisan', 'manageAvailability') || 'Manage Availability'}
+              <Button variant="outline" leftIcon={<Calendar className="h-4 w-4" />}>
+                {t('artisan', 'manageAvailability') || 'Manage Availability'}
               </Button>
             </Link>
             <Link href="/artisan/profile">
-              <Button variant="outline">
-                👤 {t('artisan', 'updateProfile') || 'Update Profile'}
+              <Button variant="outline" leftIcon={<User className="h-4 w-4" />}>
+                {t('artisan', 'updateProfile') || 'Update Profile'}
               </Button>
             </Link>
             <Link href="/artisan/stripe">
-              <Button variant="outline">
-                💳 {t('artisan', 'paymentSettings') || 'Payment Settings'}
+              <Button variant="outline" leftIcon={<CreditCard className="h-4 w-4" />}>
+                {t('artisan', 'paymentSettings') || 'Payment Settings'}
               </Button>
             </Link>
             <Link href="/artisan/quotations">
-              <Button variant="outline">
-                📄 {t('artisan', 'viewQuotations') || 'View Quotations'}
+              <Button variant="outline" leftIcon={<FileText className="h-4 w-4" />}>
+                {t('artisan', 'viewQuotations') || 'View Quotations'}
               </Button>
             </Link>
           </div>

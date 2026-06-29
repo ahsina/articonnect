@@ -10,7 +10,7 @@ import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mission, MissionStatus } from '@/types/mission';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ClipboardList, Hammer, ShoppingCart, LogOut } from 'lucide-react';
+import { ClipboardList, Hammer, ShoppingCart, LogOut, Wrench, HardHat, Building2 } from 'lucide-react';
 
 interface ClientProfile {
   clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
@@ -120,7 +120,7 @@ export default function ClientDashboard() {
                 </h1>
                 {isProfessional && (
                   <Badge variant="default" className="bg-primary">
-                    🏢 {t('client', 'professional') || 'Professionnel'}
+                    <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" /> {t("client", "professional") || "Professionnel"}</span>
                   </Badge>
                 )}
               </div>
@@ -152,16 +152,16 @@ export default function ClientDashboard() {
             href="/client/missions/new"
             className="bg-primary text-primary-foreground p-6 rounded-lg hover:bg-primary/90 transition"
           >
-            <div className="text-3xl mb-2">🔧</div>
+            <Wrench className="h-7 w-7 mb-2" />
             <h3 className="text-xl font-semibold mb-2">Nouvelle Demande</h3>
-            <p className="text-blue-100">Créer une demande d'intervention</p>
+            <p className="text-primary-foreground/80">Créer une demande d'intervention</p>
           </Link>
 
           <Link
             href="/client/artisans"
             className="bg-green-600 text-white p-6 rounded-lg hover:bg-green-700 transition"
           >
-            <div className="text-3xl mb-2">👷</div>
+            <HardHat className="h-7 w-7 mb-2" />
             <h3 className="text-xl font-semibold mb-2">Trouver un Artisan</h3>
             <p className="text-green-100">Parcourir les artisans locaux</p>
           </Link>
@@ -170,7 +170,7 @@ export default function ClientDashboard() {
             href="/client/marketplace"
             className="bg-purple-600 text-white p-6 rounded-lg hover:bg-purple-700 transition"
           >
-            <div className="text-3xl mb-2">🛒</div>
+            <ShoppingCart className="h-7 w-7 mb-2" />
             <h3 className="text-xl font-semibold mb-2">Marketplace</h3>
             <p className="text-purple-100">Acheter des produits</p>
           </Link>
@@ -182,7 +182,7 @@ export default function ClientDashboard() {
 
           {missions.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
+              <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 Aucune mission pour le moment
               </h3>
