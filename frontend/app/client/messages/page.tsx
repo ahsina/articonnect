@@ -236,7 +236,7 @@ export default function MessagesPage() {
                           {conv.user.firstName} {conv.user.lastName}
                         </span>
                         {conv.unreadCount > 0 && (
-                          <span className="bg-primary text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
+                          <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5 flex-shrink-0">
                             {conv.unreadCount}
                           </span>
                         )}
@@ -292,7 +292,7 @@ export default function MessagesPage() {
                       <div
                         className={`max-w-[70%] rounded-lg px-4 py-2 ${
                           isOwn
-                            ? 'bg-primary text-white'
+                            ? 'bg-primary text-primary-foreground'
                             : 'bg-card text-foreground border border-border'
                         }`}
                       >

@@ -208,7 +208,7 @@ export default function CertificationsPage() {
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-lg capitalize ${
                   filter === f
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground hover:bg-accent'
                 }`}
               >

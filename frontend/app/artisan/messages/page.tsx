@@ -253,7 +253,7 @@ export default function ArtisanMessagesPage() {
                       className="w-12 h-12 rounded-full flex-shrink-0"
                     />
                     {conv.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {conv.unreadCount}
                       </span>
                     )}
@@ -335,7 +335,7 @@ export default function ArtisanMessagesPage() {
                         <div
                           className={`max-w-[70%] rounded-lg px-4 py-2 ${
                             isOwn
-                              ? 'bg-primary text-white'
+                              ? 'bg-primary text-primary-foreground'
                               : 'bg-card text-foreground border border-border shadow-sm'
                           }`}
                         >

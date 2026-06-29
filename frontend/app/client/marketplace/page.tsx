@@ -223,7 +223,7 @@ export default function MarketplacePage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   selectedCategory === category.id
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-card text-foreground hover:bg-accent'
                 }`}
               >
@@ -273,7 +273,7 @@ export default function MarketplacePage() {
                         onClick={() => setMinRating(rating)}
                         className={`flex items-center gap-1 px-3 py-2 rounded-lg border transition-colors ${
                           minRating === rating
-                            ? 'bg-primary text-white border-blue-600'
+                            ? 'bg-primary text-primary-foreground border-blue-600'
                             : 'bg-card text-foreground border-border hover:bg-accent'
                         }`}
                       >
@@ -350,11 +350,17 @@ export default function MarketplacePage() {
                 <CardContent className="p-0">
                   {/* Product Image */}
                   <div className="relative">
-                    <img
-                      src={product.images[0] || '/icon-512x512.png'}
-                      alt={product.name}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
+                    {product.images?.[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-48 object-cover rounded-t-lg"
+                      />
+                    ) : (
+                      <div className="flex h-48 w-full items-center justify-center rounded-t-lg bg-muted text-5xl text-muted-foreground">
+                        📦
+                      </div>
+                    )}
                     {product.stock < 5 && (
                       <Badge variant="warning" className="absolute top-2 right-2">
                         Stock limité

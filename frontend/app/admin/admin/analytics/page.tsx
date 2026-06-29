@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
               onClick={() => setDays(7)}
               className={`px-4 py-2 rounded-lg ${
                 days === 7
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground border'
               }`}
             >
@@ -134,7 +134,7 @@ export default function AnalyticsPage() {
               onClick={() => setDays(30)}
               className={`px-4 py-2 rounded-lg ${
                 days === 30
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground border'
               }`}
             >
@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
               onClick={() => setDays(90)}
               className={`px-4 py-2 rounded-lg ${
                 days === 90
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground border'
               }`}
             >

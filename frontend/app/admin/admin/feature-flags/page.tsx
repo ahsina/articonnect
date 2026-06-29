@@ -221,7 +221,7 @@ export default function FeatureFlagsPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
           >
             + New Flag
           </button>
@@ -295,7 +295,7 @@ export default function FeatureFlagsPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-primary text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
+                  className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
                   All ({flags.length})
                 </button>
@@ -529,7 +529,7 @@ export default function FeatureFlagsPage() {
                 <button
                   onClick={handleCreateFlag}
                   disabled={!formData.key || !formData.name || actionLoading === 'create'}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
                   {actionLoading === 'create' ? 'Creating...' : 'Create Flag'}
                 </button>

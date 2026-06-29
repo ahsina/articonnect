@@ -191,7 +191,7 @@ export default function SpecialtiesPage() {
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
               + Add Specialty
             </button>
@@ -255,7 +255,7 @@ export default function SpecialtiesPage() {
             onClick={() => setSelectedCategory('')}
             className={`px-4 py-2 rounded-lg ${
               selectedCategory === ''
-                ? 'bg-primary text-white'
+                ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground hover:bg-accent'
             }`}
           >
@@ -267,7 +267,7 @@ export default function SpecialtiesPage() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-lg ${
                 selectedCategory === cat
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-foreground hover:bg-accent'
               }`}
             >
@@ -430,7 +430,7 @@ export default function SpecialtiesPage() {
                   <button
                     onClick={handleCreate}
                     disabled={processingId === 'create'}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {processingId === 'create' ? 'Creating...' : 'Create'}
                   </button>
@@ -510,7 +510,7 @@ export default function SpecialtiesPage() {
                   <button
                     onClick={handleUpdate}
                     disabled={processingId === selectedSpecialty.id}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {processingId === selectedSpecialty.id ? 'Saving...' : 'Save Changes'}
                   </button>

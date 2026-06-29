@@ -196,7 +196,7 @@ export default function ReputationPage() {
                 <button
                   onClick={handleLookup}
                   disabled={loading}
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
                   {loading ? 'Loading...' : 'Lookup'}
                 </button>
@@ -357,7 +357,7 @@ export default function ReputationPage() {
                   <button
                     onClick={handleAdjust}
                     disabled={processing || adjustmentAmount === 0 || !adjustmentReason.trim()}
-                    className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                    className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
                     {processing ? 'Applying...' : 'Apply Adjustment'}
                   </button>

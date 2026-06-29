@@ -1,16 +1,8 @@
-<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="180" height="180" fill="#2563EB" rx="27"/>
-
-  <!-- Letter "A" -->
-  <text
-    x="50%"
-    y="50%"
-    dominant-baseline="middle"
-    text-anchor="middle"
-    font-family="Arial, sans-serif"
-    font-weight="bold"
-    font-size="108"
-    fill="white"
-  >A</text>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="7" fill="#FFD500"/>
+  <g stroke="#0E0F12" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M12 8 V24"/>
+    <path d="M12 16.5 L20.5 8"/>
+    <path d="M12 15.5 L20.5 24"/>
+  </g>
 </svg>

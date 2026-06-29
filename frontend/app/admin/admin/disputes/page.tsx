@@ -300,7 +300,7 @@ export default function DisputesPage() {
                             e.stopPropagation();
                             setSelectedDispute(dispute);
                           }}
-                          className="px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary/90"
+                          className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90"
                         >
                           Resolve
                         </button>

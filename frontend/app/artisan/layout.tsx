@@ -228,7 +228,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                       onClick={() => toggleGroup(item.label)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                         hasActiveChild(item.children)
-                          ? 'bg-primary text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                       }`}
                     >
@@ -248,7 +248,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                               onClick={() => router.push(child.href)}
                               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isActive(child.href)
-                                  ? 'bg-primary text-white'
+                                  ? 'bg-primary text-primary-foreground'
                                   : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                               }`}
                             >
@@ -270,9 +270,9 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                     onClick={() => router.push(linkItem.href)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isActive(linkItem.href)
-                        ? 'bg-primary text-white'
+                        ? 'bg-primary text-primary-foreground'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-white hover:from-primary hover:to-yellow-600'
+                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-primary-foreground hover:from-primary hover:to-yellow-600'
                           : 'text-blue-200 hover:bg-primary/90 hover:text-white'
                     }`}
                   >

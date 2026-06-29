@@ -148,7 +148,7 @@ export default function ClientDashboard() {
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <Link
             href="/client/missions/new"
-            className="bg-primary text-white p-6 rounded-lg hover:bg-primary/90 transition"
+            className="bg-primary text-primary-foreground p-6 rounded-lg hover:bg-primary/90 transition"
           >
             <div className="text-3xl mb-2">🔧</div>
             <h3 className="text-xl font-semibold mb-2">Nouvelle Demande</h3>

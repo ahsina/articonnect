@@ -215,7 +215,7 @@ export default function CronJobsPage() {
                       <button
                         onClick={handleTriggerAutoValidation}
                         disabled={triggering === 'auto-validate'}
-                        className="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {triggering === 'auto-validate' ? 'Running...' : 'Trigger Now'}
                       </button>

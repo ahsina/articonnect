@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
                       <tr key={user.id} className="hover:bg-accent">
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
                               {user.firstName[0]}
                               {user.lastName[0]}
                             </div>

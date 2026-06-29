@@ -79,7 +79,7 @@ export default function EmployeeChatPage() {
           </p>
           <a
             href="/employee"
-            className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Retour à l'accueil
           </a>

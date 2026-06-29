@@ -47,7 +47,7 @@ export function ReviewCard({ review, showArtisan = false, showClient = true }: R
     <div className="bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
+          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
             {initials()}
           </div>
           <div>

@@ -88,7 +88,7 @@ export function SidebarLayout({
                             className={cn(
                               'px-2 py-0.5 text-xs font-medium rounded-full',
                               isActive
-                                ? 'bg-primary text-white'
+                                ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted text-foreground'
                             )}
                           >
@@ -108,7 +108,7 @@ export function SidebarLayout({
         <button
           type="button"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="fixed bottom-4 left-4 z-40 lg:hidden flex items-center justify-center w-12 h-12 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          className="fixed bottom-4 left-4 z-40 lg:hidden flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           aria-label={isSidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={isSidebarOpen}
         >

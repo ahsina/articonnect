@@ -154,7 +154,7 @@ export default function ModerationPage() {
                 onClick={() => setFilter(status)}
                 className={`px-4 py-2 rounded-lg ${
                   filter === status
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-card text-foreground border'
                 }`}
               >
@@ -342,7 +342,7 @@ export default function ModerationPage() {
                   <div className="flex gap-3 pt-4">
                     <button
                       onClick={handleResolve}
-                      className="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90"
+                      className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:bg-primary/90"
                     >
                       Résoudre
                     </button>

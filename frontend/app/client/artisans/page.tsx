@@ -184,7 +184,7 @@ export default function ArtisansListPage() {
                 onClick={() => setSelectedSpecialty(specialty.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   selectedSpecialty === specialty.id
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-card text-foreground hover:bg-accent'
                 }`}
               >
@@ -213,7 +213,7 @@ export default function ArtisansListPage() {
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-lg font-semibold">
+                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-lg font-semibold">
                         {artisan.firstName[0]}
                         {artisan.lastName[0]}
                       </div>

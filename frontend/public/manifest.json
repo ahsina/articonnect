@@ -4,8 +4,8 @@
   "description": "Plateforme de mise en relation entre clients et artisans",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563EB",
+  "background_color": "#0E0F12",
+  "theme_color": "#0E0F12",
   "icons": [
     {
       "src": "/icon-192x192.png",

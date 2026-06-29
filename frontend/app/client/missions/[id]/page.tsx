@@ -652,7 +652,7 @@ export default function MissionDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-semibold">
+                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xl font-semibold">
                       {mission.artisan.firstName[0]}
                       {mission.artisan.lastName[0]}
                     </div>

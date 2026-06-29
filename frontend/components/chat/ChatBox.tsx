@@ -131,7 +131,7 @@ export function ChatBox({ otherUser, missionId }: ChatBoxProps) {
     <div className="flex flex-col h-[600px] bg-card rounded-lg shadow">
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b">
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
+        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
           {otherUser.firstName[0]}
           {otherUser.lastName[0]}
         </div>
@@ -164,7 +164,7 @@ export function ChatBox({ otherUser, missionId }: ChatBoxProps) {
               <div
                 className={`max-w-[70%] rounded-lg px-4 py-2 ${
                   msg.senderId === 'me'
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground'
                 }`}
               >

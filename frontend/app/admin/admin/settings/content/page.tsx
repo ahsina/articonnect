@@ -537,7 +537,7 @@ export default function ContentModerationPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Content Moderation Settings'}
         </button>

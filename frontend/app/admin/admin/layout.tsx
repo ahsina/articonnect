@@ -148,7 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                               onClick={() => router.push(child.href)}
                               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isActive(child.href)
-                                  ? 'bg-primary text-white'
+                                  ? 'bg-primary text-primary-foreground'
                                   : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
                               }`}
                             >
@@ -170,9 +170,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     onClick={() => router.push(linkItem.href)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isActive(linkItem.href)
-                        ? 'bg-primary text-white'
+                        ? 'bg-primary text-primary-foreground'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-white hover:from-primary hover:to-yellow-600'
+                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-primary-foreground hover:from-primary hover:to-yellow-600'
                           : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
                     }`}
                   >
