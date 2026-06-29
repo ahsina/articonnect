@@ -27,8 +27,15 @@ export default function ModerationPage() {
 
   const loadReports = async () => {
     try {
+      // Mapping vers les valeurs d'enum backend (ModerationReportStatus)
+      const STATUS_MAP: Record<string, string> = {
+        pending: 'PENDING',
+        reviewing: 'UNDER_REVIEW',
+        resolved: 'RESOLVED',
+        dismissed: 'DISMISSED',
+      };
       const filterParams =
-        filter === 'all' ? {} : { status: filter.toUpperCase() };
+        filter === 'all' ? {} : { status: STATUS_MAP[filter] || filter.toUpperCase() };
       const data = await adminApi.getReports(filterParams);
       setReports(data);
     } catch (error: any) {

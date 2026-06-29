@@ -172,8 +172,9 @@ export class BusinessVerificationService {
    * Get verification status for an artisan
    */
   async getVerificationStatus(artisanId: string) {
-    const profile = await this.prisma.artisanProfile.findUnique({
-      where: { userId: artisanId },
+    // artisanId peut être l'id du profil OU l'userId (selon l'appelant) → on accepte les deux.
+    const profile = await this.prisma.artisanProfile.findFirst({
+      where: { OR: [{ id: artisanId }, { userId: artisanId }] },
       select: {
         businessVerified: true,
         businessVerifiedAt: true,
@@ -207,8 +208,9 @@ export class BusinessVerificationService {
    * Re-verify an artisan (for annual checks)
    */
   async reverifyArtisan(artisanId: string): Promise<BusinessVerificationResult> {
-    const profile = await this.prisma.artisanProfile.findUnique({
-      where: { userId: artisanId },
+    // artisanId peut être l'id du profil OU l'userId → on accepte les deux.
+    const profile = await this.prisma.artisanProfile.findFirst({
+      where: { OR: [{ id: artisanId }, { userId: artisanId }] },
     });
 
     if (!profile) {

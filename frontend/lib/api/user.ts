@@ -105,7 +105,15 @@ export const userApi = {
   },
 
   updateNotificationPreferences: async (data: UpdateNotificationPreferencesDto) => {
-    const response = await apiClient.put('/notifications/preferences', data);
+    // Le backend rejette tout champ hors DTO (forbidNonWhitelisted) → on ne garde que les champs autorisés
+    // (évite l'envoi de id/userId/createdAt/updatedAt présents dans l'objet chargé via GET).
+    const allowed: (keyof UpdateNotificationPreferencesDto)[] = [
+      'emailNotifications', 'pushNotifications', 'smsNotifications', 'missionUpdates',
+      'paymentNotifications', 'reviewNotifications', 'marketingEmails',
+    ];
+    const clean: Record<string, unknown> = {};
+    for (const k of allowed) if (k in (data as object) && (data as any)[k] !== undefined) clean[k] = (data as any)[k];
+    const response = await apiClient.put('/notifications/preferences', clean);
     return response.data;
   },
 
