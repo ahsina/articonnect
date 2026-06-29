@@ -108,7 +108,7 @@ export function Navbar({ user }: NavbarProps) {
 
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled || isMobileMenuOpen ? 'bg-card shadow-md' : 'bg-white/95 backdrop-blur-sm'
+          isScrolled || isMobileMenuOpen ? 'bg-card shadow-md' : 'bg-background/80 backdrop-blur-xl'
         }`}
         role="navigation"
         aria-label={t('nav', 'mainNavigation') || 'Navigation principale'}
@@ -154,10 +154,10 @@ export function Navbar({ user }: NavbarProps) {
               ) : (
                 <>
                   <LanguageSwitcher />
-                  <Link href="/login">
+                  <Link href="/auth/login">
                     <Button variant="ghost">{t('nav', 'login') || 'Connexion'}</Button>
                   </Link>
-                  <Link href="/register">
+                  <Link href="/auth/register">
                     <Button>{t('nav', 'register') || "S'inscrire"}</Button>
                   </Link>
                 </>
@@ -231,14 +231,14 @@ export function Navbar({ user }: NavbarProps) {
                   <LanguageSwitcher />
                 </div>
                 <Link
-                  href="/login"
+                  href="/auth/login"
                   className="block py-3 px-2 text-base font-medium text-foreground hover:bg-accent rounded-md min-h-[44px] flex items-center"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t('nav', 'login') || 'Connexion'}
                 </Link>
                 <Link
-                  href="/register"
+                  href="/auth/register"
                   className="block py-3 px-2 text-base font-medium text-primary hover:bg-primary/10 rounded-md min-h-[44px] flex items-center"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

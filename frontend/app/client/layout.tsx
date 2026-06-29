@@ -9,6 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  LayoutDashboard, ClipboardList, Hammer, Heart, Receipt, Scale,
+  Bell, Settings, Building2, type LucideIcon,
+} from 'lucide-react';
 
 interface ClientProfile {
   clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
@@ -41,13 +45,13 @@ function ClientHeader() {
     return null;
   }
 
-  const navLinks = [
-    { href: '/client/dashboard', label: t('nav', 'dashboard') || 'Tableau de bord' },
-    { href: '/client/missions', label: t('nav', 'missions') || 'Mes missions' },
-    { href: '/client/artisans', label: t('nav', 'artisans') || 'Artisans' },
-    { href: '/client/favorites', label: t('nav', 'favorites') || 'Favoris' },
-    { href: '/client/invoices', label: t('nav', 'invoices') || 'Factures' },
-    { href: '/client/disputes', label: t('nav', 'disputes') || 'Litiges' },
+  const navLinks: { href: string; label: string; icon: LucideIcon }[] = [
+    { href: '/client/dashboard', label: t('nav', 'dashboard') || 'Tableau de bord', icon: LayoutDashboard },
+    { href: '/client/missions', label: t('nav', 'missions') || 'Mes missions', icon: ClipboardList },
+    { href: '/client/artisans', label: t('nav', 'artisans') || 'Artisans', icon: Hammer },
+    { href: '/client/favorites', label: t('nav', 'favorites') || 'Favoris', icon: Heart },
+    { href: '/client/invoices', label: t('nav', 'invoices') || 'Factures', icon: Receipt },
+    { href: '/client/disputes', label: t('nav', 'disputes') || 'Litiges', icon: Scale },
   ];
 
   return (
@@ -61,8 +65,8 @@ function ClientHeader() {
             </Link>
             {isProfessional && clientProfile?.companyName && (
               <div className="hidden md:flex items-center gap-2 pl-4 border-l">
-                <Badge variant="outline" className="text-primary border-blue-300">
-                  🏢 {clientProfile.companyName}
+                <Badge variant="outline" className="gap-1 text-primary">
+                  <Building2 className="h-3.5 w-3.5" /> {clientProfile.companyName}
                 </Badge>
               </div>
             )}
@@ -70,28 +74,32 @@ function ClientHeader() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <Button
-                  variant={pathname === link.href ? 'default' : 'ghost'}
-                  size="sm"
-                >
-                  {link.label}
-                </Button>
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link key={link.href} href={link.href}>
+                  <Button
+                    variant={pathname === link.href ? 'default' : 'ghost'}
+                    size="sm"
+                    leftIcon={<Icon className="h-4 w-4" />}
+                  >
+                    {link.label}
+                  </Button>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* User Info & Actions */}
           <div className="flex items-center gap-3">
-            <Link href="/client/notifications">
-              <Button variant="ghost" size="sm">
-                🔔
+            <Link href="/client/notifications" aria-label="Notifications">
+              <Button variant="ghost" size="icon">
+                <Bell className="h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/client/settings">
-              <Button variant="ghost" size="sm">
-                ⚙️
+            <Link href="/client/settings" aria-label="Paramètres">
+              <Button variant="ghost" size="icon">
+                <Settings className="h-5 w-5" />
               </Button>
             </Link>
             <div className="hidden md:block text-sm text-muted-foreground">

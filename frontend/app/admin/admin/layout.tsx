@@ -2,70 +2,76 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import {
+  LayoutDashboard, Users, ClipboardList, TrendingUp, ShieldCheck, Eye, AlertTriangle,
+  Ban, BadgeCheck, FileCheck, Award, Wrench, Tags, Star, Flag, Server, Activity,
+  Timer, ShieldAlert, ScrollText, Settings, ChevronLeft, ChevronRight, ChevronDown,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface NavChild {
   href: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
 }
 
 interface NavItemLink {
   href: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   highlight?: boolean;
 }
 
 interface NavItemGroup {
   label: string;
-  icon: string;
+  icon: LucideIcon;
   children: NavChild[];
 }
 
 type NavItem = NavItemLink | NavItemGroup;
 
 const adminNavItems: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/users', label: 'Users', icon: '👥' },
-  { href: '/admin/missions', label: 'Missions', icon: '📋' },
-  { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/missions', label: 'Missions', icon: ClipboardList },
+  { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
   {
     label: 'Moderation',
-    icon: '🛡️',
+    icon: ShieldCheck,
     children: [
-      { href: '/admin/moderation', label: 'Reports', icon: '🔍' },
-      { href: '/admin/disputes', label: 'Disputes', icon: '⚠️' },
-      { href: '/admin/no-shows', label: 'No-Shows', icon: '🚫' },
+      { href: '/admin/moderation', label: 'Reports', icon: Eye },
+      { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
+      { href: '/admin/no-shows', label: 'No-Shows', icon: Ban },
     ],
   },
   {
     label: 'Verification',
-    icon: '✅',
+    icon: BadgeCheck,
     children: [
-      { href: '/admin/verifications', label: 'KYC/Verification', icon: '🪪' },
-      { href: '/admin/certifications', label: 'Certifications', icon: '📜' },
+      { href: '/admin/verifications', label: 'KYC/Verification', icon: FileCheck },
+      { href: '/admin/certifications', label: 'Certifications', icon: Award },
     ],
   },
   {
     label: 'Platform',
-    icon: '🔧',
+    icon: Wrench,
     children: [
-      { href: '/admin/specialties', label: 'Specialties', icon: '🛠️' },
-      { href: '/admin/reputation', label: 'Reputation', icon: '⭐' },
-      { href: '/admin/feature-flags', label: 'Feature Flags', icon: '🏳️' },
+      { href: '/admin/specialties', label: 'Specialties', icon: Tags },
+      { href: '/admin/reputation', label: 'Reputation', icon: Star },
+      { href: '/admin/feature-flags', label: 'Feature Flags', icon: Flag },
     ],
   },
   {
     label: 'System',
-    icon: '⚙️',
+    icon: Server,
     children: [
-      { href: '/admin/monitoring', label: 'Monitoring', icon: '💻' },
-      { href: '/admin/cron', label: 'CRON Jobs', icon: '⏰' },
-      { href: '/admin/fraud-settings', label: 'Fraud Settings', icon: '🔒' },
-      { href: '/admin/audit-logs', label: 'Audit Logs', icon: '📝' },
+      { href: '/admin/monitoring', label: 'Monitoring', icon: Activity },
+      { href: '/admin/cron', label: 'CRON Jobs', icon: Timer },
+      { href: '/admin/fraud-settings', label: 'Fraud Settings', icon: ShieldAlert },
+      { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
     ],
   },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️', highlight: true },
+  { href: '/admin/settings', label: 'Settings', icon: Settings, highlight: true },
 ];
 
 function isNavGroup(item: NavItem): item is NavItemGroup {
@@ -94,24 +100,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return pathname === href || pathname.startsWith(href + '/');
   };
 
-  const hasActiveChild = (children: NavChild[]): boolean => {
-    return children.some((child) => isActive(child.href));
-  };
+  const hasActiveChild = (children: NavChild[]): boolean => children.some((c) => isActive(c.href));
+
+  const linkBase = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium';
 
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-gray-900 text-white flex-shrink-0 transition-all duration-300 flex flex-col`}
+        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-card border-r border-border text-foreground flex-shrink-0 transition-all duration-300 flex flex-col`}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
-          {sidebarOpen && <span className="font-bold text-lg">Krafolt</span>}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+          {sidebarOpen && (
+            <span className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
+              <span className="font-display font-bold">Krafolt</span>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">ADMIN</span>
+            </span>
+          )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label={sidebarOpen ? 'Réduire' : 'Étendre'}
           >
-            {sidebarOpen ? '◀' : '▶'}
+            {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
         </div>
 
@@ -120,43 +133,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <ul className="space-y-1 px-2">
             {adminNavItems.map((item) => {
               if (isNavGroup(item)) {
-                const isExpanded =
-                  expandedGroups.includes(item.label) || hasActiveChild(item.children);
+                const isExpanded = expandedGroups.includes(item.label) || hasActiveChild(item.children);
+                const GroupIcon = item.icon;
                 return (
                   <li key={item.label}>
                     <button
                       onClick={() => toggleGroup(item.label)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`${linkBase} ${
                         hasActiveChild(item.children)
-                          ? 'bg-gray-800 text-white'
-                          : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                       }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
+                      <GroupIcon className="h-5 w-5 flex-shrink-0" />
                       {sidebarOpen && (
                         <>
-                          <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
-                          <span className="text-xs">{isExpanded ? '▼' : '▶'}</span>
+                          <span className="flex-1 text-left">{item.label}</span>
+                          <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                         </>
                       )}
                     </button>
                     {sidebarOpen && isExpanded && (
-                      <ul className="mt-1 ml-6 space-y-1">
-                        {item.children.map((child) => (
-                          <li key={child.href}>
-                            <button
-                              onClick={() => router.push(child.href)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                isActive(child.href)
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
-                              }`}
-                            >
-                              <span>{child.icon}</span>
-                              <span>{child.label}</span>
-                            </button>
-                          </li>
-                        ))}
+                      <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-2">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          return (
+                            <li key={child.href}>
+                              <button
+                                onClick={() => router.push(child.href)}
+                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                  isActive(child.href)
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                }`}
+                              >
+                                <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                                <span>{child.label}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
@@ -164,22 +180,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               }
 
               const linkItem = item as NavItemLink;
+              const LinkIcon = linkItem.icon;
               return (
                 <li key={linkItem.href}>
                   <button
                     onClick={() => router.push(linkItem.href)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    className={`${linkBase} ${
                       isActive(linkItem.href)
                         ? 'bg-primary text-primary-foreground'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-primary-foreground hover:from-primary hover:to-yellow-600'
-                          : 'text-muted-foreground hover:bg-gray-800 hover:text-white'
+                          ? 'text-foreground hover:bg-accent'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     }`}
                   >
-                    <span className="text-lg">{linkItem.icon}</span>
-                    {sidebarOpen && (
-                      <span className="text-sm font-medium">{linkItem.label}</span>
-                    )}
+                    <LinkIcon className="h-5 w-5 flex-shrink-0" />
+                    {sidebarOpen && <span className="flex-1 text-left">{linkItem.label}</span>}
                   </button>
                 </li>
               );
@@ -189,7 +204,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer */}
         {sidebarOpen && (
-          <div className="p-4 border-t border-gray-800">
+          <div className="p-4 border-t border-border">
             <div className="text-xs text-muted-foreground">Admin Panel v1.0</div>
           </div>
         )}

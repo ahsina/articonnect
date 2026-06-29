@@ -10,6 +10,7 @@ import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mission, MissionStatus } from '@/types/mission';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ClipboardList, Hammer, ShoppingCart, LogOut } from 'lucide-react';
 
 interface ClientProfile {
   clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
@@ -87,17 +88,18 @@ export default function ClientDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/client/missions">
-                <Button variant="ghost">{t('missions', 'myMissions')}</Button>
+                <Button variant="ghost" leftIcon={<ClipboardList className="h-4 w-4" />}>{t('missions', 'myMissions')}</Button>
               </Link>
               <Link href="/client/artisans">
-                <Button variant="ghost">{t('missions', 'findArtisan')}</Button>
+                <Button variant="ghost" leftIcon={<Hammer className="h-4 w-4" />}>{t('missions', 'findArtisan')}</Button>
               </Link>
               <Link href="/client/marketplace">
-                <Button variant="ghost">{t('marketplace', 'title')}</Button>
+                <Button variant="ghost" leftIcon={<ShoppingCart className="h-4 w-4" />}>{t('marketplace', 'title')}</Button>
               </Link>
               <Button
                 variant="ghost"
                 onClick={handleLogout}
+                leftIcon={<LogOut className="h-4 w-4" />}
               >
                 {t('common', 'logout')}
               </Button>

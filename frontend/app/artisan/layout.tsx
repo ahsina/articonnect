@@ -6,24 +6,30 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { companyApi } from '@/lib/api/company';
+import {
+  LayoutDashboard, ClipboardList, Wallet, TrendingUp, CalendarDays, CalendarRange,
+  Clock, Plane, User, FileText, Award, Star, FileSignature, Store, Building2,
+  Users, ClipboardCheck, BarChart3, Settings, CreditCard, LogOut,
+  ChevronLeft, ChevronRight, ChevronDown, type LucideIcon,
+} from 'lucide-react';
 
 interface NavChild {
   href: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
 }
 
 interface NavItemLink {
   href: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   highlight?: boolean;
   badge?: number;
 }
 
 interface NavItemGroup {
   label: string;
-  icon: string;
+  icon: LucideIcon;
   children: NavChild[];
 }
 
@@ -56,85 +62,41 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   const artisanNavItems: NavItem[] = [
-    { href: '/artisan/dashboard', label: t('navigation', 'dashboard') || 'Dashboard', icon: '📊' },
-    { href: '/artisan/missions', label: t('navigation', 'missions') || 'Missions', icon: '📋' },
-    { href: '/artisan/earnings', label: t('navigation', 'earnings') || 'Earnings', icon: '💰' },
-    { href: '/artisan/analytics', label: t('navigation', 'analytics') || 'Analytics', icon: '📈' },
+    { href: '/artisan/dashboard', label: t('navigation', 'dashboard') || 'Dashboard', icon: LayoutDashboard },
+    { href: '/artisan/missions', label: t('navigation', 'missions') || 'Missions', icon: ClipboardList },
+    { href: '/artisan/earnings', label: t('navigation', 'earnings') || 'Earnings', icon: Wallet },
+    { href: '/artisan/analytics', label: t('navigation', 'analytics') || 'Analytics', icon: TrendingUp },
     {
       label: t('navigation', 'availability') || 'Availability',
-      icon: '📅',
+      icon: CalendarDays,
       children: [
-        {
-          href: '/artisan/availability/calendar',
-          label: t('navigation', 'calendar') || 'Calendar',
-          icon: '📆',
-        },
-        {
-          href: '/artisan/availability/working-hours',
-          label: t('navigation', 'workingHours') || 'Working Hours',
-          icon: '⏰',
-        },
-        {
-          href: '/artisan/availability/time-off',
-          label: t('navigation', 'timeOff') || 'Time Off',
-          icon: '🏖️',
-        },
+        { href: '/artisan/availability/calendar', label: t('navigation', 'calendar') || 'Calendar', icon: CalendarRange },
+        { href: '/artisan/availability/working-hours', label: t('navigation', 'workingHours') || 'Working Hours', icon: Clock },
+        { href: '/artisan/availability/time-off', label: t('navigation', 'timeOff') || 'Time Off', icon: Plane },
       ],
     },
     {
       label: t('navigation', 'profile') || 'Profile',
-      icon: '👤',
+      icon: User,
       children: [
-        {
-          href: '/artisan/profile',
-          label: t('navigation', 'myProfile') || 'My Profile',
-          icon: '📝',
-        },
-        {
-          href: '/artisan/certifications',
-          label: t('navigation', 'certifications') || 'Certifications',
-          icon: '📜',
-        },
-        { href: '/artisan/reviews', label: t('navigation', 'reviews') || 'Reviews', icon: '⭐' },
+        { href: '/artisan/profile', label: t('navigation', 'myProfile') || 'My Profile', icon: FileText },
+        { href: '/artisan/certifications', label: t('navigation', 'certifications') || 'Certifications', icon: Award },
+        { href: '/artisan/reviews', label: t('navigation', 'reviews') || 'Reviews', icon: Star },
       ],
     },
-    {
-      href: '/artisan/quotations',
-      label: t('navigation', 'quotations') || 'Quotations',
-      icon: '📄',
-    },
-    { href: '/artisan/products', label: t('navigation', 'shop') || 'My Shop', icon: '🛒' },
+    { href: '/artisan/quotations', label: t('navigation', 'quotations') || 'Quotations', icon: FileSignature },
+    { href: '/artisan/products', label: t('navigation', 'shop') || 'My Shop', icon: Store },
     ...(hasCompany
       ? [
           {
             label: t('navigation', 'company') || 'Company',
-            icon: '🏢',
+            icon: Building2,
             children: [
-              {
-                href: '/artisan/company/dashboard',
-                label: t('navigation', 'companyDashboard') || 'Dashboard',
-                icon: '📊',
-              },
-              {
-                href: '/artisan/company/employees',
-                label: t('navigation', 'employees') || 'Employees',
-                icon: '👥',
-              },
-              {
-                href: '/artisan/company/assignments',
-                label: t('navigation', 'assignments') || 'Assignments',
-                icon: '📋',
-              },
-              {
-                href: '/artisan/company/reports',
-                label: t('navigation', 'reports') || 'Reports',
-                icon: '📈',
-              },
-              {
-                href: '/artisan/company/settings',
-                label: t('navigation', 'settings') || 'Settings',
-                icon: '⚙️',
-              },
+              { href: '/artisan/company/dashboard', label: t('navigation', 'companyDashboard') || 'Dashboard', icon: LayoutDashboard },
+              { href: '/artisan/company/employees', label: t('navigation', 'employees') || 'Employees', icon: Users },
+              { href: '/artisan/company/assignments', label: t('navigation', 'assignments') || 'Assignments', icon: ClipboardCheck },
+              { href: '/artisan/company/reports', label: t('navigation', 'reports') || 'Reports', icon: BarChart3 },
+              { href: '/artisan/company/settings', label: t('navigation', 'settings') || 'Settings', icon: Settings },
             ],
           } as NavItemGroup,
         ]
@@ -142,16 +104,11 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
           {
             href: '/artisan/company/create',
             label: t('navigation', 'createCompany') || 'Create Company',
-            icon: '🏢',
+            icon: Building2,
           } as NavItemLink,
         ]),
-    { href: '/artisan/stripe', label: t('navigation', 'payments') || 'Payment Setup', icon: '💳' },
-    {
-      href: '/artisan/settings',
-      label: t('navigation', 'settings') || 'Settings',
-      icon: '⚙️',
-      highlight: true,
-    },
+    { href: '/artisan/stripe', label: t('navigation', 'payments') || 'Payment Setup', icon: CreditCard },
+    { href: '/artisan/settings', label: t('navigation', 'settings') || 'Settings', icon: Settings, highlight: true },
   ];
 
   const toggleGroup = (label: string) => {
@@ -167,49 +124,48 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
     return pathname === href || pathname.startsWith(href + '/');
   };
 
-  const hasActiveChild = (children: NavChild[]): boolean => {
-    return children.some((child) => isActive(child.href));
-  };
+  const hasActiveChild = (children: NavChild[]): boolean => children.some((c) => isActive(c.href));
 
   const handleLogout = () => {
     logout();
     router.push('/');
   };
 
+  const linkBase = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium';
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-gradient-to-b from-blue-900 to-blue-800 text-white flex-shrink-0 transition-all duration-300 flex flex-col`}
+        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-card border-r border-border text-foreground flex-shrink-0 transition-all duration-300 flex flex-col`}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-blue-700">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {sidebarOpen && (
-            <button onClick={() => router.push('/artisan/dashboard')} className="font-bold text-lg">
-              Krafolt Pro
+            <button onClick={() => router.push('/artisan/dashboard')} className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
+              <span className="font-display font-bold">Krafolt Pro</span>
             </button>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-primary/90 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label={sidebarOpen ? 'Réduire' : 'Étendre'}
           >
-            {sidebarOpen ? '◀' : '▶'}
+            {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
         </div>
 
         {/* User Info */}
         {sidebarOpen && user && (
-          <div className="px-4 py-3 border-b border-blue-700">
+          <div className="px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-lg font-bold">
-                {user.firstName?.[0]}
-                {user.lastName?.[0]}
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
+                {user.firstName?.[0]}{user.lastName?.[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {user.firstName} {user.lastName}
-                </p>
-                <p className="text-xs text-blue-300 truncate">{user.email}</p>
+                <p className="text-sm font-medium truncate">{user.firstName} {user.lastName}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
             </div>
           </div>
@@ -220,43 +176,46 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
           <ul className="space-y-1 px-2">
             {artisanNavItems.map((item, index) => {
               if (isNavGroup(item)) {
-                const isExpanded =
-                  expandedGroups.includes(item.label) || hasActiveChild(item.children);
+                const isExpanded = expandedGroups.includes(item.label) || hasActiveChild(item.children);
+                const GroupIcon = item.icon;
                 return (
                   <li key={item.label}>
                     <button
                       onClick={() => toggleGroup(item.label)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`${linkBase} ${
                         hasActiveChild(item.children)
                           ? 'bg-primary text-primary-foreground'
-                          : 'text-blue-200 hover:bg-primary/90 hover:text-white'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                       }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
+                      <GroupIcon className="h-5 w-5 flex-shrink-0" />
                       {sidebarOpen && (
                         <>
-                          <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
-                          <span className="text-xs">{isExpanded ? '▼' : '▶'}</span>
+                          <span className="flex-1 text-left">{item.label}</span>
+                          <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                         </>
                       )}
                     </button>
                     {sidebarOpen && isExpanded && (
-                      <ul className="mt-1 ml-6 space-y-1">
-                        {item.children.map((child) => (
-                          <li key={child.href}>
-                            <button
-                              onClick={() => router.push(child.href)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                isActive(child.href)
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'text-blue-200 hover:bg-primary/90 hover:text-white'
-                              }`}
-                            >
-                              <span>{child.icon}</span>
-                              <span>{child.label}</span>
-                            </button>
-                          </li>
-                        ))}
+                      <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-2">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          return (
+                            <li key={child.href}>
+                              <button
+                                onClick={() => router.push(child.href)}
+                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                  isActive(child.href)
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                }`}
+                              >
+                                <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                                <span>{child.label}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
@@ -264,22 +223,23 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
               }
 
               const linkItem = item as NavItemLink;
+              const LinkIcon = linkItem.icon;
               return (
                 <li key={linkItem.href || index}>
                   <button
                     onClick={() => router.push(linkItem.href)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    className={`${linkBase} ${
                       isActive(linkItem.href)
                         ? 'bg-primary text-primary-foreground'
                         : linkItem.highlight
-                          ? 'bg-gradient-to-r from-primary to-yellow-600 text-primary-foreground hover:from-primary hover:to-yellow-600'
-                          : 'text-blue-200 hover:bg-primary/90 hover:text-white'
+                          ? 'text-foreground hover:bg-accent'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     }`}
                   >
-                    <span className="text-lg">{linkItem.icon}</span>
-                    {sidebarOpen && <span className="text-sm font-medium">{linkItem.label}</span>}
+                    <LinkIcon className="h-5 w-5 flex-shrink-0" />
+                    {sidebarOpen && <span className="flex-1 text-left">{linkItem.label}</span>}
                     {linkItem.badge !== undefined && linkItem.badge > 0 && sidebarOpen && (
-                      <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded-full">
                         {linkItem.badge}
                       </span>
                     )}
@@ -291,18 +251,16 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-blue-700">
+        <div className="p-4 border-t border-border">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 text-blue-200 hover:bg-primary/90 hover:text-white rounded-lg transition-colors"
+            className={`${linkBase} text-muted-foreground hover:bg-destructive/10 hover:text-destructive`}
           >
-            <span className="text-lg">🚪</span>
-            {sidebarOpen && (
-              <span className="text-sm font-medium">{t('common', 'logout') || 'Logout'}</span>
-            )}
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {sidebarOpen && <span>{t('common', 'logout') || 'Logout'}</span>}
           </button>
           {sidebarOpen && (
-            <div className="mt-2 text-xs text-blue-400 text-center">Krafolt Artisan v1.0</div>
+            <div className="mt-2 text-xs text-muted-foreground text-center">Krafolt Artisan v1.0</div>
           )}
         </div>
       </aside>
