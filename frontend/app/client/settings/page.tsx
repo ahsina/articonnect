@@ -30,16 +30,16 @@ interface NotificationPreferences {
 }
 
 const INDUSTRIES = [
-  'Immobilier',
-  'Restauration',
-  'Commerce',
-  'Services',
-  'Industrie',
-  'Construction',
-  'Santé',
-  'Education',
-  'Transport',
-  'Autre',
+  { value: 'Immobilier', key: 'industryRealEstate' },
+  { value: 'Restauration', key: 'industryRestaurant' },
+  { value: 'Commerce', key: 'industryCommerce' },
+  { value: 'Services', key: 'industryServices' },
+  { value: 'Industrie', key: 'industryIndustry' },
+  { value: 'Construction', key: 'industryConstruction' },
+  { value: 'Santé', key: 'industryHealth' },
+  { value: 'Education', key: 'industryEducation' },
+  { value: 'Transport', key: 'industryTransport' },
+  { value: 'Autre', key: 'industryOther' },
 ];
 
 export default function ClientSettingsPage() {
@@ -201,7 +201,7 @@ export default function ClientSettingsPage() {
                         onChange={(e) =>
                           setClientProfile({ ...clientProfile, companyName: e.target.value })
                         }
-                        placeholder="Société ABC"
+                        placeholder={t('clientSettings', 'companyNamePlaceholder')}
                       />
                     </div>
                     <div>
@@ -247,8 +247,8 @@ export default function ClientSettingsPage() {
                       >
                         <option value="">{t('common', 'select')}</option>
                         {INDUSTRIES.map((ind) => (
-                          <option key={ind} value={ind}>
-                            {ind}
+                          <option key={ind.value} value={ind.value}>
+                            {t('clientSettings', ind.key)}
                           </option>
                         ))}
                       </select>

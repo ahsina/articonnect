@@ -5,12 +5,14 @@ import { ReviewCard } from './ReviewCard';
 import { StarRating } from '../ui/star-rating';
 import { reviewsApi, Review } from '@/lib/api/reviews';
 import { ReviewSkeleton, Skeleton } from '../ui/skeleton';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ReviewListProps {
   artisanId: string;
 }
 
 export function ReviewList({ artisanId }: ReviewListProps) {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -68,7 +70,7 @@ export function ReviewList({ artisanId }: ReviewListProps) {
 
   if (loading) {
     return (
-      <div className="space-y-6" role="status" aria-label="Chargement des avis">
+      <div className="space-y-6" role="status" aria-label={t('reviewList', 'loadingReviews')}>
         {/* Stats skeleton */}
         <div className="bg-card rounded-lg border border-border p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -97,9 +99,9 @@ export function ReviewList({ artisanId }: ReviewListProps) {
   if (reviews.length === 0) {
     return (
       <div className="text-center py-12 bg-background rounded-lg">
-        <p className="text-muted-foreground mb-2">Aucun avis pour le moment</p>
+        <p className="text-muted-foreground mb-2">{t('reviewList', 'noReviewsYet')}</p>
         <p className="text-sm text-muted-foreground">
-          Soyez le premier à laisser un avis sur cet artisan
+          {t('reviewList', 'beTheFirst')}
         </p>
       </div>
     );
@@ -120,7 +122,7 @@ export function ReviewList({ artisanId }: ReviewListProps) {
             </div>
             <StarRating rating={stats.average} readonly size="lg" />
             <p className="text-sm text-muted-foreground mt-2">
-              Basé sur {stats.total} avis
+              {t('reviewList', 'basedOn')} {stats.total} {t('reviewList', 'reviewsWord')}
             </p>
           </div>
 
@@ -151,7 +153,7 @@ export function ReviewList({ artisanId }: ReviewListProps) {
       {/* Reviews List */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-foreground">
-          Tous les avis ({stats.total})
+          {t('reviewList', 'allReviews')} ({stats.total})
         </h3>
         {reviews.map((review) => (
           <ReviewCard key={review.id} review={review} showClient />

@@ -315,7 +315,7 @@ export default function EmployeeDetailPage() {
                     <span className="text-muted-foreground">
                       {t('company', 'baseSalary') || 'Base Salary'}
                     </span>
-                    <span>€{employee.baseSalary.toLocaleString()}/month</span>
+                    <span>€{employee.baseSalary.toLocaleString()}{t('companyEmployeeDetail', 'perMonth')}</span>
                   </div>
                 )}
               </div>
@@ -334,7 +334,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'canAcceptMissions') || 'Can Accept Missions'}
                   </span>
                   <span className={employee.canAcceptMissions ? 'text-green-600' : 'text-red-600'}>
-                    {employee.canAcceptMissions ? '✓ Yes' : '✗ No'}
+                    {employee.canAcceptMissions ? `✓ ${t('companyEmployeeDetail', 'yes')}` : `✗ ${t('companyEmployeeDetail', 'no')}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b">
@@ -342,7 +342,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'canViewFinancials') || 'Can View Financials'}
                   </span>
                   <span className={employee.canViewFinancials ? 'text-green-600' : 'text-red-600'}>
-                    {employee.canViewFinancials ? '✓ Yes' : '✗ No'}
+                    {employee.canViewFinancials ? `✓ ${t('companyEmployeeDetail', 'yes')}` : `✗ ${t('companyEmployeeDetail', 'no')}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
@@ -350,7 +350,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'canManageTeam') || 'Can Manage Team'}
                   </span>
                   <span className={employee.canManageTeam ? 'text-green-600' : 'text-red-600'}>
-                    {employee.canManageTeam ? '✓ Yes' : '✗ No'}
+                    {employee.canManageTeam ? `✓ ${t('companyEmployeeDetail', 'yes')}` : `✗ ${t('companyEmployeeDetail', 'no')}`}
                   </span>
                 </div>
               </div>
@@ -389,10 +389,10 @@ export default function EmployeeDetailPage() {
                   }
                   className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="TECHNICIAN">Technician</option>
-                  <option value="SUPERVISOR">Supervisor</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="CONTRACTOR">Contractor</option>
+                  <option value="TECHNICIAN">{t('companyEmployeeDetail', 'roleTechnician')}</option>
+                  <option value="SUPERVISOR">{t('companyEmployeeDetail', 'roleSupervisor')}</option>
+                  <option value="MANAGER">{t('companyEmployeeDetail', 'roleManager')}</option>
+                  <option value="CONTRACTOR">{t('companyEmployeeDetail', 'roleContractor')}</option>
                 </select>
               </div>
 
@@ -410,9 +410,9 @@ export default function EmployeeDetailPage() {
                   }
                   className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="COMMISSION">Commission Only</option>
-                  <option value="SALARY">Salary Only</option>
-                  <option value="HYBRID">Hybrid (Salary + Commission)</option>
+                  <option value="COMMISSION">{t('companyEmployeeDetail', 'paymentCommission')}</option>
+                  <option value="SALARY">{t('companyEmployeeDetail', 'paymentSalary')}</option>
+                  <option value="HYBRID">{t('companyEmployeeDetail', 'paymentHybrid')}</option>
                 </select>
               </div>
 

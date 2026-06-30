@@ -1,31 +1,33 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Settings, Percent, CreditCard, Receipt, ClipboardList, Star, Ban, Gauge, Bell,
   FileText, Users, Plug, ScrollText, Rocket, ArrowLeft, type LucideIcon,
 } from 'lucide-react';
 
-const settingsNavItems: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: '/admin/settings', label: 'Overview', icon: Settings },
-  { href: '/admin/settings/fees', label: 'Platform Fees', icon: Percent },
-  { href: '/admin/settings/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/settings/tax', label: 'VAT/Tax Rates', icon: Receipt },
-  { href: '/admin/settings/missions', label: 'Missions', icon: ClipboardList },
-  { href: '/admin/settings/reputation', label: 'Reputation Rules', icon: Star },
-  { href: '/admin/settings/no-show', label: 'No-Show Config', icon: Ban },
-  { href: '/admin/settings/limits', label: 'Rate Limits', icon: Gauge },
-  { href: '/admin/settings/notifications', label: 'Notifications', icon: Bell },
-  { href: '/admin/settings/content', label: 'Content Moderation', icon: FileText },
-  { href: '/admin/settings/users', label: 'User Settings', icon: Users },
-  { href: '/admin/settings/integrations', label: 'Integrations', icon: Plug },
-  { href: '/admin/settings/compliance', label: 'Compliance', icon: ScrollText },
-  { href: '/admin/settings/performance', label: 'Performance', icon: Rocket },
-];
-
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
+
+  const settingsNavItems: { href: string; label: string; icon: LucideIcon }[] = [
+    { href: '/admin/settings', label: t('adminSettingsNav', 'overview') || 'Overview', icon: Settings },
+    { href: '/admin/settings/fees', label: t('adminSettingsNav', 'platformFees') || 'Platform Fees', icon: Percent },
+    { href: '/admin/settings/payments', label: t('adminSettingsNav', 'payments') || 'Payments', icon: CreditCard },
+    { href: '/admin/settings/tax', label: t('adminSettingsNav', 'taxRates') || 'VAT/Tax Rates', icon: Receipt },
+    { href: '/admin/settings/missions', label: t('adminSettingsNav', 'missions') || 'Missions', icon: ClipboardList },
+    { href: '/admin/settings/reputation', label: t('adminSettingsNav', 'reputationRules') || 'Reputation Rules', icon: Star },
+    { href: '/admin/settings/no-show', label: t('adminSettingsNav', 'noShowConfig') || 'No-Show Config', icon: Ban },
+    { href: '/admin/settings/limits', label: t('adminSettingsNav', 'rateLimits') || 'Rate Limits', icon: Gauge },
+    { href: '/admin/settings/notifications', label: t('adminSettingsNav', 'notifications') || 'Notifications', icon: Bell },
+    { href: '/admin/settings/content', label: t('adminSettingsNav', 'contentModeration') || 'Content Moderation', icon: FileText },
+    { href: '/admin/settings/users', label: t('adminSettingsNav', 'userSettings') || 'User Settings', icon: Users },
+    { href: '/admin/settings/integrations', label: t('adminSettingsNav', 'integrations') || 'Integrations', icon: Plug },
+    { href: '/admin/settings/compliance', label: t('adminSettingsNav', 'compliance') || 'Compliance', icon: ScrollText },
+    { href: '/admin/settings/performance', label: t('adminSettingsNav', 'performance') || 'Performance', icon: Rocket },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,11 +39,11 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               onClick={() => router.push('/admin/dashboard')}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+              <ArrowLeft className="h-4 w-4" /> {t('adminSettingsNav', 'backToDashboard') || 'Back to Dashboard'}
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Platform Settings</h1>
-              <p className="text-sm text-muted-foreground">Configure platform-wide settings and rules</p>
+              <h1 className="text-2xl font-bold text-foreground">{t('adminSettingsNav', 'platformSettings') || 'Platform Settings'}</h1>
+              <p className="text-sm text-muted-foreground">{t('adminSettingsNav', 'subtitle') || 'Configure platform-wide settings and rules'}</p>
             </div>
           </div>
         </div>

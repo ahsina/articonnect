@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from './button';
 
 interface DarkModeToggleProps {
@@ -24,6 +25,7 @@ export const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
   showLabel = false,
 }) => {
   const { isDark, toggle, mounted } = useTheme();
+  const { t } = useLanguage();
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
@@ -40,8 +42,8 @@ export const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
       size={size}
       onClick={toggle}
       className={className}
-      aria-label={isDark ? 'Activer le mode clair' : 'Activer le mode sombre'}
-      title={isDark ? 'Activer le mode clair' : 'Activer le mode sombre'}
+      aria-label={isDark ? t('darkModeToggle', 'activateLight') : t('darkModeToggle', 'activateDark')}
+      title={isDark ? t('darkModeToggle', 'activateLight') : t('darkModeToggle', 'activateDark')}
     >
       {isDark ? (
         <>
@@ -68,7 +70,7 @@ export const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
             <path d="m6.34 17.66-1.41 1.41" />
             <path d="m19.07 4.93-1.41 1.41" />
           </svg>
-          {showLabel && <span className="ml-2">Mode clair</span>}
+          {showLabel && <span className="ml-2">{t('darkModeToggle', 'lightMode')}</span>}
         </>
       ) : (
         <>
@@ -87,7 +89,7 @@ export const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
           >
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
           </svg>
-          {showLabel && <span className="ml-2">Mode sombre</span>}
+          {showLabel && <span className="ml-2">{t('darkModeToggle', 'darkMode')}</span>}
         </>
       )}
     </Button>

@@ -153,8 +153,8 @@ export default function ClientDashboard() {
             className="bg-primary text-primary-foreground p-6 rounded-lg hover:bg-primary/90 transition"
           >
             <Wrench className="h-7 w-7 mb-2" />
-            <h3 className="text-xl font-semibold mb-2">Nouvelle Demande</h3>
-            <p className="text-primary-foreground/80">Créer une demande d'intervention</p>
+            <h3 className="text-xl font-semibold mb-2">{t('clientDashboard', 'newRequest')}</h3>
+            <p className="text-primary-foreground/80">{t('clientDashboard', 'newRequestDesc')}</p>
           </Link>
 
           <Link
@@ -162,8 +162,8 @@ export default function ClientDashboard() {
             className="bg-green-600 text-white p-6 rounded-lg hover:bg-green-700 transition"
           >
             <HardHat className="h-7 w-7 mb-2" />
-            <h3 className="text-xl font-semibold mb-2">Trouver un Artisan</h3>
-            <p className="text-green-100">Parcourir les artisans locaux</p>
+            <h3 className="text-xl font-semibold mb-2">{t('clientDashboard', 'findArtisan')}</h3>
+            <p className="text-green-100">{t('clientDashboard', 'findArtisanDesc')}</p>
           </Link>
 
           <Link
@@ -171,26 +171,26 @@ export default function ClientDashboard() {
             className="bg-purple-600 text-white p-6 rounded-lg hover:bg-purple-700 transition"
           >
             <ShoppingCart className="h-7 w-7 mb-2" />
-            <h3 className="text-xl font-semibold mb-2">Marketplace</h3>
-            <p className="text-purple-100">Acheter des produits</p>
+            <h3 className="text-xl font-semibold mb-2">{t('marketplace', 'title')}</h3>
+            <p className="text-purple-100">{t('clientDashboard', 'marketplaceDesc')}</p>
           </Link>
         </div>
 
         {/* Recent Missions */}
         <div className="bg-card shadow rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Mes Missions Récentes</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">{t('clientDashboard', 'recentMissions')}</h2>
 
           {missions.length === 0 ? (
             <div className="text-center py-12">
               <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Aucune mission pour le moment
+                {t('clientDashboard', 'noMissions')}
               </h3>
               <p className="text-muted-foreground mb-4">
-                Créez votre première demande d'intervention
+                {t('clientDashboard', 'createFirstRequest')}
               </p>
               <Link href="/client/missions/new">
-                <Button>Créer une demande</Button>
+                <Button>{t('clientDashboard', 'createRequest')}</Button>
               </Link>
             </div>
           ) : (
@@ -211,7 +211,7 @@ export default function ClientDashboard() {
                       </p>
                       {mission.artisan && (
                         <p className="text-muted-foreground text-sm">
-                          Artisan: {mission.artisan.firstName} {mission.artisan.lastName}
+                          {t('clientDashboard', 'artisanLabel')}: {mission.artisan.firstName} {mission.artisan.lastName}
                         </p>
                       )}
                     </div>
@@ -221,7 +221,7 @@ export default function ClientDashboard() {
                           mission.status
                         )}`}
                       >
-                        {mission.status}
+                        {t('clientDashboard', `status_${mission.status}`)}
                       </span>
                       {mission.agreedPrice && (
                         <div className="text-lg font-bold text-foreground mt-2">

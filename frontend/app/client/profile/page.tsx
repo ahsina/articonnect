@@ -244,7 +244,7 @@ export default function ClientProfilePage() {
                   <div className="relative">
                     <img
                       src={profile.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                      alt="Avatar"
+                      alt={t('clientProfile', 'avatarAlt')}
                       className="w-16 h-16 rounded-full"
                     />
                     {uploadingAvatar && (

@@ -140,7 +140,7 @@ export default function MarketplacePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background py-8" role="status" aria-label="Chargement du marketplace">
+      <div className="min-h-screen bg-background py-8" role="status" aria-label={t('clientMarketplace', 'loadingAria')}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header skeleton */}
           <div className="mb-8">
@@ -180,9 +180,9 @@ export default function MarketplacePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('clientMarketplace', 'heading')}</h1>
           <p className="text-muted-foreground mt-2">
-            Découvrez les produits proposés par nos artisans locaux
+            {t('clientMarketplace', 'subtitle')}
           </p>
         </div>
 
@@ -192,7 +192,7 @@ export default function MarketplacePage() {
           <div className="flex gap-4">
             <div className="flex-1">
               <Input
-                placeholder="Rechercher un produit, artisan..."
+                placeholder={t('clientMarketplace', 'searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -202,16 +202,16 @@ export default function MarketplacePage() {
               onClick={() => setShowFilters(!showFilters)}
               className="whitespace-nowrap"
             >
-              {showFilters ? '✕ Masquer' : '🔍 Filtres avancés'}
+              {showFilters ? `✕ ${t('clientMarketplace', 'hide')}` : `🔍 ${t('clientMarketplace', 'advancedFilters')}`}
             </Button>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as MarketplaceSortOption)}
               className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="newest">Plus récents</option>
-              <option value="price-asc">Prix croissant</option>
-              <option value="price-desc">Prix décroissant</option>
+              <option value="newest">{t('clientMarketplace', 'sortNewest')}</option>
+              <option value="price-asc">{t('clientMarketplace', 'sortPriceAsc')}</option>
+              <option value="price-desc">{t('clientMarketplace', 'sortPriceDesc')}</option>
             </select>
           </div>
 
@@ -241,7 +241,7 @@ export default function MarketplacePage() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-medium text-foreground">
-                      Prix
+                      {t('clientMarketplace', 'price')}
                     </label>
                     <span className="text-sm text-muted-foreground">
                       {priceRange[0].toFixed(0)}€ - {priceRange[1].toFixed(0)}€
@@ -264,7 +264,7 @@ export default function MarketplacePage() {
                 {/* Rating Filter */}
                 <div>
                   <label className="text-sm font-medium text-foreground mb-3 block">
-                    Note minimum
+                    {t('clientMarketplace', 'minRating')}
                   </label>
                   <div className="flex gap-2">
                     {[0, 1, 2, 3, 4, 5].map((rating) => (
@@ -278,7 +278,7 @@ export default function MarketplacePage() {
                         }`}
                       >
                         <span className="text-sm font-medium">
-                          {rating === 0 ? 'Tous' : `${rating}★+`}
+                          {rating === 0 ? t('clientMarketplace', 'all') : `${rating}★+`}
                         </span>
                       </button>
                     ))}
@@ -292,13 +292,13 @@ export default function MarketplacePage() {
                     onClick={resetFilters}
                     className="flex-1"
                   >
-                    Réinitialiser
+                    {t('clientMarketplace', 'reset')}
                   </Button>
                   <Button
                     onClick={() => setShowFilters(false)}
                     className="flex-1"
                   >
-                    Appliquer ({pagination.total} produits)
+                    {t('clientMarketplace', 'apply')} ({pagination.total} {t('clientMarketplace', 'products')})
                   </Button>
                 </div>
               </CardContent>
@@ -310,8 +310,8 @@ export default function MarketplacePage() {
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {pagination.total > 0
-              ? `${pagination.total} produit${pagination.total > 1 ? 's' : ''} trouvé${pagination.total > 1 ? 's' : ''} - Page ${currentPage} sur ${pagination.totalPages}`
-              : 'Aucun produit trouvé'}
+              ? `${pagination.total} ${pagination.total > 1 ? t('clientMarketplace', 'productsFoundPlural') : t('clientMarketplace', 'productFound')} - ${t('clientMarketplace', 'page')} ${currentPage} ${t('clientMarketplace', 'of')} ${pagination.totalPages}`
+              : t('clientMarketplace', 'noProductsFound')}
           </p>
           <select
             value={itemsPerPage}
@@ -321,10 +321,10 @@ export default function MarketplacePage() {
             }}
             className="px-3 py-1 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            <option value={6}>6 par page</option>
-            <option value={12}>12 par page</option>
-            <option value={24}>24 par page</option>
-            <option value={48}>48 par page</option>
+            <option value={6}>6 {t('clientMarketplace', 'perPage')}</option>
+            <option value={12}>12 {t('clientMarketplace', 'perPage')}</option>
+            <option value={24}>24 {t('clientMarketplace', 'perPage')}</option>
+            <option value={48}>48 {t('clientMarketplace', 'perPage')}</option>
           </select>
         </div>
 
@@ -332,9 +332,9 @@ export default function MarketplacePage() {
         {products.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">Aucun produit trouvé</p>
+              <p className="text-muted-foreground mb-4">{t('clientMarketplace', 'noProductsFound')}</p>
               <Button onClick={resetFilters}>
-                Réinitialiser les filtres
+                {t('clientMarketplace', 'resetFilters')}
               </Button>
             </CardContent>
           </Card>
@@ -363,7 +363,7 @@ export default function MarketplacePage() {
                     )}
                     {product.stock < 5 && (
                       <Badge variant="warning" className="absolute top-2 right-2">
-                        Stock limité
+                        {t('clientMarketplace', 'limitedStock')}
                       </Badge>
                     )}
                   </div>
@@ -382,7 +382,7 @@ export default function MarketplacePage() {
                     {/* Artisan */}
                     <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
                       <span>👤</span>
-                      <span className="truncate">{product.artisan?.companyName || 'Artisan'}</span>
+                      <span className="truncate">{product.artisan?.companyName || t('clientMarketplace', 'artisan')}</span>
                     </div>
 
                     {/* Price & Stock */}
@@ -391,7 +391,7 @@ export default function MarketplacePage() {
                         {product.price.toFixed(2)}€
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {product.stock} en stock
+                        {product.stock} {t('clientMarketplace', 'inStock')}
                       </span>
                     </div>
 
@@ -419,7 +419,7 @@ export default function MarketplacePage() {
                 disabled={!pagination.hasPreviousPage}
                 onClick={() => setCurrentPage(currentPage - 1)}
               >
-                ← Précédent
+                ← {t('clientMarketplace', 'previous')}
               </Button>
 
               <div className="flex gap-1">
@@ -457,7 +457,7 @@ export default function MarketplacePage() {
                 disabled={!pagination.hasNextPage}
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
-                Suivant →
+                {t('clientMarketplace', 'next')} →
               </Button>
             </div>
           )}

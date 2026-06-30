@@ -510,7 +510,7 @@ export default function NewMissionPage() {
                         <div key={index} className="relative group">
                           <img
                             src={url}
-                            alt={`Photo ${index + 1}`}
+                            alt={`${t('clientMissionNew', 'photo')} ${index + 1}`}
                             className="w-full h-24 object-cover rounded-lg border"
                           />
                           <button
@@ -552,7 +552,7 @@ export default function NewMissionPage() {
                       </div>
                     </label>
                     <span className="text-sm text-muted-foreground">
-                      {beforePhotos.length}/5 photos
+                      {beforePhotos.length}/5 {t('clientMissionNew', 'photos')}
                     </span>
                   </div>
                 </div>

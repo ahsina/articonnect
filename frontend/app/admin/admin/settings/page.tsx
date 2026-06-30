@@ -2,112 +2,113 @@
 
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const settingsCategories = [
   {
-    title: 'Financial Settings',
-    description: 'Configure platform fees, payments, and tax settings',
+    titleKey: 'financialSettings',
+    descriptionKey: 'financialSettingsDesc',
     items: [
       {
         href: '/admin/settings/fees',
-        label: 'Platform Fees',
-        description: 'Commission rates, deposit rules, cancellation fees',
+        labelKey: 'platformFees',
+        descriptionKey: 'platformFeesDesc',
         icon: '💰',
       },
       {
         href: '/admin/settings/payments',
-        label: 'Payment Configuration',
-        description: 'Payment providers, payout rules, escrow settings',
+        labelKey: 'paymentConfig',
+        descriptionKey: 'paymentConfigDesc',
         icon: '💳',
       },
       {
         href: '/admin/settings/tax',
-        label: 'VAT/Tax Rates',
-        description: 'Tax rates by country, invoicing, tax reporting',
+        labelKey: 'taxRates',
+        descriptionKey: 'taxRatesDesc',
         icon: '🧾',
       },
     ],
   },
   {
-    title: 'Mission & Reputation',
-    description: 'Configure mission rules and reputation scoring',
+    titleKey: 'missionReputation',
+    descriptionKey: 'missionReputationDesc',
     items: [
       {
         href: '/admin/settings/missions',
-        label: 'Mission Settings',
-        description: 'Mission limits, scheduling, auto-matching',
+        labelKey: 'missionSettings',
+        descriptionKey: 'missionSettingsDesc',
         icon: '📋',
       },
       {
         href: '/admin/settings/reputation',
-        label: 'Reputation Rules',
-        description: 'Scoring rules, level thresholds, bonuses/penalties',
+        labelKey: 'reputationRules',
+        descriptionKey: 'reputationRulesDesc',
         icon: '⭐',
       },
       {
         href: '/admin/settings/no-show',
-        label: 'No-Show Configuration',
-        description: 'No-show validation, compensation, penalties',
+        labelKey: 'noShowConfig',
+        descriptionKey: 'noShowConfigDesc',
         icon: '🚫',
       },
     ],
   },
   {
-    title: 'Security & Limits',
-    description: 'Configure rate limits, security, and moderation',
+    titleKey: 'securityLimits',
+    descriptionKey: 'securityLimitsDesc',
     items: [
       {
         href: '/admin/settings/limits',
-        label: 'Rate Limits & Security',
-        description: 'API limits, login protection, geo-blocking',
+        labelKey: 'rateLimitsSecurity',
+        descriptionKey: 'rateLimitsSecurityDesc',
         icon: '🔒',
       },
       {
         href: '/admin/settings/content',
-        label: 'Content Moderation',
-        description: 'Auto-moderation, profanity filters, spam detection',
+        labelKey: 'contentModeration',
+        descriptionKey: 'contentModerationDesc',
         icon: '📝',
       },
       {
         href: '/admin/settings/compliance',
-        label: 'Compliance Settings',
-        description: 'GDPR, KYC/AML, data retention',
+        labelKey: 'complianceSettings',
+        descriptionKey: 'complianceSettingsDesc',
         icon: '📜',
       },
     ],
   },
   {
-    title: 'Users & Communications',
-    description: 'Configure user settings and notifications',
+    titleKey: 'usersCommunications',
+    descriptionKey: 'usersCommunicationsDesc',
     items: [
       {
         href: '/admin/settings/users',
-        label: 'User Settings',
-        description: 'Profile requirements, password rules, 2FA',
+        labelKey: 'userSettings',
+        descriptionKey: 'userSettingsDesc',
         icon: '👤',
       },
       {
         href: '/admin/settings/notifications',
-        label: 'Notification Settings',
-        description: 'Email, SMS, push notification rules',
+        labelKey: 'notificationSettings',
+        descriptionKey: 'notificationSettingsDesc',
         icon: '🔔',
       },
     ],
   },
   {
-    title: 'Technical Settings',
-    description: 'Configure integrations and performance',
+    titleKey: 'technicalSettings',
+    descriptionKey: 'technicalSettingsDesc',
     items: [
       {
         href: '/admin/settings/integrations',
-        label: 'Integrations',
-        description: 'Third-party services, webhooks, APIs',
+        labelKey: 'integrations',
+        descriptionKey: 'integrationsDesc',
         icon: '🔌',
       },
       {
         href: '/admin/settings/performance',
-        label: 'Performance & Cache',
-        description: 'Caching, optimization, logging',
+        labelKey: 'performanceCache',
+        descriptionKey: 'performanceCacheDesc',
         icon: '🚀',
       },
     ],
@@ -115,6 +116,7 @@ const settingsCategories = [
 ];
 
 export default function SettingsOverviewPage() {
+  const { t } = useLanguage();
   const router = useRouter();
 
   return (
@@ -125,7 +127,7 @@ export default function SettingsOverviewPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-primary">13</p>
-              <p className="text-sm text-muted-foreground">Configuration Areas</p>
+              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configAreas')}</p>
             </div>
           </CardContent>
         </Card>
@@ -133,15 +135,15 @@ export default function SettingsOverviewPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-green-600">200+</p>
-              <p className="text-sm text-muted-foreground">Configurable Settings</p>
+              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configurableSettings')}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-purple-600">Active</p>
-              <p className="text-sm text-muted-foreground">Platform Status</p>
+              <p className="text-3xl font-bold text-purple-600">{t('adminSettingsOverview', 'active')}</p>
+              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'platformStatus')}</p>
             </div>
           </CardContent>
         </Card>
@@ -149,7 +151,7 @@ export default function SettingsOverviewPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-yellow-600">v1.0</p>
-              <p className="text-sm text-muted-foreground">Config Version</p>
+              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configVersion')}</p>
             </div>
           </CardContent>
         </Card>
@@ -157,9 +159,9 @@ export default function SettingsOverviewPage() {
 
       {/* Settings Categories */}
       {settingsCategories.map((category) => (
-        <div key={category.title}>
-          <h2 className="text-lg font-semibold text-foreground mb-2">{category.title}</h2>
-          <p className="text-sm text-muted-foreground mb-4">{category.description}</p>
+        <div key={category.titleKey}>
+          <h2 className="text-lg font-semibold text-foreground mb-2">{t('adminSettingsOverview', category.titleKey)}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{t('adminSettingsOverview', category.descriptionKey)}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {category.items.map((item) => (
               <Card
@@ -170,11 +172,11 @@ export default function SettingsOverviewPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{item.icon}</span>
-                    <CardTitle className="text-base">{item.label}</CardTitle>
+                    <CardTitle className="text-base">{t('adminSettingsOverview', item.labelKey)}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>{item.description}</CardDescription>
+                  <CardDescription>{t('adminSettingsOverview', item.descriptionKey)}</CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -185,8 +187,8 @@ export default function SettingsOverviewPage() {
       {/* Recent Changes */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Configuration Changes</CardTitle>
-          <CardDescription>Last 5 settings modifications</CardDescription>
+          <CardTitle>{t('adminSettingsOverview', 'recentChanges')}</CardTitle>
+          <CardDescription>{t('adminSettingsOverview', 'recentChangesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

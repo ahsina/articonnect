@@ -138,18 +138,18 @@ export default function AdminDashboardPage() {
   };
 
   const quickLinks: { href: string; label: string; icon: LucideIcon }[] = [
-    { href: '/admin/fraud-settings', label: 'Fraud Settings', icon: ShieldAlert },
-    { href: '/admin/monitoring', label: 'Monitoring', icon: Activity },
-    { href: '/admin/feature-flags', label: 'Feature Flags', icon: Flag },
-    { href: '/admin/cron', label: 'CRON Jobs', icon: Timer },
-    { href: '/admin/verifications', label: 'KYC & Verification', icon: FileCheck },
-    { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
-    { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
-    { href: '/admin/moderation', label: 'Moderation', icon: Eye },
-    { href: '/admin/no-shows', label: 'No-Shows', icon: Ban },
-    { href: '/admin/certifications', label: 'Certifications', icon: Award },
-    { href: '/admin/specialties', label: 'Specialties', icon: Tags },
-    { href: '/admin/reputation', label: 'Reputation', icon: Star },
+    { href: '/admin/fraud-settings', label: t('adminDashboard', 'fraudSettings'), icon: ShieldAlert },
+    { href: '/admin/monitoring', label: t('adminDashboard', 'monitoring'), icon: Activity },
+    { href: '/admin/feature-flags', label: t('adminDashboard', 'featureFlags'), icon: Flag },
+    { href: '/admin/cron', label: t('adminDashboard', 'cronJobs'), icon: Timer },
+    { href: '/admin/verifications', label: t('adminDashboard', 'kycVerification'), icon: FileCheck },
+    { href: '/admin/disputes', label: t('adminDashboard', 'disputes'), icon: AlertTriangle },
+    { href: '/admin/audit-logs', label: t('adminDashboard', 'auditLogs'), icon: ScrollText },
+    { href: '/admin/moderation', label: t('adminDashboard', 'moderation'), icon: Eye },
+    { href: '/admin/no-shows', label: t('adminDashboard', 'noShows'), icon: Ban },
+    { href: '/admin/certifications', label: t('adminDashboard', 'certifications'), icon: Award },
+    { href: '/admin/specialties', label: t('adminDashboard', 'specialties'), icon: Tags },
+    { href: '/admin/reputation', label: t('adminDashboard', 'reputation'), icon: Star },
   ];
 
   return (
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
             <button onClick={() => router.push('/admin/audit-logs')} className="text-sm text-primary hover:underline">
-              View All →
+              {t('adminDashboard', 'viewAll')} →
             </button>
           </CardHeader>
           <CardContent>
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <ClipboardList className="h-9 w-9 mx-auto mb-2 opacity-50" />
-                <p>No recent activity</p>
+                <p>{t('adminDashboard', 'noRecentActivity')}</p>
               </div>
             )}
           </CardContent>
@@ -274,9 +274,9 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-4 text-primary-foreground">
               <Settings className="h-9 w-9 flex-shrink-0" />
               <div>
-                <span className="text-xl font-semibold block">Platform Settings</span>
+                <span className="text-xl font-semibold block">{t('adminDashboard', 'platformSettings')}</span>
                 <span className="text-sm opacity-80">
-                  Configure fees, payments, limits, notifications, integrations, and more
+                  {t('adminDashboard', 'platformSettingsDesc')}
                 </span>
               </div>
               <ArrowRight className="ml-auto h-6 w-6 flex-shrink-0" />

@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   LayoutDashboard, Users, ClipboardList, TrendingUp, ShieldCheck, Eye, AlertTriangle,
   Ban, BadgeCheck, FileCheck, Award, Wrench, Tags, Star, Flag, Server, Activity,
@@ -79,6 +80,7 @@ function isNavGroup(item: NavItem): item is NavItemGroup {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -116,13 +118,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
               <span className="font-display font-bold">Krafolt</span>
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">ADMIN</span>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">{t('adminLayout', 'adminTag')}</span>
             </span>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            aria-label={sidebarOpen ? 'Réduire' : 'Étendre'}
+            aria-label={sidebarOpen ? t('adminLayout', 'collapse') : t('adminLayout', 'expand')}
           >
             {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
@@ -205,7 +207,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Footer */}
         {sidebarOpen && (
           <div className="p-4 border-t border-border">
-            <div className="text-xs text-muted-foreground">Admin Panel v1.0</div>
+            <div className="text-xs text-muted-foreground">{t('adminLayout', 'adminPanel')} v1.0</div>
           </div>
         )}
       </aside>

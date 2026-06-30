@@ -253,7 +253,7 @@ export default function StripeOnboardingPage() {
                 <span className="text-muted-foreground">
                   {t('artisan', 'stripeFee') || 'Stripe Processing'}
                 </span>
-                <span className="font-medium text-foreground">Included</span>
+                <span className="font-medium text-foreground">{t('artisanStripe', 'included') || 'Included'}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-muted-foreground">

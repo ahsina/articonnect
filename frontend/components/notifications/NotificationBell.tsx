@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useNotifications } from '@/lib/hooks/useNotifications';
 import { Badge } from '../ui/badge';
 import { NotificationSkeleton } from '../ui/skeleton';
 
 export function NotificationBell() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -64,10 +66,10 @@ export function NotificationBell() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
+    if (diffMins < 1) return t('notificationBell', 'justNow') || 'À l\'instant';
+    if (diffMins < 60) return `${t('notificationBell', 'minutesAgo') || 'Il y a'} ${diffMins} min`;
+    if (diffHours < 24) return `${t('notificationBell', 'hoursAgo') || 'Il y a'} ${diffHours}h`;
+    if (diffDays < 7) return `${t('notificationBell', 'daysAgo') || 'Il y a'} ${diffDays}j`;
     return date.toLocaleDateString('fr-FR');
   };
 
@@ -76,7 +78,7 @@ export function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center"
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} non lues)` : ''}`}
+        aria-label={`${t('notificationBell', 'notifications') || 'Notifications'}${unreadCount > 0 ? ` (${unreadCount} ${t('notificationBell', 'unread') || 'non lues'})` : ''}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -105,16 +107,16 @@ export function NotificationBell() {
         <div
           className="absolute right-0 mt-2 w-full max-w-[90vw] sm:w-96 bg-card rounded-lg shadow-xl border border-border z-50"
           role="dialog"
-          aria-label="Panneau de notifications"
+          aria-label={t('notificationBell', 'panelLabel') || 'Panneau de notifications'}
         >
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <h3 className="text-lg font-semibold text-foreground">Notifications</h3>
+            <h3 className="text-lg font-semibold text-foreground">{t('notificationBell', 'notifications') || 'Notifications'}</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
                 className="text-sm text-primary hover:text-primary"
               >
-                Tout marquer comme lu
+                {t('notificationBell', 'markAllRead') || 'Tout marquer comme lu'}
               </button>
             )}
           </div>
@@ -125,7 +127,7 @@ export function NotificationBell() {
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
                 <p className="text-2xl mb-2">🔔</p>
-                <p>Aucune notification</p>
+                <p>{t('notificationBell', 'empty') || 'Aucune notification'}</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -177,7 +179,7 @@ export function NotificationBell() {
                           </p>
                           {!notification.read && (
                             <Badge variant="info" className="text-xs">
-                              Nouveau
+                              {t('notificationBell', 'new') || 'Nouveau'}
                             </Badge>
                           )}
                         </div>
@@ -198,7 +200,7 @@ export function NotificationBell() {
                 }}
                 className="text-sm text-primary hover:text-primary font-medium"
               >
-                Voir toutes les notifications
+                {t('notificationBell', 'viewAll') || 'Voir toutes les notifications'}
               </button>
             </div>
           )}

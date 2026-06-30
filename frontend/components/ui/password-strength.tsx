@@ -1,5 +1,8 @@
+'use client';
+
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface PasswordStrengthProps {
   password: string;
@@ -8,36 +11,36 @@ export interface PasswordStrengthProps {
 }
 
 interface PasswordRequirement {
-  label: string;
+  labelKey: string;
   test: (password: string) => boolean;
 }
 
 const requirements: PasswordRequirement[] = [
-  { label: 'Au moins 8 caractères', test: (p) => p.length >= 8 },
-  { label: 'Une lettre majuscule', test: (p) => /[A-Z]/.test(p) },
-  { label: 'Une lettre minuscule', test: (p) => /[a-z]/.test(p) },
-  { label: 'Un chiffre', test: (p) => /[0-9]/.test(p) },
-  { label: 'Un caractère spécial', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+  { labelKey: 'reqMinLength', test: (p) => p.length >= 8 },
+  { labelKey: 'reqUppercase', test: (p) => /[A-Z]/.test(p) },
+  { labelKey: 'reqLowercase', test: (p) => /[a-z]/.test(p) },
+  { labelKey: 'reqDigit', test: (p) => /[0-9]/.test(p) },
+  { labelKey: 'reqSpecialChar', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
 ];
 
-const getStrength = (password: string): { score: number; label: string; color: string } => {
+const getStrength = (password: string): { score: number; labelKey: string; color: string } => {
   if (!password) {
-    return { score: 0, label: '', color: 'bg-muted' };
+    return { score: 0, labelKey: '', color: 'bg-muted' };
   }
 
   const passedRequirements = requirements.filter((req) => req.test(password)).length;
   const percentage = (passedRequirements / requirements.length) * 100;
 
   if (percentage <= 20) {
-    return { score: 1, label: 'Très faible', color: 'bg-red-500' };
+    return { score: 1, labelKey: 'veryWeak', color: 'bg-red-500' };
   } else if (percentage <= 40) {
-    return { score: 2, label: 'Faible', color: 'bg-yellow-500' };
+    return { score: 2, labelKey: 'weak', color: 'bg-yellow-500' };
   } else if (percentage <= 60) {
-    return { score: 3, label: 'Moyen', color: 'bg-yellow-500' };
+    return { score: 3, labelKey: 'medium', color: 'bg-yellow-500' };
   } else if (percentage <= 80) {
-    return { score: 4, label: 'Fort', color: 'bg-lime-500' };
+    return { score: 4, labelKey: 'strong', color: 'bg-lime-500' };
   } else {
-    return { score: 5, label: 'Très fort', color: 'bg-green-500' };
+    return { score: 5, labelKey: 'veryStrong', color: 'bg-green-500' };
   }
 };
 
@@ -46,6 +49,7 @@ const PasswordStrength = ({
   className,
   showRequirements = true,
 }: PasswordStrengthProps) => {
+  const { t } = useLanguage();
   const strength = getStrength(password);
   const segments = 5;
 
@@ -56,7 +60,7 @@ const PasswordStrength = ({
       {/* Strength bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs">
-          <span className="text-muted-foreground">Force du mot de passe</span>
+          <span className="text-muted-foreground">{t('passwordStrength', 'passwordStrengthLabel')}</span>
           <span
             className={cn(
               'font-medium',
@@ -65,7 +69,7 @@ const PasswordStrength = ({
               strength.score >= 4 && 'text-green-600'
             )}
           >
-            {strength.label}
+            {strength.labelKey ? t('passwordStrength', strength.labelKey) : ''}
           </span>
         </div>
         <div className="flex gap-1" role="progressbar" aria-valuenow={strength.score} aria-valuemin={0} aria-valuemax={5}>
@@ -83,7 +87,7 @@ const PasswordStrength = ({
 
       {/* Requirements list */}
       {showRequirements && (
-        <ul className="space-y-1 text-xs" aria-label="Exigences du mot de passe">
+        <ul className="space-y-1 text-xs" aria-label={t('passwordStrength', 'requirementsAriaLabel')}>
           {requirements.map((req, index) => {
             const passed = req.test(password);
             return (
@@ -107,7 +111,7 @@ const PasswordStrength = ({
                     <circle cx="12" cy="12" r="10" strokeWidth="2" />
                   </svg>
                 )}
-                <span>{req.label}</span>
+                <span>{t('passwordStrength', req.labelKey)}</span>
               </li>
             );
           })}

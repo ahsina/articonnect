@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Alert } from '@/components/ui/alert';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ContactInfoWarningProps {
   show: boolean;
@@ -18,6 +19,7 @@ export const ContactInfoWarning: React.FC<ContactInfoWarningProps> = ({
   show,
   detectedPatterns = [],
 }) => {
+  const { t } = useLanguage();
   if (!show) return null;
 
   return (
@@ -37,24 +39,23 @@ export const ContactInfoWarning: React.FC<ContactInfoWarningProps> = ({
         </svg>
         <div className="flex-1">
           <h3 className="font-semibold text-sm mb-1">
-            Informations de contact détectées
+            {t('contactInfoWarning', 'title')}
           </h3>
           <p className="text-sm">
-            Pour votre sécurité et celle de nos utilisateurs, le partage d'informations
-            de contact (téléphone, email, réseaux sociaux) est interdit sur Krafolt.
+            {t('contactInfoWarning', 'message')}
           </p>
           <div className="mt-2 text-xs">
-            <strong>Pourquoi ?</strong>
+            <strong>{t('contactInfoWarning', 'why')}</strong>
             <ul className="list-disc ml-4 mt-1 space-y-1">
-              <li>Protection contre les arnaques et fraudes</li>
-              <li>Garantie de paiement sécurisé via la plateforme</li>
-              <li>Accès au support et médiation en cas de litige</li>
-              <li>Traçabilité des échanges pour votre protection</li>
+              <li>{t('contactInfoWarning', 'reasonFraud')}</li>
+              <li>{t('contactInfoWarning', 'reasonPayment')}</li>
+              <li>{t('contactInfoWarning', 'reasonSupport')}</li>
+              <li>{t('contactInfoWarning', 'reasonTraceability')}</li>
             </ul>
           </div>
           {detectedPatterns.length > 0 && (
             <p className="text-xs mt-2 opacity-75">
-              Détecté : {detectedPatterns.join(', ')}
+              {t('contactInfoWarning', 'detected')} : {detectedPatterns.join(', ')}
             </p>
           )}
         </div>

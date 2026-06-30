@@ -171,7 +171,7 @@ export function ElectronicSignature({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Erreur lors de la signature');
+        throw new Error(data.message || t('electronicSignature', 'signatureError'));
       }
 
       const result = await response.json();
@@ -184,18 +184,18 @@ export function ElectronicSignature({
   };
 
   const legalText = signerRole === 'CLIENT'
-    ? "En signant ce devis, je reconnais avoir pris connaissance de l'ensemble des conditions et accepte les termes proposes. Cette signature electronique a la meme valeur juridique qu'une signature manuscrite conformement au reglement eIDAS et aux articles 1366 et 1367 du Code civil francais."
-    : "Je certifie que ce devis reflete fidelement les prestations proposees et les prix indiques. Cette signature electronique engage ma responsabilite professionnelle conformement au reglement eIDAS.";
+    ? t('electronicSignature', 'legalTextClient')
+    : t('electronicSignature', 'legalTextArtisan');
 
   return (
     <div className="bg-card rounded-xl shadow-lg overflow-hidden max-w-lg mx-auto">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-blue-800 px-6 py-4">
         <h2 className="text-xl font-bold text-white">
-          Signature electronique
+          {t('electronicSignature', 'title')}
         </h2>
         <p className="text-blue-100 text-sm mt-1">
-          {signerRole === 'CLIENT' ? 'Signez pour accepter ce devis' : 'Validez ce devis avec votre signature'}
+          {signerRole === 'CLIENT' ? t('electronicSignature', 'subtitleClient') : t('electronicSignature', 'subtitleArtisan')}
         </p>
       </div>
 
@@ -210,7 +210,7 @@ export function ElectronicSignature({
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Dessiner
+            {t('electronicSignature', 'draw')}
           </button>
           <button
             onClick={() => setMode('type')}
@@ -220,7 +220,7 @@ export function ElectronicSignature({
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Taper
+            {t('electronicSignature', 'type')}
           </button>
         </div>
 
@@ -241,7 +241,7 @@ export function ElectronicSignature({
               />
               {!hasDrawn && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-muted-foreground">Signez ici</span>
+                  <span className="text-muted-foreground">{t('electronicSignature', 'signHere')}</span>
                 </div>
               )}
             </div>
@@ -249,7 +249,7 @@ export function ElectronicSignature({
               onClick={clearCanvas}
               className="mt-2 text-sm text-muted-foreground hover:text-foreground"
             >
-              Effacer
+              {t('electronicSignature', 'clear')}
             </button>
           </div>
         ) : (
@@ -258,12 +258,12 @@ export function ElectronicSignature({
               type="text"
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
-              placeholder="Votre nom complet"
+              placeholder={t('electronicSignature', 'fullNamePlaceholder')}
               className="w-full px-4 py-3 text-2xl font-serif italic text-center border-2 border-border rounded-lg focus:border-primary focus:ring-2 focus:ring-blue-200"
               style={{ fontFamily: '"Brush Script MT", cursive' }}
             />
             <p className="mt-2 text-sm text-muted-foreground text-center">
-              Cette signature manuscrite sera utilisee
+              {t('electronicSignature', 'handwrittenNote')}
             </p>
           </div>
         )}
@@ -298,7 +298,7 @@ export function ElectronicSignature({
               disabled={loading}
               className="flex-1 px-4 py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
             >
-              Annuler
+              {t('electronicSignature', 'cancel')}
             </button>
           )}
           <button
@@ -312,14 +312,14 @@ export function ElectronicSignature({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Signature en cours...
+                {t('electronicSignature', 'signing')}
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Signer le devis
+                {t('electronicSignature', 'signQuote')}
               </>
             )}
           </button>
@@ -331,7 +331,7 @@ export function ElectronicSignature({
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            Signature securisee - Conforme eIDAS
+            {t('electronicSignature', 'securityInfo')}
           </div>
         </div>
       </div>

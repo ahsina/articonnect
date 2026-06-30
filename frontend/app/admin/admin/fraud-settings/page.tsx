@@ -11,118 +11,118 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface FraudFeature {
   key: keyof FraudProtectionConfig;
   toggleKey: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   icon: string;
   color: string;
   thresholdKey?: keyof FraudProtectionConfig;
-  thresholdLabel?: string;
+  thresholdLabelKey?: string;
   autoActionKey?: keyof FraudProtectionConfig;
-  autoActionLabel?: string;
+  autoActionLabelKey?: string;
 }
 
 const fraudFeatures: FraudFeature[] = [
   {
     key: 'multiAccountDetectionEnabled',
     toggleKey: 'multi-account',
-    title: 'Multi-Account Detection',
-    description: 'Detect users creating multiple accounts with same device, IP, or payment info',
+    titleKey: 'multiAccountTitle',
+    descriptionKey: 'multiAccountDesc',
     icon: '👥',
     color: 'blue',
     thresholdKey: 'multiAccountRiskThreshold',
-    thresholdLabel: 'Risk Threshold (0-100)',
+    thresholdLabelKey: 'riskThreshold',
   },
   {
     key: 'reviewFraudDetectionEnabled',
     toggleKey: 'review-fraud',
-    title: 'Review Fraud Detection',
-    description: 'Identify fake or manipulated reviews using sentiment and pattern analysis',
+    titleKey: 'reviewFraudTitle',
+    descriptionKey: 'reviewFraudDesc',
     icon: '⭐',
     color: 'yellow',
     thresholdKey: 'reviewFraudScoreThreshold',
-    thresholdLabel: 'Fraud Score Threshold (0-100)',
+    thresholdLabelKey: 'fraudScoreThreshold',
     autoActionKey: 'reviewAutoHideEnabled',
-    autoActionLabel: 'Auto-hide suspicious reviews',
+    autoActionLabelKey: 'reviewAutoHide',
   },
   {
     key: 'payoutFraudScreeningEnabled',
     toggleKey: 'payout-fraud',
-    title: 'Payout Fraud Screening',
-    description: 'Screen payouts for suspicious patterns before processing',
+    titleKey: 'payoutFraudTitle',
+    descriptionKey: 'payoutFraudDesc',
     icon: '💳',
     color: 'green',
     thresholdKey: 'payoutRiskThreshold',
-    thresholdLabel: 'Risk Threshold (0-100)',
+    thresholdLabelKey: 'riskThreshold',
     autoActionKey: 'payoutAutoHoldEnabled',
-    autoActionLabel: 'Auto-hold suspicious payouts',
+    autoActionLabelKey: 'payoutAutoHold',
   },
   {
     key: 'priceAnomalyDetectionEnabled',
     toggleKey: 'price-anomaly',
-    title: 'Price Anomaly Detection',
-    description: 'Flag missions with unusual pricing compared to market rates',
+    titleKey: 'priceAnomalyTitle',
+    descriptionKey: 'priceAnomalyDesc',
     icon: '📊',
     color: 'purple',
     thresholdKey: 'priceDeviationThreshold',
-    thresholdLabel: 'Deviation Threshold (%)',
+    thresholdLabelKey: 'deviationThreshold',
     autoActionKey: 'priceAutoFlagEnabled',
-    autoActionLabel: 'Auto-flag anomalous prices',
+    autoActionLabelKey: 'priceAutoFlag',
   },
   {
     key: 'refundAbuseDetectionEnabled',
     toggleKey: 'refund-abuse',
-    title: 'Refund Abuse Detection',
-    description: 'Detect users exploiting refund policies',
+    titleKey: 'refundAbuseTitle',
+    descriptionKey: 'refundAbuseDesc',
     icon: '↩️',
     color: 'red',
     thresholdKey: 'refundAbuseScoreThreshold',
-    thresholdLabel: 'Abuse Score Threshold (0-100)',
+    thresholdLabelKey: 'abuseScoreThreshold',
     autoActionKey: 'refundAutoRejectEnabled',
-    autoActionLabel: 'Auto-reject abusive refunds',
+    autoActionLabelKey: 'refundAutoReject',
   },
   {
     key: 'sessionAnomalyDetectionEnabled',
     toggleKey: 'session-anomaly',
-    title: 'Session Anomaly Detection',
-    description: 'Detect unusual session behavior like impossible travel or device changes',
+    titleKey: 'sessionAnomalyTitle',
+    descriptionKey: 'sessionAnomalyDesc',
     icon: '🔐',
     color: 'indigo',
     autoActionKey: 'sessionAutoLogoutEnabled',
-    autoActionLabel: 'Auto-logout suspicious sessions',
+    autoActionLabelKey: 'sessionAutoLogout',
   },
   {
     key: 'kycEnabled',
     toggleKey: 'kyc',
-    title: 'KYC/AML Verification',
-    description: 'Require identity verification for high-value transactions',
+    titleKey: 'kycTitle',
+    descriptionKey: 'kycDesc',
     icon: '🪪',
     color: 'teal',
     thresholdKey: 'kycSingleTransactionThreshold',
-    thresholdLabel: 'Single Transaction Limit (€)',
+    thresholdLabelKey: 'singleTransactionLimit',
     autoActionKey: 'kycAutoBlockEnabled',
-    autoActionLabel: 'Auto-block non-verified high-value',
+    autoActionLabelKey: 'kycAutoBlock',
   },
   {
     key: 'botDetectionEnabled',
     toggleKey: 'bot-detection',
-    title: 'Bot Detection',
-    description: 'Identify and block automated bot activity',
+    titleKey: 'botTitle',
+    descriptionKey: 'botDesc',
     icon: '🤖',
     color: 'orange',
     thresholdKey: 'botScoreThreshold',
-    thresholdLabel: 'Bot Score Threshold (0-100)',
+    thresholdLabelKey: 'botScoreThreshold',
     autoActionKey: 'botCaptchaEnabled',
-    autoActionLabel: 'Show CAPTCHA for suspicious activity',
+    autoActionLabelKey: 'botCaptcha',
   },
   {
     key: 'businessVerificationRequired',
     toggleKey: 'business-verification',
-    title: 'Business Verification',
-    description: 'Require business verification for artisan accounts',
+    titleKey: 'businessVerificationTitle',
+    descriptionKey: 'businessVerificationDesc',
     icon: '🏢',
     color: 'gray',
     autoActionKey: 'businessVerificationAutoReject',
-    autoActionLabel: 'Auto-reject unverified businesses',
+    autoActionLabelKey: 'businessVerificationAutoReject',
   },
 ];
 
@@ -148,7 +148,7 @@ export default function FraudSettingsPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load fraud settings');
+        setError(t('adminFraudSettings', 'loadFailed'));
       }
     } finally {
       setLoading(false);
@@ -167,7 +167,7 @@ export default function FraudSettingsPage() {
       setError(null);
     } catch (err) {
       console.error('Error toggling feature:', err);
-      setError(`Failed to toggle ${feature.title}`);
+      setError(`${t('adminFraudSettings', 'toggleFailed')} ${t('adminFraudSettings', feature.titleKey)}`);
     } finally {
       setSaving(null);
     }
@@ -188,7 +188,7 @@ export default function FraudSettingsPage() {
       setError(null);
     } catch (err) {
       console.error('Error updating threshold:', err);
-      setError('Failed to update threshold');
+      setError(t('adminFraudSettings', 'updateThresholdFailed'));
     } finally {
       setSaving(null);
     }
@@ -206,7 +206,7 @@ export default function FraudSettingsPage() {
       setError(null);
     } catch (err) {
       console.error('Error toggling auto action:', err);
-      setError('Failed to toggle auto action');
+      setError(t('adminFraudSettings', 'toggleAutoActionFailed'));
     } finally {
       setSaving(null);
     }
@@ -241,7 +241,7 @@ export default function FraudSettingsPage() {
   if (!config) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{error || 'Failed to load settings'}</div>
+        <div className="text-red-600">{error || t('adminFraudSettings', 'loadSettingsFailed')}</div>
       </div>
     );
   }
@@ -256,12 +256,12 @@ export default function FraudSettingsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← Back
+              ← {t('adminFraudSettings', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Fraud Protection Settings</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminFraudSettings', 'pageTitle')}</h1>
               <p className="text-muted-foreground mt-2">
-                Configure fraud detection features to protect the platform
+                {t('adminFraudSettings', 'pageSubtitle')}
               </p>
             </div>
           </div>
@@ -280,7 +280,7 @@ export default function FraudSettingsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Features Enabled</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'featuresEnabled')}</p>
                   <p className="text-3xl font-bold text-green-600">
                     {fraudFeatures.filter((f) => config[f.key] as boolean).length}
                   </p>
@@ -293,7 +293,7 @@ export default function FraudSettingsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Features Disabled</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'featuresDisabled')}</p>
                   <p className="text-3xl font-bold text-muted-foreground">
                     {fraudFeatures.filter((f) => !(config[f.key] as boolean)).length}
                   </p>
@@ -306,7 +306,7 @@ export default function FraudSettingsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Last Updated</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'lastUpdated')}</p>
                   <p className="text-lg font-semibold text-foreground">
                     {new Date(config.updatedAt).toLocaleDateString('fr-FR')}
                   </p>
@@ -333,13 +333,13 @@ export default function FraudSettingsPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{feature.icon}</span>
                       <div>
-                        <CardTitle className="text-lg">{feature.title}</CardTitle>
-                        <CardDescription className="mt-1">{feature.description}</CardDescription>
+                        <CardTitle className="text-lg">{t('adminFraudSettings', feature.titleKey)}</CardTitle>
+                        <CardDescription className="mt-1">{t('adminFraudSettings', feature.descriptionKey)}</CardDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {isSaving && (
-                        <span className="text-sm text-muted-foreground animate-pulse">Saving...</span>
+                        <span className="text-sm text-muted-foreground animate-pulse">{t('adminFraudSettings', 'saving')}</span>
                       )}
                       <Switch
                         checked={isEnabled}
@@ -356,7 +356,7 @@ export default function FraudSettingsPage() {
                       {feature.thresholdKey && (
                         <div>
                           <label className="block text-sm font-medium text-foreground mb-1">
-                            {feature.thresholdLabel}
+                            {t('adminFraudSettings', feature.thresholdLabelKey!)}
                           </label>
                           <Input
                             type="number"
@@ -372,7 +372,7 @@ export default function FraudSettingsPage() {
 
                       {feature.autoActionKey && (
                         <Switch
-                          label={feature.autoActionLabel}
+                          label={t('adminFraudSettings', feature.autoActionLabelKey!)}
                           checked={config[feature.autoActionKey] as boolean}
                           onChange={() =>
                             handleAutoActionToggle(
@@ -396,17 +396,17 @@ export default function FraudSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <span className="text-2xl">📧</span>
-              Fraud Alert Notifications
+              {t('adminFraudSettings', 'alertNotifications')}
             </CardTitle>
             <CardDescription>
-              Configure email notifications for fraud detection alerts
+              {t('adminFraudSettings', 'alertNotificationsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <Switch
-                label="Enable fraud alert emails"
-                description="Receive email notifications when fraud is detected"
+                label={t('adminFraudSettings', 'enableAlertEmails')}
+                description={t('adminFraudSettings', 'enableAlertEmailsDesc')}
                 checked={config.fraudAlertEmailEnabled}
                 onChange={() =>
                   handleAutoActionToggle('fraudAlertEmailEnabled', !config.fraudAlertEmailEnabled)
@@ -417,7 +417,7 @@ export default function FraudSettingsPage() {
               {config.fraudAlertEmailEnabled && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Alert Email Address
+                    {t('adminFraudSettings', 'alertEmailAddress')}
                   </label>
                   <Input
                     type="email"

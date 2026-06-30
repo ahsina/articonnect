@@ -173,13 +173,13 @@ export default function CertificationsPage() {
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-foreground">{cert.name}</h4>
                         {cert.verified && (
-                          <Badge className="bg-green-500/15 text-green-400">✓ Verified</Badge>
+                          <Badge className="bg-green-500/15 text-green-400">✓ {t('artisanCertifications', 'verified') || 'Verified'}</Badge>
                         )}
                         {isExpired(cert.expiryDate) && (
-                          <Badge className="bg-red-500/15 text-red-400">Expired</Badge>
+                          <Badge className="bg-red-500/15 text-red-400">{t('artisanCertifications', 'expired') || 'Expired'}</Badge>
                         )}
                         {isExpiringSoon(cert.expiryDate) && !isExpired(cert.expiryDate) && (
-                          <Badge className="bg-yellow-500/15 text-yellow-400">Expiring Soon</Badge>
+                          <Badge className="bg-yellow-500/15 text-yellow-400">{t('artisanCertifications', 'expiringSoon') || 'Expiring Soon'}</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{cert.issuer}</p>
@@ -231,7 +231,7 @@ export default function CertificationsPage() {
                 <Input
                   value={newCert.name}
                   onChange={(e) => setNewCert({ ...newCert, name: e.target.value })}
-                  placeholder="e.g., QualiPV Electricien"
+                  placeholder={t('artisanCertifications', 'namePlaceholder') || 'e.g., QualiPV Electricien'}
                 />
               </div>
 
@@ -242,7 +242,7 @@ export default function CertificationsPage() {
                 <Input
                   value={newCert.issuer}
                   onChange={(e) => setNewCert({ ...newCert, issuer: e.target.value })}
-                  placeholder="e.g., Qualit'EnR"
+                  placeholder={t('artisanCertifications', 'issuerPlaceholder') || "e.g., Qualit'EnR"}
                 />
               </div>
 

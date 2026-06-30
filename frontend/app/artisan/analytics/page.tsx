@@ -236,7 +236,7 @@ export default function ArtisanAnalyticsPage() {
               <Badge className={data.earnings.growth >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}>
                 {data.earnings.growth >= 0 ? '↑' : '↓'} {Math.abs(data.earnings.growth)}%
               </Badge>
-              <span className="text-xs text-muted-foreground">vs last month</span>
+              <span className="text-xs text-muted-foreground">{t('artisanAnalytics', 'vsLastMonth') || 'vs last month'}</span>
             </div>
           </CardContent>
         </Card>
@@ -295,7 +295,7 @@ export default function ArtisanAnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`${value}€`, 'Earnings']} />
+                <Tooltip formatter={(value) => [`${value}€`, t('artisanAnalytics', 'earnings') || 'Earnings']} />
                 <Area
                   type="monotone"
                   dataKey="amount"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface User {
   id: string;
@@ -55,6 +56,7 @@ interface InternalChatProps {
 }
 
 export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
+  const { t } = useLanguage();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -193,7 +195,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
     if (days === 0) {
       return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     } else if (days === 1) {
-      return 'Hier';
+      return t('internalChat', 'yesterday');
     } else if (days < 7) {
       return date.toLocaleDateString('fr-FR', { weekday: 'short' });
     } else {
@@ -251,7 +253,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Messages</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('internalChat', 'messages')}</h2>
             <button
               onClick={() => setShowNewChatModal(true)}
               className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
@@ -267,12 +269,12 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
         <div className="flex-1 overflow-y-auto">
           {rooms.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">
-              <p>Aucune conversation</p>
+              <p>{t('internalChat', 'noConversation')}</p>
               <button
                 onClick={() => setShowNewChatModal(true)}
                 className="mt-2 text-primary hover:underline"
               >
-                Commencer une conversation
+                {t('internalChat', 'startConversation')}
               </button>
             </div>
           ) : (
@@ -335,7 +337,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                 <div>
                   <h3 className="font-semibold text-foreground">{selectedRoom.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {selectedRoom.members.length} membre{selectedRoom.members.length > 1 ? 's' : ''}
+                    {selectedRoom.members.length} {selectedRoom.members.length > 1 ? t('internalChat', 'membersPlural') : t('internalChat', 'memberSingular')}
                   </p>
                 </div>
               </div>
@@ -392,7 +394,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                         </div>
                         <div className={`flex items-center gap-2 mt-1 text-xs text-muted-foreground ${message.sender.id === currentUserId ? 'justify-end' : ''}`}>
                           <span>{formatTime(message.createdAt)}</span>
-                          {message.isEdited && <span>(modifie)</span>}
+                          {message.isEdited && <span>({t('internalChat', 'edited')})</span>}
                         </div>
                       </div>
                     </div>
@@ -417,7 +419,7 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
                           handleSendMessage(e);
                         }
                       }}
-                      placeholder="Ecrivez votre message..."
+                      placeholder={t('internalChat', 'messagePlaceholder')}
                       rows={1}
                       className="w-full px-4 py-3 border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       style={{ minHeight: '48px', maxHeight: '120px' }}
@@ -445,8 +447,8 @@ export function InternalChat({ companyId, currentUserId }: InternalChatProps) {
             <svg className="w-16 h-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <p className="text-lg font-medium">Selectionnez une conversation</p>
-            <p className="text-sm">ou commencez une nouvelle discussion</p>
+            <p className="text-lg font-medium">{t('internalChat', 'selectConversation')}</p>
+            <p className="text-sm">{t('internalChat', 'orStartNew')}</p>
           </div>
         )}
       </div>
@@ -470,6 +472,7 @@ interface NewChatModalProps {
 }
 
 function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
+  const { t } = useLanguage();
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -497,7 +500,7 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-card rounded-xl shadow-xl w-full max-w-md">
         <div className="p-4 border-b border-border flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Nouvelle conversation</h3>
+          <h3 className="text-lg font-semibold">{t('internalChat', 'newConversation')}</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -509,7 +512,7 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
           {/* Search */}
           <input
             type="text"
-            placeholder="Rechercher un membre..."
+            placeholder={t('internalChat', 'searchMember')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -519,7 +522,7 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
           {selectedMembers.length > 1 && (
             <input
               type="text"
-              placeholder="Nom du groupe"
+              placeholder={t('internalChat', 'groupName')}
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               className="w-full mt-3 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -588,14 +591,14 @@ function NewChatModal({ members, onClose, onCreate }: NewChatModalProps) {
             onClick={onClose}
             className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-accent"
           >
-            Annuler
+            {t('internalChat', 'cancel')}
           </button>
           <button
             onClick={handleCreate}
             disabled={selectedMembers.length === 0}
             className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Creer
+            {t('internalChat', 'create')}
           </button>
         </div>
       </div>
