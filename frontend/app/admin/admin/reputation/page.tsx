@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, UserReputation } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ReputationPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export default function ReputationPage() {
 
   const handleLookup = async () => {
     if (!userId.trim()) {
-      setError('Please enter a user ID');
+      setError(t('adminReputation', 'enterUserId'));
       return;
     }
     try {
@@ -34,11 +36,11 @@ export default function ReputationPage() {
       console.error('Error fetching reputation:', err);
       const error = err as { response?: { status?: number } };
       if (error.response?.status === 404) {
-        setError('User not found');
+        setError(t('adminReputation', 'userNotFound'));
       } else if (error.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to fetch reputation data');
+        setError(t('adminReputation', 'fetchError'));
       }
       setReputation(null);
     } finally {
@@ -48,7 +50,7 @@ export default function ReputationPage() {
 
   const handleAdjust = async () => {
     if (!userId.trim() || adjustmentAmount === 0 || !adjustmentReason.trim()) {
-      setError('Please provide adjustment amount and reason');
+      setError(t('adminReputation', 'provideAmountReason'));
       return;
     }
     try {
@@ -80,7 +82,7 @@ export default function ReputationPage() {
       setAdjustmentReason('');
     } catch (err) {
       console.error('Error adjusting reputation:', err);
-      setError('Failed to adjust reputation');
+      setError(t('adminReputation', 'adjustError'));
     } finally {
       setProcessing(false);
     }
@@ -119,24 +121,24 @@ export default function ReputationPage() {
   // Preset adjustment reasons
   const presetReasons = [
     {
-      label: 'Dispute Resolution - Favor User',
+      label: t('adminReputation', 'presetDisputeFavorLabel'),
       value: 10,
-      reason: 'Dispute resolved in user favor',
+      reason: t('adminReputation', 'presetDisputeFavorReason'),
     },
     {
-      label: 'Dispute Resolution - Against User',
+      label: t('adminReputation', 'presetDisputeAgainstLabel'),
       value: -15,
-      reason: 'Dispute resolved against user',
+      reason: t('adminReputation', 'presetDisputeAgainstReason'),
     },
     {
-      label: 'Excellent Service Feedback',
+      label: t('adminReputation', 'presetExcellentLabel'),
       value: 5,
-      reason: 'Exceptional service quality reported',
+      reason: t('adminReputation', 'presetExcellentReason'),
     },
-    { label: 'Policy Violation - Minor', value: -10, reason: 'Minor policy violation' },
-    { label: 'Policy Violation - Major', value: -25, reason: 'Major policy violation' },
-    { label: 'False No-Show Report', value: -20, reason: 'Filed false no-show report' },
-    { label: 'Account Rehabilitation', value: 15, reason: 'Account rehabilitation after review' },
+    { label: t('adminReputation', 'presetMinorLabel'), value: -10, reason: t('adminReputation', 'presetMinorReason') },
+    { label: t('adminReputation', 'presetMajorLabel'), value: -25, reason: t('adminReputation', 'presetMajorReason') },
+    { label: t('adminReputation', 'presetFalseNoShowLabel'), value: -20, reason: t('adminReputation', 'presetFalseNoShowReason') },
+    { label: t('adminReputation', 'presetRehabLabel'), value: 15, reason: t('adminReputation', 'presetRehabReason') },
   ];
 
   return (
@@ -149,11 +151,11 @@ export default function ReputationPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              Back
+              {t('adminReputation', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Reputation Management</h1>
-              <p className="text-muted-foreground mt-1">Look up and adjust user reputation scores</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminReputation', 'title')}</h1>
+              <p className="text-muted-foreground mt-1">{t('adminReputation', 'subtitle')}</p>
             </div>
           </div>
         </div>
@@ -163,7 +165,7 @@ export default function ReputationPage() {
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
             <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
-              Dismiss
+              {t('adminReputation', 'dismiss')}
             </button>
           </div>
         )}
@@ -171,7 +173,7 @@ export default function ReputationPage() {
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
             {success}
             <button onClick={() => setSuccess(null)} className="ml-4 text-green-300 font-medium">
-              Dismiss
+              {t('adminReputation', 'dismiss')}
             </button>
           </div>
         )}
@@ -180,8 +182,8 @@ export default function ReputationPage() {
           {/* Lookup Section */}
           <Card>
             <CardHeader>
-              <CardTitle>User Lookup</CardTitle>
-              <CardDescription>Search for a user to view their reputation</CardDescription>
+              <CardTitle>{t('adminReputation', 'lookupTitle')}</CardTitle>
+              <CardDescription>{t('adminReputation', 'lookupDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-4 mb-6">
@@ -189,7 +191,7 @@ export default function ReputationPage() {
                   type="text"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  placeholder="Enter User ID"
+                  placeholder={t('adminReputation', 'enterUserIdPlaceholder')}
                   className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                 />
@@ -198,7 +200,7 @@ export default function ReputationPage() {
                   disabled={loading}
                   className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {loading ? 'Loading...' : 'Lookup'}
+                  {loading ? t('adminReputation', 'loading') : t('adminReputation', 'lookup')}
                 </button>
               </div>
 
@@ -207,7 +209,7 @@ export default function ReputationPage() {
                 <div className="space-y-6">
                   {/* Score */}
                   <div className="text-center p-6 bg-background rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Reputation Score</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t('adminReputation', 'reputationScore')}</p>
                     <p className={`text-5xl font-bold ${getReputationColor(reputation.score)}`}>
                       {reputation.score}
                     </p>
@@ -221,39 +223,39 @@ export default function ReputationPage() {
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground">Total Missions</p>
+                      <p className="text-sm text-muted-foreground">{t('adminReputation', 'totalMissions')}</p>
                       <p className="text-xl font-bold text-foreground">{reputation.totalMissions}</p>
                     </div>
                     <div className="p-4 bg-green-500/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Completed</p>
+                      <p className="text-sm text-muted-foreground">{t('adminReputation', 'completed')}</p>
                       <p className="text-xl font-bold text-green-600">
                         {reputation.completedMissions}
                       </p>
                     </div>
                     <div className="p-4 bg-red-500/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Cancelled</p>
+                      <p className="text-sm text-muted-foreground">{t('adminReputation', 'cancelled')}</p>
                       <p className="text-xl font-bold text-red-600">
                         {reputation.cancelledMissions}
                       </p>
                     </div>
                     <div className="p-4 bg-yellow-500/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground">No-Shows</p>
+                      <p className="text-sm text-muted-foreground">{t('adminReputation', 'noShows')}</p>
                       <p className="text-xl font-bold text-yellow-600">{reputation.noShowCount}</p>
                     </div>
                     <div className="p-4 bg-yellow-500/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Avg Rating</p>
+                      <p className="text-sm text-muted-foreground">{t('adminReputation', 'avgRating')}</p>
                       <p className="text-xl font-bold text-yellow-600">
                         {reputation.averageRating.toFixed(1)} / 5
                       </p>
                     </div>
                     <div className="p-4 bg-primary/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Reviews</p>
+                      <p className="text-sm text-muted-foreground">{t('adminReputation', 'reviews')}</p>
                       <p className="text-xl font-bold text-primary">{reputation.reviewCount}</p>
                     </div>
                   </div>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    Last updated: {formatDate(reputation.lastUpdated)}
+                    {t('adminReputation', 'lastUpdated')} {formatDate(reputation.lastUpdated)}
                   </p>
                 </div>
               )}
@@ -263,20 +265,20 @@ export default function ReputationPage() {
           {/* Adjustment Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Adjust Reputation</CardTitle>
-              <CardDescription>Manually adjust a user&apos;s reputation score</CardDescription>
+              <CardTitle>{t('adminReputation', 'adjustTitle')}</CardTitle>
+              <CardDescription>{t('adminReputation', 'adjustDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {!reputation ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <span className="text-4xl block mb-2">🔍</span>
-                  <p>Look up a user first to adjust their reputation</p>
+                  <p>{t('adminReputation', 'lookupFirst')}</p>
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* Quick Presets */}
                   <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Quick Presets</p>
+                    <p className="text-sm font-medium text-foreground mb-2">{t('adminReputation', 'quickPresets')}</p>
                     <div className="flex flex-wrap gap-2">
                       {presetReasons.map((preset, idx) => (
                         <button
@@ -301,7 +303,7 @@ export default function ReputationPage() {
                   {/* Manual Adjustment */}
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Adjustment Amount
+                      {t('adminReputation', 'adjustmentAmount')}
                     </label>
                     <div className="flex items-center gap-4">
                       <button
@@ -336,7 +338,7 @@ export default function ReputationPage() {
                       </button>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      New score will be:{' '}
+                      {t('adminReputation', 'newScoreWillBe')}{' '}
                       <strong className={getReputationColor(reputation.score + adjustmentAmount)}>
                         {Math.max(0, Math.min(100, reputation.score + adjustmentAmount))}
                       </strong>
@@ -344,11 +346,11 @@ export default function ReputationPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Reason *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('adminReputation', 'reasonLabel')}</label>
                     <textarea
                       value={adjustmentReason}
                       onChange={(e) => setAdjustmentReason(e.target.value)}
-                      placeholder="Explain why you are adjusting this user's reputation..."
+                      placeholder={t('adminReputation', 'reasonPlaceholder')}
                       rows={3}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
@@ -359,7 +361,7 @@ export default function ReputationPage() {
                     disabled={processing || adjustmentAmount === 0 || !adjustmentReason.trim()}
                     className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {processing ? 'Applying...' : 'Apply Adjustment'}
+                    {processing ? t('adminReputation', 'applying') : t('adminReputation', 'applyAdjustment')}
                   </button>
                 </div>
               )}
@@ -371,7 +373,7 @@ export default function ReputationPage() {
         {recentAdjustments.length > 0 && (
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Recent Adjustments (This Session)</CardTitle>
+              <CardTitle>{t('adminReputation', 'recentAdjustments')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -379,16 +381,16 @@ export default function ReputationPage() {
                   <thead className="bg-background">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        User ID
+                        {t('adminReputation', 'userIdCol')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Adjustment
+                        {t('adminReputation', 'adjustmentCol')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Reason
+                        {t('adminReputation', 'reasonCol')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Time
+                        {t('adminReputation', 'timeCol')}
                       </th>
                     </tr>
                   </thead>

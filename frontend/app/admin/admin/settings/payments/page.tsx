@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, PaymentSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultPaymentSettings: PaymentSettings = {
   stripeEnabled: true,
@@ -26,6 +27,7 @@ const defaultPaymentSettings: PaymentSettings = {
 };
 
 export default function PaymentSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<PaymentSettings>(defaultPaymentSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,11 +56,11 @@ export default function PaymentSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updatePaymentSettings(settings);
-      setSuccess('Payment settings saved successfully');
+      setSuccess(t('adminSettingsPayments', 'saveSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving payment settings:', err);
-      setError('Failed to save payment settings');
+      setError(t('adminSettingsPayments', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -84,7 +86,7 @@ export default function PaymentSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsPayments', 'dismiss')}
           </button>
         </div>
       )}
@@ -97,16 +99,16 @@ export default function PaymentSettingsPage() {
       {/* Payment Providers */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Providers</CardTitle>
-          <CardDescription>Enable or disable payment methods</CardDescription>
+          <CardTitle>{t('adminSettingsPayments', 'providersTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPayments', 'providersDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { key: 'stripeEnabled' as const, label: 'Stripe', icon: '💳' },
               { key: 'paypalEnabled' as const, label: 'PayPal', icon: '🅿️' },
-              { key: 'bankTransferEnabled' as const, label: 'Bank Transfer', icon: '🏦' },
-              { key: 'walletEnabled' as const, label: 'Wallet', icon: '👛' },
+              { key: 'bankTransferEnabled' as const, label: t('adminSettingsPayments', 'bankTransfer'), icon: '🏦' },
+              { key: 'walletEnabled' as const, label: t('adminSettingsPayments', 'wallet'), icon: '👛' },
             ].map((provider) => (
               <div
                 key={provider.key}
@@ -122,7 +124,7 @@ export default function PaymentSettingsPage() {
                   <div>
                     <p className="font-medium">{provider.label}</p>
                     <p className="text-sm text-muted-foreground">
-                      {settings[provider.key] ? 'Enabled' : 'Disabled'}
+                      {settings[provider.key] ? t('adminSettingsPayments', 'enabled') : t('adminSettingsPayments', 'disabled')}
                     </p>
                   </div>
                 </div>
@@ -135,14 +137,14 @@ export default function PaymentSettingsPage() {
       {/* Payment Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Limits</CardTitle>
-          <CardDescription>Configure minimum and maximum payment amounts</CardDescription>
+          <CardTitle>{t('adminSettingsPayments', 'limitsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPayments', 'limitsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Minimum Payment (cents)
+                {t('adminSettingsPayments', 'minPayment')}
               </label>
               <input
                 type="number"
@@ -157,7 +159,7 @@ export default function PaymentSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Maximum Payment (cents)
+                {t('adminSettingsPayments', 'maxPayment')}
               </label>
               <input
                 type="number"
@@ -177,14 +179,14 @@ export default function PaymentSettingsPage() {
       {/* Payout Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Payout Settings</CardTitle>
-          <CardDescription>Configure artisan payout rules</CardDescription>
+          <CardTitle>{t('adminSettingsPayments', 'payoutTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPayments', 'payoutDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Payout Delay (days)
+                {t('adminSettingsPayments', 'payoutDelay')}
               </label>
               <input
                 type="number"
@@ -193,11 +195,11 @@ export default function PaymentSettingsPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-muted-foreground">Days after mission completion</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsPayments', 'daysAfterCompletion')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Auto-Payout Threshold (cents)
+                {t('adminSettingsPayments', 'autoPayoutThreshold')}
               </label>
               <input
                 type="number"
@@ -212,7 +214,7 @@ export default function PaymentSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Escrow Duration (hours)
+                {t('adminSettingsPayments', 'escrowDuration')}
               </label>
               <input
                 type="number"
@@ -232,7 +234,7 @@ export default function PaymentSettingsPage() {
                 onChange={(e) => updateSetting('autoPayoutEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable auto-payouts</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPayments', 'enableAutoPayouts')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -241,7 +243,7 @@ export default function PaymentSettingsPage() {
                 onChange={(e) => updateSetting('holdFundsForDisputes', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Hold funds during disputes</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPayments', 'holdFunds')}</span>
             </label>
           </div>
         </CardContent>
@@ -250,8 +252,8 @@ export default function PaymentSettingsPage() {
       {/* Instant Payout */}
       <Card>
         <CardHeader>
-          <CardTitle>Instant Payout</CardTitle>
-          <CardDescription>Configure instant payout options for artisans</CardDescription>
+          <CardTitle>{t('adminSettingsPayments', 'instantPayoutTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPayments', 'instantPayoutDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
@@ -262,13 +264,13 @@ export default function PaymentSettingsPage() {
                 onChange={(e) => updateSetting('instantPayoutEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable instant payouts</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPayments', 'enableInstantPayouts')}</span>
             </label>
           </div>
           {settings.instantPayoutEnabled && (
             <div className="w-48">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Instant Payout Fee (%)
+                {t('adminSettingsPayments', 'instantPayoutFee')}
               </label>
               <input
                 type="number"
@@ -289,14 +291,14 @@ export default function PaymentSettingsPage() {
       {/* Refund Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Refund Settings</CardTitle>
-          <CardDescription>Configure refund policies</CardDescription>
+          <CardTitle>{t('adminSettingsPayments', 'refundTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPayments', 'refundDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Refund Window (days)
+                {t('adminSettingsPayments', 'refundWindow')}
               </label>
               <input
                 type="number"
@@ -306,7 +308,7 @@ export default function PaymentSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Days after payment for refund eligibility
+                {t('adminSettingsPayments', 'refundEligibility')}
               </p>
             </div>
             <div className="flex items-center">
@@ -317,7 +319,7 @@ export default function PaymentSettingsPage() {
                   onChange={(e) => updateSetting('partialRefundEnabled', e.target.checked)}
                   className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-foreground">Allow partial refunds</span>
+                <span className="text-sm text-foreground">{t('adminSettingsPayments', 'allowPartialRefunds')}</span>
               </label>
             </div>
           </div>
@@ -327,13 +329,13 @@ export default function PaymentSettingsPage() {
       {/* Payment Retry Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Retry Settings</CardTitle>
-          <CardDescription>Configure automatic payment retry behavior</CardDescription>
+          <CardTitle>{t('adminSettingsPayments', 'retryTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPayments', 'retryDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Retry Attempts</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsPayments', 'retryAttempts')}</label>
               <input
                 type="number"
                 value={settings.paymentRetryAttempts}
@@ -345,7 +347,7 @@ export default function PaymentSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Retry Delay (minutes)
+                {t('adminSettingsPayments', 'retryDelay')}
               </label>
               <input
                 type="number"
@@ -365,7 +367,7 @@ export default function PaymentSettingsPage() {
                   onChange={(e) => updateSetting('failedPaymentNotification', e.target.checked)}
                   className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-foreground">Notify on failed payments</span>
+                <span className="text-sm text-foreground">{t('adminSettingsPayments', 'notifyFailed')}</span>
               </label>
             </div>
           </div>
@@ -379,7 +381,7 @@ export default function PaymentSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Payment Settings'}
+          {saving ? t('adminSettingsPayments', 'saving') : t('adminSettingsPayments', 'saveButton')}
         </button>
       </div>
     </div>

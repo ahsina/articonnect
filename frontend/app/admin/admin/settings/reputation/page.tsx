@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, ReputationRules } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultReputationRules: ReputationRules = {
   initialScore: 50,
@@ -33,6 +34,7 @@ const defaultReputationRules: ReputationRules = {
 };
 
 export default function ReputationRulesPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<ReputationRules>(defaultReputationRules);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,11 +63,11 @@ export default function ReputationRulesPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateReputationRules(settings);
-      setSuccess('Reputation rules saved successfully');
+      setSuccess(t('adminSettingsReputation', 'saveSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving reputation rules:', err);
-      setError('Failed to save reputation rules');
+      setError(t('adminSettingsReputation', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -89,7 +91,7 @@ export default function ReputationRulesPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsReputation', 'dismiss')}
           </button>
         </div>
       )}
@@ -102,13 +104,13 @@ export default function ReputationRulesPage() {
       {/* Score Bounds */}
       <Card>
         <CardHeader>
-          <CardTitle>Score Configuration</CardTitle>
-          <CardDescription>Configure reputation score bounds</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'scoreConfigTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'scoreConfigDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Initial Score</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'initialScore')}</label>
               <input
                 type="number"
                 value={settings.initialScore}
@@ -117,10 +119,10 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-muted-foreground">Starting score for new users</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsReputation', 'initialScoreHint')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Minimum Score</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'minScore')}</label>
               <input
                 type="number"
                 value={settings.minScore}
@@ -130,7 +132,7 @@ export default function ReputationRulesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Maximum Score</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'maxScore')}</label>
               <input
                 type="number"
                 value={settings.maxScore}
@@ -146,13 +148,13 @@ export default function ReputationRulesPage() {
       {/* Level Thresholds */}
       <Card>
         <CardHeader>
-          <CardTitle>Level Thresholds</CardTitle>
-          <CardDescription>Configure score thresholds for each level</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'levelThresholdsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'levelThresholdsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <label className="block text-sm font-medium text-yellow-400 mb-1">Gold</label>
+              <label className="block text-sm font-medium text-yellow-400 mb-1">{t('adminSettingsReputation', 'levelGold')}</label>
               <input
                 type="number"
                 value={settings.goldThreshold}
@@ -161,10 +163,10 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg focus:ring-2 focus:ring-yellow-500"
               />
-              <p className="mt-1 text-xs text-yellow-600">Score &gt;= {settings.goldThreshold}</p>
+              <p className="mt-1 text-xs text-yellow-600">{t('adminSettingsReputation', 'scoreGte')} {settings.goldThreshold}</p>
             </div>
             <div className="p-4 bg-background rounded-lg border border-border">
-              <label className="block text-sm font-medium text-foreground mb-1">Silver</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'levelSilver')}</label>
               <input
                 type="number"
                 value={settings.silverThreshold}
@@ -173,10 +175,10 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-gray-500"
               />
-              <p className="mt-1 text-xs text-muted-foreground">Score &gt;= {settings.silverThreshold}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsReputation', 'scoreGte')} {settings.silverThreshold}</p>
             </div>
             <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <label className="block text-sm font-medium text-yellow-400 mb-1">Bronze</label>
+              <label className="block text-sm font-medium text-yellow-400 mb-1">{t('adminSettingsReputation', 'levelBronze')}</label>
               <input
                 type="number"
                 value={settings.bronzeThreshold}
@@ -185,10 +187,10 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg focus:ring-2 focus:ring-yellow-500"
               />
-              <p className="mt-1 text-xs text-yellow-600">Score &gt;= {settings.bronzeThreshold}</p>
+              <p className="mt-1 text-xs text-yellow-600">{t('adminSettingsReputation', 'scoreGte')} {settings.bronzeThreshold}</p>
             </div>
             <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-              <label className="block text-sm font-medium text-green-400 mb-1">Trusted</label>
+              <label className="block text-sm font-medium text-green-400 mb-1">{t('adminSettingsReputation', 'levelTrusted')}</label>
               <input
                 type="number"
                 value={settings.trustedThreshold}
@@ -197,10 +199,10 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-green-500/30 rounded-lg focus:ring-2 focus:ring-green-500"
               />
-              <p className="mt-1 text-xs text-green-600">Score &gt;= {settings.trustedThreshold}</p>
+              <p className="mt-1 text-xs text-green-600">{t('adminSettingsReputation', 'scoreGte')} {settings.trustedThreshold}</p>
             </div>
             <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
-              <label className="block text-sm font-medium text-red-400 mb-1">Warning</label>
+              <label className="block text-sm font-medium text-red-400 mb-1">{t('adminSettingsReputation', 'levelWarning')}</label>
               <input
                 type="number"
                 value={settings.warningThreshold}
@@ -209,7 +211,7 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-red-500/30 rounded-lg focus:ring-2 focus:ring-red-500"
               />
-              <p className="mt-1 text-xs text-red-600">Score &lt; {settings.warningThreshold}</p>
+              <p className="mt-1 text-xs text-red-600">{t('adminSettingsReputation', 'scoreLt')} {settings.warningThreshold}</p>
             </div>
           </div>
         </CardContent>
@@ -218,14 +220,14 @@ export default function ReputationRulesPage() {
       {/* Mission Bonuses */}
       <Card>
         <CardHeader>
-          <CardTitle>Mission Bonuses</CardTitle>
-          <CardDescription>Points earned for mission-related actions</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'missionBonusesTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'missionBonusesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Completed Mission Bonus
+                {t('adminSettingsReputation', 'completedMissionBonus')}
               </label>
               <input
                 type="number"
@@ -235,12 +237,12 @@ export default function ReputationRulesPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-green-600">
-                +{settings.completedMissionBonus} points
+                +{settings.completedMissionBonus} {t('adminSettingsReputation', 'points')}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Response Time Bonus
+                {t('adminSettingsReputation', 'responseTimeBonus')}
               </label>
               <input
                 type="number"
@@ -250,12 +252,12 @@ export default function ReputationRulesPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-green-600">
-                +{settings.responseTimeBonus} for fast response
+                +{settings.responseTimeBonus} {t('adminSettingsReputation', 'forFastResponse')}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Verification Bonus
+                {t('adminSettingsReputation', 'verificationBonus')}
               </label>
               <input
                 type="number"
@@ -265,7 +267,7 @@ export default function ReputationRulesPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-green-600">
-                +{settings.verificationBonus} one-time bonus
+                +{settings.verificationBonus} {t('adminSettingsReputation', 'oneTimeBonus')}
               </p>
             </div>
           </div>
@@ -275,13 +277,13 @@ export default function ReputationRulesPage() {
       {/* Review Score Changes */}
       <Card>
         <CardHeader>
-          <CardTitle>Review Score Changes</CardTitle>
-          <CardDescription>Points gained or lost based on review ratings</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'reviewChangesTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'reviewChangesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="p-4 bg-green-500/10 rounded-lg">
-              <label className="block text-sm font-medium text-foreground mb-1">5 Stars</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'fiveStars')}</label>
               <input
                 type="number"
                 value={settings.fiveStarReviewBonus}
@@ -292,7 +294,7 @@ export default function ReputationRulesPage() {
               <p className="mt-1 text-xs text-green-600">+{settings.fiveStarReviewBonus}</p>
             </div>
             <div className="p-4 bg-green-500/10 rounded-lg">
-              <label className="block text-sm font-medium text-foreground mb-1">4 Stars</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'fourStars')}</label>
               <input
                 type="number"
                 value={settings.fourStarReviewBonus}
@@ -303,7 +305,7 @@ export default function ReputationRulesPage() {
               <p className="mt-1 text-xs text-green-600">+{settings.fourStarReviewBonus}</p>
             </div>
             <div className="p-4 bg-background rounded-lg">
-              <label className="block text-sm font-medium text-foreground mb-1">3 Stars</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'threeStars')}</label>
               <input
                 type="number"
                 value={settings.threeStarReviewBonus}
@@ -316,7 +318,7 @@ export default function ReputationRulesPage() {
               </p>
             </div>
             <div className="p-4 bg-red-500/10 rounded-lg">
-              <label className="block text-sm font-medium text-foreground mb-1">2 Stars</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'twoStars')}</label>
               <input
                 type="number"
                 value={settings.twoStarReviewPenalty}
@@ -327,7 +329,7 @@ export default function ReputationRulesPage() {
               <p className="mt-1 text-xs text-red-600">-{settings.twoStarReviewPenalty}</p>
             </div>
             <div className="p-4 bg-red-500/10 rounded-lg">
-              <label className="block text-sm font-medium text-foreground mb-1">1 Star</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'oneStar')}</label>
               <input
                 type="number"
                 value={settings.oneStarReviewPenalty}
@@ -344,14 +346,14 @@ export default function ReputationRulesPage() {
       {/* Penalties */}
       <Card>
         <CardHeader>
-          <CardTitle>Penalties</CardTitle>
-          <CardDescription>Points deducted for negative actions</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'penaltiesTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'penaltiesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                No-Show Penalty
+                {t('adminSettingsReputation', 'noShowPenalty')}
               </label>
               <input
                 type="number"
@@ -360,11 +362,11 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-red-600">-{settings.noShowPenalty} points</p>
+              <p className="mt-1 text-xs text-red-600">-{settings.noShowPenalty} {t('adminSettingsReputation', 'points')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Cancellation Penalty
+                {t('adminSettingsReputation', 'cancellationPenalty')}
               </label>
               <input
                 type="number"
@@ -373,11 +375,11 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-red-600">-{settings.cancellationPenalty} points</p>
+              <p className="mt-1 text-xs text-red-600">-{settings.cancellationPenalty} {t('adminSettingsReputation', 'points')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Late Cancellation Penalty
+                {t('adminSettingsReputation', 'lateCancellationPenalty')}
               </label>
               <input
                 type="number"
@@ -387,7 +389,7 @@ export default function ReputationRulesPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-red-600">
-                -{settings.lateCancellationPenalty} points
+                -{settings.lateCancellationPenalty} {t('adminSettingsReputation', 'points')}
               </p>
             </div>
           </div>
@@ -397,14 +399,14 @@ export default function ReputationRulesPage() {
       {/* Dispute Effects */}
       <Card>
         <CardHeader>
-          <CardTitle>Dispute Effects</CardTitle>
-          <CardDescription>Points changed based on dispute outcomes</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'disputeEffectsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'disputeEffectsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Dispute Loss Penalty
+                {t('adminSettingsReputation', 'disputeLossPenalty')}
               </label>
               <input
                 type="number"
@@ -413,11 +415,11 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-red-600">-{settings.disputeLossPenalty} points</p>
+              <p className="mt-1 text-xs text-red-600">-{settings.disputeLossPenalty} {t('adminSettingsReputation', 'points')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Dispute Win Bonus
+                {t('adminSettingsReputation', 'disputeWinBonus')}
               </label>
               <input
                 type="number"
@@ -426,7 +428,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">+{settings.disputeWinBonus} points</p>
+              <p className="mt-1 text-xs text-green-600">+{settings.disputeWinBonus} {t('adminSettingsReputation', 'points')}</p>
             </div>
           </div>
         </CardContent>
@@ -435,13 +437,13 @@ export default function ReputationRulesPage() {
       {/* Streak & Inactivity */}
       <Card>
         <CardHeader>
-          <CardTitle>Streak &amp; Inactivity</CardTitle>
-          <CardDescription>Bonuses for consistency, penalties for inactivity</CardDescription>
+          <CardTitle>{t('adminSettingsReputation', 'streakInactivityTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsReputation', 'streakInactivityDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Streak Bonus</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'streakBonus')}</label>
               <input
                 type="number"
                 value={settings.streakBonus}
@@ -449,11 +451,11 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">+{settings.streakBonus} points</p>
+              <p className="mt-1 text-xs text-green-600">+{settings.streakBonus} {t('adminSettingsReputation', 'points')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Streak Threshold (missions)
+                {t('adminSettingsReputation', 'streakThreshold')}
               </label>
               <input
                 type="number"
@@ -465,7 +467,7 @@ export default function ReputationRulesPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Inactivity Penalty (/month)
+                {t('adminSettingsReputation', 'inactivityPenalty')}
               </label>
               <input
                 type="number"
@@ -474,11 +476,11 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-red-600">-{settings.inactivityPenalty} per month</p>
+              <p className="mt-1 text-xs text-red-600">-{settings.inactivityPenalty} {t('adminSettingsReputation', 'perMonth')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Inactivity Threshold (days)
+                {t('adminSettingsReputation', 'inactivityThreshold')}
               </label>
               <input
                 type="number"
@@ -499,7 +501,7 @@ export default function ReputationRulesPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Reputation Rules'}
+          {saving ? t('adminSettingsReputation', 'saving') : t('adminSettingsReputation', 'saveButton')}
         </button>
       </div>
     </div>

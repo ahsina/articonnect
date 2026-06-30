@@ -39,7 +39,7 @@ export default function CronJobsPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load CRON jobs data');
+        setError(t('adminCron', 'loadError'));
       }
     } finally {
       setLoading(false);
@@ -55,7 +55,7 @@ export default function CronJobsPage() {
       setError(null);
     } catch (err) {
       console.error('Error triggering auto-validation:', err);
-      setError('Failed to trigger auto-validation');
+      setError(t('adminCron', 'triggerError'));
     } finally {
       setTriggering(null);
     }
@@ -81,7 +81,7 @@ export default function CronJobsPage() {
   if (!status || !health) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{error || 'Failed to load data'}</div>
+        <div className="text-red-600">{error || t('adminCron', 'loadDataError')}</div>
       </div>
     );
   }
@@ -96,12 +96,12 @@ export default function CronJobsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← Back
+              ← {t('adminCron', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">CRON Jobs Management</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminCron', 'title')}</h1>
               <p className="text-muted-foreground mt-1">
-                Monitor and manage scheduled tasks
+                {t('adminCron', 'subtitle')}
               </p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function CronJobsPage() {
             onClick={loadData}
             className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
-            Refresh
+            {t('adminCron', 'refresh')}
           </button>
         </div>
 
@@ -128,18 +128,18 @@ export default function CronJobsPage() {
                 <div
                   className={`px-4 py-2 rounded-lg ${health.status === 'healthy' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}
                 >
-                  {health.status === 'healthy' ? '🟢 Healthy' : '🔴 Unhealthy'}
+                  {health.status === 'healthy' ? `🟢 ${t('adminCron', 'healthy')}` : `🔴 ${t('adminCron', 'unhealthy')}`}
                 </div>
                 <div>
                   <p className="text-foreground">{health.message}</p>
-                  <p className="text-sm text-muted-foreground">Timezone: {health.timezone}</p>
+                  <p className="text-sm text-muted-foreground">{t('adminCron', 'timezone')} {health.timezone}</p>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-foreground">
                   {health.activeJobs}/{health.totalJobs}
                 </div>
-                <div className="text-sm text-muted-foreground">Active Jobs</div>
+                <div className="text-sm text-muted-foreground">{t('adminCron', 'activeJobs')}</div>
               </div>
             </div>
           </CardContent>
@@ -150,7 +150,7 @@ export default function CronJobsPage() {
           <Card className="mb-8 border-green-500/20 bg-green-500/10">
             <CardHeader>
               <CardTitle className="text-green-400">
-                Auto-Validation Completed
+                {t('adminCron', 'autoValidationCompleted')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -177,9 +177,9 @@ export default function CronJobsPage() {
         {/* CRON Jobs List */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Scheduled Jobs</CardTitle>
+            <CardTitle>{t('adminCron', 'scheduledJobs')}</CardTitle>
             <CardDescription>
-              All configured CRON jobs and their schedules
+              {t('adminCron', 'scheduledJobsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -197,17 +197,17 @@ export default function CronJobsPage() {
                           <h3 className="font-semibold text-foreground">{job.name}</h3>
                           {job.enabled ? (
                             <span className="px-2 py-0.5 text-xs bg-green-500/15 text-green-400 rounded">
-                              Active
+                              {t('adminCron', 'active')}
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">
-                              Disabled
+                              {t('adminCron', 'disabled')}
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{job.description}</p>
                         <p className="text-sm text-muted-foreground mt-2">
-                          <span className="font-medium">Schedule:</span> {job.schedule}
+                          <span className="font-medium">{t('adminCron', 'schedule')}</span> {job.schedule}
                         </p>
                       </div>
                     </div>
@@ -217,7 +217,7 @@ export default function CronJobsPage() {
                         disabled={triggering === 'auto-validate'}
                         className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {triggering === 'auto-validate' ? 'Running...' : 'Trigger Now'}
+                        {triggering === 'auto-validate' ? t('adminCron', 'running') : t('adminCron', 'triggerNow')}
                       </button>
                     )}
                   </div>
@@ -230,9 +230,9 @@ export default function CronJobsPage() {
         {/* Next Executions */}
         <Card>
           <CardHeader>
-            <CardTitle>Next Scheduled Executions</CardTitle>
+            <CardTitle>{t('adminCron', 'nextExecutions')}</CardTitle>
             <CardDescription>
-              Upcoming job executions (timezone: {status.timezone})
+              {t('adminCron', 'nextExecutionsDesc')} ({status.timezone})
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -246,7 +246,7 @@ export default function CronJobsPage() {
                     <div className="font-medium text-foreground capitalize">
                       {jobName.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
-                    <div className="text-sm text-muted-foreground">Next execution</div>
+                    <div className="text-sm text-muted-foreground">{t('adminCron', 'nextExecution')}</div>
                   </div>
                   <div className="text-right">
                     <div className="font-mono text-sm text-foreground">
@@ -268,9 +268,9 @@ export default function CronJobsPage() {
         {/* Quick Actions */}
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>Manual Triggers</CardTitle>
+            <CardTitle>{t('adminCron', 'manualTriggers')}</CardTitle>
             <CardDescription>
-              Manually trigger scheduled jobs when needed
+              {t('adminCron', 'manualTriggersDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -281,21 +281,21 @@ export default function CronJobsPage() {
                 className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
                 <span>✅</span>
-                <span>Run Auto-Validation</span>
+                <span>{t('adminCron', 'runAutoValidation')}</span>
               </button>
               <button
                 disabled
                 className="flex items-center gap-2 px-4 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed"
               >
                 <span>🧹</span>
-                <span>Run Cleanup (Coming Soon)</span>
+                <span>{t('adminCron', 'runCleanup')}</span>
               </button>
               <button
                 disabled
                 className="flex items-center gap-2 px-4 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed"
               >
                 <span>📊</span>
-                <span>Generate Reports (Coming Soon)</span>
+                <span>{t('adminCron', 'generateReports')}</span>
               </button>
             </div>
           </CardContent>

@@ -27,7 +27,7 @@ export default function MissionsManagementPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load mission data');
+        setError(t('adminMissions', 'errorLoad'));
       }
     } finally {
       setLoading(false);
@@ -45,7 +45,7 @@ export default function MissionsManagementPage() {
   if (!metrics) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{error || 'Failed to load data'}</div>
+        <div className="text-red-600">{error || t('adminMissions', 'errorLoadData')}</div>
       </div>
     );
   }
@@ -60,12 +60,12 @@ export default function MissionsManagementPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← Back
+              ← {t('adminMissions', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Mission Management</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminMissions', 'title')}</h1>
               <p className="text-muted-foreground mt-1">
-                Overview of all platform missions and their status
+                {t('adminMissions', 'subtitle')}
               </p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function MissionsManagementPage() {
             onClick={loadData}
             className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
-            Refresh
+            {t('adminMissions', 'refresh')}
           </button>
         </div>
 
@@ -90,7 +90,7 @@ export default function MissionsManagementPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Missions</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMissions', 'totalMissions')}</p>
                   <p className="text-3xl font-bold text-foreground">{metrics.missions.total}</p>
                 </div>
                 <span className="text-4xl">📋</span>
@@ -102,7 +102,7 @@ export default function MissionsManagementPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMissions', 'pending')}</p>
                   <p className="text-3xl font-bold text-yellow-600">{metrics.missions.pending}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
@@ -114,7 +114,7 @@ export default function MissionsManagementPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">In Progress</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMissions', 'inProgress')}</p>
                   <p className="text-3xl font-bold text-primary">{metrics.missions.inProgress}</p>
                 </div>
                 <span className="text-4xl">🔧</span>
@@ -126,7 +126,7 @@ export default function MissionsManagementPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMissions', 'completed')}</p>
                   <p className="text-3xl font-bold text-green-600">{metrics.missions.completed}</p>
                 </div>
                 <span className="text-4xl">✅</span>
@@ -141,13 +141,13 @@ export default function MissionsManagementPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span>📊</span>
-                Mission Performance
+                {t('adminMissions', 'missionPerformance')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Completion Rate</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'completionRate')}</span>
                   <div className="flex items-center gap-2">
                     <div className="w-32 bg-muted rounded-full h-2">
                       <div
@@ -161,19 +161,19 @@ export default function MissionsManagementPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Average Mission Value</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'averageMissionValue')}</span>
                   <span className="font-semibold text-foreground">
                     {metrics.missions.averageValue.toLocaleString('fr-FR')}€
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Total Transactions</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'totalTransactions')}</span>
                   <span className="font-semibold text-foreground">
                     {metrics.payments.totalTransactions}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-muted-foreground">Payment Success Rate</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'paymentSuccessRate')}</span>
                   <span className="font-semibold text-green-600">
                     {metrics.payments.successRate.toFixed(1)}%
                   </span>
@@ -186,17 +186,17 @@ export default function MissionsManagementPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span>⚠️</span>
-                Disputes & Issues
+                {t('adminMissions', 'disputesIssues')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Total Disputes</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'totalDisputes')}</span>
                   <span className="font-semibold text-foreground">{metrics.disputes.total}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Pending Disputes</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'pendingDisputes')}</span>
                   <span
                     className={`font-semibold ${metrics.disputes.pending > 0 ? 'text-yellow-600' : 'text-foreground'}`}
                   >
@@ -204,17 +204,17 @@ export default function MissionsManagementPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Resolved</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'resolved')}</span>
                   <span className="font-semibold text-green-600">{metrics.disputes.resolved}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Resolution Rate</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'resolutionRate')}</span>
                   <span className="font-semibold text-foreground">
                     {metrics.disputes.resolutionRate.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-muted-foreground">Avg Resolution Time</span>
+                  <span className="text-muted-foreground">{t('adminMissions', 'avgResolutionTime')}</span>
                   <span className="font-semibold text-foreground">
                     {metrics.disputes.averageResolutionTime.toFixed(1)}h
                   </span>
@@ -229,35 +229,35 @@ export default function MissionsManagementPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>🚫</span>
-              No-Show Reports
+              {t('adminMissions', 'noShowReports')}
             </CardTitle>
             <CardDescription>
-              Client or artisan no-show incident reports
+              {t('adminMissions', 'noShowReportsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="text-center p-4 bg-background rounded-lg">
                 <div className="text-2xl font-bold text-foreground">{metrics.noShows.total}</div>
-                <div className="text-sm text-muted-foreground">Total Reports</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'totalReports')}</div>
               </div>
               <div className="text-center p-4 bg-yellow-500/10 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">{metrics.noShows.pending}</div>
-                <div className="text-sm text-muted-foreground">Pending</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'pending')}</div>
               </div>
               <div className="text-center p-4 bg-green-500/10 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">{metrics.noShows.validated}</div>
-                <div className="text-sm text-muted-foreground">Validated</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'validated')}</div>
               </div>
               <div className="text-center p-4 bg-red-500/10 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">{metrics.noShows.rejected}</div>
-                <div className="text-sm text-muted-foreground">Rejected</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'rejected')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
                   {metrics.noShows.validationRate.toFixed(0)}%
                 </div>
-                <div className="text-sm text-muted-foreground">Validation Rate</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'validationRate')}</div>
               </div>
             </div>
           </CardContent>
@@ -268,7 +268,7 @@ export default function MissionsManagementPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>💰</span>
-              Revenue Overview
+              {t('adminMissions', 'revenueOverview')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -277,30 +277,30 @@ export default function MissionsManagementPage() {
                 <div className="text-3xl font-bold text-green-600">
                   {metrics.revenue.total.toLocaleString('fr-FR')}€
                 </div>
-                <div className="text-sm text-muted-foreground">Total Revenue</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'totalRevenue')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
                   {metrics.revenue.today.toLocaleString('fr-FR')}€
                 </div>
-                <div className="text-sm text-muted-foreground">Today</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'today')}</div>
               </div>
               <div className="text-center p-4 bg-purple-500/10 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
                   {metrics.revenue.thisWeek.toLocaleString('fr-FR')}€
                 </div>
-                <div className="text-sm text-muted-foreground">This Week</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'thisWeek')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
                   {metrics.revenue.thisMonth.toLocaleString('fr-FR')}€
                 </div>
-                <div className="text-sm text-muted-foreground">This Month</div>
+                <div className="text-sm text-muted-foreground">{t('adminMissions', 'thisMonth')}</div>
               </div>
             </div>
             <div className="mt-4 p-4 bg-background rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Growth</span>
+                <span className="text-muted-foreground">{t('adminMissions', 'growth')}</span>
                 <span
                   className={`text-xl font-bold ${metrics.revenue.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
@@ -315,7 +315,7 @@ export default function MissionsManagementPage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle>{t('adminMissions', 'quickActions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
@@ -324,28 +324,28 @@ export default function MissionsManagementPage() {
                 className="flex items-center gap-2 px-4 py-3 bg-yellow-500/15 text-yellow-400 rounded-lg hover:bg-yellow-200"
               >
                 <span>⚠️</span>
-                <span>View Disputes</span>
+                <span>{t('adminMissions', 'viewDisputes')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/cron')}
                 className="flex items-center gap-2 px-4 py-3 bg-primary/10 text-primary rounded-lg hover:bg-blue-200"
               >
                 <span>✅</span>
-                <span>Trigger Auto-Validation</span>
+                <span>{t('adminMissions', 'triggerAutoValidation')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/monitoring')}
                 className="flex items-center gap-2 px-4 py-3 bg-green-500/15 text-green-400 rounded-lg hover:bg-green-200"
               >
                 <span>📊</span>
-                <span>View Monitoring</span>
+                <span>{t('adminMissions', 'viewMonitoring')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/analytics')}
                 className="flex items-center gap-2 px-4 py-3 bg-purple-500/15 text-purple-400 rounded-lg hover:bg-purple-200"
               >
                 <span>📈</span>
-                <span>Analytics Dashboard</span>
+                <span>{t('adminMissions', 'analyticsDashboard')}</span>
               </button>
             </div>
           </CardContent>

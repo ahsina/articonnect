@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, Specialty, CreateSpecialtyDto, UpdateSpecialtyDto } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function SpecialtiesPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export default function SpecialtiesPage() {
       if (error.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load specialties');
+        setError(t('adminSpecialties', 'errorLoad'));
       }
     } finally {
       setLoading(false);
@@ -55,7 +57,7 @@ export default function SpecialtiesPage() {
 
   const handleCreate = async () => {
     if (!formData.name.trim() || !formData.category.trim()) {
-      setError('Name and category are required');
+      setError(t('adminSpecialties', 'errorNameCategoryRequired'));
       return;
     }
     try {
@@ -66,7 +68,7 @@ export default function SpecialtiesPage() {
       resetForm();
     } catch (err) {
       console.error('Error creating specialty:', err);
-      setError('Failed to create specialty');
+      setError(t('adminSpecialties', 'errorCreate'));
     } finally {
       setProcessingId(null);
     }
@@ -89,7 +91,7 @@ export default function SpecialtiesPage() {
       resetForm();
     } catch (err) {
       console.error('Error updating specialty:', err);
-      setError('Failed to update specialty');
+      setError(t('adminSpecialties', 'errorUpdate'));
     } finally {
       setProcessingId(null);
     }
@@ -105,7 +107,7 @@ export default function SpecialtiesPage() {
       setSelectedSpecialty(null);
     } catch (err) {
       console.error('Error deleting specialty:', err);
-      setError('Failed to delete specialty');
+      setError(t('adminSpecialties', 'errorDelete'));
     } finally {
       setProcessingId(null);
     }
@@ -160,7 +162,7 @@ export default function SpecialtiesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{t('common', 'loading')}</div>
       </div>
     );
   }
@@ -175,11 +177,11 @@ export default function SpecialtiesPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              Back
+              {t('adminSpecialties', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Specialty Management</h1>
-              <p className="text-muted-foreground mt-1">Manage service categories and specialties</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminSpecialties', 'title')}</h1>
+              <p className="text-muted-foreground mt-1">{t('adminSpecialties', 'subtitle')}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -187,13 +189,13 @@ export default function SpecialtiesPage() {
               onClick={loadData}
               className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
             >
-              Refresh
+              {t('adminSpecialties', 'refresh')}
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
-              + Add Specialty
+              {t('adminSpecialties', 'addSpecialty')}
             </button>
           </div>
         </div>
@@ -203,7 +205,7 @@ export default function SpecialtiesPage() {
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
             {error}
             <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
-              Dismiss
+              {t('adminSpecialties', 'dismiss')}
             </button>
           </div>
         )}
@@ -214,7 +216,7 @@ export default function SpecialtiesPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Specialties</p>
+                  <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'totalSpecialties')}</p>
                   <p className="text-3xl font-bold text-primary">{specialties.length}</p>
                 </div>
                 <span className="text-4xl">🛠️</span>
@@ -226,7 +228,7 @@ export default function SpecialtiesPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Categories</p>
+                  <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'categories')}</p>
                   <p className="text-3xl font-bold text-purple-600">{categories.length}</p>
                 </div>
                 <span className="text-4xl">📁</span>
@@ -238,7 +240,7 @@ export default function SpecialtiesPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Active</p>
+                  <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'active')}</p>
                   <p className="text-3xl font-bold text-green-600">
                     {specialties.filter((s) => s.isActive).length}
                   </p>
@@ -259,7 +261,7 @@ export default function SpecialtiesPage() {
                 : 'bg-muted text-foreground hover:bg-accent'
             }`}
           >
-            All Categories
+            {t('adminSpecialties', 'allCategories')}
           </button>
           {categories.map((cat) => (
             <button
@@ -281,7 +283,7 @@ export default function SpecialtiesPage() {
           <Card key={category} className="mb-6">
             <CardHeader>
               <CardTitle>{category}</CardTitle>
-              <CardDescription>{specs.length} specialties</CardDescription>
+              <CardDescription>{specs.length} {t('adminSpecialties', 'specialtiesWord')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -304,7 +306,7 @@ export default function SpecialtiesPage() {
                           )}
                           {specialty._count?.artisans !== undefined && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              {specialty._count.artisans} artisans
+                              {specialty._count.artisans} {t('adminSpecialties', 'artisansWord')}
                             </p>
                           )}
                         </div>
@@ -313,7 +315,7 @@ export default function SpecialtiesPage() {
                         <button
                           onClick={() => openEditModal(specialty)}
                           className="p-1 text-primary hover:text-primary"
-                          title="Edit"
+                          title={t('adminSpecialties', 'edit')}
                         >
                           ✏️
                         </button>
@@ -323,14 +325,14 @@ export default function SpecialtiesPage() {
                             setShowDeleteModal(true);
                           }}
                           className="p-1 text-red-600 hover:text-red-400"
-                          title="Delete"
+                          title={t('adminSpecialties', 'delete')}
                         >
                           🗑️
                         </button>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Created: {formatDate(specialty.createdAt)}</span>
+                      <span>{t('adminSpecialties', 'created')}: {formatDate(specialty.createdAt)}</span>
                       <span
                         className={`px-2 py-0.5 rounded ${
                           specialty.isActive
@@ -338,7 +340,7 @@ export default function SpecialtiesPage() {
                             : 'bg-muted text-muted-foreground'
                         }`}
                       >
-                        {specialty.isActive ? 'Active' : 'Inactive'}
+                        {specialty.isActive ? t('adminSpecialties', 'active') : t('adminSpecialties', 'inactive')}
                       </span>
                     </div>
                   </div>
@@ -352,7 +354,7 @@ export default function SpecialtiesPage() {
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
               <span className="text-4xl block mb-2">🛠️</span>
-              <p>No specialties found</p>
+              <p>{t('adminSpecialties', 'noSpecialtiesFound')}</p>
             </CardContent>
           </Card>
         )}
@@ -362,27 +364,27 @@ export default function SpecialtiesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Add New Specialty</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t('adminSpecialties', 'addNewSpecialty')}</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('adminSpecialties', 'nameRequired')}</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., Plomberie"
+                      placeholder={t('adminSpecialties', 'namePlaceholder')}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Category *
+                      {t('adminSpecialties', 'categoryRequired')}
                     </label>
                     <input
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      placeholder="e.g., Building & Construction"
+                      placeholder={t('adminSpecialties', 'categoryPlaceholder')}
                       list="categories"
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
@@ -394,19 +396,19 @@ export default function SpecialtiesPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Description
+                      {t('adminSpecialties', 'description')}
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Brief description..."
+                      placeholder={t('adminSpecialties', 'descriptionPlaceholder')}
                       rows={3}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Icon (emoji)
+                      {t('adminSpecialties', 'iconEmoji')}
                     </label>
                     <input
                       type="text"
@@ -425,14 +427,14 @@ export default function SpecialtiesPage() {
                     }}
                     className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
-                    Cancel
+                    {t('adminSpecialties', 'cancel')}
                   </button>
                   <button
                     onClick={handleCreate}
                     disabled={processingId === 'create'}
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {processingId === 'create' ? 'Creating...' : 'Create'}
+                    {processingId === 'create' ? t('adminSpecialties', 'creating') : t('adminSpecialties', 'create')}
                   </button>
                 </div>
               </div>
@@ -445,10 +447,10 @@ export default function SpecialtiesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Edit Specialty</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t('adminSpecialties', 'editSpecialty')}</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('adminSpecialties', 'nameRequired')}</label>
                     <input
                       type="text"
                       value={formData.name}
@@ -458,7 +460,7 @@ export default function SpecialtiesPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Category *
+                      {t('adminSpecialties', 'categoryRequired')}
                     </label>
                     <input
                       type="text"
@@ -475,7 +477,7 @@ export default function SpecialtiesPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Description
+                      {t('adminSpecialties', 'description')}
                     </label>
                     <textarea
                       value={formData.description}
@@ -486,7 +488,7 @@ export default function SpecialtiesPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Icon (emoji)
+                      {t('adminSpecialties', 'iconEmoji')}
                     </label>
                     <input
                       type="text"
@@ -505,14 +507,14 @@ export default function SpecialtiesPage() {
                     }}
                     className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
-                    Cancel
+                    {t('adminSpecialties', 'cancel')}
                   </button>
                   <button
                     onClick={handleUpdate}
                     disabled={processingId === selectedSpecialty.id}
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {processingId === selectedSpecialty.id ? 'Saving...' : 'Save Changes'}
+                    {processingId === selectedSpecialty.id ? t('adminSpecialties', 'saving') : t('adminSpecialties', 'saveChanges')}
                   </button>
                 </div>
               </div>
@@ -525,16 +527,14 @@ export default function SpecialtiesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Delete Specialty</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">{t('adminSpecialties', 'deleteSpecialty')}</h2>
                 <p className="text-muted-foreground mb-4">
-                  Are you sure you want to delete <strong>{selectedSpecialty.name}</strong>? This
-                  action cannot be undone.
+                  {t('adminSpecialties', 'deleteConfirmPrefix')} <strong>{selectedSpecialty.name}</strong>{t('adminSpecialties', 'deleteConfirmSuffix')}
                 </p>
                 {selectedSpecialty._count?.artisans && selectedSpecialty._count.artisans > 0 && (
                   <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-4">
                     <p className="text-yellow-400">
-                      Warning: {selectedSpecialty._count.artisans} artisans are using this
-                      specialty.
+                      {t('adminSpecialties', 'warningPrefix')} {selectedSpecialty._count.artisans} {t('adminSpecialties', 'warningSuffix')}
                     </p>
                   </div>
                 )}
@@ -546,14 +546,14 @@ export default function SpecialtiesPage() {
                     }}
                     className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                   >
-                    Cancel
+                    {t('adminSpecialties', 'cancel')}
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={processingId === selectedSpecialty.id}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                   >
-                    {processingId === selectedSpecialty.id ? 'Deleting...' : 'Delete'}
+                    {processingId === selectedSpecialty.id ? t('adminSpecialties', 'deleting') : t('adminSpecialties', 'delete')}
                   </button>
                 </div>
               </div>

@@ -44,7 +44,7 @@ export default function VerificationsPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load verification data');
+        setError(t('adminVerifications', 'errorLoad'));
       }
     } finally {
       setLoading(false);
@@ -120,9 +120,9 @@ export default function VerificationsPage() {
   }
 
   const tabs: { id: TabType; label: string; icon: string }[] = [
-    { id: 'unverified', label: 'Unverified Artisans', icon: '❓' },
-    { id: 'reverification', label: 'Re-verification Needed', icon: '🔄' },
-    { id: 'kycLookup', label: 'KYC Lookup', icon: '🔍' },
+    { id: 'unverified', label: t('adminVerifications', 'tabUnverified'), icon: '❓' },
+    { id: 'reverification', label: t('adminVerifications', 'tabReverification'), icon: '🔄' },
+    { id: 'kycLookup', label: t('adminVerifications', 'tabKycLookup'), icon: '🔍' },
   ];
 
   return (
@@ -135,12 +135,12 @@ export default function VerificationsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              Back
+              {t('adminVerifications', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">KYC & Verification Management</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminVerifications', 'title')}</h1>
               <p className="text-muted-foreground mt-1">
-                Manage artisan business verification and KYC compliance
+                {t('adminVerifications', 'subtitle')}
               </p>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function VerificationsPage() {
             onClick={loadData}
             className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
-            Refresh
+            {t('adminVerifications', 'refresh')}
           </button>
         </div>
 
@@ -165,7 +165,7 @@ export default function VerificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Unverified Artisans</p>
+                  <p className="text-sm text-muted-foreground">{t('adminVerifications', 'tabUnverified')}</p>
                   <p className="text-3xl font-bold text-yellow-600">{unverifiedArtisans.length}</p>
                 </div>
                 <span className="text-4xl">❓</span>
@@ -177,7 +177,7 @@ export default function VerificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Re-verification Needed</p>
+                  <p className="text-sm text-muted-foreground">{t('adminVerifications', 'tabReverification')}</p>
                   <p className="text-3xl font-bold text-yellow-600">
                     {reverificationNeeded.length}
                   </p>
@@ -191,7 +191,7 @@ export default function VerificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Pending</p>
+                  <p className="text-sm text-muted-foreground">{t('adminVerifications', 'totalPending')}</p>
                   <p className="text-3xl font-bold text-red-600">
                     {unverifiedArtisans.length + reverificationNeeded.length}
                   </p>
@@ -226,9 +226,9 @@ export default function VerificationsPage() {
         {activeTab === 'unverified' && (
           <Card>
             <CardHeader>
-              <CardTitle>Unverified Artisans</CardTitle>
+              <CardTitle>{t('adminVerifications', 'tabUnverified')}</CardTitle>
               <CardDescription>
-                Artisans who have not completed business verification
+                {t('adminVerifications', 'unverifiedDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -238,22 +238,22 @@ export default function VerificationsPage() {
                     <thead className="bg-background">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Artisan
+                          {t('adminVerifications', 'colArtisan')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Business
+                          {t('adminVerifications', 'colBusiness')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Registration
+                          {t('adminVerifications', 'colRegistration')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Joined
+                          {t('adminVerifications', 'colJoined')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Status
+                          {t('adminVerifications', 'colStatus')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Actions
+                          {t('adminVerifications', 'colActions')}
                         </th>
                       </tr>
                     </thead>
@@ -297,14 +297,14 @@ export default function VerificationsPage() {
                                 onClick={() => handleViewStatus(artisan)}
                                 className="text-primary hover:text-primary"
                               >
-                                View
+                                {t('adminVerifications', 'view')}
                               </button>
                               <button
                                 onClick={() => handleReverify(artisan.id)}
                                 disabled={reverifyingId === artisan.id}
                                 className="text-green-600 hover:text-green-400 disabled:opacity-50"
                               >
-                                {reverifyingId === artisan.id ? 'Verifying...' : 'Verify'}
+                                {reverifyingId === artisan.id ? t('adminVerifications', 'verifying') : t('adminVerifications', 'verify')}
                               </button>
                             </div>
                           </td>
@@ -316,7 +316,7 @@ export default function VerificationsPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <span className="text-4xl block mb-2">✅</span>
-                  <p>All artisans are verified!</p>
+                  <p>{t('adminVerifications', 'allVerified')}</p>
                 </div>
               )}
             </CardContent>
@@ -326,9 +326,9 @@ export default function VerificationsPage() {
         {activeTab === 'reverification' && (
           <Card>
             <CardHeader>
-              <CardTitle>Re-verification Needed</CardTitle>
+              <CardTitle>{t('adminVerifications', 'tabReverification')}</CardTitle>
               <CardDescription>
-                Artisans whose verification has expired or needs renewal
+                {t('adminVerifications', 'reverificationDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -338,19 +338,19 @@ export default function VerificationsPage() {
                     <thead className="bg-background">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Artisan
+                          {t('adminVerifications', 'colArtisan')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Business
+                          {t('adminVerifications', 'colBusiness')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Registration
+                          {t('adminVerifications', 'colRegistration')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Status
+                          {t('adminVerifications', 'colStatus')}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Actions
+                          {t('adminVerifications', 'colActions')}
                         </th>
                       </tr>
                     </thead>
@@ -378,7 +378,7 @@ export default function VerificationsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-500/15 text-yellow-400">
-                              NEEDS REVERIFICATION
+                              {t('adminVerifications', 'needsReverification')}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -387,14 +387,14 @@ export default function VerificationsPage() {
                                 onClick={() => handleViewStatus(artisan)}
                                 className="text-primary hover:text-primary"
                               >
-                                View
+                                {t('adminVerifications', 'view')}
                               </button>
                               <button
                                 onClick={() => handleReverify(artisan.id)}
                                 disabled={reverifyingId === artisan.id}
                                 className="text-green-600 hover:text-green-400 disabled:opacity-50"
                               >
-                                {reverifyingId === artisan.id ? 'Verifying...' : 'Re-verify'}
+                                {reverifyingId === artisan.id ? t('adminVerifications', 'verifying') : t('adminVerifications', 'reverify')}
                               </button>
                             </div>
                           </td>
@@ -406,7 +406,7 @@ export default function VerificationsPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <span className="text-4xl block mb-2">✅</span>
-                  <p>No artisans need re-verification</p>
+                  <p>{t('adminVerifications', 'noReverification')}</p>
                 </div>
               )}
             </CardContent>
@@ -416,8 +416,8 @@ export default function VerificationsPage() {
         {activeTab === 'kycLookup' && (
           <Card>
             <CardHeader>
-              <CardTitle>KYC Status Lookup</CardTitle>
-              <CardDescription>Look up KYC verification status for any user</CardDescription>
+              <CardTitle>{t('adminVerifications', 'kycStatusLookup')}</CardTitle>
+              <CardDescription>{t('adminVerifications', 'kycLookupDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6">
@@ -426,7 +426,7 @@ export default function VerificationsPage() {
                     type="text"
                     value={kycUserId}
                     onChange={(e) => setKycUserId(e.target.value)}
-                    placeholder="Enter User ID"
+                    placeholder={t('adminVerifications', 'enterUserId')}
                     className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <button
@@ -434,7 +434,7 @@ export default function VerificationsPage() {
                     disabled={kycLoading || !kycUserId.trim()}
                     className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {kycLoading ? 'Loading...' : 'Lookup'}
+                    {kycLoading ? t('common', 'loading') : t('adminVerifications', 'lookup')}
                   </button>
                 </div>
               </div>
@@ -442,11 +442,11 @@ export default function VerificationsPage() {
               {kycStatus && (
                 <div className="border border-border rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">
-                    KYC Status for {kycStatus.userId}
+                    {t('adminVerifications', 'kycStatusFor')} {kycStatus.userId}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground">Verification Status</p>
+                      <p className="text-sm text-muted-foreground">{t('adminVerifications', 'verificationStatus')}</p>
                       <p className="font-semibold">
                         <span
                           className={`px-2 py-1 text-xs rounded-full ${
@@ -455,31 +455,31 @@ export default function VerificationsPage() {
                               : 'bg-red-500/15 text-red-400'
                           }`}
                         >
-                          {kycStatus.kycVerified ? 'VERIFIED' : 'NOT VERIFIED'}
+                          {kycStatus.kycVerified ? t('adminVerifications', 'verified') : t('adminVerifications', 'notVerified')}
                         </span>
                       </p>
                     </div>
                     <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground">KYC Level</p>
+                      <p className="text-sm text-muted-foreground">{t('adminVerifications', 'kycLevel')}</p>
                       <p className="font-semibold text-foreground">{kycStatus.kycLevel || 'N/A'}</p>
                     </div>
                     <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground">Verification Date</p>
+                      <p className="text-sm text-muted-foreground">{t('adminVerifications', 'verificationDate')}</p>
                       <p className="font-semibold text-foreground">
                         {formatDate(kycStatus.verificationDate)}
                       </p>
                     </div>
                     <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-muted-foreground">Documents</p>
+                      <p className="text-sm text-muted-foreground">{t('adminVerifications', 'documents')}</p>
                       <p className="font-semibold text-foreground">
-                        {kycStatus.documents?.length || 0} submitted
+                        {kycStatus.documents?.length || 0} {t('adminVerifications', 'submitted')}
                       </p>
                     </div>
                   </div>
 
                   {kycStatus.documents && kycStatus.documents.length > 0 && (
                     <div className="mt-6">
-                      <h4 className="font-medium text-foreground mb-3">Submitted Documents</h4>
+                      <h4 className="font-medium text-foreground mb-3">{t('adminVerifications', 'submittedDocuments')}</h4>
                       <div className="space-y-2">
                         {kycStatus.documents.map((doc, index) => (
                           <div
@@ -491,7 +491,7 @@ export default function VerificationsPage() {
                               <div>
                                 <p className="font-medium text-foreground">{doc.type}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  Uploaded: {formatDate(doc.uploadedAt)}
+                                  {t('adminVerifications', 'uploaded')}: {formatDate(doc.uploadedAt)}
                                 </p>
                               </div>
                             </div>
@@ -523,7 +523,7 @@ export default function VerificationsPage() {
             <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-foreground">Verification Details</h2>
+                  <h2 className="text-xl font-semibold text-foreground">{t('adminVerifications', 'verificationDetails')}</h2>
                   <button
                     onClick={() => {
                       setSelectedArtisan(null);
@@ -538,24 +538,24 @@ export default function VerificationsPage() {
                 <div className="space-y-6">
                   {/* Artisan Info */}
                   <div className="border-b border-border pb-4">
-                    <h3 className="font-medium text-foreground mb-3">Artisan Information</h3>
+                    <h3 className="font-medium text-foreground mb-3">{t('adminVerifications', 'artisanInformation')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Name</p>
+                        <p className="text-sm text-muted-foreground">{t('adminVerifications', 'fieldName')}</p>
                         <p className="font-medium">
                           {selectedArtisan.firstName} {selectedArtisan.lastName}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="text-sm text-muted-foreground">{t('adminVerifications', 'fieldEmail')}</p>
                         <p className="font-medium">{selectedArtisan.email}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Business Name</p>
+                        <p className="text-sm text-muted-foreground">{t('adminVerifications', 'businessName')}</p>
                         <p className="font-medium">{selectedArtisan.businessName || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Registration #</p>
+                        <p className="text-sm text-muted-foreground">{t('adminVerifications', 'registrationNumber')}</p>
                         <p className="font-medium">{selectedArtisan.registrationNumber || 'N/A'}</p>
                       </div>
                     </div>
@@ -564,10 +564,10 @@ export default function VerificationsPage() {
                   {/* Verification Status */}
                   {verificationStatus ? (
                     <div>
-                      <h3 className="font-medium text-foreground mb-3">Verification Status</h3>
+                      <h3 className="font-medium text-foreground mb-3">{t('adminVerifications', 'verificationStatus')}</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-background rounded-lg">
-                          <p className="text-sm text-muted-foreground">Status</p>
+                          <p className="text-sm text-muted-foreground">{t('adminVerifications', 'colStatus')}</p>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                               verificationStatus.status,
@@ -577,29 +577,29 @@ export default function VerificationsPage() {
                           </span>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
-                          <p className="text-sm text-muted-foreground">Verified</p>
+                          <p className="text-sm text-muted-foreground">{t('adminVerifications', 'verifiedLabel')}</p>
                           <p className="font-medium">
-                            {verificationStatus.verified ? 'Yes' : 'No'}
+                            {verificationStatus.verified ? t('adminVerifications', 'yes') : t('adminVerifications', 'no')}
                           </p>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
-                          <p className="text-sm text-muted-foreground">Verification Date</p>
+                          <p className="text-sm text-muted-foreground">{t('adminVerifications', 'verificationDate')}</p>
                           <p className="font-medium">
                             {formatDate(verificationStatus.verificationDate)}
                           </p>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
-                          <p className="text-sm text-muted-foreground">Last Check</p>
+                          <p className="text-sm text-muted-foreground">{t('adminVerifications', 'lastCheck')}</p>
                           <p className="font-medium">{formatDate(verificationStatus.lastCheck)}</p>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
-                          <p className="text-sm text-muted-foreground">Next Check Due</p>
+                          <p className="text-sm text-muted-foreground">{t('adminVerifications', 'nextCheckDue')}</p>
                           <p className="font-medium">
                             {formatDate(verificationStatus.nextCheckDue)}
                           </p>
                         </div>
                         <div className="p-4 bg-background rounded-lg">
-                          <p className="text-sm text-muted-foreground">Registration Type</p>
+                          <p className="text-sm text-muted-foreground">{t('adminVerifications', 'registrationType')}</p>
                           <p className="font-medium">
                             {verificationStatus.registrationType || 'N/A'}
                           </p>
@@ -608,7 +608,7 @@ export default function VerificationsPage() {
                     </div>
                   ) : (
                     <div className="text-center py-4 text-muted-foreground">
-                      Loading verification status...
+                      {t('adminVerifications', 'loadingStatus')}
                     </div>
                   )}
 
@@ -621,7 +621,7 @@ export default function VerificationsPage() {
                       }}
                       className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                     >
-                      Close
+                      {t('adminVerifications', 'close')}
                     </button>
                     <button
                       onClick={() => {
@@ -631,7 +631,7 @@ export default function VerificationsPage() {
                       }}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                     >
-                      Trigger Re-verification
+                      {t('adminVerifications', 'triggerReverification')}
                     </button>
                   </div>
                 </div>

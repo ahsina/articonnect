@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, NoShowConfig } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultNoShowConfig: NoShowConfig = {
   enabled: true,
@@ -27,6 +28,7 @@ const defaultNoShowConfig: NoShowConfig = {
 };
 
 export default function NoShowConfigPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<NoShowConfig>(defaultNoShowConfig);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,11 +57,11 @@ export default function NoShowConfigPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateNoShowConfig(settings);
-      setSuccess('No-show configuration saved successfully');
+      setSuccess(t('adminSettingsNoShow', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving no-show config:', err);
-      setError('Failed to save no-show configuration');
+      setError(t('adminSettingsNoShow', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -98,7 +100,7 @@ export default function NoShowConfigPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsNoShow', 'dismiss')}
           </button>
         </div>
       )}
@@ -111,8 +113,8 @@ export default function NoShowConfigPage() {
       {/* Enable/Disable */}
       <Card>
         <CardHeader>
-          <CardTitle>No-Show System</CardTitle>
-          <CardDescription>Enable or disable the no-show reporting system</CardDescription>
+          <CardTitle>{t('adminSettingsNoShow', 'systemTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsNoShow', 'systemDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <label className="flex items-center gap-3">
@@ -124,10 +126,10 @@ export default function NoShowConfigPage() {
             />
             <div>
               <span className="text-sm font-medium text-foreground">
-                Enable No-Show Reporting System
+                {t('adminSettingsNoShow', 'enableLabel')}
               </span>
               <p className="text-xs text-muted-foreground">
-                Allow artisans to report client no-shows for compensation
+                {t('adminSettingsNoShow', 'enableHint')}
               </p>
             </div>
           </label>
@@ -139,16 +141,16 @@ export default function NoShowConfigPage() {
           {/* Reporting Requirements */}
           <Card>
             <CardHeader>
-              <CardTitle>Reporting Requirements</CardTitle>
+              <CardTitle>{t('adminSettingsNoShow', 'reportingTitle')}</CardTitle>
               <CardDescription>
-                Configure what evidence is required for no-show reports
+                {t('adminSettingsNoShow', 'reportingDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Minimum Wait Time (minutes)
+                    {t('adminSettingsNoShow', 'minWaitTimeLabel')}
                   </label>
                   <input
                     type="number"
@@ -160,12 +162,12 @@ export default function NoShowConfigPage() {
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Artisan must wait this long before reporting
+                    {t('adminSettingsNoShow', 'minWaitTimeHint')}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    GPS Radius (meters)
+                    {t('adminSettingsNoShow', 'gpsRadiusLabel')}
                   </label>
                   <input
                     type="number"
@@ -175,12 +177,12 @@ export default function NoShowConfigPage() {
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    How close to mission location for GPS verification
+                    {t('adminSettingsNoShow', 'gpsRadiusHint')}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Min Contact Attempts
+                    {t('adminSettingsNoShow', 'minContactAttemptsLabel')}
                   </label>
                   <input
                     type="number"
@@ -190,7 +192,7 @@ export default function NoShowConfigPage() {
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Required contact attempts before reporting
+                    {t('adminSettingsNoShow', 'minContactAttemptsHint')}
                   </p>
                 </div>
               </div>
@@ -203,7 +205,7 @@ export default function NoShowConfigPage() {
                     onChange={(e) => updateSetting('gpsVerificationRequired', e.target.checked)}
                     className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-foreground">Require GPS verification</span>
+                  <span className="text-sm text-foreground">{t('adminSettingsNoShow', 'requireGps')}</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -212,7 +214,7 @@ export default function NoShowConfigPage() {
                     onChange={(e) => updateSetting('photoEvidenceRequired', e.target.checked)}
                     className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-foreground">Require photo evidence</span>
+                  <span className="text-sm text-foreground">{t('adminSettingsNoShow', 'requirePhoto')}</span>
                 </label>
               </div>
             </CardContent>
@@ -221,16 +223,16 @@ export default function NoShowConfigPage() {
           {/* Compensation Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>Compensation Settings</CardTitle>
+              <CardTitle>{t('adminSettingsNoShow', 'compensationTitle')}</CardTitle>
               <CardDescription>
-                Configure artisan compensation for validated no-shows
+                {t('adminSettingsNoShow', 'compensationDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Compensation (% of mission)
+                    {t('adminSettingsNoShow', 'compensationPctLabel')}
                   </label>
                   <input
                     type="number"
@@ -245,7 +247,7 @@ export default function NoShowConfigPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Minimum (cents)
+                    {t('adminSettingsNoShow', 'minimumCents')}
                   </label>
                   <input
                     type="number"
@@ -260,7 +262,7 @@ export default function NoShowConfigPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Maximum (cents)
+                    {t('adminSettingsNoShow', 'maximumCents')}
                   </label>
                   <input
                     type="number"
@@ -275,7 +277,7 @@ export default function NoShowConfigPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Client Penalty (%)
+                    {t('adminSettingsNoShow', 'clientPenaltyLabel')}
                   </label>
                   <input
                     type="number"
@@ -288,7 +290,7 @@ export default function NoShowConfigPage() {
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Penalty charged to client for no-show
+                    {t('adminSettingsNoShow', 'clientPenaltyHint')}
                   </p>
                 </div>
               </div>
@@ -298,9 +300,9 @@ export default function NoShowConfigPage() {
           {/* Auto-Validation */}
           <Card>
             <CardHeader>
-              <CardTitle>Auto-Validation</CardTitle>
+              <CardTitle>{t('adminSettingsNoShow', 'autoValidationTitle')}</CardTitle>
               <CardDescription>
-                Configure automatic validation for no-show reports with sufficient evidence
+                {t('adminSettingsNoShow', 'autoValidationDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -311,18 +313,18 @@ export default function NoShowConfigPage() {
                   onChange={(e) => updateSetting('autoValidationEnabled', e.target.checked)}
                   className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm font-medium text-foreground">Enable auto-validation</span>
+                <span className="text-sm font-medium text-foreground">{t('adminSettingsNoShow', 'enableAutoValidation')}</span>
               </label>
 
               {settings.autoValidationEnabled && (
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <p className="text-sm font-medium text-primary mb-4">
-                    Auto-validation Requirements
+                    {t('adminSettingsNoShow', 'autoValidationReqs')}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm text-foreground mb-1">
-                        Min Wait Time (minutes)
+                        {t('adminSettingsNoShow', 'minWaitTimeShort')}
                       </label>
                       <input
                         type="number"
@@ -336,7 +338,7 @@ export default function NoShowConfigPage() {
                     </div>
                     <div>
                       <label className="block text-sm text-foreground mb-1">
-                        Min Contact Attempts
+                        {t('adminSettingsNoShow', 'minContactAttemptsLabel')}
                       </label>
                       <input
                         type="number"
@@ -356,7 +358,7 @@ export default function NoShowConfigPage() {
                           onChange={(e) => updateAutoValidationReq('gpsVerified', e.target.checked)}
                           className="w-4 h-4 text-primary rounded"
                         />
-                        <span className="text-sm text-foreground">GPS must be verified</span>
+                        <span className="text-sm text-foreground">{t('adminSettingsNoShow', 'gpsMustBeVerified')}</span>
                       </label>
                     </div>
                   </div>
@@ -368,16 +370,16 @@ export default function NoShowConfigPage() {
           {/* Dispute & Repeat Offenders */}
           <Card>
             <CardHeader>
-              <CardTitle>Dispute &amp; Repeat Offenders</CardTitle>
+              <CardTitle>{t('adminSettingsNoShow', 'disputeTitle')}</CardTitle>
               <CardDescription>
-                Configure dispute window and repeat offender handling
+                {t('adminSettingsNoShow', 'disputeDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Dispute Window (hours)
+                    {t('adminSettingsNoShow', 'disputeWindowLabel')}
                   </label>
                   <input
                     type="number"
@@ -386,11 +388,11 @@ export default function NoShowConfigPage() {
                     min="1"
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">Time client has to dispute a no-show</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsNoShow', 'disputeWindowHint')}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Repeat Offender Threshold
+                    {t('adminSettingsNoShow', 'repeatThresholdLabel')}
                   </label>
                   <input
                     type="number"
@@ -401,11 +403,11 @@ export default function NoShowConfigPage() {
                     min="1"
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">No-shows before escalation measures</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsNoShow', 'repeatThresholdHint')}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Repeat Penalty Multiplier
+                    {t('adminSettingsNoShow', 'repeatMultiplierLabel')}
                   </label>
                   <input
                     type="number"
@@ -418,7 +420,7 @@ export default function NoShowConfigPage() {
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Penalty multiplier for repeat offenders
+                    {t('adminSettingsNoShow', 'repeatMultiplierHint')}
                   </p>
                 </div>
               </div>
@@ -434,7 +436,7 @@ export default function NoShowConfigPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save No-Show Configuration'}
+          {saving ? t('adminSettingsNoShow', 'saving') : t('adminSettingsNoShow', 'saveButton')}
         </button>
       </div>
     </div>

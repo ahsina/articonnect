@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, TaxSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultTaxSettings: TaxSettings = {
   vatEnabled: true,
@@ -27,6 +28,7 @@ const defaultTaxSettings: TaxSettings = {
 };
 
 export default function TaxSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<TaxSettings>(defaultTaxSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,11 +58,11 @@ export default function TaxSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateTaxSettings(settings);
-      setSuccess('Tax settings saved successfully');
+      setSuccess(t('adminSettingsTax', 'saveSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving tax settings:', err);
-      setError('Failed to save tax settings');
+      setError(t('adminSettingsTax', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -74,7 +76,7 @@ export default function TaxSettingsPage() {
     if (!newCountry.country) return;
     const exists = settings.vatRates.some((r) => r.country === newCountry.country);
     if (exists) {
-      setError('Country already exists');
+      setError(t('adminSettingsTax', 'countryExists'));
       return;
     }
     setSettings((prev) => ({
@@ -123,7 +125,7 @@ export default function TaxSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsTax', 'dismiss')}
           </button>
         </div>
       )}
@@ -136,8 +138,8 @@ export default function TaxSettingsPage() {
       {/* VAT Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>VAT Configuration</CardTitle>
-          <CardDescription>Configure Value Added Tax settings</CardDescription>
+          <CardTitle>{t('adminSettingsTax', 'vatConfigTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsTax', 'vatConfigDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
@@ -148,7 +150,7 @@ export default function TaxSettingsPage() {
                 onChange={(e) => updateSetting('vatEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Enable VAT</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsTax', 'enableVat')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -157,13 +159,13 @@ export default function TaxSettingsPage() {
                 onChange={(e) => updateSetting('reverseChargeEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable reverse charge (B2B)</span>
+              <span className="text-sm text-foreground">{t('adminSettingsTax', 'enableReverseCharge')}</span>
             </label>
           </div>
 
           <div className="w-48">
             <label className="block text-sm font-medium text-foreground mb-1">
-              Default VAT Rate (%)
+              {t('adminSettingsTax', 'defaultVatRate')}
             </label>
             <input
               type="number"
@@ -181,8 +183,8 @@ export default function TaxSettingsPage() {
       {/* VAT Rates by Country */}
       <Card>
         <CardHeader>
-          <CardTitle>VAT Rates by Country</CardTitle>
-          <CardDescription>Configure country-specific VAT rates</CardDescription>
+          <CardTitle>{t('adminSettingsTax', 'ratesByCountryTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsTax', 'ratesByCountryDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -190,19 +192,19 @@ export default function TaxSettingsPage() {
               <thead className="bg-background">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Country
+                    {t('adminSettingsTax', 'country')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Standard Rate (%)
+                    {t('adminSettingsTax', 'standardRatePct')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Reduced Rate (%)
+                    {t('adminSettingsTax', 'reducedRatePct')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Super Reduced (%)
+                    {t('adminSettingsTax', 'superReducedPct')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Actions
+                    {t('adminSettingsTax', 'actions')}
                   </th>
                 </tr>
               </thead>
@@ -258,7 +260,7 @@ export default function TaxSettingsPage() {
                         onClick={() => removeVatRate(rate.country)}
                         className="text-red-600 hover:text-red-400"
                       >
-                        Remove
+                        {t('adminSettingsTax', 'remove')}
                       </button>
                     </td>
                   </tr>
@@ -270,7 +272,7 @@ export default function TaxSettingsPage() {
           {/* Add New Country */}
           <div className="mt-4 flex gap-4 items-end">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Country Code</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsTax', 'countryCode')}</label>
               <input
                 type="text"
                 value={newCountry.country}
@@ -283,7 +285,7 @@ export default function TaxSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Standard Rate</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsTax', 'standardRate')}</label>
               <input
                 type="number"
                 value={newCountry.rate}
@@ -296,7 +298,7 @@ export default function TaxSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Reduced Rate</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsTax', 'reducedRate')}</label>
               <input
                 type="number"
                 value={newCountry.reducedRate}
@@ -312,7 +314,7 @@ export default function TaxSettingsPage() {
               onClick={addVatRate}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              Add Country
+              {t('adminSettingsTax', 'addCountry')}
             </button>
           </div>
         </CardContent>
@@ -321,8 +323,8 @@ export default function TaxSettingsPage() {
       {/* Invoice Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Invoice Settings</CardTitle>
-          <CardDescription>Configure invoice generation and format</CardDescription>
+          <CardTitle>{t('adminSettingsTax', 'invoiceTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsTax', 'invoiceDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
@@ -333,13 +335,13 @@ export default function TaxSettingsPage() {
                 onChange={(e) => updateSetting('autoGenerateInvoices', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Auto-generate invoices</span>
+              <span className="text-sm text-foreground">{t('adminSettingsTax', 'autoGenerate')}</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Invoice Prefix</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsTax', 'invoicePrefix')}</label>
               <input
                 type="text"
                 value={settings.invoiceNumberPrefix}
@@ -349,7 +351,7 @@ export default function TaxSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Invoice Number Format
+                {t('adminSettingsTax', 'invoiceNumberFormat')}
               </label>
               <input
                 type="text"
@@ -361,7 +363,7 @@ export default function TaxSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Retention Period (years)
+                {t('adminSettingsTax', 'retentionPeriod')}
               </label>
               <input
                 type="number"
@@ -378,8 +380,8 @@ export default function TaxSettingsPage() {
       {/* Tax Reporting */}
       <Card>
         <CardHeader>
-          <CardTitle>Tax Reporting</CardTitle>
-          <CardDescription>Configure tax reporting thresholds</CardDescription>
+          <CardTitle>{t('adminSettingsTax', 'reportingTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsTax', 'reportingDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
@@ -390,7 +392,7 @@ export default function TaxSettingsPage() {
                 onChange={(e) => updateSetting('taxReportingEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable tax reporting</span>
+              <span className="text-sm text-foreground">{t('adminSettingsTax', 'enableReporting')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -399,14 +401,14 @@ export default function TaxSettingsPage() {
                 onChange={(e) => updateSetting('witholdingTaxEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable withholding tax</span>
+              <span className="text-sm text-foreground">{t('adminSettingsTax', 'enableWithholding')}</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Reporting Threshold (cents)
+                {t('adminSettingsTax', 'reportingThreshold')}
               </label>
               <input
                 type="number"
@@ -422,7 +424,7 @@ export default function TaxSettingsPage() {
             {settings.witholdingTaxEnabled && (
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Withholding Tax Rate (%)
+                  {t('adminSettingsTax', 'withholdingRate')}
                 </label>
                 <input
                   type="number"
@@ -446,7 +448,7 @@ export default function TaxSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Tax Settings'}
+          {saving ? t('adminSettingsTax', 'saving') : t('adminSettingsTax', 'saveButton')}
         </button>
       </div>
     </div>

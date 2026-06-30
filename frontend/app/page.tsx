@@ -1,30 +1,35 @@
+'use client';
+
 import Link from 'next/link';
-
-const CATEGORIES = [
-  { icon: '🔧', label: 'Plomberie' },
-  { icon: '⚡', label: 'Électricité' },
-  { icon: '🎨', label: 'Peinture' },
-  { icon: '🪵', label: 'Menuiserie' },
-  { icon: '🧱', label: 'Maçonnerie' },
-  { icon: '🌿', label: 'Jardinage' },
-  { icon: '❄️', label: 'Chauffage' },
-  { icon: '🔑', label: 'Serrurerie' },
-];
-
-const STEPS = [
-  { n: '01', title: 'Décrivez votre besoin', desc: 'Publiez votre demande en 2 minutes : type de travaux, lieu, photos.' },
-  { n: '02', title: 'Recevez des devis', desc: 'Des artisans vérifiés près de chez vous vous répondent et négocient en direct.' },
-  { n: '03', title: 'Réservez en confiance', desc: 'Paiement sécurisé, suivi de mission et avis vérifiés après chaque intervention.' },
-];
-
-const FEATURES = [
-  { icon: '📍', title: 'Géolocalisé', desc: 'Les meilleurs artisans autour de vous, au Luxembourg, en France et en Belgique.' },
-  { icon: '💬', title: 'Négociation directe', desc: 'Discutez, ajustez le devis et planifiez sans intermédiaire.' },
-  { icon: '⭐', title: 'Avis vérifiés', desc: 'Chaque artisan est noté par de vrais clients après une vraie mission.' },
-  { icon: '🛡️', title: 'Paiement protégé', desc: 'Vos fonds sont sécurisés et libérés une fois le travail validé.' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function HomePage() {
+  const { t } = useLanguage();
+
+  const CATEGORIES = [
+    { icon: '🔧', label: t('landing', 'categoryPlumbing') },
+    { icon: '⚡', label: t('landing', 'categoryElectricity') },
+    { icon: '🎨', label: t('landing', 'categoryPainting') },
+    { icon: '🪵', label: t('landing', 'categoryCarpentry') },
+    { icon: '🧱', label: t('landing', 'categoryMasonry') },
+    { icon: '🌿', label: t('landing', 'categoryGardening') },
+    { icon: '❄️', label: t('landing', 'categoryHeating') },
+    { icon: '🔑', label: t('landing', 'categoryLocksmith') },
+  ];
+
+  const STEPS = [
+    { n: '01', title: t('landing', 'step1Title'), desc: t('landing', 'step1Desc') },
+    { n: '02', title: t('landing', 'step2Title'), desc: t('landing', 'step2Desc') },
+    { n: '03', title: t('landing', 'step3Title'), desc: t('landing', 'step3Desc') },
+  ];
+
+  const FEATURES = [
+    { icon: '📍', title: t('landing', 'feature1Title'), desc: t('landing', 'feature1Desc') },
+    { icon: '💬', title: t('landing', 'feature2Title'), desc: t('landing', 'feature2Desc') },
+    { icon: '⭐', title: t('landing', 'feature3Title'), desc: t('landing', 'feature3Desc') },
+    { icon: '🛡️', title: t('landing', 'feature4Title'), desc: t('landing', 'feature4Desc') },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* NAV */}
@@ -36,10 +41,10 @@ export default function HomePage() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/auth/login" className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              Se connecter
+              {t('landing', 'login')}
             </Link>
             <Link href="/auth/register" className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-glow active:scale-[0.98]">
-              S'inscrire
+              {t('landing', 'register')}
             </Link>
           </div>
         </nav>
@@ -51,22 +56,21 @@ export default function HomePage() {
         <div className="container relative mx-auto px-4 pb-20 pt-20 sm:pt-28 text-center">
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-sm text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-            +1 200 artisans vérifiés au Luxembourg, en France et en Belgique
+            {t('landing', 'heroBadge')}
           </div>
           <h1 className="font-display mx-auto max-w-4xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-7xl">
-            Trouvez l'artisan parfait,{' '}
-            <span className="text-primary">en quelques minutes.</span>
+            {t('landing', 'heroTitle')}{' '}
+            <span className="text-primary">{t('landing', 'heroTitleHighlight')}</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Plomberie, électricité, peinture, rénovation… Décrivez votre projet, comparez les devis
-            d'artisans de confiance et réservez en toute sérénité.
+            {t('landing', 'heroSubtitle')}
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/auth/register?role=client" className="w-full rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-glow active:scale-[0.98] sm:w-auto">
-              Trouver un artisan
+              {t('landing', 'ctaFindArtisan')}
             </Link>
             <Link href="/auth/register?role=artisan" className="w-full rounded-2xl border border-border bg-card px-8 py-4 text-base font-semibold text-foreground transition-colors hover:bg-accent sm:w-auto">
-              Je suis artisan
+              {t('landing', 'ctaIamArtisan')}
             </Link>
           </div>
 
@@ -86,10 +90,10 @@ export default function HomePage() {
       <section className="border-y border-border bg-card/40">
         <div className="container mx-auto grid grid-cols-2 gap-6 px-4 py-12 md:grid-cols-4">
           {[
-            ['1 200+', 'Artisans vérifiés'],
-            ['15 000+', 'Missions réalisées'],
-            ['4,8/5', 'Note moyenne'],
-            ['3 pays', 'LU · FR · BE'],
+            ['1 200+', t('landing', 'statArtisans')],
+            ['15 000+', t('landing', 'statMissions')],
+            ['4,8/5', t('landing', 'statRating')],
+            [t('landing', 'statCountries'), 'LU · FR · BE'],
           ].map(([n, l]) => (
             <div key={l} className="text-center">
               <div className="font-display text-3xl font-bold text-primary sm:text-4xl">{n}</div>
@@ -102,8 +106,8 @@ export default function HomePage() {
       {/* COMMENT ÇA MARCHE */}
       <section className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">Comment ça marche</h2>
-          <p className="mt-3 text-muted-foreground">Trois étapes, zéro prise de tête.</p>
+          <h2 className="font-display text-3xl font-bold sm:text-4xl">{t('landing', 'howItWorksTitle')}</h2>
+          <p className="mt-3 text-muted-foreground">{t('landing', 'howItWorksSubtitle')}</p>
         </div>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {STEPS.map((s) => (
@@ -120,8 +124,8 @@ export default function HomePage() {
       <section className="border-t border-border bg-card/40">
         <div className="container mx-auto px-4 py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold sm:text-4xl">Pourquoi Krafolt</h2>
-            <p className="mt-3 text-muted-foreground">Pensé pour vous faire gagner du temps et de la confiance.</p>
+            <h2 className="font-display text-3xl font-bold sm:text-4xl">{t('landing', 'whyTitle')}</h2>
+            <p className="mt-3 text-muted-foreground">{t('landing', 'whySubtitle')}</p>
           </div>
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((f) => (
@@ -140,17 +144,17 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/15 to-yellow-600/5 p-10 text-center sm:p-16">
           <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-[100px]" />
           <h2 className="font-display relative text-3xl font-bold sm:text-5xl">
-            Prêt à lancer votre projet ?
+            {t('landing', 'ctaFinalTitle')}
           </h2>
           <p className="relative mx-auto mt-4 max-w-xl text-muted-foreground">
-            Publiez votre première demande gratuitement et recevez des devis dès aujourd'hui.
+            {t('landing', 'ctaFinalSubtitle')}
           </p>
           <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/auth/register?role=client" className="w-full rounded-2xl bg-primary px-8 py-4 font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-glow active:scale-[0.98] sm:w-auto">
-              Commencer maintenant
+              {t('landing', 'ctaStartNow')}
             </Link>
             <Link href="/auth/login" className="w-full rounded-2xl border border-border bg-card px-8 py-4 font-semibold transition-colors hover:bg-accent sm:w-auto">
-              J'ai déjà un compte
+              {t('landing', 'ctaHaveAccount')}
             </Link>
           </div>
         </div>
@@ -163,10 +167,10 @@ export default function HomePage() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
             <span className="font-display font-bold">Krafolt</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2026 Krafolt — Artisans de confiance · LU · FR · BE</p>
+          <p className="text-sm text-muted-foreground">© 2026 Krafolt — {t('landing', 'footerTagline')} · LU · FR · BE</p>
           <div className="flex gap-4 text-sm text-muted-foreground">
-            <Link href="/auth/login" className="transition-colors hover:text-foreground">Connexion</Link>
-            <Link href="/auth/register" className="transition-colors hover:text-foreground">Inscription</Link>
+            <Link href="/auth/login" className="transition-colors hover:text-foreground">{t('landing', 'footerLogin')}</Link>
+            <Link href="/auth/register" className="transition-colors hover:text-foreground">{t('landing', 'footerRegister')}</Link>
           </div>
         </div>
       </footer>

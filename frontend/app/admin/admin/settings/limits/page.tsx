@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, RateLimitSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultRateLimitSettings: RateLimitSettings = {
   apiRateLimit: 100,
@@ -26,6 +27,7 @@ const defaultRateLimitSettings: RateLimitSettings = {
 };
 
 export default function RateLimitsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<RateLimitSettings>(defaultRateLimitSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,11 +58,11 @@ export default function RateLimitsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateRateLimitSettings(settings);
-      setSuccess('Rate limit settings saved successfully');
+      setSuccess(t('adminSettingsLimits', 'saveSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving rate limit settings:', err);
-      setError('Failed to save rate limit settings');
+      setError(t('adminSettingsLimits', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -123,7 +125,7 @@ export default function RateLimitsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsLimits', 'dismiss')}
           </button>
         </div>
       )}
@@ -136,14 +138,14 @@ export default function RateLimitsPage() {
       {/* API Rate Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>API Rate Limits</CardTitle>
-          <CardDescription>Configure API request limits</CardDescription>
+          <CardTitle>{t('adminSettingsLimits', 'apiTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsLimits', 'apiDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Requests per Window
+                {t('adminSettingsLimits', 'requestsPerWindow')}
               </label>
               <input
                 type="number"
@@ -155,7 +157,7 @@ export default function RateLimitsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Window Duration (minutes)
+                {t('adminSettingsLimits', 'windowDuration')}
               </label>
               <input
                 type="number"
@@ -172,14 +174,14 @@ export default function RateLimitsPage() {
       {/* Authentication Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>Authentication Security</CardTitle>
-          <CardDescription>Configure login and password reset limits</CardDescription>
+          <CardTitle>{t('adminSettingsLimits', 'authTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsLimits', 'authDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Login Attempts
+                {t('adminSettingsLimits', 'maxLoginAttempts')}
               </label>
               <input
                 type="number"
@@ -191,7 +193,7 @@ export default function RateLimitsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Lockout Duration (minutes)
+                {t('adminSettingsLimits', 'lockoutDuration')}
               </label>
               <input
                 type="number"
@@ -203,7 +205,7 @@ export default function RateLimitsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Password Resets/Day
+                {t('adminSettingsLimits', 'passwordResetsPerDay')}
               </label>
               <input
                 type="number"
@@ -220,14 +222,14 @@ export default function RateLimitsPage() {
       {/* User Activity Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>User Activity Limits</CardTitle>
-          <CardDescription>Configure limits for user actions</CardDescription>
+          <CardTitle>{t('adminSettingsLimits', 'activityTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsLimits', 'activityDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Missions/Day/User
+                {t('adminSettingsLimits', 'missionsPerDay')}
               </label>
               <input
                 type="number"
@@ -238,7 +240,7 @@ export default function RateLimitsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Messages/Hour</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsLimits', 'messagesPerHour')}</label>
               <input
                 type="number"
                 value={settings.messageLimit}
@@ -248,7 +250,7 @@ export default function RateLimitsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Reviews/Day</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsLimits', 'reviewsPerDay')}</label>
               <input
                 type="number"
                 value={settings.reviewLimit}
@@ -258,7 +260,7 @@ export default function RateLimitsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Reports/Day</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsLimits', 'reportsPerDay')}</label>
               <input
                 type="number"
                 value={settings.reportLimit}
@@ -269,7 +271,7 @@ export default function RateLimitsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Searches/Minute
+                {t('adminSettingsLimits', 'searchesPerMinute')}
               </label>
               <input
                 type="number"
@@ -286,13 +288,13 @@ export default function RateLimitsPage() {
       {/* File Upload Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>File Upload Limits</CardTitle>
-          <CardDescription>Configure file upload restrictions</CardDescription>
+          <CardTitle>{t('adminSettingsLimits', 'uploadTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsLimits', 'uploadDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Uploads/Hour</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsLimits', 'uploadsPerHour')}</label>
               <input
                 type="number"
                 value={settings.fileUploadLimit}
@@ -303,7 +305,7 @@ export default function RateLimitsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max File Size (MB)
+                {t('adminSettingsLimits', 'maxFileSize')}
               </label>
               <input
                 type="number"
@@ -320,8 +322,8 @@ export default function RateLimitsPage() {
       {/* Security Features */}
       <Card>
         <CardHeader>
-          <CardTitle>Security Features</CardTitle>
-          <CardDescription>Enable or disable security mechanisms</CardDescription>
+          <CardTitle>{t('adminSettingsLimits', 'securityTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsLimits', 'securityDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-6">
@@ -332,7 +334,7 @@ export default function RateLimitsPage() {
                 onChange={(e) => updateSetting('ipBlocklistEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable IP blocklist</span>
+              <span className="text-sm text-foreground">{t('adminSettingsLimits', 'enableIpBlocklist')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -341,7 +343,7 @@ export default function RateLimitsPage() {
                 onChange={(e) => updateSetting('geoBlockingEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable geo-blocking</span>
+              <span className="text-sm text-foreground">{t('adminSettingsLimits', 'enableGeoBlocking')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -350,14 +352,14 @@ export default function RateLimitsPage() {
                 onChange={(e) => updateSetting('captchaEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable CAPTCHA</span>
+              <span className="text-sm text-foreground">{t('adminSettingsLimits', 'enableCaptcha')}</span>
             </label>
           </div>
 
           {settings.captchaEnabled && (
             <div className="w-64">
               <label className="block text-sm font-medium text-foreground mb-1">
-                CAPTCHA Threshold Score
+                {t('adminSettingsLimits', 'captchaThresholdScore')}
               </label>
               <input
                 type="number"
@@ -368,7 +370,7 @@ export default function RateLimitsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Suspicious activity score to trigger CAPTCHA (0-100)
+                {t('adminSettingsLimits', 'captchaThresholdHint')}
               </p>
             </div>
           )}
@@ -379,14 +381,14 @@ export default function RateLimitsPage() {
       {settings.geoBlockingEnabled && (
         <Card>
           <CardHeader>
-            <CardTitle>Geo-Blocking Configuration</CardTitle>
-            <CardDescription>Configure country-based access restrictions</CardDescription>
+            <CardTitle>{t('adminSettingsLimits', 'geoBlockingTitle')}</CardTitle>
+            <CardDescription>{t('adminSettingsLimits', 'geoBlockingDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Blocked Countries */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Blocked Countries
+                {t('adminSettingsLimits', 'blockedCountries')}
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {settings.blockedCountries.map((code) => (
@@ -404,7 +406,7 @@ export default function RateLimitsPage() {
                   </span>
                 ))}
                 {settings.blockedCountries.length === 0 && (
-                  <span className="text-sm text-muted-foreground">No blocked countries</span>
+                  <span className="text-sm text-muted-foreground">{t('adminSettingsLimits', 'noBlockedCountries')}</span>
                 )}
               </div>
               <div className="flex gap-2">
@@ -412,7 +414,7 @@ export default function RateLimitsPage() {
                   type="text"
                   value={newBlockedCountry}
                   onChange={(e) => setNewBlockedCountry(e.target.value)}
-                  placeholder="Country code (e.g., CN)"
+                  placeholder={t('adminSettingsLimits', 'countryCodePlaceholderCn')}
                   maxLength={2}
                   className="w-32 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
@@ -420,7 +422,7 @@ export default function RateLimitsPage() {
                   onClick={addBlockedCountry}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
-                  Block
+                  {t('adminSettingsLimits', 'block')}
                 </button>
               </div>
             </div>
@@ -428,7 +430,7 @@ export default function RateLimitsPage() {
             {/* Allowed Countries */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Allowed Countries (whitelist mode)
+                {t('adminSettingsLimits', 'allowedCountries')}
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {settings.allowedCountries.map((code) => (
@@ -447,7 +449,7 @@ export default function RateLimitsPage() {
                 ))}
                 {settings.allowedCountries.length === 0 && (
                   <span className="text-sm text-muted-foreground">
-                    All countries allowed (no whitelist)
+                    {t('adminSettingsLimits', 'allCountriesAllowed')}
                   </span>
                 )}
               </div>
@@ -456,7 +458,7 @@ export default function RateLimitsPage() {
                   type="text"
                   value={newAllowedCountry}
                   onChange={(e) => setNewAllowedCountry(e.target.value)}
-                  placeholder="Country code (e.g., FR)"
+                  placeholder={t('adminSettingsLimits', 'countryCodePlaceholderFr')}
                   maxLength={2}
                   className="w-32 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
@@ -464,11 +466,11 @@ export default function RateLimitsPage() {
                   onClick={addAllowedCountry}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                  Allow
+                  {t('adminSettingsLimits', 'allow')}
                 </button>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                If whitelist is empty, all non-blocked countries are allowed
+                {t('adminSettingsLimits', 'whitelistHint')}
               </p>
             </div>
           </CardContent>
@@ -482,7 +484,7 @@ export default function RateLimitsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Rate Limit Settings'}
+          {saving ? t('adminSettingsLimits', 'saving') : t('adminSettingsLimits', 'saveButton')}
         </button>
       </div>
     </div>

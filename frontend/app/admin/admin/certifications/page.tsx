@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, Certification } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type FilterType = 'all' | 'pending' | 'verified';
 
 export default function CertificationsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export default function CertificationsPage() {
       if (error.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load certifications');
+        setError(t('adminCertifications', 'loadError'));
       }
     } finally {
       setLoading(false);
@@ -48,7 +50,7 @@ export default function CertificationsPage() {
       setSelectedCert(null);
     } catch (err) {
       console.error('Error verifying certification:', err);
-      setError('Failed to verify certification');
+      setError(t('adminCertifications', 'verifyError'));
     } finally {
       setProcessingId(null);
     }
@@ -62,7 +64,7 @@ export default function CertificationsPage() {
       setSelectedCert(null);
     } catch (err) {
       console.error('Error unverifying certification:', err);
-      setError('Failed to unverify certification');
+      setError(t('adminCertifications', 'unverifyError'));
     } finally {
       setProcessingId(null);
     }
@@ -111,7 +113,7 @@ export default function CertificationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{t('adminCertifications', 'loading')}</div>
       </div>
     );
   }
@@ -126,18 +128,18 @@ export default function CertificationsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              Back
+              {t('adminCertifications', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Certification Management</h1>
-              <p className="text-muted-foreground mt-1">Verify and manage artisan certifications</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminCertifications', 'title')}</h1>
+              <p className="text-muted-foreground mt-1">{t('adminCertifications', 'subtitle')}</p>
             </div>
           </div>
           <button
             onClick={loadData}
             className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
           >
-            Refresh
+            {t('adminCertifications', 'refresh')}
           </button>
         </div>
 
@@ -154,7 +156,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-sm text-muted-foreground">{t('adminCertifications', 'total')}</p>
                   <p className="text-3xl font-bold text-primary">{certifications.length}</p>
                 </div>
                 <span className="text-4xl">📜</span>
@@ -166,7 +168,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending Review</p>
+                  <p className="text-sm text-muted-foreground">{t('adminCertifications', 'pendingReview')}</p>
                   <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
@@ -178,7 +180,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Verified</p>
+                  <p className="text-sm text-muted-foreground">{t('adminCertifications', 'verified')}</p>
                   <p className="text-3xl font-bold text-green-600">{verifiedCount}</p>
                 </div>
                 <span className="text-4xl">✅</span>
@@ -190,7 +192,7 @@ export default function CertificationsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Expired</p>
+                  <p className="text-sm text-muted-foreground">{t('adminCertifications', 'expired')}</p>
                   <p className="text-3xl font-bold text-red-600">{expiredCount}</p>
                 </div>
                 <span className="text-4xl">⚠️</span>
@@ -212,7 +214,7 @@ export default function CertificationsPage() {
                     : 'bg-muted text-foreground hover:bg-accent'
                 }`}
               >
-                {f}
+                {t('adminCertifications', `filter_${f}`)}
               </button>
             ))}
           </div>
@@ -220,7 +222,7 @@ export default function CertificationsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, organization, or artisan..."
+            placeholder={t('adminCertifications', 'searchPlaceholder')}
             className="flex-1 min-w-[300px] px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
@@ -228,8 +230,8 @@ export default function CertificationsPage() {
         {/* Certifications List */}
         <Card>
           <CardHeader>
-            <CardTitle>Certifications ({filteredCertifications.length})</CardTitle>
-            <CardDescription>Review and verify artisan professional certifications</CardDescription>
+            <CardTitle>{t('adminCertifications', 'listTitle')} ({filteredCertifications.length})</CardTitle>
+            <CardDescription>{t('adminCertifications', 'listDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {filteredCertifications.length > 0 ? (
@@ -238,22 +240,22 @@ export default function CertificationsPage() {
                   <thead className="bg-background">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Certification
+                        {t('adminCertifications', 'colCertification')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Artisan
+                        {t('adminCertifications', 'colArtisan')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Issuing Organization
+                        {t('adminCertifications', 'colIssuingOrg')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Dates
+                        {t('adminCertifications', 'colDates')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Status
+                        {t('adminCertifications', 'colStatus')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Actions
+                        {t('adminCertifications', 'colActions')}
                       </th>
                     </tr>
                   </thead>
@@ -282,7 +284,7 @@ export default function CertificationsPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm">
                             <div className="text-foreground">
-                              Issued: {formatDate(cert.issueDate)}
+                              {t('adminCertifications', 'issued')}: {formatDate(cert.issueDate)}
                             </div>
                             {cert.expiryDate && (
                               <div
@@ -290,8 +292,8 @@ export default function CertificationsPage() {
                                   isExpired(cert.expiryDate) ? 'text-red-600' : 'text-muted-foreground'
                                 }
                               >
-                                Expires: {formatDate(cert.expiryDate)}
-                                {isExpired(cert.expiryDate) && ' (EXPIRED)'}
+                                {t('adminCertifications', 'expires')}: {formatDate(cert.expiryDate)}
+                                {isExpired(cert.expiryDate) && ` (${t('adminCertifications', 'expiredTag')})`}
                               </div>
                             )}
                           </div>
@@ -304,7 +306,7 @@ export default function CertificationsPage() {
                                 : 'bg-yellow-500/15 text-yellow-400'
                             }`}
                           >
-                            {cert.verified ? 'VERIFIED' : 'PENDING'}
+                            {cert.verified ? t('adminCertifications', 'statusVerified') : t('adminCertifications', 'statusPending')}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -313,7 +315,7 @@ export default function CertificationsPage() {
                               onClick={() => setSelectedCert(cert)}
                               className="text-primary hover:text-primary"
                             >
-                              View
+                              {t('adminCertifications', 'view')}
                             </button>
                             {cert.verified ? (
                               <button
@@ -321,7 +323,7 @@ export default function CertificationsPage() {
                                 disabled={processingId === cert.id}
                                 className="text-red-600 hover:text-red-400 disabled:opacity-50"
                               >
-                                Unverify
+                                {t('adminCertifications', 'unverify')}
                               </button>
                             ) : (
                               <button
@@ -329,7 +331,7 @@ export default function CertificationsPage() {
                                 disabled={processingId === cert.id}
                                 className="text-green-600 hover:text-green-400 disabled:opacity-50"
                               >
-                                Verify
+                                {t('adminCertifications', 'verify')}
                               </button>
                             )}
                           </div>
@@ -342,7 +344,7 @@ export default function CertificationsPage() {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <span className="text-4xl block mb-2">📜</span>
-                <p>No certifications found</p>
+                <p>{t('adminCertifications', 'noneFound')}</p>
               </div>
             )}
           </CardContent>
@@ -354,7 +356,7 @@ export default function CertificationsPage() {
             <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-foreground">Certification Details</h2>
+                  <h2 className="text-xl font-semibold text-foreground">{t('adminCertifications', 'detailsTitle')}</h2>
                   <button
                     onClick={() => setSelectedCert(null)}
                     className="text-muted-foreground hover:text-muted-foreground"
@@ -366,22 +368,22 @@ export default function CertificationsPage() {
                 <div className="space-y-6">
                   {/* Certification Info */}
                   <div className="border-b border-border pb-4">
-                    <h3 className="font-medium text-foreground mb-3">Certification Information</h3>
+                    <h3 className="font-medium text-foreground mb-3">{t('adminCertifications', 'certInfo')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Name</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'name')}</p>
                         <p className="font-medium">{selectedCert.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Certificate Number</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'certificateNumber')}</p>
                         <p className="font-medium">{selectedCert.certificateNumber || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Issuing Organization</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'issuingOrg')}</p>
                         <p className="font-medium">{selectedCert.issuingOrganization}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Status</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'status')}</p>
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${
                             selectedCert.verified
@@ -389,7 +391,7 @@ export default function CertificationsPage() {
                               : 'bg-yellow-500/15 text-yellow-400'
                           }`}
                         >
-                          {selectedCert.verified ? 'VERIFIED' : 'PENDING'}
+                          {selectedCert.verified ? t('adminCertifications', 'statusVerified') : t('adminCertifications', 'statusPending')}
                         </span>
                       </div>
                     </div>
@@ -397,10 +399,10 @@ export default function CertificationsPage() {
 
                   {/* Dates */}
                   <div className="border-b border-border pb-4">
-                    <h3 className="font-medium text-foreground mb-3">Dates</h3>
+                    <h3 className="font-medium text-foreground mb-3">{t('adminCertifications', 'dates')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-background rounded-lg">
-                        <p className="text-sm text-muted-foreground">Issue Date</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'issueDate')}</p>
                         <p className="font-medium">{formatDate(selectedCert.issueDate)}</p>
                       </div>
                       <div
@@ -408,23 +410,23 @@ export default function CertificationsPage() {
                           isExpired(selectedCert.expiryDate) ? 'bg-red-500/10' : 'bg-background'
                         }`}
                       >
-                        <p className="text-sm text-muted-foreground">Expiry Date</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'expiryDate')}</p>
                         <p
                           className={`font-medium ${
                             isExpired(selectedCert.expiryDate) ? 'text-red-600' : ''
                           }`}
                         >
                           {formatDate(selectedCert.expiryDate)}
-                          {isExpired(selectedCert.expiryDate) && ' (EXPIRED)'}
+                          {isExpired(selectedCert.expiryDate) && ` (${t('adminCertifications', 'expiredTag')})`}
                         </p>
                       </div>
                       <div className="p-4 bg-background rounded-lg">
-                        <p className="text-sm text-muted-foreground">Submitted</p>
+                        <p className="text-sm text-muted-foreground">{t('adminCertifications', 'submitted')}</p>
                         <p className="font-medium">{formatDate(selectedCert.createdAt)}</p>
                       </div>
                       {selectedCert.verifiedAt && (
                         <div className="p-4 bg-green-500/10 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Verified On</p>
+                          <p className="text-sm text-muted-foreground">{t('adminCertifications', 'verifiedOn')}</p>
                           <p className="font-medium">{formatDate(selectedCert.verifiedAt)}</p>
                         </div>
                       )}
@@ -433,7 +435,7 @@ export default function CertificationsPage() {
 
                   {/* Artisan Info */}
                   <div className="border-b border-border pb-4">
-                    <h3 className="font-medium text-foreground mb-3">Artisan</h3>
+                    <h3 className="font-medium text-foreground mb-3">{t('adminCertifications', 'artisan')}</h3>
                     <div className="p-4 bg-primary/10 rounded-lg">
                       <p className="font-medium text-foreground">
                         {selectedCert.artisan?.firstName} {selectedCert.artisan?.lastName}
@@ -445,7 +447,7 @@ export default function CertificationsPage() {
                   {/* Document */}
                   {selectedCert.documentUrl && (
                     <div className="border-b border-border pb-4">
-                      <h3 className="font-medium text-foreground mb-3">Document</h3>
+                      <h3 className="font-medium text-foreground mb-3">{t('adminCertifications', 'document')}</h3>
                       <a
                         href={selectedCert.documentUrl}
                         target="_blank"
@@ -453,7 +455,7 @@ export default function CertificationsPage() {
                         className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-blue-200"
                       >
                         <span>📄</span>
-                        View Document
+                        {t('adminCertifications', 'viewDocument')}
                       </a>
                     </div>
                   )}
@@ -464,7 +466,7 @@ export default function CertificationsPage() {
                       onClick={() => setSelectedCert(null)}
                       className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                     >
-                      Close
+                      {t('adminCertifications', 'close')}
                     </button>
                     {selectedCert.verified ? (
                       <button
@@ -472,7 +474,7 @@ export default function CertificationsPage() {
                         disabled={processingId === selectedCert.id}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                       >
-                        {processingId === selectedCert.id ? 'Processing...' : 'Unverify'}
+                        {processingId === selectedCert.id ? t('adminCertifications', 'processing') : t('adminCertifications', 'unverify')}
                       </button>
                     ) : (
                       <button
@@ -481,8 +483,8 @@ export default function CertificationsPage() {
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                       >
                         {processingId === selectedCert.id
-                          ? 'Processing...'
-                          : 'Verify Certification'}
+                          ? t('adminCertifications', 'processing')
+                          : t('adminCertifications', 'verifyCertification')}
                       </button>
                     )}
                   </div>

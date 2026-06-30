@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, IntegrationSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultIntegrationSettings: IntegrationSettings = {
   stripePublicKey: '',
@@ -31,6 +32,7 @@ const defaultIntegrationSettings: IntegrationSettings = {
 };
 
 export default function IntegrationSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<IntegrationSettings>(defaultIntegrationSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,11 +61,11 @@ export default function IntegrationSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateIntegrationSettings(settings);
-      setSuccess('Integration settings saved successfully');
+      setSuccess(t('adminSettingsIntegrations', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving integration settings:', err);
-      setError('Failed to save integration settings');
+      setError(t('adminSettingsIntegrations', 'saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -90,7 +92,7 @@ export default function IntegrationSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsIntegrations', 'dismiss')}
           </button>
         </div>
       )}
@@ -103,12 +105,12 @@ export default function IntegrationSettingsPage() {
       {/* Payment Integration - Stripe */}
       <Card>
         <CardHeader>
-          <CardTitle>Stripe Integration</CardTitle>
-          <CardDescription>Configure Stripe payment processing</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'stripeTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'stripeDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Public Key</label>
+            <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsIntegrations', 'publicKey')}</label>
             <input
               type="text"
               value={settings.stripePublicKey}
@@ -117,7 +119,7 @@ export default function IntegrationSettingsPage() {
               className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Your Stripe publishable key (starts with pk_)
+              {t('adminSettingsIntegrations', 'stripePublishableHint')}
             </p>
           </div>
           <label className="flex items-center gap-2">
@@ -127,7 +129,7 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('stripeWebhookEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm text-foreground">Enable Stripe webhooks</span>
+            <span className="text-sm text-foreground">{t('adminSettingsIntegrations', 'enableStripeWebhooks')}</span>
           </label>
         </CardContent>
       </Card>
@@ -135,8 +137,8 @@ export default function IntegrationSettingsPage() {
       {/* Google Maps */}
       <Card>
         <CardHeader>
-          <CardTitle>Google Maps Integration</CardTitle>
-          <CardDescription>Configure Google Maps for location services</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'googleMapsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'googleMapsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -146,11 +148,11 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('googleMapsEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Google Maps</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableGoogleMaps')}</span>
           </label>
           {settings.googleMapsEnabled && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">API Key</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsIntegrations', 'apiKey')}</label>
               <input
                 type="text"
                 value={settings.googleMapsApiKey}
@@ -166,8 +168,8 @@ export default function IntegrationSettingsPage() {
       {/* Communications - Twilio */}
       <Card>
         <CardHeader>
-          <CardTitle>Twilio Integration</CardTitle>
-          <CardDescription>Configure SMS and voice calling via Twilio</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'twilioTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'twilioDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -177,7 +179,7 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('twilioEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Twilio</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableTwilio')}</span>
           </label>
           {settings.twilioEnabled && (
             <div className="flex gap-4">
@@ -188,7 +190,7 @@ export default function IntegrationSettingsPage() {
                   onChange={(e) => updateSetting('twilioSmsEnabled', e.target.checked)}
                   className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-foreground">SMS enabled</span>
+                <span className="text-sm text-foreground">{t('adminSettingsIntegrations', 'smsEnabled')}</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -197,7 +199,7 @@ export default function IntegrationSettingsPage() {
                   onChange={(e) => updateSetting('twilioVoiceEnabled', e.target.checked)}
                   className="w-4 h-4 text-primary rounded"
                 />
-                <span className="text-sm text-foreground">Voice enabled</span>
+                <span className="text-sm text-foreground">{t('adminSettingsIntegrations', 'voiceEnabled')}</span>
               </label>
             </div>
           )}
@@ -207,8 +209,8 @@ export default function IntegrationSettingsPage() {
       {/* Email - SendGrid */}
       <Card>
         <CardHeader>
-          <CardTitle>SendGrid Integration</CardTitle>
-          <CardDescription>Configure email delivery via SendGrid</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'sendgridTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'sendgridDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <label className="flex items-center gap-2">
@@ -218,7 +220,7 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('sendgridEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable SendGrid</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableSendgrid')}</span>
           </label>
         </CardContent>
       </Card>
@@ -226,8 +228,8 @@ export default function IntegrationSettingsPage() {
       {/* Push - Firebase */}
       <Card>
         <CardHeader>
-          <CardTitle>Firebase Integration</CardTitle>
-          <CardDescription>Configure Firebase for push notifications</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'firebaseTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'firebaseDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -237,7 +239,7 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('firebaseEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Firebase</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableFirebase')}</span>
           </label>
           {settings.firebaseEnabled && (
             <label className="flex items-center gap-2">
@@ -247,7 +249,7 @@ export default function IntegrationSettingsPage() {
                 onChange={(e) => updateSetting('firebasePushEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable push notifications</span>
+              <span className="text-sm text-foreground">{t('adminSettingsIntegrations', 'enablePushNotifications')}</span>
             </label>
           )}
         </CardContent>
@@ -256,8 +258,8 @@ export default function IntegrationSettingsPage() {
       {/* Monitoring - Sentry */}
       <Card>
         <CardHeader>
-          <CardTitle>Sentry Integration</CardTitle>
-          <CardDescription>Configure error tracking and monitoring</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'sentryTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'sentryDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -267,11 +269,11 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('sentryEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Sentry</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableSentry')}</span>
           </label>
           {settings.sentryEnabled && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Sentry DSN</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsIntegrations', 'sentryDsn')}</label>
               <input
                 type="text"
                 value={settings.sentryDsn || ''}
@@ -287,8 +289,8 @@ export default function IntegrationSettingsPage() {
       {/* Analytics */}
       <Card>
         <CardHeader>
-          <CardTitle>Analytics Integration</CardTitle>
-          <CardDescription>Configure analytics tracking</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'analyticsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'analyticsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -298,12 +300,12 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('analyticsEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Analytics</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableAnalytics')}</span>
           </label>
           {settings.analyticsEnabled && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Google Analytics ID
+                {t('adminSettingsIntegrations', 'googleAnalyticsId')}
               </label>
               <input
                 type="text"
@@ -320,8 +322,8 @@ export default function IntegrationSettingsPage() {
       {/* Support - Intercom */}
       <Card>
         <CardHeader>
-          <CardTitle>Intercom Integration</CardTitle>
-          <CardDescription>Configure customer support chat</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'intercomTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'intercomDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -331,16 +333,16 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('intercomEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Intercom</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableIntercom')}</span>
           </label>
           {settings.intercomEnabled && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">App ID</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsIntegrations', 'appId')}</label>
               <input
                 type="text"
                 value={settings.intercomAppId || ''}
                 onChange={(e) => updateSetting('intercomAppId', e.target.value)}
-                placeholder="Your Intercom App ID"
+                placeholder={t('adminSettingsIntegrations', 'intercomAppIdPlaceholder')}
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -351,8 +353,8 @@ export default function IntegrationSettingsPage() {
       {/* Slack Alerts */}
       <Card>
         <CardHeader>
-          <CardTitle>Slack Integration</CardTitle>
-          <CardDescription>Configure Slack notifications for alerts</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'slackTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'slackDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -362,12 +364,12 @@ export default function IntegrationSettingsPage() {
               onChange={(e) => updateSetting('slackWebhookEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Slack Webhooks</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableSlackWebhooks')}</span>
           </label>
           {settings.slackWebhookEnabled && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Webhook URL</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsIntegrations', 'webhookUrl')}</label>
                 <input
                   type="text"
                   value={settings.slackWebhookUrl || ''}
@@ -378,7 +380,7 @@ export default function IntegrationSettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Alert Channel
+                  {t('adminSettingsIntegrations', 'alertChannel')}
                 </label>
                 <input
                   type="text"
@@ -396,8 +398,8 @@ export default function IntegrationSettingsPage() {
       {/* API Webhooks */}
       <Card>
         <CardHeader>
-          <CardTitle>API Webhooks</CardTitle>
-          <CardDescription>Configure outgoing webhook settings</CardDescription>
+          <CardTitle>{t('adminSettingsIntegrations', 'apiWebhooksTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsIntegrations', 'apiWebhooksDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -408,7 +410,7 @@ export default function IntegrationSettingsPage() {
                 onChange={(e) => updateSetting('apiWebhooksEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Enable API Webhooks</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsIntegrations', 'enableApiWebhooks')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -417,14 +419,14 @@ export default function IntegrationSettingsPage() {
                 onChange={(e) => updateSetting('zapierEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable Zapier</span>
+              <span className="text-sm text-foreground">{t('adminSettingsIntegrations', 'enableZapier')}</span>
             </label>
           </div>
           {settings.apiWebhooksEnabled && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Retry Attempts
+                  {t('adminSettingsIntegrations', 'retryAttempts')}
                 </label>
                 <input
                   type="number"
@@ -437,7 +439,7 @@ export default function IntegrationSettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Timeout (seconds)
+                  {t('adminSettingsIntegrations', 'timeoutSeconds')}
                 </label>
                 <input
                   type="number"
@@ -460,7 +462,7 @@ export default function IntegrationSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Integration Settings'}
+          {saving ? t('adminSettingsIntegrations', 'saving') : t('adminSettingsIntegrations', 'saveButton')}
         </button>
       </div>
     </div>

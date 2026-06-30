@@ -102,10 +102,10 @@ export default function ModerationPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: any }> = {
-      PENDING: { label: 'En attente', variant: 'default' },
-      REVIEWING: { label: 'En cours', variant: 'default' },
-      RESOLVED: { label: 'Résolu', variant: 'default' },
-      DISMISSED: { label: 'Rejeté', variant: 'default' },
+      PENDING: { label: t('adminModeration', 'statusPending'), variant: 'default' },
+      REVIEWING: { label: t('adminModeration', 'statusReviewing'), variant: 'default' },
+      RESOLVED: { label: t('adminModeration', 'statusResolved'), variant: 'default' },
+      DISMISSED: { label: t('adminModeration', 'statusDismissed'), variant: 'default' },
     };
 
     const config = statusMap[status] || { label: status, variant: 'default' };
@@ -125,10 +125,10 @@ export default function ModerationPage() {
 
   const getTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      REVIEW: 'Avis',
-      PRODUCT: 'Produit',
-      USER: 'Utilisateur',
-      MISSION: 'Mission',
+      REVIEW: t('adminModeration', 'typeReview'),
+      PRODUCT: t('adminModeration', 'typeProduct'),
+      USER: t('adminModeration', 'typeUser'),
+      MISSION: t('adminModeration', 'typeMission'),
     };
     return typeMap[type] || type;
   };
@@ -136,7 +136,7 @@ export default function ModerationPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Chargement...</div>
+        <div className="text-muted-foreground">{t('adminModeration', 'loading')}</div>
       </div>
     );
   }
@@ -146,9 +146,9 @@ export default function ModerationPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Modération</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('adminModeration', 'title')}</h1>
           <p className="text-muted-foreground mt-2">
-            Gérer les signalements et le contenu de la plateforme
+            {t('adminModeration', 'subtitle')}
           </p>
         </div>
 
@@ -165,7 +165,7 @@ export default function ModerationPage() {
                     : 'bg-card text-foreground border'
                 }`}
               >
-                {status === 'all' ? 'Tous' : status}
+                {status === 'all' ? t('adminModeration', 'filterAll') : status}
               </button>
             ),
           )}
@@ -175,13 +175,13 @@ export default function ModerationPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Total signalements</p>
+              <p className="text-sm text-muted-foreground">{t('adminModeration', 'totalReports')}</p>
               <p className="text-3xl font-bold">{reports.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">En attente</p>
+              <p className="text-sm text-muted-foreground">{t('adminModeration', 'pending')}</p>
               <p className="text-3xl font-bold text-yellow-600">
                 {reports.filter((r) => r.status === 'PENDING').length}
               </p>
@@ -189,7 +189,7 @@ export default function ModerationPage() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">En cours</p>
+              <p className="text-sm text-muted-foreground">{t('adminModeration', 'inProgress')}</p>
               <p className="text-3xl font-bold text-primary">
                 {reports.filter((r) => r.status === 'REVIEWING').length}
               </p>
@@ -197,7 +197,7 @@ export default function ModerationPage() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Résolus</p>
+              <p className="text-sm text-muted-foreground">{t('adminModeration', 'resolved')}</p>
               <p className="text-3xl font-bold text-green-600">
                 {reports.filter((r) => r.status === 'RESOLVED').length}
               </p>
@@ -208,12 +208,12 @@ export default function ModerationPage() {
         {/* Reports List */}
         <Card>
           <CardHeader>
-            <CardTitle>Signalements</CardTitle>
+            <CardTitle>{t('adminModeration', 'reports')}</CardTitle>
           </CardHeader>
           <CardContent>
             {reports.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Aucun signalement trouvé
+                {t('adminModeration', 'noReports')}
               </div>
             ) : (
               <div className="space-y-4">
@@ -234,7 +234,7 @@ export default function ModerationPage() {
                               {report.reason}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Type: {getTypeLabel(report.reportedType)} • Par:{' '}
+                              {t('adminModeration', 'typeLabel')} {getTypeLabel(report.reportedType)} • {t('adminModeration', 'byLabel')}{' '}
                               {report.reporter.firstName}{' '}
                               {report.reporter.lastName}
                             </p>
@@ -259,7 +259,7 @@ export default function ModerationPage() {
                           }}
                           className="text-red-600 hover:text-red-400 text-sm"
                         >
-                          Supprimer
+                          {t('adminModeration', 'delete')}
                         </button>
                       </div>
                     </div>
@@ -276,7 +276,7 @@ export default function ModerationPage() {
             <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-2xl font-bold">Résoudre le signalement</h2>
+                  <h2 className="text-2xl font-bold">{t('adminModeration', 'resolveReport')}</h2>
                   <button
                     onClick={() => {
                       setSelectedReport(null);
@@ -291,17 +291,17 @@ export default function ModerationPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <p className="font-semibold mb-1">Type de signalement:</p>
+                    <p className="font-semibold mb-1">{t('adminModeration', 'reportType')}</p>
                     <p>{selectedReport.reason}</p>
                   </div>
 
                   <div>
-                    <p className="font-semibold mb-1">Description:</p>
+                    <p className="font-semibold mb-1">{t('adminModeration', 'description')}</p>
                     <p className="text-foreground">{selectedReport.description}</p>
                   </div>
 
                   <div>
-                    <p className="font-semibold mb-1">Signalé par:</p>
+                    <p className="font-semibold mb-1">{t('adminModeration', 'reportedBy')}</p>
                     <p>
                       {selectedReport.reporter.firstName}{' '}
                       {selectedReport.reporter.lastName} (
@@ -310,38 +310,38 @@ export default function ModerationPage() {
                   </div>
 
                   <div>
-                    <p className="font-semibold mb-1">Type de contenu:</p>
+                    <p className="font-semibold mb-1">{t('adminModeration', 'contentType')}</p>
                     <p>{getTypeLabel(selectedReport.reportedType)}</p>
                   </div>
 
                   <div>
                     <label className="block font-semibold mb-2">
-                      Action à prendre:
+                      {t('adminModeration', 'actionToTake')}
                     </label>
                     <select
                       value={action}
                       onChange={(e) => setAction(e.target.value)}
                       className="w-full p-2 border rounded-lg"
                     >
-                      <option value="">Sélectionner une action...</option>
-                      <option value="DISMISS">Rejeter</option>
-                      <option value="WARNING">Avertissement</option>
-                      <option value="CONTENT_REMOVED">Supprimer le contenu</option>
-                      <option value="USER_SUSPENDED">Suspendre l'utilisateur</option>
+                      <option value="">{t('adminModeration', 'selectAction')}</option>
+                      <option value="DISMISS">{t('adminModeration', 'actionDismiss')}</option>
+                      <option value="WARNING">{t('adminModeration', 'actionWarning')}</option>
+                      <option value="CONTENT_REMOVED">{t('adminModeration', 'actionRemoveContent')}</option>
+                      <option value="USER_SUSPENDED">{t('adminModeration', 'actionSuspendUser')}</option>
                       <option value="ACCOUNT_TERMINATED">
-                        Bannir le compte
+                        {t('adminModeration', 'actionBanAccount')}
                       </option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block font-semibold mb-2">
-                      Résolution:
+                      {t('adminModeration', 'resolution')}
                     </label>
                     <textarea
                       value={resolution}
                       onChange={(e) => setResolution(e.target.value)}
-                      placeholder="Expliquez la décision prise..."
+                      placeholder={t('adminModeration', 'resolutionPlaceholder')}
                       className="w-full p-3 border rounded-lg h-32"
                     />
                   </div>
@@ -351,7 +351,7 @@ export default function ModerationPage() {
                       onClick={handleResolve}
                       className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:bg-primary/90"
                     >
-                      Résoudre
+                      {t('adminModeration', 'resolve')}
                     </button>
                     <button
                       onClick={() => {
@@ -361,7 +361,7 @@ export default function ModerationPage() {
                       }}
                       className="flex-1 bg-gray-300 text-foreground py-2 px-4 rounded-lg hover:bg-gray-400"
                     >
-                      Annuler
+                      {t('adminModeration', 'cancel')}
                     </button>
                   </div>
                 </div>

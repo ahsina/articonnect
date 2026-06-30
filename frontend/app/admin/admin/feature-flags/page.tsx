@@ -55,7 +55,7 @@ export default function FeatureFlagsPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load feature flags');
+        setError(t('adminFeatureFlags', 'errorLoad'));
       }
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ export default function FeatureFlagsPage() {
       setError(null);
     } catch (err) {
       console.error('Error creating feature flag:', err);
-      setError('Failed to create feature flag');
+      setError(t('adminFeatureFlags', 'errorCreate'));
     } finally {
       setActionLoading(null);
     }
@@ -127,14 +127,14 @@ export default function FeatureFlagsPage() {
       setError(null);
     } catch (err) {
       console.error('Error toggling feature flag:', err);
-      setError(`Failed to toggle ${flag.name}`);
+      setError(t('adminFeatureFlags', 'errorToggle').replace('{name}', flag.name));
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (key: string) => {
-    if (!confirm('Are you sure you want to delete this feature flag?')) return;
+    if (!confirm(t('adminFeatureFlags', 'confirmDelete'))) return;
 
     setActionLoading(key);
     try {
@@ -143,7 +143,7 @@ export default function FeatureFlagsPage() {
       setError(null);
     } catch (err) {
       console.error('Error deleting feature flag:', err);
-      setError('Failed to delete feature flag');
+      setError(t('adminFeatureFlags', 'errorDelete'));
     } finally {
       setActionLoading(null);
     }
@@ -210,12 +210,12 @@ export default function FeatureFlagsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← Back
+              {t('adminFeatureFlags', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Feature Flags</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminFeatureFlags', 'title')}</h1>
               <p className="text-muted-foreground mt-1">
-                Manage feature flags and rollout configurations
+                {t('adminFeatureFlags', 'subtitle')}
               </p>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function FeatureFlagsPage() {
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
           >
-            + New Flag
+            {t('adminFeatureFlags', 'newFlag')}
           </button>
         </div>
 
@@ -240,7 +240,7 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Flags</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'totalFlags')}</p>
                   <p className="text-3xl font-bold text-foreground">{flags.length}</p>
                 </div>
                 <span className="text-3xl">🏳️</span>
@@ -251,7 +251,7 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Enabled</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'enabled')}</p>
                   <p className="text-3xl font-bold text-green-600">
                     {flags.filter((f) => f.value.enabled).length}
                   </p>
@@ -264,7 +264,7 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Disabled</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'disabled')}</p>
                   <p className="text-3xl font-bold text-muted-foreground">
                     {flags.filter((f) => !f.value.enabled).length}
                   </p>
@@ -277,7 +277,7 @@ export default function FeatureFlagsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Percentage Rollouts</p>
+                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'percentageRollouts')}</p>
                   <p className="text-3xl font-bold text-purple-600">
                     {flags.filter((f) => f.type === FeatureFlagType.PERCENTAGE).length}
                   </p>
@@ -297,23 +297,23 @@ export default function FeatureFlagsPage() {
                   onClick={() => setFilter('all')}
                   className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
-                  All ({flags.length})
+                  {t('adminFeatureFlags', 'filterAll')} ({flags.length})
                 </button>
                 <button
                   onClick={() => setFilter('active')}
                   className={`px-4 py-2 rounded-lg ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
-                  Enabled ({flags.filter((f) => f.value.enabled).length})
+                  {t('adminFeatureFlags', 'enabled')} ({flags.filter((f) => f.value.enabled).length})
                 </button>
                 <button
                   onClick={() => setFilter('inactive')}
                   className={`px-4 py-2 rounded-lg ${filter === 'inactive' ? 'bg-gray-600 text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
                 >
-                  Disabled ({flags.filter((f) => !f.value.enabled).length})
+                  {t('adminFeatureFlags', 'disabled')} ({flags.filter((f) => !f.value.enabled).length})
                 </button>
               </div>
               <Input
-                placeholder="Search flags..."
+                placeholder={t('adminFeatureFlags', 'searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-xs"
@@ -328,8 +328,8 @@ export default function FeatureFlagsPage() {
             <Card>
               <CardContent className="p-12 text-center">
                 <span className="text-6xl mb-4 block">🏳️</span>
-                <h3 className="text-lg font-medium text-foreground mb-2">No feature flags found</h3>
-                <p className="text-muted-foreground">Create your first feature flag to get started.</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">{t('adminFeatureFlags', 'noFlagsFound')}</h3>
+                <p className="text-muted-foreground">{t('adminFeatureFlags', 'noFlagsHint')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -363,14 +363,14 @@ export default function FeatureFlagsPage() {
                         <div className="mt-3 flex flex-wrap gap-2">
                           {flag.type === FeatureFlagType.PERCENTAGE && (
                             <span className="text-xs bg-purple-500/15 text-purple-400 px-2 py-1 rounded">
-                              {flag.value.percentage}% rollout
+                              {flag.value.percentage}% {t('adminFeatureFlags', 'rollout')}
                             </span>
                           )}
                           {flag.type === FeatureFlagType.USER_LIST &&
                             flag.value.allowedUsers &&
                             flag.value.allowedUsers.length > 0 && (
                               <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                {flag.value.allowedUsers.length} users allowed
+                                {flag.value.allowedUsers.length} {t('adminFeatureFlags', 'usersAllowed')}
                               </span>
                             )}
                           {flag.metadata?.tags?.map((tag) => (
@@ -383,7 +383,7 @@ export default function FeatureFlagsPage() {
                           ))}
                         </div>
                         <p className="text-xs text-muted-foreground mt-3">
-                          Updated: {new Date(flag.updatedAt).toLocaleString('fr-FR')}
+                          {t('adminFeatureFlags', 'updated')}: {new Date(flag.updatedAt).toLocaleString('fr-FR')}
                           {flag.updatedBy && ` by ${flag.updatedBy.slice(0, 8)}...`}
                         </p>
                       </div>
@@ -399,7 +399,7 @@ export default function FeatureFlagsPage() {
                         disabled={actionLoading === flag.key}
                         className="text-red-600 hover:text-red-400 disabled:opacity-50"
                       >
-                        Delete
+                        {t('adminFeatureFlags', 'delete')}
                       </button>
                     </div>
                   </div>
@@ -414,30 +414,30 @@ export default function FeatureFlagsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-border">
-                <h2 className="text-xl font-semibold">Create Feature Flag</h2>
+                <h2 className="text-xl font-semibold">{t('adminFeatureFlags', 'createTitle')}</h2>
               </div>
               <div className="p-6 space-y-4">
                 <Input
-                  label="Key"
+                  label={t('adminFeatureFlags', 'labelKey')}
                   placeholder="my-feature-flag"
                   value={formData.key}
                   onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-                  hint="Unique identifier for the flag (lowercase, hyphens allowed)"
+                  hint={t('adminFeatureFlags', 'hintKey')}
                 />
                 <Input
-                  label="Name"
+                  label={t('adminFeatureFlags', 'labelName')}
                   placeholder="My Feature Flag"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
                 <Textarea
-                  label="Description"
-                  placeholder="Description of what this flag controls..."
+                  label={t('adminFeatureFlags', 'labelDescription')}
+                  placeholder={t('adminFeatureFlags', 'placeholderDescription')}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Type</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">{t('adminFeatureFlags', 'labelType')}</label>
                   <select
                     value={formData.type}
                     onChange={(e) =>
@@ -445,15 +445,15 @@ export default function FeatureFlagsPage() {
                     }
                     className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value={FeatureFlagType.BOOLEAN}>Boolean (On/Off)</option>
-                    <option value={FeatureFlagType.PERCENTAGE}>Percentage Rollout</option>
-                    <option value={FeatureFlagType.USER_LIST}>User/Role List</option>
-                    <option value={FeatureFlagType.ENVIRONMENT}>Environment Based</option>
+                    <option value={FeatureFlagType.BOOLEAN}>{t('adminFeatureFlags', 'typeBoolean')}</option>
+                    <option value={FeatureFlagType.PERCENTAGE}>{t('adminFeatureFlags', 'typePercentage')}</option>
+                    <option value={FeatureFlagType.USER_LIST}>{t('adminFeatureFlags', 'typeUserList')}</option>
+                    <option value={FeatureFlagType.ENVIRONMENT}>{t('adminFeatureFlags', 'typeEnvironment')}</option>
                   </select>
                 </div>
 
                 <Switch
-                  label="Initially Enabled"
+                  label={t('adminFeatureFlags', 'initiallyEnabled')}
                   checked={formData.enabled}
                   onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
                 />
@@ -461,7 +461,7 @@ export default function FeatureFlagsPage() {
                 {formData.type === FeatureFlagType.PERCENTAGE && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Rollout Percentage
+                      {t('adminFeatureFlags', 'rolloutPercentage')}
                     </label>
                     <input
                       type="range"
@@ -480,38 +480,38 @@ export default function FeatureFlagsPage() {
                 {formData.type === FeatureFlagType.USER_LIST && (
                   <>
                     <Input
-                      label="Allowed Users"
+                      label={t('adminFeatureFlags', 'labelAllowedUsers')}
                       placeholder="user-id-1, user-id-2"
                       value={formData.allowedUsers}
                       onChange={(e) => setFormData({ ...formData, allowedUsers: e.target.value })}
-                      hint="Comma-separated list of user IDs"
+                      hint={t('adminFeatureFlags', 'hintAllowedUsers')}
                     />
                     <Input
-                      label="Allowed Roles"
+                      label={t('adminFeatureFlags', 'labelAllowedRoles')}
                       placeholder="ADMIN, ARTISAN"
                       value={formData.allowedRoles}
                       onChange={(e) => setFormData({ ...formData, allowedRoles: e.target.value })}
-                      hint="Comma-separated list of roles"
+                      hint={t('adminFeatureFlags', 'hintAllowedRoles')}
                     />
                   </>
                 )}
 
                 <Input
-                  label="Tags"
+                  label={t('adminFeatureFlags', 'labelTags')}
                   placeholder="beta, experimental, frontend"
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  hint="Comma-separated list of tags"
+                  hint={t('adminFeatureFlags', 'hintTags')}
                 />
                 <Input
-                  label="Owner"
-                  placeholder="team-name or email"
+                  label={t('adminFeatureFlags', 'labelOwner')}
+                  placeholder={t('adminFeatureFlags', 'placeholderOwner')}
                   value={formData.owner}
                   onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
                 />
                 <Textarea
-                  label="Notes"
-                  placeholder="Additional notes..."
+                  label={t('adminFeatureFlags', 'labelNotes')}
+                  placeholder={t('adminFeatureFlags', 'placeholderNotes')}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
@@ -524,14 +524,14 @@ export default function FeatureFlagsPage() {
                   }}
                   className="px-4 py-2 text-muted-foreground hover:text-foreground"
                 >
-                  Cancel
+                  {t('adminFeatureFlags', 'cancel')}
                 </button>
                 <button
                   onClick={handleCreateFlag}
                   disabled={!formData.key || !formData.name || actionLoading === 'create'}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {actionLoading === 'create' ? 'Creating...' : 'Create Flag'}
+                  {actionLoading === 'create' ? t('adminFeatureFlags', 'creating') : t('adminFeatureFlags', 'createFlag')}
                 </button>
               </div>
             </div>

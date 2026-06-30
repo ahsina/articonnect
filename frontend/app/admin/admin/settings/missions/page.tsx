@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, MissionSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultMissionSettings: MissionSettings = {
   minMissionValue: 1000,
@@ -47,6 +48,7 @@ const defaultMissionSettings: MissionSettings = {
 };
 
 export default function MissionSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<MissionSettings>(defaultMissionSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,11 +78,11 @@ export default function MissionSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateMissionSettings(settings);
-      setSuccess('Mission settings saved successfully');
+      setSuccess(t('adminSettingsMissions', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving mission settings:', err);
-      setError('Failed to save mission settings');
+      setError(t('adminSettingsMissions', 'saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -93,7 +95,7 @@ export default function MissionSettingsPage() {
   const addCategory = () => {
     if (!newCategory.trim()) return;
     if (settings.categories.includes(newCategory.trim())) {
-      setError('Category already exists');
+      setError(t('adminSettingsMissions', 'categoryExists'));
       return;
     }
     setSettings((prev) => ({
@@ -139,7 +141,7 @@ export default function MissionSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsMissions', 'dismiss')}
           </button>
         </div>
       )}
@@ -152,14 +154,14 @@ export default function MissionSettingsPage() {
       {/* Mission Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>Mission Limits</CardTitle>
-          <CardDescription>Configure mission value and quantity limits</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'missionLimitsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'missionLimitsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Min Mission Value (cents)
+                {t('adminSettingsMissions', 'minMissionValue')}
               </label>
               <input
                 type="number"
@@ -174,7 +176,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Mission Value (cents)
+                {t('adminSettingsMissions', 'maxMissionValue')}
               </label>
               <input
                 type="number"
@@ -189,7 +191,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Active Per Client
+                {t('adminSettingsMissions', 'maxActivePerClient')}
               </label>
               <input
                 type="number"
@@ -203,7 +205,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Active Per Artisan
+                {t('adminSettingsMissions', 'maxActivePerArtisan')}
               </label>
               <input
                 type="number"
@@ -222,8 +224,8 @@ export default function MissionSettingsPage() {
       {/* Auto-Matching */}
       <Card>
         <CardHeader>
-          <CardTitle>Auto-Matching</CardTitle>
-          <CardDescription>Configure automatic artisan matching</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'autoMatchingTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'autoMatchingDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -233,14 +235,14 @@ export default function MissionSettingsPage() {
               onChange={(e) => updateSetting('autoMatchingEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable auto-matching</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsMissions', 'enableAutoMatching')}</span>
           </label>
 
           {settings.autoMatchingEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Search Radius (km)
+                  {t('adminSettingsMissions', 'searchRadius')}
                 </label>
                 <input
                   type="number"
@@ -252,7 +254,7 @@ export default function MissionSettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Max Candidates
+                  {t('adminSettingsMissions', 'maxCandidates')}
                 </label>
                 <input
                   type="number"
@@ -272,14 +274,14 @@ export default function MissionSettingsPage() {
       {/* Quotation & Negotiation */}
       <Card>
         <CardHeader>
-          <CardTitle>Quotation &amp; Negotiation</CardTitle>
-          <CardDescription>Configure quotation and negotiation rules</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'quotationNegotiationTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'quotationNegotiationDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Quotation Validity (days)
+                {t('adminSettingsMissions', 'quotationValidity')}
               </label>
               <input
                 type="number"
@@ -290,7 +292,7 @@ export default function MissionSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Max Revisions</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsMissions', 'maxRevisions')}</label>
               <input
                 type="number"
                 value={settings.quotationMaxRevisions}
@@ -301,7 +303,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Negotiation Timeout (hours)
+                {t('adminSettingsMissions', 'negotiationTimeout')}
               </label>
               <input
                 type="number"
@@ -321,11 +323,11 @@ export default function MissionSettingsPage() {
                 onChange={(e) => updateSetting('negotiationEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable negotiation</span>
+              <span className="text-sm text-foreground">{t('adminSettingsMissions', 'enableNegotiation')}</span>
             </label>
             {settings.negotiationEnabled && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Max rounds:</span>
+                <span className="text-sm text-muted-foreground">{t('adminSettingsMissions', 'maxRounds')}</span>
                 <input
                   type="number"
                   value={settings.maxNegotiationRounds}
@@ -343,8 +345,8 @@ export default function MissionSettingsPage() {
       {/* Validation Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Validation Settings</CardTitle>
-          <CardDescription>Configure mission completion validation</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'validationTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'validationDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -355,7 +357,7 @@ export default function MissionSettingsPage() {
                 onChange={(e) => updateSetting('autoValidationEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Enable auto-validation</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsMissions', 'enableAutoValidation')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -364,14 +366,14 @@ export default function MissionSettingsPage() {
                 onChange={(e) => updateSetting('depositRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require deposit</span>
+              <span className="text-sm text-foreground">{t('adminSettingsMissions', 'requireDeposit')}</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Auto-validation Delay (hours)
+                {t('adminSettingsMissions', 'autoValidationDelay')}
               </label>
               <input
                 type="number"
@@ -385,7 +387,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Client Validation Window (hours)
+                {t('adminSettingsMissions', 'clientValidationWindow')}
               </label>
               <input
                 type="number"
@@ -399,7 +401,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Deposit Refundable Until (hours)
+                {t('adminSettingsMissions', 'depositRefundableUntil')}
               </label>
               <input
                 type="number"
@@ -418,8 +420,8 @@ export default function MissionSettingsPage() {
       {/* Rescheduling & Cancellation */}
       <Card>
         <CardHeader>
-          <CardTitle>Rescheduling &amp; Cancellation</CardTitle>
-          <CardDescription>Configure rescheduling and cancellation policies</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'reschedulingTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'reschedulingDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -430,14 +432,14 @@ export default function MissionSettingsPage() {
                 onChange={(e) => updateSetting('allowRescheduling', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Allow rescheduling</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsMissions', 'allowRescheduling')}</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Reschedules Per Mission
+                {t('adminSettingsMissions', 'maxReschedulesPerMission')}
               </label>
               <input
                 type="number"
@@ -451,7 +453,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Rescheduling Deadline (hours)
+                {t('adminSettingsMissions', 'reschedulingDeadline')}
               </label>
               <input
                 type="number"
@@ -465,7 +467,7 @@ export default function MissionSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Cancellation Policy
+                {t('adminSettingsMissions', 'cancellationPolicy')}
               </label>
               <select
                 value={settings.cancellationPolicy}
@@ -477,9 +479,9 @@ export default function MissionSettingsPage() {
                 }
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               >
-                <option value="FLEXIBLE">Flexible</option>
-                <option value="MODERATE">Moderate</option>
-                <option value="STRICT">Strict</option>
+                <option value="FLEXIBLE">{t('adminSettingsMissions', 'policyFlexible')}</option>
+                <option value="MODERATE">{t('adminSettingsMissions', 'policyModerate')}</option>
+                <option value="STRICT">{t('adminSettingsMissions', 'policyStrict')}</option>
               </select>
             </div>
           </div>
@@ -489,13 +491,13 @@ export default function MissionSettingsPage() {
       {/* Working Hours */}
       <Card>
         <CardHeader>
-          <CardTitle>Working Hours</CardTitle>
-          <CardDescription>Configure allowed mission scheduling times</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'workingHoursTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'workingHoursDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Start Time</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsMissions', 'startTime')}</label>
               <input
                 type="time"
                 value={settings.workingHoursStart}
@@ -504,7 +506,7 @@ export default function MissionSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">End Time</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsMissions', 'endTime')}</label>
               <input
                 type="time"
                 value={settings.workingHoursEnd}
@@ -522,7 +524,7 @@ export default function MissionSettingsPage() {
                 onChange={(e) => updateSetting('weekendMissionsAllowed', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Allow weekend missions</span>
+              <span className="text-sm text-foreground">{t('adminSettingsMissions', 'allowWeekendMissions')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -531,7 +533,7 @@ export default function MissionSettingsPage() {
                 onChange={(e) => updateSetting('holidayMissionsAllowed', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Allow holiday missions</span>
+              <span className="text-sm text-foreground">{t('adminSettingsMissions', 'allowHolidayMissions')}</span>
             </label>
           </div>
         </CardContent>
@@ -540,8 +542,8 @@ export default function MissionSettingsPage() {
       {/* Categories */}
       <Card>
         <CardHeader>
-          <CardTitle>Mission Categories</CardTitle>
-          <CardDescription>Manage available mission categories</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'categoriesTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'categoriesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-4">
@@ -565,7 +567,7 @@ export default function MissionSettingsPage() {
               type="text"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="New category name"
+              placeholder={t('adminSettingsMissions', 'newCategoryPlaceholder')}
               className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               onKeyDown={(e) => e.key === 'Enter' && addCategory()}
             />
@@ -573,7 +575,7 @@ export default function MissionSettingsPage() {
               onClick={addCategory}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              Add
+              {t('adminSettingsMissions', 'add')}
             </button>
           </div>
         </CardContent>
@@ -582,8 +584,8 @@ export default function MissionSettingsPage() {
       {/* Urgency Levels */}
       <Card>
         <CardHeader>
-          <CardTitle>Urgency Levels</CardTitle>
-          <CardDescription>Configure urgency levels and their multipliers</CardDescription>
+          <CardTitle>{t('adminSettingsMissions', 'urgencyLevelsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsMissions', 'urgencyLevelsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -593,11 +595,11 @@ export default function MissionSettingsPage() {
                   type="text"
                   value={level.name}
                   onChange={(e) => updateUrgencyLevel(index, 'name', e.target.value)}
-                  placeholder="Level name"
+                  placeholder={t('adminSettingsMissions', 'levelNamePlaceholder')}
                   className="w-32 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
                 <div>
-                  <label className="block text-xs text-muted-foreground">Multiplier</label>
+                  <label className="block text-xs text-muted-foreground">{t('adminSettingsMissions', 'multiplier')}</label>
                   <input
                     type="number"
                     value={level.multiplier}
@@ -610,7 +612,7 @@ export default function MissionSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground">Max Response (hours)</label>
+                  <label className="block text-xs text-muted-foreground">{t('adminSettingsMissions', 'maxResponse')}</label>
                   <input
                     type="number"
                     value={level.maxResponseHours}
@@ -634,7 +636,7 @@ export default function MissionSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Mission Settings'}
+          {saving ? t('adminSettingsMissions', 'saving') : t('adminSettingsMissions', 'saveButton')}
         </button>
       </div>
     </div>

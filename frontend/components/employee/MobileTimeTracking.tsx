@@ -71,7 +71,7 @@ export function MobileTimeTracking() {
         setStatus(data);
       }
     } catch (err) {
-      setError('Erreur de connexion');
+      setError(t('mobileTimeTracking', 'connectionError'));
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export function MobileTimeTracking() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Erreur lors du pointage');
+        throw new Error(data.message || t('mobileTimeTracking', 'clockError'));
       }
 
       await fetchStatus();
@@ -130,7 +130,7 @@ export function MobileTimeTracking() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Erreur lors du pointage');
+        throw new Error(data.message || t('mobileTimeTracking', 'clockError'));
       }
 
       await fetchStatus();
@@ -154,7 +154,7 @@ export function MobileTimeTracking() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Erreur');
+        throw new Error(data.message || t('mobileTimeTracking', 'error'));
       }
 
       await fetchStatus();
@@ -177,7 +177,7 @@ export function MobileTimeTracking() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Erreur');
+        throw new Error(data.message || t('mobileTimeTracking', 'error'));
       }
 
       await fetchStatus();
@@ -237,14 +237,14 @@ export function MobileTimeTracking() {
           {/* Current Status */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <div className="text-sm text-muted-foreground uppercase tracking-wide">Statut</div>
+              <div className="text-sm text-muted-foreground uppercase tracking-wide">{t('mobileTimeTracking', 'status')}</div>
               <div className="text-2xl font-bold mt-1">
                 {status?.isOnBreak ? (
-                  <span className="text-yellow-400">En pause</span>
+                  <span className="text-yellow-400">{t('mobileTimeTracking', 'onBreak')}</span>
                 ) : status?.isWorking ? (
-                  <span className="text-green-400">En service</span>
+                  <span className="text-green-400">{t('mobileTimeTracking', 'working')}</span>
                 ) : (
-                  <span className="text-muted-foreground">Hors service</span>
+                  <span className="text-muted-foreground">{t('mobileTimeTracking', 'offDuty')}</span>
                 )}
               </div>
             </div>
@@ -257,13 +257,13 @@ export function MobileTimeTracking() {
           {/* Today's Stats */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-700/50 rounded-xl p-4">
-              <div className="text-sm text-muted-foreground">Travaille</div>
+              <div className="text-sm text-muted-foreground">{t('mobileTimeTracking', 'worked')}</div>
               <div className="text-2xl font-bold text-blue-400">
                 {formatTime(status?.todayWorkedMinutes || 0)}
               </div>
             </div>
             <div className="bg-gray-700/50 rounded-xl p-4">
-              <div className="text-sm text-muted-foreground">Pause</div>
+              <div className="text-sm text-muted-foreground">{t('mobileTimeTracking', 'break')}</div>
               <div className="text-2xl font-bold text-yellow-400">
                 {formatTime(status?.todayBreakMinutes || 0)}
               </div>
@@ -293,7 +293,7 @@ export function MobileTimeTracking() {
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
-                    Pointer l'entree
+                    {t('mobileTimeTracking', 'clockIn')}
                   </>
                 )}
               </button>
@@ -313,7 +313,7 @@ export function MobileTimeTracking() {
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Prendre une pause
+                        {t('mobileTimeTracking', 'takeBreak')}
                       </>
                     )}
                   </button>
@@ -331,7 +331,7 @@ export function MobileTimeTracking() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Fin de pause
+                        {t('mobileTimeTracking', 'endBreak')}
                       </>
                     )}
                   </button>
@@ -350,7 +350,7 @@ export function MobileTimeTracking() {
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      Pointer la sortie
+                      {t('mobileTimeTracking', 'clockOut')}
                     </>
                   )}
                 </button>
@@ -365,7 +365,7 @@ export function MobileTimeTracking() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Localisation activee
+              {t('mobileTimeTracking', 'locationEnabled')}
             </div>
           )}
         </div>
@@ -373,7 +373,7 @@ export function MobileTimeTracking() {
 
       {/* Week Summary */}
       <div className="px-4 mt-6">
-        <h3 className="text-lg font-semibold mb-3">Cette semaine</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('mobileTimeTracking', 'thisWeek')}</h3>
         <div className="grid grid-cols-7 gap-1">
           {weekSummary.map((day) => (
             <div
@@ -399,7 +399,7 @@ export function MobileTimeTracking() {
 
         {/* Week Total */}
         <div className="mt-4 bg-gray-800 rounded-xl p-4 flex justify-between items-center">
-          <span className="text-muted-foreground">Total semaine</span>
+          <span className="text-muted-foreground">{t('mobileTimeTracking', 'weekTotal')}</span>
           <span className="text-xl font-bold">
             {formatTime(weekSummary.reduce((sum, d) => sum + d.workDuration, 0))}
             <span className="text-sm text-muted-foreground ml-1">/ 35h</span>
@@ -418,7 +418,7 @@ export function MobileTimeTracking() {
                 </svg>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Entree a</div>
+                <div className="text-sm text-muted-foreground">{t('mobileTimeTracking', 'clockedInAt')}</div>
                 <div className="font-semibold">
                   {new Date(status.clockedInAt).toLocaleTimeString('fr-FR', {
                     hour: '2-digit',

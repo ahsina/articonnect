@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, ContentModerationSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultContentModerationSettings: ContentModerationSettings = {
   autoModerationEnabled: true,
@@ -29,6 +30,7 @@ const defaultContentModerationSettings: ContentModerationSettings = {
 };
 
 export default function ContentModerationPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<ContentModerationSettings>(
     defaultContentModerationSettings,
   );
@@ -61,11 +63,11 @@ export default function ContentModerationPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateContentModerationSettings(settings);
-      setSuccess('Content moderation settings saved successfully');
+      setSuccess(t('adminSettingsContent', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving content moderation settings:', err);
-      setError('Failed to save content moderation settings');
+      setError(t('adminSettingsContent', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -126,7 +128,7 @@ export default function ContentModerationPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsContent', 'dismiss')}
           </button>
         </div>
       )}
@@ -139,8 +141,8 @@ export default function ContentModerationPage() {
       {/* Auto-Moderation */}
       <Card>
         <CardHeader>
-          <CardTitle>Auto-Moderation</CardTitle>
-          <CardDescription>Configure automatic content moderation</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'autoModerationTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'autoModerationDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <label className="flex items-center gap-3">
@@ -151,9 +153,9 @@ export default function ContentModerationPage() {
               className="w-5 h-5 text-primary rounded"
             />
             <div>
-              <span className="text-sm font-medium text-foreground">Enable Auto-Moderation</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsContent', 'enableAutoModeration')}</span>
               <p className="text-xs text-muted-foreground">
-                Automatically scan and moderate user-generated content
+                {t('adminSettingsContent', 'enableAutoModerationHint')}
               </p>
             </div>
           </label>
@@ -163,8 +165,8 @@ export default function ContentModerationPage() {
       {/* Profanity Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>Profanity Filter</CardTitle>
-          <CardDescription>Configure profanity detection and filtering</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'profanityFilterTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'profanityFilterDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -174,14 +176,14 @@ export default function ContentModerationPage() {
               onChange={(e) => updateSetting('profanityFilterEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Profanity Filter</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsContent', 'enableProfanityFilter')}</span>
           </label>
 
           {settings.profanityFilterEnabled && (
             <>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Filter Strength
+                  {t('adminSettingsContent', 'filterStrength')}
                 </label>
                 <select
                   value={settings.profanityFilterStrength}
@@ -193,15 +195,15 @@ export default function ContentModerationPage() {
                   }
                   className="w-48 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 >
-                  <option value="LOW">Low - Only severe profanity</option>
-                  <option value="MEDIUM">Medium - Common profanity</option>
-                  <option value="HIGH">High - All offensive words</option>
+                  <option value="LOW">{t('adminSettingsContent', 'strengthLow')}</option>
+                  <option value="MEDIUM">{t('adminSettingsContent', 'strengthMedium')}</option>
+                  <option value="HIGH">{t('adminSettingsContent', 'strengthHigh')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Custom Banned Words
+                  {t('adminSettingsContent', 'customBannedWords')}
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {settings.customBannedWords.map((word) => (
@@ -219,7 +221,7 @@ export default function ContentModerationPage() {
                     </span>
                   ))}
                   {settings.customBannedWords.length === 0 && (
-                    <span className="text-sm text-muted-foreground">No custom banned words</span>
+                    <span className="text-sm text-muted-foreground">{t('adminSettingsContent', 'noBannedWords')}</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -227,7 +229,7 @@ export default function ContentModerationPage() {
                     type="text"
                     value={newBannedWord}
                     onChange={(e) => setNewBannedWord(e.target.value)}
-                    placeholder="Add banned word"
+                    placeholder={t('adminSettingsContent', 'addBannedWordPlaceholder')}
                     className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                     onKeyDown={(e) => e.key === 'Enter' && addBannedWord()}
                   />
@@ -235,7 +237,7 @@ export default function ContentModerationPage() {
                     onClick={addBannedWord}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                   >
-                    Add
+                    {t('adminSettingsContent', 'add')}
                   </button>
                 </div>
               </div>
@@ -247,8 +249,8 @@ export default function ContentModerationPage() {
       {/* Spam Detection */}
       <Card>
         <CardHeader>
-          <CardTitle>Spam Detection</CardTitle>
-          <CardDescription>Configure spam detection settings</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'spamDetectionTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'spamDetectionDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -259,7 +261,7 @@ export default function ContentModerationPage() {
                 onChange={(e) => updateSetting('spamDetectionEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Enable Spam Detection</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsContent', 'enableSpamDetection')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -268,14 +270,14 @@ export default function ContentModerationPage() {
                 onChange={(e) => updateSetting('duplicateContentCheck', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Check for duplicate content</span>
+              <span className="text-sm text-foreground">{t('adminSettingsContent', 'checkDuplicate')}</span>
             </label>
           </div>
 
           {settings.spamDetectionEnabled && (
             <div className="w-48">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Spam Score Threshold
+                {t('adminSettingsContent', 'spamScoreThreshold')}
               </label>
               <input
                 type="number"
@@ -286,7 +288,7 @@ export default function ContentModerationPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Content with score &gt;= {settings.spamScoreThreshold} flagged as spam
+                {t('adminSettingsContent', 'spamThresholdHintBefore')} {settings.spamScoreThreshold} {t('adminSettingsContent', 'spamThresholdHintAfter')}
               </p>
             </div>
           )}
@@ -296,8 +298,8 @@ export default function ContentModerationPage() {
       {/* Image Moderation */}
       <Card>
         <CardHeader>
-          <CardTitle>Image Moderation</CardTitle>
-          <CardDescription>Configure image content moderation</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'imageModerationTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'imageModerationDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -307,12 +309,12 @@ export default function ContentModerationPage() {
               onChange={(e) => updateSetting('imagesModerationEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Image Moderation</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsContent', 'enableImageModeration')}</span>
           </label>
 
           {settings.imagesModerationEnabled && (
             <div className="w-64">
-              <label className="block text-sm font-medium text-foreground mb-1">Provider</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsContent', 'provider')}</label>
               <select
                 value={settings.imagesModerationProvider}
                 onChange={(e) => updateSetting('imagesModerationProvider', e.target.value)}
@@ -330,8 +332,8 @@ export default function ContentModerationPage() {
       {/* Link Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>Link Filter</CardTitle>
-          <CardDescription>Configure link filtering in content</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'linkFilterTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'linkFilterDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 items-center">
@@ -342,11 +344,11 @@ export default function ContentModerationPage() {
                 onChange={(e) => updateSetting('linkFilterEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Enable Link Filter</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsContent', 'enableLinkFilter')}</span>
             </label>
             {settings.linkFilterEnabled && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Max links per message:</span>
+                <span className="text-sm text-muted-foreground">{t('adminSettingsContent', 'maxLinksPerMessage')}</span>
                 <input
                   type="number"
                   value={settings.maxLinksPerMessage}
@@ -361,7 +363,7 @@ export default function ContentModerationPage() {
           {settings.linkFilterEnabled && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Allowed Domains (whitelist)
+                {t('adminSettingsContent', 'allowedDomains')}
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {settings.allowedDomains.map((domain) => (
@@ -379,7 +381,7 @@ export default function ContentModerationPage() {
                   </span>
                 ))}
                 {settings.allowedDomains.length === 0 && (
-                  <span className="text-sm text-muted-foreground">All domains allowed</span>
+                  <span className="text-sm text-muted-foreground">{t('adminSettingsContent', 'allDomainsAllowed')}</span>
                 )}
               </div>
               <div className="flex gap-2">
@@ -395,7 +397,7 @@ export default function ContentModerationPage() {
                   onClick={addAllowedDomain}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                  Add
+                  {t('adminSettingsContent', 'add')}
                 </button>
               </div>
             </div>
@@ -406,14 +408,14 @@ export default function ContentModerationPage() {
       {/* Content Length Limits */}
       <Card>
         <CardHeader>
-          <CardTitle>Content Length Limits</CardTitle>
-          <CardDescription>Configure minimum and maximum content lengths</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'contentLengthTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'contentLengthDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Min Review Length
+                {t('adminSettingsContent', 'minReviewLength')}
               </label>
               <input
                 type="number"
@@ -425,7 +427,7 @@ export default function ContentModerationPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Review Length
+                {t('adminSettingsContent', 'maxReviewLength')}
               </label>
               <input
                 type="number"
@@ -437,7 +439,7 @@ export default function ContentModerationPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Min Description
+                {t('adminSettingsContent', 'minDescription')}
               </label>
               <input
                 type="number"
@@ -449,7 +451,7 @@ export default function ContentModerationPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Description
+                {t('adminSettingsContent', 'maxDescription')}
               </label>
               <input
                 type="number"
@@ -466,8 +468,8 @@ export default function ContentModerationPage() {
       {/* Review & Approval */}
       <Card>
         <CardHeader>
-          <CardTitle>Review &amp; Approval</CardTitle>
-          <CardDescription>Configure content review and approval settings</CardDescription>
+          <CardTitle>{t('adminSettingsContent', 'reviewApprovalTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsContent', 'reviewApprovalDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
@@ -478,7 +480,7 @@ export default function ContentModerationPage() {
                 onChange={(e) => updateSetting('requireReviewForPublish', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require manual review for publishing</span>
+              <span className="text-sm text-foreground">{t('adminSettingsContent', 'requireManualReview')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -487,14 +489,14 @@ export default function ContentModerationPage() {
                 onChange={(e) => updateSetting('autoApproveVerifiedUsers', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Auto-approve verified users</span>
+              <span className="text-sm text-foreground">{t('adminSettingsContent', 'autoApproveVerified')}</span>
             </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Flags to Trigger Review
+                {t('adminSettingsContent', 'flagsToTriggerReview')}
               </label>
               <input
                 type="number"
@@ -506,7 +508,7 @@ export default function ContentModerationPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Flags to Auto-Hide
+                {t('adminSettingsContent', 'flagsToAutoHide')}
               </label>
               <input
                 type="number"
@@ -518,7 +520,7 @@ export default function ContentModerationPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Appeal Window (days)
+                {t('adminSettingsContent', 'appealWindow')}
               </label>
               <input
                 type="number"
@@ -539,7 +541,7 @@ export default function ContentModerationPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Content Moderation Settings'}
+          {saving ? t('adminSettingsContent', 'saving') : t('adminSettingsContent', 'saveButton')}
         </button>
       </div>
     </div>

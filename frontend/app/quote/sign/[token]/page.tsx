@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ElectronicSignature } from '@/components/quote/ElectronicSignature';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface QuoteLineItem {
   id: string;
@@ -48,6 +49,7 @@ interface SignatureData {
 }
 
 export default function SignQuotePage() {
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
@@ -63,7 +65,7 @@ export default function SignQuotePage() {
         const response = await fetch(`/api/sign/${token}`);
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || 'Lien de signature invalide ou expiré');
+          throw new Error(errorData.message || t('quoteSign', 'invalidLinkError'));
         }
         const quoteData = await response.json();
         setData(quoteData);
@@ -103,7 +105,7 @@ export default function SignQuotePage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Chargement du devis...</p>
+          <p className="mt-4 text-muted-foreground">{t('quoteSign', 'loading')}</p>
         </div>
       </div>
     );
@@ -118,13 +120,13 @@ export default function SignQuotePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-foreground mb-2">Lien invalide</h1>
+          <h1 className="text-xl font-bold text-foreground mb-2">{t('quoteSign', 'invalidLinkTitle')}</h1>
           <p className="text-muted-foreground mb-6">{error}</p>
           <a
             href="/"
             className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Retour à l'accueil
+            {t('quoteSign', 'backHome')}
           </a>
         </div>
       </div>
@@ -140,12 +142,12 @@ export default function SignQuotePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-foreground mb-2">Devis signé avec succès</h1>
+          <h1 className="text-xl font-bold text-foreground mb-2">{t('quoteSign', 'signedTitle')}</h1>
           <p className="text-muted-foreground mb-6">
-            Merci ! Votre signature a été enregistrée. L'artisan sera notifié de votre acceptation.
+            {t('quoteSign', 'signedMessage')}
           </p>
           <p className="text-sm text-muted-foreground">
-            Un email de confirmation vous sera envoyé.
+            {t('quoteSign', 'signedEmailNote')}
           </p>
         </div>
       </div>
@@ -162,10 +164,10 @@ export default function SignQuotePage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-foreground">
-            Signature de devis
+            {t('quoteSign', 'pageTitle')}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Devis n° {quote.quoteNumber}
+            {t('quoteSign', 'quoteNumber')} {quote.quoteNumber}
           </p>
         </div>
 
@@ -173,7 +175,7 @@ export default function SignQuotePage() {
         {message && (
           <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
             <p className="text-primary">
-              <span className="font-medium">Message de l'artisan :</span> {message}
+              <span className="font-medium">{t('quoteSign', 'artisanMessage')}</span> {message}
             </p>
           </div>
         )}
@@ -182,13 +184,13 @@ export default function SignQuotePage() {
           {/* Quote Details */}
           <div className="bg-card rounded-xl shadow-lg overflow-hidden">
             <div className="bg-gradient-to-r from-gray-700 to-gray-900 px-6 py-4">
-              <h2 className="text-lg font-bold text-white">Détails du devis</h2>
+              <h2 className="text-lg font-bold text-white">{t('quoteSign', 'quoteDetails')}</h2>
             </div>
 
             <div className="p-6">
               {/* Artisan info */}
               <div className="mb-6 pb-4 border-b border-border">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Artisan</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('quoteSign', 'artisan')}</h3>
                 <p className="font-semibold text-foreground">
                   {quote.artisan.artisanProfile?.companyName || `${quote.artisan.firstName} ${quote.artisan.lastName}`}
                 </p>
@@ -211,7 +213,7 @@ export default function SignQuotePage() {
 
               {/* Line items */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Prestations</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">{t('quoteSign', 'lineItems')}</h3>
                 <div className="space-y-3">
                   {quote.lineItems.map((item) => (
                     <div key={item.id} className="flex justify-between items-start">
@@ -232,15 +234,15 @@ export default function SignQuotePage() {
               {/* Totals */}
               <div className="pt-4 border-t border-border space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Sous-total HT</span>
+                  <span className="text-muted-foreground">{t('quoteSign', 'subtotal')}</span>
                   <span className="text-foreground">{formatCurrency(quote.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">TVA ({quote.taxRate}%)</span>
+                  <span className="text-muted-foreground">{t('quoteSign', 'vat')} ({quote.taxRate}%)</span>
                   <span className="text-foreground">{formatCurrency(quote.taxAmount)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                  <span className="text-foreground">Total TTC</span>
+                  <span className="text-foreground">{t('quoteSign', 'totalInclTax')}</span>
                   <span className="text-primary">{formatCurrency(quote.totalAmount)}</span>
                 </div>
               </div>
@@ -248,10 +250,10 @@ export default function SignQuotePage() {
               {/* Validity */}
               <div className="mt-6 pt-4 border-t border-border">
                 <p className="text-sm text-muted-foreground">
-                  Valide jusqu'au : <span className="font-medium text-foreground">{formatDate(quote.validUntil)}</span>
+                  {t('quoteSign', 'validUntil')} <span className="font-medium text-foreground">{formatDate(quote.validUntil)}</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Lien de signature expire le : {formatDate(expiresAt)}
+                  {t('quoteSign', 'linkExpires')} {formatDate(expiresAt)}
                 </p>
               </div>
             </div>
@@ -270,13 +272,13 @@ export default function SignQuotePage() {
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>
-            Ce devis est fourni par{' '}
+            {t('quoteSign', 'providedBy')}{' '}
             <span className="font-medium">
               {quote.artisan.artisanProfile?.companyName || `${quote.artisan.firstName} ${quote.artisan.lastName}`}
             </span>
           </p>
           <p className="mt-2">
-            Propulsé par <span className="font-medium text-primary">Krafolt</span>
+            {t('quoteSign', 'poweredBy')} <span className="font-medium text-primary">Krafolt</span>
           </p>
         </div>
       </div>

@@ -279,7 +279,7 @@ function ArtisanProfileContent() {
                   <Input
                     value={setupForm.companyName}
                     onChange={(e) => setSetupForm({ ...setupForm, companyName: e.target.value })}
-                    placeholder="Ex: Plomberie Martin"
+                    placeholder={t('artisanProfile', 'companyNamePlaceholder')}
                     required
                   />
                 </div>
@@ -317,7 +317,7 @@ function ArtisanProfileContent() {
                     onChange={(e) => setSetupForm({ ...setupForm, description: e.target.value })}
                     rows={4}
                     className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Describe your business and experience..."
+                    placeholder={t('artisanProfile', 'descriptionPlaceholder')}
                   />
                 </div>
               </CardContent>
@@ -485,7 +485,7 @@ function ArtisanProfileContent() {
             onClick={handleToggleAvailability}
             className={profile.available ? 'bg-green-600 hover:bg-green-700' : ''}
           >
-            {profile.available ? '✓ Available' : 'Unavailable'}
+            {profile.available ? `✓ ${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
           </Button>
         </div>
       </div>
@@ -497,7 +497,7 @@ function ArtisanProfileContent() {
             <div className="text-center">
               <div className="text-3xl font-bold text-primary">{profile.rating.toFixed(1)}</div>
               <div className="text-sm text-muted-foreground">{t('artisan', 'rating') || 'Rating'}</div>
-              <div className="text-xs text-muted-foreground">{profile.reviewCount} reviews</div>
+              <div className="text-xs text-muted-foreground">{profile.reviewCount} {t('artisanProfile', 'reviews')}</div>
             </div>
           </CardContent>
         </Card>
@@ -579,7 +579,7 @@ function ArtisanProfileContent() {
                 <span className="text-muted-foreground">
                   {t('artisan', 'baseAddress') || 'Base Address'}
                 </span>
-                <span className="font-medium">{profile.baseAddress || 'Not set'}</span>
+                <span className="font-medium">{profile.baseAddress || t('artisanProfile', 'notSet')}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-muted-foreground">{t('artisan', 'hourlyRate') || 'Hourly Rate'}</span>
@@ -763,8 +763,8 @@ function ArtisanProfileContent() {
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
                   <div className="text-3xl opacity-50">🌟</div>
                   <div className="flex-1">
-                    <div className="font-medium text-foreground">50 Missions</div>
-                    <div className="text-sm text-muted-foreground">Complete 50 missions</div>
+                    <div className="font-medium text-foreground">{t('artisanProfile', 'badge50Missions')}</div>
+                    <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badge50MissionsDesc')}</div>
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min((profile?.missionCount || 0) / 50 * 100, 100)}%` }} />
                     </div>
@@ -774,8 +774,8 @@ function ArtisanProfileContent() {
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
                   <div className="text-3xl opacity-50">💎</div>
                   <div className="flex-1">
-                    <div className="font-medium text-foreground">Perfect Rating</div>
-                    <div className="text-sm text-muted-foreground">Maintain 5.0 rating for 30 days</div>
+                    <div className="font-medium text-foreground">{t('artisanProfile', 'badgePerfectRating')}</div>
+                    <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badgePerfectRatingDesc')}</div>
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-purple-600 rounded-full" style={{ width: profile?.rating === 5 ? '100%' : '0%' }} />
                     </div>
@@ -784,8 +784,8 @@ function ArtisanProfileContent() {
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
                   <div className="text-3xl opacity-50">🔥</div>
                   <div className="flex-1">
-                    <div className="font-medium text-foreground">Verified Expert</div>
-                    <div className="text-sm text-muted-foreground">Upload 5 certifications</div>
+                    <div className="font-medium text-foreground">{t('artisanProfile', 'badgeVerifiedExpert')}</div>
+                    <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badgeVerifiedExpertDesc')}</div>
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-yellow-600 rounded-full" style={{ width: `${Math.min((profile?.certifications?.length || 0) / 5 * 100, 100)}%` }} />
                     </div>

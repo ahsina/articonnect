@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, UserProfileSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultUserProfileSettings: UserProfileSettings = {
   requireEmailVerification: true,
@@ -44,6 +45,7 @@ const defaultUserProfileSettings: UserProfileSettings = {
 };
 
 export default function UserSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<UserProfileSettings>(defaultUserProfileSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,11 +74,11 @@ export default function UserSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateUserSettings(settings);
-      setSuccess('User settings saved successfully');
+      setSuccess(t('adminSettingsUsers', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving user settings:', err);
-      setError('Failed to save user settings');
+      setError(t('adminSettingsUsers', 'saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -141,7 +143,7 @@ export default function UserSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsUsers', 'dismiss')}
           </button>
         </div>
       )}
@@ -154,8 +156,8 @@ export default function UserSettingsPage() {
       {/* Account Verification */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Verification</CardTitle>
-          <CardDescription>Configure verification requirements for accounts</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'accountVerifyTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'accountVerifyDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -166,7 +168,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('requireEmailVerification', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require email verification</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requireEmailVerification')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -175,7 +177,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('requirePhoneVerification', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require phone verification</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requirePhoneVerification')}</span>
             </label>
           </div>
         </CardContent>
@@ -184,14 +186,14 @@ export default function UserSettingsPage() {
       {/* Profile Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>Configure user profile options</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'profileSettingsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'profileSettingsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Display Name Max Length
+                {t('adminSettingsUsers', 'displayNameMaxLength')}
               </label>
               <input
                 type="number"
@@ -202,7 +204,7 @@ export default function UserSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Bio Max Length</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsUsers', 'bioMaxLength')}</label>
               <input
                 type="number"
                 value={settings.bioMaxLength}
@@ -213,7 +215,7 @@ export default function UserSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Username Changes/Year
+                {t('adminSettingsUsers', 'usernameChangesPerYear')}
               </label>
               <input
                 type="number"
@@ -233,7 +235,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('allowUsernameChange', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Allow username changes</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'allowUsernameChanges')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -242,7 +244,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('profilePhotoRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require profile photo</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requireProfilePhoto')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -251,7 +253,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('profilePhotoModeration', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Moderate profile photos</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'moderateProfilePhotos')}</span>
             </label>
           </div>
 
@@ -263,7 +265,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('showOnlineStatus', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Show online status</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'showOnlineStatus')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -272,7 +274,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('showLastActive', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Show last active</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'showLastActive')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -281,7 +283,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('allowAnonymousProfiles', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Allow anonymous profiles</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'allowAnonymousProfiles')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -290,7 +292,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('allowProfileHiding', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Allow profile hiding</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'allowProfileHiding')}</span>
             </label>
           </div>
         </CardContent>
@@ -299,8 +301,8 @@ export default function UserSettingsPage() {
       {/* Artisan Requirements */}
       <Card>
         <CardHeader>
-          <CardTitle>Artisan Requirements</CardTitle>
-          <CardDescription>Configure requirements for artisan profiles</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'artisanReqTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'artisanReqDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
@@ -311,7 +313,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateArtisanReq('businessVerificationRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Business verification required</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'businessVerificationRequired')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -320,7 +322,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateArtisanReq('insuranceRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Insurance required</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'insuranceRequired')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -329,14 +331,14 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateArtisanReq('portfolioRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Portfolio required</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'portfolioRequired')}</span>
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Minimum Certifications
+                {t('adminSettingsUsers', 'minimumCertifications')}
               </label>
               <input
                 type="number"
@@ -348,7 +350,7 @@ export default function UserSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Minimum Portfolio Items
+                {t('adminSettingsUsers', 'minimumPortfolioItems')}
               </label>
               <input
                 type="number"
@@ -365,8 +367,8 @@ export default function UserSettingsPage() {
       {/* Client Requirements */}
       <Card>
         <CardHeader>
-          <CardTitle>Client Requirements</CardTitle>
-          <CardDescription>Configure requirements for client profiles</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'clientReqTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'clientReqDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -377,7 +379,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateClientReq('addressRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Address required</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'addressRequired')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -386,7 +388,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateClientReq('phoneRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Phone required</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'phoneRequired')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -395,7 +397,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateClientReq('identityVerificationRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Identity verification required</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'identityVerificationRequired')}</span>
             </label>
           </div>
         </CardContent>
@@ -404,13 +406,13 @@ export default function UserSettingsPage() {
       {/* Password Policy */}
       <Card>
         <CardHeader>
-          <CardTitle>Password Policy</CardTitle>
-          <CardDescription>Configure password requirements</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'passwordPolicyTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'passwordPolicyDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Minimum Length</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsUsers', 'minimumLength')}</label>
               <input
                 type="number"
                 value={settings.passwordMinLength}
@@ -422,7 +424,7 @@ export default function UserSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Password Expiry (days, 0 = never)
+                {t('adminSettingsUsers', 'passwordExpiry')}
               </label>
               <input
                 type="number"
@@ -442,7 +444,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('passwordRequireUppercase', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require uppercase</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requireUppercase')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -451,7 +453,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('passwordRequireLowercase', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require lowercase</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requireLowercase')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -460,7 +462,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('passwordRequireNumbers', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require numbers</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requireNumbers')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -469,7 +471,7 @@ export default function UserSettingsPage() {
                 onChange={(e) => updateSetting('passwordRequireSymbols', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Require symbols</span>
+              <span className="text-sm text-foreground">{t('adminSettingsUsers', 'requireSymbols')}</span>
             </label>
           </div>
         </CardContent>
@@ -478,14 +480,14 @@ export default function UserSettingsPage() {
       {/* Session & 2FA */}
       <Card>
         <CardHeader>
-          <CardTitle>Session &amp; Two-Factor Authentication</CardTitle>
-          <CardDescription>Configure session and 2FA settings</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'sessionTwoFactorTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'sessionTwoFactorDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Session Timeout (minutes)
+                {t('adminSettingsUsers', 'sessionTimeout')}
               </label>
               <input
                 type="number"
@@ -497,7 +499,7 @@ export default function UserSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Concurrent Sessions
+                {t('adminSettingsUsers', 'maxConcurrentSessions')}
               </label>
               <input
                 type="number"
@@ -518,7 +520,7 @@ export default function UserSettingsPage() {
                 className="w-4 h-4 text-primary rounded"
               />
               <span className="text-sm font-medium text-foreground">
-                Require Two-Factor Authentication
+                {t('adminSettingsUsers', 'requireTwoFactor')}
               </span>
             </label>
 
@@ -542,8 +544,8 @@ export default function UserSettingsPage() {
       {/* Account Deletion */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Deletion</CardTitle>
-          <CardDescription>Configure account deletion options</CardDescription>
+          <CardTitle>{t('adminSettingsUsers', 'accountDeletionTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsUsers', 'accountDeletionDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -553,13 +555,13 @@ export default function UserSettingsPage() {
               onChange={(e) => updateSetting('accountDeletionEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Allow account deletion</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsUsers', 'allowAccountDeletion')}</span>
           </label>
 
           {settings.accountDeletionEnabled && (
             <div className="w-48">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Cooldown Period (days)
+                {t('adminSettingsUsers', 'cooldownPeriod')}
               </label>
               <input
                 type="number"
@@ -570,7 +572,7 @@ export default function UserSettingsPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-muted-foreground">Time before deletion is permanent</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsUsers', 'timeBeforePermanent')}</p>
             </div>
           )}
         </CardContent>
@@ -583,7 +585,7 @@ export default function UserSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save User Settings'}
+          {saving ? t('adminSettingsUsers', 'saving') : t('adminSettingsUsers', 'saveButton')}
         </button>
       </div>
     </div>

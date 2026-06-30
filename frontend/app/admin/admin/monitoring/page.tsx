@@ -41,7 +41,7 @@ export default function MonitoringPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load monitoring data');
+        setError(t('adminMonitoring', 'loadError'));
       }
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ export default function MonitoringPage() {
   if (!dashboard || !health) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{error || 'Failed to load data'}</div>
+        <div className="text-red-600">{error || t('adminMonitoring', 'loadDataError')}</div>
       </div>
     );
   }
@@ -112,12 +112,12 @@ export default function MonitoringPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← Back
+              ← {t('adminMonitoring', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">System Monitoring</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminMonitoring', 'title')}</h1>
               <p className="text-muted-foreground mt-1">
-                Real-time platform health and CRON job metrics
+                {t('adminMonitoring', 'subtitle')}
               </p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function MonitoringPage() {
             disabled={refreshing}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
           >
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? t('adminMonitoring', 'refreshing') : t('adminMonitoring', 'refresh')}
           </button>
         </div>
 
@@ -142,10 +142,10 @@ export default function MonitoringPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">
-                    System Health: {health.status}
+                    {t('adminMonitoring', 'systemHealth')}: {health.status}
                   </h2>
                   <p className="text-muted-foreground mt-1">
-                    Last checked: {new Date(health.lastCheck).toLocaleString('fr-FR')}
+                    {t('adminMonitoring', 'lastChecked')}: {new Date(health.lastCheck).toLocaleString('fr-FR')}
                   </p>
                 </div>
               </div>
@@ -155,18 +155,18 @@ export default function MonitoringPage() {
                     {alerts.critical > 0 && (
                       <div className="text-center px-4 py-2 bg-red-500/15 rounded-lg">
                         <div className="text-2xl font-bold text-red-600">{alerts.critical}</div>
-                        <div className="text-xs text-red-600">Critical</div>
+                        <div className="text-xs text-red-600">{t('adminMonitoring', 'critical')}</div>
                       </div>
                     )}
                     {alerts.warnings > 0 && (
                       <div className="text-center px-4 py-2 bg-yellow-500/15 rounded-lg">
                         <div className="text-2xl font-bold text-yellow-600">{alerts.warnings}</div>
-                        <div className="text-xs text-yellow-600">Warnings</div>
+                        <div className="text-xs text-yellow-600">{t('adminMonitoring', 'warnings')}</div>
                       </div>
                     )}
                     <div className="text-center px-4 py-2 bg-primary/10 rounded-lg">
                       <div className="text-2xl font-bold text-primary">{alerts.info}</div>
-                      <div className="text-xs text-primary">Info</div>
+                      <div className="text-xs text-primary">{t('adminMonitoring', 'info')}</div>
                     </div>
                   </>
                 )}
@@ -181,12 +181,12 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Missions</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'totalMissions')}</p>
                   <p className="text-3xl font-bold text-foreground">
                     {dashboard.overview.totalMissions}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {dashboard.overview.missionsLast24h} today
+                    {dashboard.overview.missionsLast24h} {t('adminMonitoring', 'today')}
                   </p>
                 </div>
                 <span className="text-4xl">📋</span>
@@ -198,12 +198,12 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Auto-Validated</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'autoValidated')}</p>
                   <p className="text-3xl font-bold text-green-600">
                     {dashboard.overview.autoValidatedMissions}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {dashboard.overview.autoValidationRate} rate
+                    {dashboard.overview.autoValidationRate} {t('adminMonitoring', 'rate')}
                   </p>
                 </div>
                 <span className="text-4xl">✅</span>
@@ -215,11 +215,11 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending Validations</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'pendingValidations')}</p>
                   <p className="text-3xl font-bold text-yellow-600">
                     {dashboard.overview.pendingValidations}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">Awaiting client action</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('adminMonitoring', 'awaitingClient')}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
               </div>
@@ -230,11 +230,11 @@ export default function MonitoringPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Cancelled</p>
+                  <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'cancelled')}</p>
                   <p className="text-3xl font-bold text-red-600">
                     {dashboard.overview.cancelledMissions}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">By system/users</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('adminMonitoring', 'bySystemUsers')}</p>
                 </div>
                 <span className="text-4xl">❌</span>
               </div>
@@ -249,7 +249,7 @@ export default function MonitoringPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span>🔍</span>
-                Health Checks
+                {t('adminMonitoring', 'healthChecks')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -277,7 +277,7 @@ export default function MonitoringPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span>💡</span>
-                Recommendations
+                {t('adminMonitoring', 'recommendations')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -299,7 +299,7 @@ export default function MonitoringPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <span>🚨</span>
-                Active Alerts ({alerts.total})
+                {t('adminMonitoring', 'activeAlerts')} ({alerts.total})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -319,7 +319,7 @@ export default function MonitoringPage() {
                           onClick={() => router.push(alert.actionUrl!)}
                           className="text-sm text-primary hover:text-primary"
                         >
-                          Take Action →
+                          {t('adminMonitoring', 'takeAction')} →
                         </button>
                       )}
                     </div>
@@ -335,10 +335,10 @@ export default function MonitoringPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>📊</span>
-              Auto-Validation Statistics
+              {t('adminMonitoring', 'autoValidationStats')}
             </CardTitle>
             <CardDescription>
-              Last 30 days of auto-validated missions
+              {t('adminMonitoring', 'last30Days')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -347,25 +347,25 @@ export default function MonitoringPage() {
                 <div className="text-3xl font-bold text-green-600">
                   {dashboard.autoValidation.total}
                 </div>
-                <div className="text-sm text-muted-foreground">Total Auto-Validated</div>
+                <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'totalAutoValidated')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-3xl font-bold text-primary">
                   {dashboard.autoValidation.totalAmount}
                 </div>
-                <div className="text-sm text-muted-foreground">Total Amount</div>
+                <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'totalAmount')}</div>
               </div>
               <div className="text-center p-4 bg-purple-500/10 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600">
                   {dashboard.autoValidation.avgDelayHours}
                 </div>
-                <div className="text-sm text-muted-foreground">Avg Delay</div>
+                <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'avgDelay')}</div>
               </div>
             </div>
 
             {dashboard.autoValidation.recentAutoValidations.length > 0 && (
               <div>
-                <h4 className="font-medium text-foreground mb-3">Recent Auto-Validations</h4>
+                <h4 className="font-medium text-foreground mb-3">{t('adminMonitoring', 'recentAutoValidations')}</h4>
                 <div className="space-y-2">
                   {dashboard.autoValidation.recentAutoValidations.slice(0, 5).map((mission) => (
                     <div
@@ -394,16 +394,16 @@ export default function MonitoringPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>📈</span>
-              Trends & Predictions
+              {t('adminMonitoring', 'trendsPredictions')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-foreground mb-3">Current Growth</h4>
+                <h4 className="font-medium text-foreground mb-3">{t('adminMonitoring', 'currentGrowth')}</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Missions Growth</span>
+                    <span className="text-muted-foreground">{t('adminMonitoring', 'missionsGrowth')}</span>
                     <span
                       className={`font-semibold ${parseFloat(dashboard.trends.missionsGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
@@ -411,7 +411,7 @@ export default function MonitoringPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Auto-Validation Growth</span>
+                    <span className="text-muted-foreground">{t('adminMonitoring', 'autoValidationGrowth')}</span>
                     <span
                       className={`font-semibold ${parseFloat(dashboard.trends.autoValidationGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}
                     >
@@ -421,16 +421,16 @@ export default function MonitoringPage() {
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-foreground mb-3">Next Month Predictions</h4>
+                <h4 className="font-medium text-foreground mb-3">{t('adminMonitoring', 'nextMonthPredictions')}</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Expected Missions</span>
+                    <span className="text-muted-foreground">{t('adminMonitoring', 'expectedMissions')}</span>
                     <span className="font-semibold text-foreground">
                       {dashboard.trends.prediction.nextMonthMissions}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Expected Auto-Validations</span>
+                    <span className="text-muted-foreground">{t('adminMonitoring', 'expectedAutoValidations')}</span>
                     <span className="font-semibold text-foreground">
                       {dashboard.trends.prediction.nextMonthAutoValidations}
                     </span>
@@ -446,7 +446,7 @@ export default function MonitoringPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span>🧹</span>
-              System Cleanup
+              {t('adminMonitoring', 'systemCleanup')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -455,25 +455,25 @@ export default function MonitoringPage() {
                 <div className="text-2xl font-bold text-foreground">
                   {dashboard.cleanup.cancelledBySystemLast30Days}
                 </div>
-                <div className="text-sm text-muted-foreground">Cancelled (30d)</div>
+                <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'cancelled30d')}</div>
               </div>
               <div className="text-center p-4 bg-background rounded-lg">
                 <div className="text-2xl font-bold text-foreground">
                   {dashboard.cleanup.oldPendingMissions}
                 </div>
-                <div className="text-sm text-muted-foreground">Old Pending</div>
+                <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'oldPending')}</div>
               </div>
               <div className="text-center p-4 bg-background rounded-lg">
                 <div className="text-sm font-medium text-foreground">
                   {dashboard.cleanup.cleanupFrequency}
                 </div>
-                <div className="text-sm text-muted-foreground">Cleanup Schedule</div>
+                <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'cleanupSchedule')}</div>
               </div>
             </div>
             {dashboard.cleanup.nextCleanupRecommended && (
               <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <span className="text-yellow-400">
-                  Cleanup recommended - consider running manual cleanup
+                  {t('adminMonitoring', 'cleanupRecommended')}
                 </span>
               </div>
             )}
@@ -482,7 +482,7 @@ export default function MonitoringPage() {
 
         {/* Footer with generated time */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          Data generated at: {new Date(dashboard.generatedAt).toLocaleString('fr-FR')}
+          {t('adminMonitoring', 'dataGeneratedAt')}: {new Date(dashboard.generatedAt).toLocaleString('fr-FR')}
         </div>
       </div>
     </div>

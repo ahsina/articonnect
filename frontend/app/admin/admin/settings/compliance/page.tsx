@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, ComplianceSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultComplianceSettings: ComplianceSettings = {
   gdprEnabled: true,
@@ -34,6 +35,7 @@ const defaultComplianceSettings: ComplianceSettings = {
 };
 
 export default function ComplianceSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<ComplianceSettings>(defaultComplianceSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,11 +65,11 @@ export default function ComplianceSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateComplianceSettings(settings);
-      setSuccess('Compliance settings saved successfully');
+      setSuccess(t('adminSettingsCompliance', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving compliance settings:', err);
-      setError('Failed to save compliance settings');
+      setError(t('adminSettingsCompliance', 'saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -111,7 +113,7 @@ export default function ComplianceSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsCompliance', 'dismiss')}
           </button>
         </div>
       )}
@@ -124,8 +126,8 @@ export default function ComplianceSettingsPage() {
       {/* GDPR Compliance */}
       <Card>
         <CardHeader>
-          <CardTitle>GDPR Compliance</CardTitle>
-          <CardDescription>General Data Protection Regulation settings (EU)</CardDescription>
+          <CardTitle>{t('adminSettingsCompliance', 'gdprTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsCompliance', 'gdprDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-3">
@@ -136,8 +138,8 @@ export default function ComplianceSettingsPage() {
               className="w-5 h-5 text-primary rounded"
             />
             <div>
-              <span className="text-sm font-medium text-foreground">Enable GDPR Compliance</span>
-              <p className="text-xs text-muted-foreground">Enforce GDPR requirements for EU users</p>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsCompliance', 'enableGdpr')}</span>
+              <p className="text-xs text-muted-foreground">{t('adminSettingsCompliance', 'enableGdprDesc')}</p>
             </div>
           </label>
 
@@ -146,7 +148,7 @@ export default function ComplianceSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Data Retention Period (days)
+                    {t('adminSettingsCompliance', 'dataRetentionPeriod')}
                   </label>
                   <input
                     type="number"
@@ -158,7 +160,7 @@ export default function ComplianceSettingsPage() {
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    ~{Math.round(settings.gdprDataRetentionDays / 365)} years
+                    ~{Math.round(settings.gdprDataRetentionDays / 365)} {t('adminSettingsCompliance', 'years')}
                   </p>
                 </div>
               </div>
@@ -171,7 +173,7 @@ export default function ComplianceSettingsPage() {
                     onChange={(e) => updateSetting('gdprRightToErasure', e.target.checked)}
                     className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-foreground">Right to erasure</span>
+                  <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'rightToErasure')}</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -180,7 +182,7 @@ export default function ComplianceSettingsPage() {
                     onChange={(e) => updateSetting('gdprDataPortability', e.target.checked)}
                     className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-foreground">Data portability</span>
+                  <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'dataPortability')}</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -189,7 +191,7 @@ export default function ComplianceSettingsPage() {
                     onChange={(e) => updateSetting('gdprConsentRequired', e.target.checked)}
                     className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-foreground">Require explicit consent</span>
+                  <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'requireConsent')}</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -198,7 +200,7 @@ export default function ComplianceSettingsPage() {
                     onChange={(e) => updateSetting('gdprCookieConsentRequired', e.target.checked)}
                     className="w-4 h-4 text-primary rounded"
                   />
-                  <span className="text-sm text-foreground">Cookie consent required</span>
+                  <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'cookieConsent')}</span>
                 </label>
               </div>
             </>
@@ -209,8 +211,8 @@ export default function ComplianceSettingsPage() {
       {/* CCPA Compliance */}
       <Card>
         <CardHeader>
-          <CardTitle>CCPA Compliance</CardTitle>
-          <CardDescription>California Consumer Privacy Act settings (US)</CardDescription>
+          <CardTitle>{t('adminSettingsCompliance', 'ccpaTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsCompliance', 'ccpaDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -220,7 +222,7 @@ export default function ComplianceSettingsPage() {
               onChange={(e) => updateSetting('ccpaEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable CCPA Compliance</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsCompliance', 'enableCcpa')}</span>
           </label>
 
           {settings.ccpaEnabled && (
@@ -232,7 +234,7 @@ export default function ComplianceSettingsPage() {
                 className="w-4 h-4 text-primary rounded"
               />
               <span className="text-sm text-foreground">
-                Enable &quot;Do Not Sell My Personal Information&quot; option
+                {t('adminSettingsCompliance', 'doNotSell')}
               </span>
             </label>
           )}
@@ -242,8 +244,8 @@ export default function ComplianceSettingsPage() {
       {/* Age Verification */}
       <Card>
         <CardHeader>
-          <CardTitle>Age Verification</CardTitle>
-          <CardDescription>Configure age verification requirements</CardDescription>
+          <CardTitle>{t('adminSettingsCompliance', 'ageVerifyTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsCompliance', 'ageVerifyDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -253,12 +255,12 @@ export default function ComplianceSettingsPage() {
               onChange={(e) => updateSetting('ageVerificationRequired', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Require Age Verification</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsCompliance', 'requireAgeVerify')}</span>
           </label>
 
           {settings.ageVerificationRequired && (
             <div className="w-32">
-              <label className="block text-sm font-medium text-foreground mb-1">Minimum Age</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsCompliance', 'minimumAge')}</label>
               <input
                 type="number"
                 value={settings.minimumAge}
@@ -275,16 +277,16 @@ export default function ComplianceSettingsPage() {
       {/* Terms & Privacy */}
       <Card>
         <CardHeader>
-          <CardTitle>Terms &amp; Privacy Policy</CardTitle>
-          <CardDescription>Manage terms of service and privacy policy versions</CardDescription>
+          <CardTitle>{t('adminSettingsCompliance', 'termsPrivacyTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsCompliance', 'termsPrivacyDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-background rounded-lg">
-              <h4 className="font-medium text-foreground mb-3">Terms of Service</h4>
+              <h4 className="font-medium text-foreground mb-3">{t('adminSettingsCompliance', 'termsOfService')}</h4>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Version</label>
+                  <label className="block text-sm text-muted-foreground mb-1">{t('adminSettingsCompliance', 'version')}</label>
                   <input
                     type="text"
                     value={settings.termsVersion}
@@ -293,7 +295,7 @@ export default function ComplianceSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Last Updated</label>
+                  <label className="block text-sm text-muted-foreground mb-1">{t('adminSettingsCompliance', 'lastUpdated')}</label>
                   <input
                     type="date"
                     value={settings.termsLastUpdated}
@@ -304,10 +306,10 @@ export default function ComplianceSettingsPage() {
               </div>
             </div>
             <div className="p-4 bg-background rounded-lg">
-              <h4 className="font-medium text-foreground mb-3">Privacy Policy</h4>
+              <h4 className="font-medium text-foreground mb-3">{t('adminSettingsCompliance', 'privacyPolicy')}</h4>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Version</label>
+                  <label className="block text-sm text-muted-foreground mb-1">{t('adminSettingsCompliance', 'version')}</label>
                   <input
                     type="text"
                     value={settings.privacyPolicyVersion}
@@ -316,7 +318,7 @@ export default function ComplianceSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Last Updated</label>
+                  <label className="block text-sm text-muted-foreground mb-1">{t('adminSettingsCompliance', 'lastUpdated')}</label>
                   <input
                     type="date"
                     value={settings.privacyPolicyLastUpdated}
@@ -333,13 +335,13 @@ export default function ComplianceSettingsPage() {
       {/* Document Requirements */}
       <Card>
         <CardHeader>
-          <CardTitle>Document Requirements</CardTitle>
-          <CardDescription>Configure required identity documents</CardDescription>
+          <CardTitle>{t('adminSettingsCompliance', 'docReqTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsCompliance', 'docReqDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Required Documents
+              {t('adminSettingsCompliance', 'requiredDocuments')}
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {settings.requiredDocuments.map((doc) => (
@@ -362,7 +364,7 @@ export default function ComplianceSettingsPage() {
                 type="text"
                 value={newDocument}
                 onChange={(e) => setNewDocument(e.target.value)}
-                placeholder="Document type"
+                placeholder={t('adminSettingsCompliance', 'documentTypePlaceholder')}
                 className="flex-1 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 onKeyDown={(e) => e.key === 'Enter' && addDocument()}
               />
@@ -370,7 +372,7 @@ export default function ComplianceSettingsPage() {
                 onClick={addDocument}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
-                Add
+                {t('adminSettingsCompliance', 'add')}
               </button>
             </div>
           </div>
@@ -383,11 +385,11 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('documentExpiryCheckEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Check document expiry</span>
+              <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'checkDocExpiry')}</span>
             </label>
             {settings.documentExpiryCheckEnabled && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Remind</span>
+                <span className="text-sm text-muted-foreground">{t('adminSettingsCompliance', 'remind')}</span>
                 <input
                   type="number"
                   value={settings.documentExpiryReminderDays}
@@ -397,7 +399,7 @@ export default function ComplianceSettingsPage() {
                   min="1"
                   className="w-20 px-2 py-1 border border-border rounded focus:ring-2 focus:ring-primary"
                 />
-                <span className="text-sm text-muted-foreground">days before expiry</span>
+                <span className="text-sm text-muted-foreground">{t('adminSettingsCompliance', 'daysBeforeExpiry')}</span>
               </div>
             )}
           </div>
@@ -408,7 +410,7 @@ export default function ComplianceSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>AML &amp; KYC</CardTitle>
-          <CardDescription>Anti-Money Laundering and Know Your Customer settings</CardDescription>
+          <CardDescription>{t('adminSettingsCompliance', 'amlKycDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
@@ -419,7 +421,7 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('amlCheckRequired', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm font-medium text-foreground">Enable AML Checks</span>
+              <span className="text-sm font-medium text-foreground">{t('adminSettingsCompliance', 'enableAmlChecks')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -428,7 +430,7 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('pep_screening_enabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">PEP Screening</span>
+              <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'pepScreening')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -437,7 +439,7 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('sanctionsListCheckEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Sanctions List Check</span>
+              <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'sanctionsListCheck')}</span>
             </label>
           </div>
 
@@ -445,14 +447,14 @@ export default function ComplianceSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  AML Check Provider
+                  {t('adminSettingsCompliance', 'amlCheckProvider')}
                 </label>
                 <select
                   value={settings.amlCheckProvider || ''}
                   onChange={(e) => updateSetting('amlCheckProvider', e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 >
-                  <option value="">Select provider</option>
+                  <option value="">{t('adminSettingsCompliance', 'selectProvider')}</option>
                   <option value="onfido">Onfido</option>
                   <option value="jumio">Jumio</option>
                   <option value="sumsub">Sumsub</option>
@@ -461,7 +463,7 @@ export default function ComplianceSettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  AML Check Threshold (cents)
+                  {t('adminSettingsCompliance', 'amlCheckThreshold')}
                 </label>
                 <input
                   type="number"
@@ -471,7 +473,7 @@ export default function ComplianceSettingsPage() {
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {(settings.amlCheckThreshold / 100).toFixed(2)} EUR threshold for AML checks
+                  {(settings.amlCheckThreshold / 100).toFixed(2)} {t('adminSettingsCompliance', 'eurThresholdForAml')}
                 </p>
               </div>
             </div>
@@ -482,8 +484,8 @@ export default function ComplianceSettingsPage() {
       {/* Data Security */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Security</CardTitle>
-          <CardDescription>Configure data security and audit settings</CardDescription>
+          <CardTitle>{t('adminSettingsCompliance', 'dataSecurityTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsCompliance', 'dataSecurityDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
@@ -494,7 +496,7 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('dataEncryptionAtRest', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Encryption at rest</span>
+              <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'encryptionAtRest')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -503,7 +505,7 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('dataEncryptionInTransit', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Encryption in transit</span>
+              <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'encryptionInTransit')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -512,14 +514,14 @@ export default function ComplianceSettingsPage() {
                 onChange={(e) => updateSetting('auditLoggingEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Audit logging</span>
+              <span className="text-sm text-foreground">{t('adminSettingsCompliance', 'auditLogging')}</span>
             </label>
           </div>
 
           {settings.auditLoggingEnabled && (
             <div className="w-48">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Audit Log Retention (days)
+                {t('adminSettingsCompliance', 'auditLogRetention')}
               </label>
               <input
                 type="number"
@@ -540,7 +542,7 @@ export default function ComplianceSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Compliance Settings'}
+          {saving ? t('adminSettingsCompliance', 'saving') : t('adminSettingsCompliance', 'saveButton')}
         </button>
       </div>
     </div>

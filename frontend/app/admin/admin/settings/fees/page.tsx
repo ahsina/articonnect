@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, FeeSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultFeeSettings: FeeSettings = {
   platformCommissionRate: 15,
@@ -23,6 +24,7 @@ const defaultFeeSettings: FeeSettings = {
 };
 
 export default function FeesSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<FeeSettings>(defaultFeeSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,11 +54,11 @@ export default function FeesSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updateFeeSettings(settings);
-      setSuccess('Fee settings saved successfully');
+      setSuccess(t('adminSettingsFees', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving fee settings:', err);
-      setError('Failed to save fee settings');
+      setError(t('adminSettingsFees', 'saveError'));
     } finally {
       setSaving(false);
     }
@@ -85,7 +87,7 @@ export default function FeesSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsFees', 'dismiss')}
           </button>
         </div>
       )}
@@ -98,14 +100,14 @@ export default function FeesSettingsPage() {
       {/* Commission Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Commission Rates</CardTitle>
-          <CardDescription>Configure platform commission on transactions</CardDescription>
+          <CardTitle>{t('adminSettingsFees', 'commissionTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsFees', 'commissionDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Platform Commission Rate (%)
+                {t('adminSettingsFees', 'platformCommissionLabel')}
               </label>
               <input
                 type="number"
@@ -119,12 +121,12 @@ export default function FeesSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Artisan receives: {100 - settings.platformCommissionRate}%
+                {t('adminSettingsFees', 'artisanReceives')}: {100 - settings.platformCommissionRate}%
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Min Commission (cents)
+                {t('adminSettingsFees', 'minCommissionLabel')}
               </label>
               <input
                 type="number"
@@ -139,7 +141,7 @@ export default function FeesSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Max Commission (cents)
+                {t('adminSettingsFees', 'maxCommissionLabel')}
               </label>
               <input
                 type="number"
@@ -159,14 +161,14 @@ export default function FeesSettingsPage() {
       {/* Deposit Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Deposit Rules</CardTitle>
-          <CardDescription>Configure deposit requirements for missions</CardDescription>
+          <CardTitle>{t('adminSettingsFees', 'depositTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsFees', 'depositDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Deposit Percentage (%)
+                {t('adminSettingsFees', 'depositPercentageLabel')}
               </label>
               <input
                 type="number"
@@ -179,7 +181,7 @@ export default function FeesSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Minimum Deposit (cents)
+                {t('adminSettingsFees', 'minDepositLabel')}
               </label>
               <input
                 type="number"
@@ -194,7 +196,7 @@ export default function FeesSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Maximum Deposit (cents)
+                {t('adminSettingsFees', 'maxDepositLabel')}
               </label>
               <input
                 type="number"
@@ -214,14 +216,14 @@ export default function FeesSettingsPage() {
       {/* Price Multipliers */}
       <Card>
         <CardHeader>
-          <CardTitle>Price Multipliers</CardTitle>
-          <CardDescription>Configure pricing adjustments for special circumstances</CardDescription>
+          <CardTitle>{t('adminSettingsFees', 'multipliersTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsFees', 'multipliersDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Urgent Mission Multiplier
+                {t('adminSettingsFees', 'urgentMultiplierLabel')}
               </label>
               <input
                 type="number"
@@ -235,12 +237,12 @@ export default function FeesSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                e.g., 1.5 = 50% price increase for urgent
+                {t('adminSettingsFees', 'urgentMultiplierHint')}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Weekend Multiplier
+                {t('adminSettingsFees', 'weekendMultiplierLabel')}
               </label>
               <input
                 type="number"
@@ -254,7 +256,7 @@ export default function FeesSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Holiday Multiplier
+                {t('adminSettingsFees', 'holidayMultiplierLabel')}
               </label>
               <input
                 type="number"
@@ -273,14 +275,14 @@ export default function FeesSettingsPage() {
       {/* Cancellation Fees */}
       <Card>
         <CardHeader>
-          <CardTitle>Cancellation Fees</CardTitle>
-          <CardDescription>Configure fees for mission cancellations</CardDescription>
+          <CardTitle>{t('adminSettingsFees', 'cancellationTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsFees', 'cancellationDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Standard Cancellation Fee (%)
+                {t('adminSettingsFees', 'standardCancellationLabel')}
               </label>
               <input
                 type="number"
@@ -295,7 +297,7 @@ export default function FeesSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Late Cancellation Threshold (hours)
+                {t('adminSettingsFees', 'lateCancellationThresholdLabel')}
               </label>
               <input
                 type="number"
@@ -305,12 +307,12 @@ export default function FeesSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Cancellations within this time apply late fee
+                {t('adminSettingsFees', 'lateCancellationThresholdHint')}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Late Cancellation Fee (%)
+                {t('adminSettingsFees', 'lateCancellationFeeLabel')}
               </label>
               <input
                 type="number"
@@ -330,14 +332,14 @@ export default function FeesSettingsPage() {
       {/* Bonuses & Discounts */}
       <Card>
         <CardHeader>
-          <CardTitle>Bonuses &amp; Discounts</CardTitle>
-          <CardDescription>Configure promotional incentives</CardDescription>
+          <CardTitle>{t('adminSettingsFees', 'bonusesTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsFees', 'bonusesDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Artisan Payout Percentage (%)
+                {t('adminSettingsFees', 'artisanPayoutLabel')}
               </label>
               <input
                 type="number"
@@ -349,11 +351,11 @@ export default function FeesSettingsPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-muted-foreground">Should equal 100 - commission rate</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsFees', 'artisanPayoutHint')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Referral Bonus (cents)
+                {t('adminSettingsFees', 'referralBonusLabel')}
               </label>
               <input
                 type="number"
@@ -368,7 +370,7 @@ export default function FeesSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                First Mission Discount (%)
+                {t('adminSettingsFees', 'firstMissionDiscountLabel')}
               </label>
               <input
                 type="number"
@@ -390,7 +392,7 @@ export default function FeesSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Fee Settings'}
+          {saving ? t('adminSettingsFees', 'saving') : t('adminSettingsFees', 'saveButton')}
         </button>
       </div>
     </div>

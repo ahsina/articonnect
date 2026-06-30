@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminApi, PerformanceSettings } from '@/lib/api/admin';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const defaultPerformanceSettings: PerformanceSettings = {
   cacheEnabled: true,
@@ -36,6 +37,7 @@ const defaultPerformanceSettings: PerformanceSettings = {
 };
 
 export default function PerformanceSettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<PerformanceSettings>(defaultPerformanceSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,11 +66,11 @@ export default function PerformanceSettingsPage() {
       setSaving(true);
       setError(null);
       await adminApi.updatePerformanceSettings(settings);
-      setSuccess('Performance settings saved successfully');
+      setSuccess(t('adminSettingsPerformance', 'savedSuccess'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Error saving performance settings:', err);
-      setError('Failed to save performance settings');
+      setError(t('adminSettingsPerformance', 'saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -95,7 +97,7 @@ export default function PerformanceSettingsPage() {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
-            Dismiss
+            {t('adminSettingsPerformance', 'dismiss')}
           </button>
         </div>
       )}
@@ -108,8 +110,8 @@ export default function PerformanceSettingsPage() {
       {/* Caching */}
       <Card>
         <CardHeader>
-          <CardTitle>Caching</CardTitle>
-          <CardDescription>Configure caching for improved performance</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'cachingTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'cachingDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -119,14 +121,14 @@ export default function PerformanceSettingsPage() {
               onChange={(e) => updateSetting('cacheEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Caching</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsPerformance', 'enableCaching')}</span>
           </label>
 
           {settings.cacheEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Cache TTL (seconds)
+                  {t('adminSettingsPerformance', 'cacheTtl')}
                 </label>
                 <input
                   type="number"
@@ -136,12 +138,12 @@ export default function PerformanceSettingsPage() {
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {Math.round(settings.cacheTtlSeconds / 60)} minutes
+                  {Math.round(settings.cacheTtlSeconds / 60)} {t('adminSettingsPerformance', 'minutes')}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Max Cache Size (MB)
+                  {t('adminSettingsPerformance', 'maxCacheSize')}
                 </label>
                 <input
                   type="number"
@@ -159,8 +161,8 @@ export default function PerformanceSettingsPage() {
       {/* CDN */}
       <Card>
         <CardHeader>
-          <CardTitle>Content Delivery Network</CardTitle>
-          <CardDescription>Configure CDN for static asset delivery</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'cdnTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'cdnDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -170,12 +172,12 @@ export default function PerformanceSettingsPage() {
               onChange={(e) => updateSetting('cdnEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable CDN</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsPerformance', 'enableCdn')}</span>
           </label>
 
           {settings.cdnEnabled && (
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">CDN URL</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsPerformance', 'cdnUrl')}</label>
               <input
                 type="text"
                 value={settings.cdnUrl || ''}
@@ -191,8 +193,8 @@ export default function PerformanceSettingsPage() {
       {/* Image Optimization */}
       <Card>
         <CardHeader>
-          <CardTitle>Image Optimization</CardTitle>
-          <CardDescription>Configure automatic image optimization</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'imageOptTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'imageOptDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -202,14 +204,14 @@ export default function PerformanceSettingsPage() {
               onChange={(e) => updateSetting('imageOptimizationEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Image Optimization</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsPerformance', 'enableImageOpt')}</span>
           </label>
 
           {settings.imageOptimizationEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Max Width (px)
+                  {t('adminSettingsPerformance', 'maxWidth')}
                 </label>
                 <input
                   type="number"
@@ -221,7 +223,7 @@ export default function PerformanceSettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Max Height (px)
+                  {t('adminSettingsPerformance', 'maxHeight')}
                 </label>
                 <input
                   type="number"
@@ -233,7 +235,7 @@ export default function PerformanceSettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Quality (1-100)
+                  {t('adminSettingsPerformance', 'quality')}
                 </label>
                 <input
                   type="number"
@@ -254,7 +256,7 @@ export default function PerformanceSettingsPage() {
               onChange={(e) => updateSetting('lazyLoadingEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm text-foreground">Enable lazy loading</span>
+            <span className="text-sm text-foreground">{t('adminSettingsPerformance', 'enableLazyLoading')}</span>
           </label>
         </CardContent>
       </Card>
@@ -262,14 +264,14 @@ export default function PerformanceSettingsPage() {
       {/* Pagination */}
       <Card>
         <CardHeader>
-          <CardTitle>Pagination</CardTitle>
-          <CardDescription>Configure pagination settings</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'paginationTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'paginationDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Default Page Size
+                {t('adminSettingsPerformance', 'defaultPageSize')}
               </label>
               <input
                 type="number"
@@ -282,7 +284,7 @@ export default function PerformanceSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Maximum Page Size
+                {t('adminSettingsPerformance', 'maximumPageSize')}
               </label>
               <input
                 type="number"
@@ -300,8 +302,8 @@ export default function PerformanceSettingsPage() {
       {/* Search Index */}
       <Card>
         <CardHeader>
-          <CardTitle>Search Index</CardTitle>
-          <CardDescription>Configure search indexing</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'searchIndexTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'searchIndexDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -311,13 +313,13 @@ export default function PerformanceSettingsPage() {
               onChange={(e) => updateSetting('searchIndexEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Search Index</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsPerformance', 'enableSearchIndex')}</span>
           </label>
 
           {settings.searchIndexEnabled && (
             <div className="w-48">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Refresh Interval (minutes)
+                {t('adminSettingsPerformance', 'refreshInterval')}
               </label>
               <input
                 type="number"
@@ -336,14 +338,14 @@ export default function PerformanceSettingsPage() {
       {/* Database */}
       <Card>
         <CardHeader>
-          <CardTitle>Database</CardTitle>
-          <CardDescription>Configure database connection settings</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'databaseTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'databaseDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Connection Pool Size
+                {t('adminSettingsPerformance', 'connectionPoolSize')}
               </label>
               <input
                 type="number"
@@ -358,7 +360,7 @@ export default function PerformanceSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Query Timeout (ms)
+                {t('adminSettingsPerformance', 'queryTimeout')}
               </label>
               <input
                 type="number"
@@ -368,7 +370,7 @@ export default function PerformanceSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                {Math.round(settings.databaseQueryTimeout / 1000)} seconds
+                {Math.round(settings.databaseQueryTimeout / 1000)} {t('adminSettingsPerformance', 'seconds')}
               </p>
             </div>
           </div>
@@ -378,8 +380,8 @@ export default function PerformanceSettingsPage() {
       {/* Background Jobs */}
       <Card>
         <CardHeader>
-          <CardTitle>Background Jobs</CardTitle>
-          <CardDescription>Configure background job processing</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'backgroundJobsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'backgroundJobsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="flex items-center gap-2">
@@ -389,12 +391,12 @@ export default function PerformanceSettingsPage() {
               onChange={(e) => updateSetting('backgroundJobsEnabled', e.target.checked)}
               className="w-4 h-4 text-primary rounded"
             />
-            <span className="text-sm font-medium text-foreground">Enable Background Jobs</span>
+            <span className="text-sm font-medium text-foreground">{t('adminSettingsPerformance', 'enableBackgroundJobs')}</span>
           </label>
 
           {settings.backgroundJobsEnabled && (
             <div className="w-48">
-              <label className="block text-sm font-medium text-foreground mb-1">Concurrency</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsPerformance', 'concurrency')}</label>
               <input
                 type="number"
                 value={settings.backgroundJobConcurrency}
@@ -413,14 +415,14 @@ export default function PerformanceSettingsPage() {
       {/* Request Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Request Settings</CardTitle>
-          <CardDescription>Configure HTTP request handling</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'requestSettingsTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'requestSettingsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Request Timeout (ms)
+                {t('adminSettingsPerformance', 'requestTimeout')}
               </label>
               <input
                 type="number"
@@ -430,12 +432,12 @@ export default function PerformanceSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                {Math.round(settings.requestTimeoutMs / 1000)} seconds
+                {Math.round(settings.requestTimeoutMs / 1000)} {t('adminSettingsPerformance', 'seconds')}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Compression Level (1-9)
+                {t('adminSettingsPerformance', 'compressionLevel')}
               </label>
               <input
                 type="number"
@@ -456,7 +458,7 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('rateLimitingEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable rate limiting</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPerformance', 'enableRateLimiting')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -465,7 +467,7 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('enableCompression', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable compression</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPerformance', 'enableCompression')}</span>
             </label>
           </div>
         </CardContent>
@@ -474,13 +476,13 @@ export default function PerformanceSettingsPage() {
       {/* Logging & Monitoring */}
       <Card>
         <CardHeader>
-          <CardTitle>Logging &amp; Monitoring</CardTitle>
-          <CardDescription>Configure logging and health monitoring</CardDescription>
+          <CardTitle>{t('adminSettingsPerformance', 'loggingTitle')}</CardTitle>
+          <CardDescription>{t('adminSettingsPerformance', 'loggingDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Log Level</label>
+              <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsPerformance', 'logLevel')}</label>
               <select
                 value={settings.logLevel}
                 onChange={(e) =>
@@ -488,15 +490,15 @@ export default function PerformanceSettingsPage() {
                 }
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               >
-                <option value="DEBUG">Debug</option>
-                <option value="INFO">Info</option>
-                <option value="WARN">Warning</option>
-                <option value="ERROR">Error</option>
+                <option value="DEBUG">{t('adminSettingsPerformance', 'logLevelDebug')}</option>
+                <option value="INFO">{t('adminSettingsPerformance', 'logLevelInfo')}</option>
+                <option value="WARN">{t('adminSettingsPerformance', 'logLevelWarning')}</option>
+                <option value="ERROR">{t('adminSettingsPerformance', 'logLevelError')}</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Log Retention (days)
+                {t('adminSettingsPerformance', 'logRetention')}
               </label>
               <input
                 type="number"
@@ -508,7 +510,7 @@ export default function PerformanceSettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Metrics Interval (seconds)
+                {t('adminSettingsPerformance', 'metricsInterval')}
               </label>
               <input
                 type="number"
@@ -530,7 +532,7 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('metricsEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable metrics collection</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPerformance', 'enableMetricsCollection')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -539,14 +541,14 @@ export default function PerformanceSettingsPage() {
                 onChange={(e) => updateSetting('healthCheckEnabled', e.target.checked)}
                 className="w-4 h-4 text-primary rounded"
               />
-              <span className="text-sm text-foreground">Enable health checks</span>
+              <span className="text-sm text-foreground">{t('adminSettingsPerformance', 'enableHealthChecks')}</span>
             </label>
           </div>
 
           {settings.healthCheckEnabled && (
             <div className="w-48">
               <label className="block text-sm font-medium text-foreground mb-1">
-                Health Check Interval (seconds)
+                {t('adminSettingsPerformance', 'healthCheckInterval')}
               </label>
               <input
                 type="number"
@@ -567,7 +569,7 @@ export default function PerformanceSettingsPage() {
           disabled={saving}
           className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Performance Settings'}
+          {saving ? t('adminSettingsPerformance', 'saving') : t('adminSettingsPerformance', 'saveButton')}
         </button>
       </div>
     </div>

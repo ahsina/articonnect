@@ -38,7 +38,7 @@ export default function DisputesPage() {
       if (err.response?.status === 403) {
         router.push('/');
       } else {
-        setError('Failed to load disputes');
+        setError(t('adminDisputes', 'errorLoad'));
       }
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export default function DisputesPage() {
       setError(null);
     } catch (err) {
       console.error('Error resolving dispute:', err);
-      setError('Failed to resolve dispute');
+      setError(t('adminDisputes', 'errorResolve'));
     } finally {
       setResolving(false);
     }
@@ -136,11 +136,11 @@ export default function DisputesPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← Back
+              ← {t('adminDisputes', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Dispute Resolution</h1>
-              <p className="text-muted-foreground mt-1">Manage and resolve platform disputes</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('adminDisputes', 'title')}</h1>
+              <p className="text-muted-foreground mt-1">{t('adminDisputes', 'subtitle')}</p>
             </div>
           </div>
           <button
@@ -148,7 +148,7 @@ export default function DisputesPage() {
             disabled={loading}
             className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent disabled:opacity-50"
           >
-            {loading ? 'Loading...' : 'Refresh'}
+            {loading ? t('common', 'loading') : t('adminDisputes', 'refresh')}
           </button>
         </div>
 
@@ -164,37 +164,37 @@ export default function DisputesPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statTotal')}</p>
             </CardContent>
           </Card>
           <Card className="border-yellow-500/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-yellow-600">{stats.open}</p>
-              <p className="text-sm text-muted-foreground">Open</p>
+              <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statOpen')}</p>
             </CardContent>
           </Card>
           <Card className="border-primary/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-primary">{stats.inReview}</p>
-              <p className="text-sm text-muted-foreground">In Review</p>
+              <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statInReview')}</p>
             </CardContent>
           </Card>
           <Card className="border-green-500/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
-              <p className="text-sm text-muted-foreground">Resolved</p>
+              <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statResolved')}</p>
             </CardContent>
           </Card>
           <Card className="border-red-500/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-red-600">{stats.critical}</p>
-              <p className="text-sm text-muted-foreground">Critical</p>
+              <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statCritical')}</p>
             </CardContent>
           </Card>
           <Card className="border-yellow-500/20">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-yellow-600">{stats.high}</p>
-              <p className="text-sm text-muted-foreground">High Priority</p>
+              <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statHighPriority')}</p>
             </CardContent>
           </Card>
         </div>
@@ -204,31 +204,31 @@ export default function DisputesPage() {
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div>
-                <label className="block text-sm text-muted-foreground mb-1">Status</label>
+                <label className="block text-sm text-muted-foreground mb-1">{t('adminDisputes', 'filterStatus')}</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as DisputeStatus | '')}
                   className="px-3 py-2 border border-border rounded-md"
                 >
-                  <option value="">All Statuses</option>
-                  <option value={DisputeStatus.OPEN}>Open</option>
-                  <option value={DisputeStatus.IN_REVIEW}>In Review</option>
-                  <option value={DisputeStatus.RESOLVED}>Resolved</option>
-                  <option value={DisputeStatus.CANCELLED}>Cancelled</option>
+                  <option value="">{t('adminDisputes', 'allStatuses')}</option>
+                  <option value={DisputeStatus.OPEN}>{t('adminDisputes', 'optOpen')}</option>
+                  <option value={DisputeStatus.IN_REVIEW}>{t('adminDisputes', 'optInReview')}</option>
+                  <option value={DisputeStatus.RESOLVED}>{t('adminDisputes', 'optResolved')}</option>
+                  <option value={DisputeStatus.CANCELLED}>{t('adminDisputes', 'optCancelled')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-muted-foreground mb-1">Priority</label>
+                <label className="block text-sm text-muted-foreground mb-1">{t('adminDisputes', 'filterPriority')}</label>
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value as DisputePriority | '')}
                   className="px-3 py-2 border border-border rounded-md"
                 >
-                  <option value="">All Priorities</option>
-                  <option value={DisputePriority.CRITICAL}>Critical</option>
-                  <option value={DisputePriority.HIGH}>High</option>
-                  <option value={DisputePriority.MEDIUM}>Medium</option>
-                  <option value={DisputePriority.LOW}>Low</option>
+                  <option value="">{t('adminDisputes', 'allPriorities')}</option>
+                  <option value={DisputePriority.CRITICAL}>{t('adminDisputes', 'optCritical')}</option>
+                  <option value={DisputePriority.HIGH}>{t('adminDisputes', 'optHigh')}</option>
+                  <option value={DisputePriority.MEDIUM}>{t('adminDisputes', 'optMedium')}</option>
+                  <option value={DisputePriority.LOW}>{t('adminDisputes', 'optLow')}</option>
                 </select>
               </div>
               <button
@@ -238,7 +238,7 @@ export default function DisputesPage() {
                 }}
                 className="px-4 py-2 text-muted-foreground hover:text-foreground self-end"
               >
-                Clear Filters
+                {t('adminDisputes', 'clearFilters')}
               </button>
             </div>
           </CardContent>
@@ -247,8 +247,8 @@ export default function DisputesPage() {
         {/* Disputes List */}
         <Card>
           <CardHeader>
-            <CardTitle>Disputes ({disputes.length})</CardTitle>
-            <CardDescription>Click on a dispute to view details and resolve</CardDescription>
+            <CardTitle>{t('adminDisputes', 'listTitle')} ({disputes.length})</CardTitle>
+            <CardDescription>{t('adminDisputes', 'listDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {disputes.length > 0 ? (
@@ -284,12 +284,12 @@ export default function DisputesPage() {
                         <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
                           {dispute.user && (
                             <span>
-                              By: {dispute.user.firstName} {dispute.user.lastName}
+                              {t('adminDisputes', 'by')}: {dispute.user.firstName} {dispute.user.lastName}
                             </span>
                           )}
-                          {dispute.mission && <span>Mission: {dispute.mission.title}</span>}
+                          {dispute.mission && <span>{t('adminDisputes', 'mission')}: {dispute.mission.title}</span>}
                           <span>
-                            Created: {new Date(dispute.createdAt).toLocaleDateString('fr-FR')}
+                            {t('adminDisputes', 'created')}: {new Date(dispute.createdAt).toLocaleDateString('fr-FR')}
                           </span>
                         </div>
                       </div>
@@ -302,18 +302,18 @@ export default function DisputesPage() {
                           }}
                           className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90"
                         >
-                          Resolve
+                          {t('adminDisputes', 'resolve')}
                         </button>
                       )}
                     </div>
                     {dispute.status === DisputeStatus.RESOLVED && dispute.resolution && (
                       <div className="mt-3 p-3 bg-green-500/10 rounded-lg">
                         <p className="text-sm text-green-400">
-                          <strong>Resolution:</strong> {dispute.resolution}
+                          <strong>{t('adminDisputes', 'resolution')}:</strong> {dispute.resolution}
                         </p>
                         {dispute.resolvedAt && (
                           <p className="text-xs text-green-600 mt-1">
-                            Resolved: {new Date(dispute.resolvedAt).toLocaleString('fr-FR')}
+                            {t('adminDisputes', 'resolvedLabel')}: {new Date(dispute.resolvedAt).toLocaleString('fr-FR')}
                           </p>
                         )}
                       </div>
@@ -324,8 +324,8 @@ export default function DisputesPage() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <span className="text-6xl block mb-4">⚖️</span>
-                <p className="text-lg font-medium">No disputes found</p>
-                <p className="text-sm mt-2">Adjust your filters or check back later</p>
+                <p className="text-lg font-medium">{t('adminDisputes', 'emptyTitle')}</p>
+                <p className="text-sm mt-2">{t('adminDisputes', 'emptyDesc')}</p>
               </div>
             )}
           </CardContent>
@@ -337,7 +337,7 @@ export default function DisputesPage() {
             <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Dispute Details</h2>
+                  <h2 className="text-xl font-semibold">{t('adminDisputes', 'detailsTitle')}</h2>
                   <button
                     onClick={() => {
                       setSelectedDispute(null);
@@ -370,18 +370,18 @@ export default function DisputesPage() {
 
                 <div className="grid grid-cols-2 gap-4 p-4 bg-background rounded-lg">
                   <div>
-                    <p className="text-sm text-muted-foreground">Created</p>
+                    <p className="text-sm text-muted-foreground">{t('adminDisputes', 'fieldCreated')}</p>
                     <p className="font-medium">
                       {new Date(selectedDispute.createdAt).toLocaleString('fr-FR')}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Dispute ID</p>
+                    <p className="text-sm text-muted-foreground">{t('adminDisputes', 'disputeId')}</p>
                     <p className="font-mono text-sm">{selectedDispute.id.slice(0, 8)}...</p>
                   </div>
                   {selectedDispute.user && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Reported By</p>
+                      <p className="text-sm text-muted-foreground">{t('adminDisputes', 'reportedBy')}</p>
                       <p className="font-medium">
                         {selectedDispute.user.firstName} {selectedDispute.user.lastName}
                       </p>
@@ -390,7 +390,7 @@ export default function DisputesPage() {
                   )}
                   {selectedDispute.mission && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Related Mission</p>
+                      <p className="text-sm text-muted-foreground">{t('adminDisputes', 'relatedMission')}</p>
                       <p className="font-medium">{selectedDispute.mission.title}</p>
                       {selectedDispute.mission.agreedPrice && (
                         <p className="text-sm text-muted-foreground">
@@ -403,21 +403,21 @@ export default function DisputesPage() {
 
                 {selectedDispute.status === DisputeStatus.RESOLVED ? (
                   <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <h4 className="font-medium text-green-400 mb-2">Resolution</h4>
+                    <h4 className="font-medium text-green-400 mb-2">{t('adminDisputes', 'resolution')}</h4>
                     <p className="text-green-400">{selectedDispute.resolution}</p>
                     {selectedDispute.resolvedAt && (
                       <p className="text-sm text-green-600 mt-2">
-                        Resolved on: {new Date(selectedDispute.resolvedAt).toLocaleString('fr-FR')}
+                        {t('adminDisputes', 'resolvedOn')}: {new Date(selectedDispute.resolvedAt).toLocaleString('fr-FR')}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div>
-                    <label className="block font-medium text-foreground mb-2">Resolution</label>
+                    <label className="block font-medium text-foreground mb-2">{t('adminDisputes', 'resolution')}</label>
                     <Textarea
                       value={resolution}
                       onChange={(e) => setResolution(e.target.value)}
-                      placeholder="Enter the resolution details..."
+                      placeholder={t('adminDisputes', 'resolutionPlaceholder')}
                       rows={4}
                     />
                   </div>
@@ -431,7 +431,7 @@ export default function DisputesPage() {
                   }}
                   className="px-4 py-2 text-muted-foreground hover:text-foreground"
                 >
-                  Close
+                  {t('adminDisputes', 'close')}
                 </button>
                 {(selectedDispute.status === DisputeStatus.OPEN ||
                   selectedDispute.status === DisputeStatus.IN_REVIEW) && (
@@ -440,7 +440,7 @@ export default function DisputesPage() {
                     disabled={!resolution.trim() || resolving}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                   >
-                    {resolving ? 'Resolving...' : 'Resolve Dispute'}
+                    {resolving ? t('adminDisputes', 'resolving') : t('adminDisputes', 'resolveDispute')}
                   </button>
                 )}
               </div>
