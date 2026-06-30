@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Hammer, Heart, Receipt, Scale,
@@ -92,6 +93,7 @@ function ClientHeader() {
 
           {/* User Info & Actions */}
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Link href="/client/notifications" aria-label="Notifications">
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />

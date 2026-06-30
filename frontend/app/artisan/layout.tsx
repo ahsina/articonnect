@@ -1,5 +1,6 @@
 'use client';
 
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -252,6 +253,11 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
 
         {/* Footer */}
         <div className="p-4 border-t border-border">
+          {sidebarOpen && (
+            <div className="mb-2">
+              <LanguageSwitcher />
+            </div>
+          )}
           <button
             onClick={handleLogout}
             className={`${linkBase} text-muted-foreground hover:bg-destructive/10 hover:text-destructive`}

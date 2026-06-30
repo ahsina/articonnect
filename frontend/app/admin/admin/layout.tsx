@@ -1,5 +1,6 @@
 'use client';
 
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -206,7 +207,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer */}
         {sidebarOpen && (
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-2">
+            <LanguageSwitcher />
             <div className="text-xs text-muted-foreground">{t('adminLayout', 'adminPanel')} v1.0</div>
           </div>
         )}

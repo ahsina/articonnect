@@ -1,5 +1,6 @@
 'use client';
 
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -96,6 +97,7 @@ export default function ClientDashboard() {
               <Link href="/client/marketplace">
                 <Button variant="ghost" leftIcon={<ShoppingCart className="h-4 w-4" />}>{t('marketplace', 'title')}</Button>
               </Link>
+              <LanguageSwitcher />
               <Button
                 variant="ghost"
                 onClick={handleLogout}

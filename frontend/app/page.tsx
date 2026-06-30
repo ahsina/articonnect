@@ -1,5 +1,6 @@
 'use client';
 
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -40,6 +41,7 @@ export default function HomePage() {
             <span className="font-display text-xl font-bold tracking-tight">Krafolt</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSwitcher />
             <Link href="/auth/login" className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               {t('landing', 'login')}
             </Link>
@@ -168,9 +170,13 @@ export default function HomePage() {
             <span className="font-display font-bold">Krafolt</span>
           </div>
           <p className="text-sm text-muted-foreground">© 2026 Krafolt — {t('landing', 'footerTagline')} · LU · FR · BE</p>
-          <div className="flex gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             <Link href="/auth/login" className="transition-colors hover:text-foreground">{t('landing', 'footerLogin')}</Link>
             <Link href="/auth/register" className="transition-colors hover:text-foreground">{t('landing', 'footerRegister')}</Link>
+            <Link href="/legal/mentions" className="transition-colors hover:text-foreground">Mentions légales</Link>
+            <Link href="/legal/terms" className="transition-colors hover:text-foreground">CGU/CGV</Link>
+            <Link href="/legal/privacy" className="transition-colors hover:text-foreground">Confidentialité</Link>
+            <Link href="/legal/cookies" className="transition-colors hover:text-foreground">Cookies</Link>
           </div>
         </div>
       </footer>

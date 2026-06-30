@@ -43,7 +43,7 @@ const INDUSTRIES = [
 ];
 
 export default function ClientSettingsPage() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -408,12 +408,17 @@ export default function ClientSettingsPage() {
             </CardHeader>
             <CardContent>
               <select
-                className="w-full md:w-64 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                defaultValue="fr"
+                className="w-full md:w-64 px-3 py-2 border border-border rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as typeof language)}
               >
                 <option value="fr">Français</option>
                 <option value="en">English</option>
                 <option value="de">Deutsch</option>
+                <option value="nl">Nederlands</option>
+                <option value="es">Español</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Português</option>
               </select>
             </CardContent>
           </Card>
