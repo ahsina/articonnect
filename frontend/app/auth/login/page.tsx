@@ -90,7 +90,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-2xl text-center">{t('common', 'login')}</CardTitle>
           <CardDescription className="text-center">
-            Connectez-vous à votre compte Krafolt
+            {t('authPages', 'loginSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>

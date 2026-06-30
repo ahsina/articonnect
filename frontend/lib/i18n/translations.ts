@@ -2,6 +2,7 @@ import { es } from './es';
 import { it } from './it';
 import { nl } from './nl';
 import { pt } from './pt';
+import { extra } from './extra';
 
 export const translations = {
   fr: {
@@ -2141,9 +2142,11 @@ export type TranslationKey = keyof typeof translations.fr;
 
 // 7 langues réellement traduites (es/it/nl/pt générées, à relire) — fichiers dédiés lib/i18n/{lang}.ts
 export const allTranslations: Record<Language, typeof translations.fr> = {
-  ...translations,
-  es: es as typeof translations.fr,
-  it: it as typeof translations.fr,
-  nl: nl as typeof translations.fr,
-  pt: pt as typeof translations.fr,
+  fr: { ...translations.fr, ...extra.fr } as typeof translations.fr,
+  en: { ...translations.en, ...extra.en } as typeof translations.fr,
+  de: { ...translations.de, ...extra.de } as typeof translations.fr,
+  nl: { ...nl, ...extra.nl } as typeof translations.fr,
+  es: { ...es, ...extra.es } as typeof translations.fr,
+  it: { ...it, ...extra.it } as typeof translations.fr,
+  pt: { ...pt, ...extra.pt } as typeof translations.fr,
 };
