@@ -10,6 +10,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Request,
 } from '@nestjs/common';
 import { InvoiceService } from '../services/invoice.service';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
@@ -79,6 +80,7 @@ export class InvoiceController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findAll(
+    @Request() req: any,
     @Query('issuerId') issuerId?: string,
     @Query('clientId') clientId?: string,
     @Query('status') status?: string,
@@ -97,10 +99,13 @@ export class InvoiceController {
       endDate: endDate ? new Date(endDate) : undefined,
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
+      requesterUserId: req.user.id,
+      isAdmin: req.user.role === 'ADMIN',
     });
   }
 
   @Get('number/:invoiceNumber')
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'Get invoice by invoice number' })
   findByInvoiceNumber(@Param('invoiceNumber') invoiceNumber: string) {
     return this.invoiceService.findByInvoiceNumber(invoiceNumber);
@@ -108,8 +113,8 @@ export class InvoiceController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get invoice by ID' })
-  findOne(@Param('id') id: string) {
-    return this.invoiceService.findOne(id);
+  findOne(@Request() req: any, @Param('id') id: string) {
+    return this.invoiceService.findOne(id, { userId: req.user.id, isAdmin: req.user.role === 'ADMIN' });
   }
 
   @Patch(':id')
@@ -129,8 +134,11 @@ export class InvoiceController {
 
   @Get(':id/pdf')
   @ApiOperation({ summary: 'Generate and get PDF URL for invoice' })
-  async generatePDF(@Param('id') id: string) {
-    const pdfUrl = await this.invoiceService.generatePDF(id);
+  async generatePDF(@Request() req: any, @Param('id') id: string) {
+    const pdfUrl = await this.invoiceService.generatePDF(id, {
+      userId: req.user.id,
+      isAdmin: req.user.role === 'ADMIN',
+    });
     return { pdfUrl };
   }
 }

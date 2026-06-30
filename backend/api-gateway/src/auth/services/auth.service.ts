@@ -215,7 +215,7 @@ export class AuthService {
 
     // If 2FA enabled, verify token
     if (user.twoFactorEnabled && twoFactorToken) {
-      const isValid = await this.twoFactorService.verifyToken(user.id, twoFactorToken);
+      const isValid = await this.twoFactorService.verifyToken(user.twoFactorSecret || "", twoFactorToken);
       if (!isValid) {
         throw new UnauthorizedException('Code 2FA invalide');
       }
@@ -271,7 +271,7 @@ export class AuthService {
     }
 
     // Verify 2FA code
-    const isValid = await this.twoFactorService.verifyToken(user.id, twoFactorCode);
+    const isValid = await this.twoFactorService.verifyToken(user.twoFactorSecret || "", twoFactorCode);
     if (!isValid) {
       throw new UnauthorizedException('Code 2FA invalide');
     }

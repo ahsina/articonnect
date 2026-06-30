@@ -11,6 +11,7 @@ import { FeatureToggleService } from '../../fraud/services/feature-toggle.servic
 @Controller('admin/fraud-settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
+@Roles('ADMIN')
 export class FraudSettingsController {
   constructor(private featureToggle: FeatureToggleService) {}
 

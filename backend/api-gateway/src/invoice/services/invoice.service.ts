@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 import { UpdateInvoiceDto } from '../dto/update-invoice.dto';
@@ -148,7 +148,7 @@ export class InvoiceService {
   /**
    * Generate PDF for an invoice
    */
-  async generatePDF(invoiceId: string): Promise<string> {
+  async generatePDF(invoiceId: string, requester?: { userId: string; isAdmin: boolean }): Promise<string> {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: {
@@ -158,6 +158,13 @@ export class InvoiceService {
     });
 
     if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    // SÉCURITÉ : ownership (émetteur / client / admin).
+    if (requester && !requester.isAdmin &&
+        invoice.issuerId !== requester.userId &&
+        invoice.clientId !== requester.userId) {
       throw new NotFoundException('Invoice not found');
     }
 
@@ -268,14 +275,23 @@ export class InvoiceService {
     endDate?: Date;
     page?: number;
     limit?: number;
+    requesterUserId?: string;
+    isAdmin?: boolean;
   }) {
-    const { page = 1, limit = 20, ...where } = filters;
+    const { page = 1, limit = 20, requesterUserId, isAdmin, ...where } = filters;
     const skip = (page - 1) * limit;
 
     const whereClause: Prisma.InvoiceWhereInput = {};
 
-    if (where.issuerId) whereClause.issuerId = where.issuerId;
-    if (where.clientId) whereClause.clientId = where.clientId;
+    // SÉCURITÉ : un non-admin ne voit QUE ses factures (émetteur ou client) ; on ignore les filtres
+    // issuerId/clientId fournis par le client (sinon IDOR : lecture des factures d'autrui).
+    if (!isAdmin) {
+      if (!requesterUserId) throw new ForbiddenException('Non autorisé');
+      whereClause.OR = [{ issuerId: requesterUserId }, { clientId: requesterUserId }];
+    } else {
+      if (where.issuerId) whereClause.issuerId = where.issuerId;
+      if (where.clientId) whereClause.clientId = where.clientId;
+    }
     if (where.status) whereClause.status = where.status as any;
     if (where.type) whereClause.type = where.type as any;
 
@@ -325,7 +341,7 @@ export class InvoiceService {
   /**
    * Find one invoice by ID
    */
-  async findOne(id: string) {
+  async findOne(id: string, requester?: { userId: string; isAdmin: boolean }) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
       include: {
@@ -352,6 +368,13 @@ export class InvoiceService {
     });
 
     if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    // SÉCURITÉ : seuls l'émetteur (artisan), le client propriétaire ou un admin peuvent lire la facture.
+    if (requester && !requester.isAdmin &&
+        invoice.issuerId !== requester.userId &&
+        invoice.clientId !== requester.userId) {
       throw new NotFoundException('Invoice not found');
     }
 
