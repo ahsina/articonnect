@@ -32,47 +32,47 @@ interface NavItemGroup {
 type NavItem = NavItemLink | NavItemGroup;
 
 const adminNavItems: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/missions', label: 'Missions', icon: ClipboardList },
-  { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
+  { href: '/admin/dashboard', label: 'dashboard', icon: LayoutDashboard },
+  { href: '/admin/users', label: 'users', icon: Users },
+  { href: '/admin/missions', label: 'missions', icon: ClipboardList },
+  { href: '/admin/analytics', label: 'analytics', icon: TrendingUp },
   {
-    label: 'Moderation',
+    label: 'moderation',
     icon: ShieldCheck,
     children: [
-      { href: '/admin/moderation', label: 'Reports', icon: Eye },
-      { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
-      { href: '/admin/no-shows', label: 'No-Shows', icon: Ban },
+      { href: '/admin/moderation', label: 'reports', icon: Eye },
+      { href: '/admin/disputes', label: 'disputes', icon: AlertTriangle },
+      { href: '/admin/no-shows', label: 'noShows', icon: Ban },
     ],
   },
   {
-    label: 'Verification',
+    label: 'verification',
     icon: BadgeCheck,
     children: [
-      { href: '/admin/verifications', label: 'KYC/Verification', icon: FileCheck },
-      { href: '/admin/certifications', label: 'Certifications', icon: Award },
+      { href: '/admin/verifications', label: 'kycVerification', icon: FileCheck },
+      { href: '/admin/certifications', label: 'certifications', icon: Award },
     ],
   },
   {
-    label: 'Platform',
+    label: 'platform',
     icon: Wrench,
     children: [
-      { href: '/admin/specialties', label: 'Specialties', icon: Tags },
-      { href: '/admin/reputation', label: 'Reputation', icon: Star },
-      { href: '/admin/feature-flags', label: 'Feature Flags', icon: Flag },
+      { href: '/admin/specialties', label: 'specialties', icon: Tags },
+      { href: '/admin/reputation', label: 'reputation', icon: Star },
+      { href: '/admin/feature-flags', label: 'featureFlags', icon: Flag },
     ],
   },
   {
-    label: 'System',
+    label: 'system',
     icon: Server,
     children: [
-      { href: '/admin/monitoring', label: 'Monitoring', icon: Activity },
-      { href: '/admin/cron', label: 'CRON Jobs', icon: Timer },
-      { href: '/admin/fraud-settings', label: 'Fraud Settings', icon: ShieldAlert },
-      { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
+      { href: '/admin/monitoring', label: 'monitoring', icon: Activity },
+      { href: '/admin/cron', label: 'cronJobs', icon: Timer },
+      { href: '/admin/fraud-settings', label: 'fraudSettings', icon: ShieldAlert },
+      { href: '/admin/audit-logs', label: 'auditLogs', icon: ScrollText },
     ],
   },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, highlight: true },
+  { href: '/admin/settings', label: 'settings', icon: Settings, highlight: true },
 ];
 
 function isNavGroup(item: NavItem): item is NavItemGroup {
@@ -150,7 +150,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       <GroupIcon className="h-5 w-5 flex-shrink-0" />
                       {sidebarOpen && (
                         <>
-                          <span className="flex-1 text-left">{item.label}</span>
+                          <span className="flex-1 text-left">{t('adminNav', item.label)}</span>
                           <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                         </>
                       )}
@@ -170,7 +170,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 }`}
                               >
                                 <ChildIcon className="h-4 w-4 flex-shrink-0" />
-                                <span>{child.label}</span>
+                                <span>{t('adminNav', child.label)}</span>
                               </button>
                             </li>
                           );
@@ -196,7 +196,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     }`}
                   >
                     <LinkIcon className="h-5 w-5 flex-shrink-0" />
-                    {sidebarOpen && <span className="flex-1 text-left">{linkItem.label}</span>}
+                    {sidebarOpen && <span className="flex-1 text-left">{t('adminNav', linkItem.label)}</span>}
                   </button>
                 </li>
               );
