@@ -2140,13 +2140,27 @@ export const translations = {
 export type Language = 'fr' | 'en' | 'de' | 'es' | 'it' | 'nl' | 'pt';
 export type TranslationKey = keyof typeof translations.fr;
 
+// Fusion RÉCURSIVE : extra peut étendre les namespaces existants (artisan, common…) sans les écraser.
+function deepMerge(base: any, ext: any): any {
+  const out: any = { ...base };
+  for (const k of Object.keys(ext || {})) {
+    if (ext[k] && typeof ext[k] === 'object' && !Array.isArray(ext[k]) &&
+        base?.[k] && typeof base[k] === 'object' && !Array.isArray(base[k])) {
+      out[k] = deepMerge(base[k], ext[k]);
+    } else {
+      out[k] = ext[k];
+    }
+  }
+  return out;
+}
+
 // 7 langues réellement traduites (es/it/nl/pt générées, à relire) — fichiers dédiés lib/i18n/{lang}.ts
 export const allTranslations: Record<Language, typeof translations.fr> = {
-  fr: { ...translations.fr, ...extra.fr } as typeof translations.fr,
-  en: { ...translations.en, ...extra.en } as typeof translations.fr,
-  de: { ...translations.de, ...extra.de } as typeof translations.fr,
-  nl: { ...nl, ...extra.nl } as typeof translations.fr,
-  es: { ...es, ...extra.es } as typeof translations.fr,
-  it: { ...it, ...extra.it } as typeof translations.fr,
-  pt: { ...pt, ...extra.pt } as typeof translations.fr,
+  fr: deepMerge(translations.fr, extra.fr) as typeof translations.fr,
+  en: deepMerge(translations.en, extra.en) as typeof translations.fr,
+  de: deepMerge(translations.de, extra.de) as typeof translations.fr,
+  nl: deepMerge(nl, extra.nl) as typeof translations.fr,
+  es: deepMerge(es, extra.es) as typeof translations.fr,
+  it: deepMerge(it, extra.it) as typeof translations.fr,
+  pt: deepMerge(pt, extra.pt) as typeof translations.fr,
 };
