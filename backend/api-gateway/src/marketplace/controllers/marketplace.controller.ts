@@ -77,8 +77,8 @@ export class MarketplaceController {
   @ApiOperation({ summary: 'Update a product' })
   @ApiResponse({ status: 200, description: 'Product updated' })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async updateProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
-    return this.productService.update(id, data);
+  async updateProduct(@Request() req, @Param('id') id: string, @Body() data: UpdateProductDto) {
+    return this.productService.update(id, req.user.userId, data);
   }
 
   @Delete('products/:id')
@@ -86,8 +86,8 @@ export class MarketplaceController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a product' })
   @ApiResponse({ status: 200, description: 'Product deleted' })
-  async deleteProduct(@Param('id') id: string) {
-    return this.productService.delete(id);
+  async deleteProduct(@Request() req, @Param('id') id: string) {
+    return this.productService.delete(id, req.user.userId);
   }
 
   // ==================== PRODUCT VARIANTS ====================
@@ -177,7 +177,7 @@ export class MarketplaceController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update order status' })
   @ApiResponse({ status: 200, description: 'Order status updated' })
-  async updateOrderStatus(@Param('id') id: string, @Body() body: UpdateOrderStatusDto) {
-    return this.orderService.updateStatus(id, body.status);
+  async updateOrderStatus(@Request() req, @Param('id') id: string, @Body() body: UpdateOrderStatusDto) {
+    return this.orderService.updateStatus(id, req.user.userId, body.status);
   }
 }

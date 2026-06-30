@@ -178,7 +178,8 @@ export class KboVerificationService {
     this.logger.warn(`Using MOCK verification for Belgian KBO: ${kboNumber}`);
 
     return {
-      verified: true,
+      // SÉCURITÉ : fail-closed — sans accès KBO réel, pas de validation auto (vérif manuelle admin).
+      verified: false,
       kboNumber,
       companyName: companyName || 'Entreprise Belge SPRL',
       legalForm: 'SPRL',

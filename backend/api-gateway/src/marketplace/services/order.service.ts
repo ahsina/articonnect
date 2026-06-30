@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { OrderItemDto } from '../dto/order.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -144,13 +144,20 @@ export class OrderService {
     return order;
   }
 
-  async updateStatus(orderId: string, status: string) {
+  async updateStatus(orderId: string, artisanId: string, status: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
+      include: { items: { include: { product: { select: { artisanId: true } } } } },
     });
 
     if (!order) {
       throw new NotFoundException('Commande introuvable');
+    }
+
+    // SÉCURITÉ : seul l'artisan vendeur d'un produit de la commande peut changer son statut.
+    const owns = (order as any).items?.some((it: any) => it.product?.artisanId === artisanId);
+    if (!owns) {
+      throw new ForbiddenException('Vous n\'avez pas accès à cette commande');
     }
 
     // Validate status is a valid OrderStatus

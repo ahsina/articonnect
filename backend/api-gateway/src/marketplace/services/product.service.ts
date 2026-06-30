@@ -172,9 +172,12 @@ export class ProductService {
     return product;
   }
 
-  async update(id: string, data: UpdateProductDto) {
-    // Verify product exists
-    await this.findOne(id);
+  async update(id: string, artisanId: string, data: UpdateProductDto) {
+    // Verify product exists + ownership (un artisan ne modifie que SES produits)
+    const product = await this.findOne(id);
+    if ((product as any).artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à ce produit');
+    }
 
     // Transform category to categoryId if present
     const updateData: any = { ...data };
@@ -203,9 +206,12 @@ export class ProductService {
     });
   }
 
-  async delete(id: string) {
-    // Verify product exists
-    await this.findOne(id);
+  async delete(id: string, artisanId: string) {
+    // Verify product exists + ownership
+    const product = await this.findOne(id);
+    if ((product as any).artisanId !== artisanId) {
+      throw new ForbiddenException('Vous n\'avez pas accès à ce produit');
+    }
 
     await this.prisma.product.delete({
       where: { id },

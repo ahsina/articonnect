@@ -101,7 +101,8 @@ export class RcsVerificationService {
     this.logger.warn(`Using MOCK verification for Luxembourg RCS: ${rcsNumber}`);
 
     return {
-      verified: true,
+      // SÉCURITÉ : fail-closed — RCS Luxembourg non vérifié réellement → pas de validation auto.
+      verified: false,
       rcsNumber,
       companyName: companyName || 'Entreprise Luxembourg S.à r.l.',
       legalForm: 'S.à r.l.',

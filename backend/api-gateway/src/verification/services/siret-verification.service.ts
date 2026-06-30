@@ -164,7 +164,8 @@ export class SiretVerificationService {
     companyName?: string,
   ): SiretVerificationResult {
     return {
-      verified: true,
+      // SÉCURITÉ : fail-closed — sans token INSEE, on NE valide PAS automatiquement (vérif manuelle admin).
+      verified: false,
       siret,
       siren: siret.substring(0, 9),
       companyName: companyName || 'Entreprise Test SARL',

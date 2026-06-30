@@ -152,6 +152,11 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants incorrects');
     }
 
+    // SÉCURITÉ : un compte suspendu/banni/désactivé ne reçoit aucun token.
+    if (['SUSPENDED', 'BANNED', 'INACTIVE', 'DELETED'].includes((user as any).status)) {
+      throw new UnauthorizedException('Compte suspendu. Contactez le support.');
+    }
+
     // Multi-Account Detection (if enabled)
     const isMultiAccountDetectionEnabled = await this.featureToggle.isMultiAccountDetectionEnabled();
     if (isMultiAccountDetectionEnabled) {
