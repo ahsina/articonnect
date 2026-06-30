@@ -202,22 +202,22 @@ export default function ReviewsPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        {review.reviewer.avatar ? (
+                        {review.reviewer?.avatar ? (
                           <img
-                            src={review.reviewer.avatar}
+                            src={review.reviewer?.avatar}
                             alt=""
                             className="w-10 h-10 rounded-full"
                           />
                         ) : (
                           <span className="text-muted-foreground font-medium">
-                            {review.reviewer.firstName[0]}
-                            {review.reviewer.lastName[0]}
+                            {review.reviewer?.firstName?.[0]}
+                            {review.reviewer?.lastName?.[0]}
                           </span>
                         )}
                       </div>
                       <div>
                         <div className="font-medium text-foreground">
-                          {review.reviewer.firstName} {review.reviewer.lastName}
+                          {review.reviewer?.firstName} {review.reviewer?.lastName}
                         </div>
                         <div className="text-sm text-muted-foreground">{formatDate(review.createdAt)}</div>
                       </div>
