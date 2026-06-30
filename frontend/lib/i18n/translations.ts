@@ -1,3 +1,8 @@
+import { es } from './es';
+import { it } from './it';
+import { nl } from './nl';
+import { pt } from './pt';
+
 export const translations = {
   fr: {
     nav: {
@@ -2134,11 +2139,11 @@ export const translations = {
 export type Language = 'fr' | 'en' | 'de' | 'es' | 'it' | 'nl' | 'pt';
 export type TranslationKey = keyof typeof translations.fr;
 
-// Add new languages using English as fallback (needs proper translations)
+// 7 langues réellement traduites (es/it/nl/pt générées, à relire) — fichiers dédiés lib/i18n/{lang}.ts
 export const allTranslations: Record<Language, typeof translations.fr> = {
   ...translations,
-  es: { ...translations.en },
-  it: { ...translations.en },
-  nl: { ...translations.en },
-  pt: { ...translations.en },
+  es: es as typeof translations.fr,
+  it: it as typeof translations.fr,
+  nl: nl as typeof translations.fr,
+  pt: pt as typeof translations.fr,
 };
