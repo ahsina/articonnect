@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
@@ -42,6 +42,21 @@ export class PaymentService {
 
     if (!mission.agreedPrice) {
       throw new BadRequestException('Prix non défini');
+    }
+
+    // IDEMPOTENCE : 1 seule Transaction par mission. Si elle existe déjà, on réutilise l'intent
+    // (pas de doublon de PaymentIntent/Transaction sur re-mount/retry).
+    const existingTx = await this.prisma.transaction.findUnique({ where: { missionId } });
+    if (existingTx) {
+      if (['SUCCEEDED', 'COMPLETED', 'CAPTURED'].includes(existingTx.status as string)) {
+        throw new BadRequestException('Cette mission est déjà payée');
+      }
+      if (existingTx.stripePaymentIntentId) {
+        const pi = await this.stripeService.retrievePaymentIntent(existingTx.stripePaymentIntentId);
+        if (pi?.client_secret) {
+          return { clientSecret: pi.client_secret };
+        }
+      }
     }
 
     const amount = Number(mission.agreedPrice) * 100; // Convert to cents
@@ -348,6 +363,18 @@ export class PaymentService {
     // Handle Stripe webhook events
     const eventData = event as { type: string; data: { object: { id: string; status?: string; charge?: string; metadata: Record<string, string> } } };
 
+    // IDEMPOTENCE : Stripe redélivre les events ; on n'exécute les effets de bord (capture/refund/transfert)
+    // qu'UNE seule fois par event.id.
+    const eventId = (event as any).id as string | undefined;
+    if (eventId) {
+      try {
+        await this.prisma.webhookEvent.create({ data: { id: eventId, type: eventData.type } });
+      } catch {
+        this.logger.warn(`Webhook ${eventId} (${eventData.type}) déjà traité — ignoré (idempotence)`);
+        return { received: true, duplicate: true };
+      }
+    }
+
     switch (eventData.type) {
       case 'payment_intent.succeeded':
         await this.handlePaymentSuccess(eventData.data.object);
@@ -592,6 +619,11 @@ export class PaymentService {
       throw new BadRequestException('Mission introuvable');
     }
 
+    // SÉCURITÉ : seul le client de la mission peut demander un remboursement de SA mission.
+    if (_requestedBy && mission.clientId !== _requestedBy) {
+      throw new ForbiddenException('Vous ne pouvez pas rembourser cette mission');
+    }
+
     // Trouver le paiement principal
     const payment = mission.payments.find((p) => p.type === 'FULL_PAYMENT') ||
       mission.payments.find((p) => p.type === 'DEPOSIT');
@@ -600,7 +632,9 @@ export class PaymentService {
       throw new BadRequestException('Aucun paiement à rembourser');
     }
 
-    const refundAmount = amount || Number(payment.amount);
+    // SÉCURITÉ : on clamp le montant fourni par le client au montant réellement payé (0 ≤ refund ≤ payé).
+    const maxRefund = Number(payment.amount);
+    const refundAmount = amount != null ? Math.min(Math.max(Number(amount), 0), maxRefund) : maxRefund;
 
     // Logique de remboursement selon la raison
     switch (reason) {

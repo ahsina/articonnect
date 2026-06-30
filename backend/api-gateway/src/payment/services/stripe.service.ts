@@ -11,6 +11,11 @@ export class StripeService {
     });
   }
 
+  /** Récupère un PaymentIntent existant (idempotence : réutiliser au lieu de recréer). */
+  async retrievePaymentIntent(id: string) {
+    return this.stripe.paymentIntents.retrieve(id);
+  }
+
   async createPaymentIntent(params: {
     amount: number;
     currency: string;

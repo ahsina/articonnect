@@ -4153,3 +4153,12 @@ model ChatReadReceipt {
   @@index([messageId])
   @@index([userId])
 }
+
+/// Idempotence des webhooks Stripe : on enregistre chaque event.id traité pour ignorer les redéliveries.
+model WebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
