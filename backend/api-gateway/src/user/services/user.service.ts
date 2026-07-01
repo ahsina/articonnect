@@ -232,10 +232,23 @@ export class UserService {
       take: 50,
     });
 
-    return artisans.map((user) => {
-      const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
-      return sanitized;
-    });
+    return artisans.map((user) => this.stripSensitiveUserFields(user));
+  }
+
+  /** Retire les champs internes/sensibles d'un objet User avant exposition publique. */
+  private stripSensitiveUserFields(user: Record<string, unknown>) {
+    const SENSITIVE = [
+      'password', 'twoFactorSecret', 'outlookAccessToken', 'outlookRefreshToken',
+      'outlookTokenExpiry', 'fcmTokens', 'deviceFingerprints', 'lastUserAgent',
+      'lastIpAddress', 'lastSessionId', 'lastSessionLocation', 'multiAccountRiskScore',
+      'multiAccountFlagged', 'multiAccountReviewedAt', 'kycSessionId', 'kycProvider',
+      'stripeIdentitySessionId', 'refundCount', 'refundRate', 'refundAbuseScore',
+      'refundBlocked', 'sessionAnomalyCount', 'botDetectionScore', 'botFlagged',
+      'captchaRequired',
+    ];
+    const clone: Record<string, unknown> = { ...user };
+    for (const k of SENSITIVE) delete clone[k];
+    return clone;
   }
 
   async getArtisan(artisanId: string) {
@@ -270,7 +283,36 @@ export class UserService {
       throw new NotFoundException('Artisan introuvable');
     }
 
-    const { password: _password, twoFactorSecret: _twoFactorSecret, ...sanitized } = user;
+    // SÉCURITÉ : ne jamais exposer les champs internes (tokens OAuth/push, IP, empreintes,
+    // scores anti-fraude, session/KYC) d'un autre utilisateur sur cet endpoint public.
+    const {
+      password: _password,
+      twoFactorSecret: _twoFactorSecret,
+      outlookAccessToken: _oat,
+      outlookRefreshToken: _ort,
+      outlookTokenExpiry: _ote,
+      fcmTokens: _fcm,
+      deviceFingerprints: _df,
+      lastUserAgent: _lua,
+      lastIpAddress: _lip,
+      lastSessionId: _lsid,
+      lastSessionLocation: _lsl,
+      multiAccountRiskScore: _mars,
+      multiAccountFlagged: _maf,
+      multiAccountReviewedAt: _mara,
+      kycSessionId: _ksid,
+      kycProvider: _kp,
+      stripeIdentitySessionId: _sis,
+      refundCount: _rc,
+      refundRate: _rr,
+      refundAbuseScore: _ras,
+      refundBlocked: _rb,
+      sessionAnomalyCount: _sac,
+      botDetectionScore: _bds,
+      botFlagged: _bf,
+      captchaRequired: _cr,
+      ...sanitized
+    } = user as Record<string, unknown>;
     return sanitized;
   }
 

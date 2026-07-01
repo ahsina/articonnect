@@ -11,32 +11,29 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface OrderItem {
   id: string;
   productId: string;
-  productName: string;
-  productImage: string;
+  product?: {
+    name: string;
+    images?: string[];
+  };
   quantity: number;
-  price: number;
+  unitPrice: number | string;
+  totalPrice: number | string;
 }
+
+type OrderStatus = 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
 
 interface Order {
   id: string;
-  orderNumber: string;
-  status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-  totalAmount: number;
+  status: OrderStatus;
+  subtotal: number | string;
+  vat: number | string;
+  shippingCost: number | string;
+  total: number | string;
   items: OrderItem[];
-  artisan: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatar?: string;
-  };
-  shippingAddress: {
-    address: string;
-    city: string;
-    postalCode: string;
-    country: string;
-  };
+  shippingAddress: string;
   createdAt: string;
   updatedAt: string;
+  paidAt?: string;
   deliveredAt?: string;
   trackingNumber?: string;
 }
@@ -44,10 +41,12 @@ interface Order {
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-500/15 text-yellow-400',
-  CONFIRMED: 'bg-primary/10 text-primary',
+  PAID: 'bg-primary/10 text-primary',
+  PROCESSING: 'bg-blue-500/15 text-blue-400',
   SHIPPED: 'bg-purple-500/15 text-purple-400',
   DELIVERED: 'bg-green-500/15 text-green-400',
   CANCELLED: 'bg-red-500/15 text-red-400',
+  REFUNDED: 'bg-muted text-muted-foreground',
 };
 
 export default function ClientOrdersPage() {
@@ -55,16 +54,18 @@ export default function ClientOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED'>('all');
+  const [filter, setFilter] = useState<'all' | 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
       PENDING: t('common', 'pending'),
-      CONFIRMED: t('orders', 'confirmed'),
+      PAID: t('orders', 'confirmed'),
+      PROCESSING: t('orders', 'confirmed'),
       SHIPPED: t('orders', 'shipped'),
       DELIVERED: t('orders', 'delivered'),
       CANCELLED: t('common', 'cancelled'),
+      REFUNDED: t('common', 'cancelled'),
     };
     return statusMap[status] || status;
   };
@@ -155,7 +156,7 @@ export default function ClientOrdersPage() {
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('orders', 'inProgress')}</div>
               <div className="text-2xl font-bold text-primary">
-                {orders.filter((o) => ['CONFIRMED', 'SHIPPED'].includes(o.status)).length}
+                {orders.filter((o) => ['PAID', 'PROCESSING', 'SHIPPED'].includes(o.status)).length}
               </div>
             </CardContent>
           </Card>
@@ -184,10 +185,10 @@ export default function ClientOrdersPage() {
             {t('common', 'pending')} ({orders.filter((o) => o.status === 'PENDING').length})
           </Button>
           <Button
-            variant={filter === 'CONFIRMED' ? 'default' : 'outline'}
-            onClick={() => setFilter('CONFIRMED')}
+            variant={filter === 'PAID' ? 'default' : 'outline'}
+            onClick={() => setFilter('PAID')}
           >
-            {t('orders', 'confirmed')} ({orders.filter((o) => o.status === 'CONFIRMED').length})
+            {t('orders', 'confirmed')} ({orders.filter((o) => ['PAID','PROCESSING'].includes(o.status)).length})
           </Button>
           <Button
             variant={filter === 'SHIPPED' ? 'default' : 'outline'}
@@ -224,7 +225,7 @@ export default function ClientOrdersPage() {
                     <div>
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-semibold text-foreground">
-                          {t('orders', 'order')} {order.orderNumber}
+                          {t('orders', 'order')} #{order.id.slice(0, 8).toUpperCase()}
                         </h3>
                         <Badge className={STATUS_COLORS[order.status]}>
                           {getStatusLabel(order.status)}
@@ -236,7 +237,7 @@ export default function ClientOrdersPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-foreground">
-                        {order.totalAmount}€
+                        {Number(order.total).toFixed(2)}€
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {order.items.reduce((sum, item) => sum + item.quantity, 0)} {order.items.reduce((sum, item) => sum + item.quantity, 0) > 1 ? t('cart', 'items') : t('cart', 'item')}
@@ -244,46 +245,41 @@ export default function ClientOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Artisan Info (le listing peut ne pas inclure l'artisan) */}
-                  {order.artisan && (
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
-                      <img
-                        src={order.artisan.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                        alt={order.artisan.firstName}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('orders', 'soldBy')}</p>
-                        <p className="font-semibold text-foreground">
-                          {order.artisan.firstName} {order.artisan.lastName}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Order Items */}
                   <div className="space-y-3 mb-4">
                     {(order.items ?? []).map((item) => (
                       <div key={item.id} className="flex items-center gap-4">
-                        <img
-                          src={item.productImage}
-                          alt={item.productName}
-                          className="w-16 h-16 object-cover rounded"
-                        />
+                        {item.product?.images?.[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.product.images[0]}
+                            alt={item.product?.name || 'Produit'}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded bg-muted" />
+                        )}
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{item.productName}</p>
+                          <p className="font-medium text-foreground">{item.product?.name || '—'}</p>
                           <p className="text-sm text-muted-foreground">
-                            {t('cart', 'quantity')}: {item.quantity} × {Number(item.price)}€
+                            {t('cart', 'quantity')}: {item.quantity} × {Number(item.unitPrice).toFixed(2)}€
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-foreground">
-                            {(item.quantity * Number(item.price)).toFixed(2)}€
+                            {Number(item.totalPrice).toFixed(2)}€
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
+
+                  {/* Adresse de livraison (chaîne libre) */}
+                  {order.shippingAddress && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {t('orders', 'shippingTo') || 'Livraison'} : {order.shippingAddress}
+                    </p>
+                  )}
 
                   {/* Shipping Info */}
                   {order.trackingNumber && (
@@ -330,15 +326,6 @@ export default function ClientOrdersPage() {
                       </Button>
                     )}
 
-                    {order.artisan?.id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/client/messages?userId=${order.artisan.id}`)}
-                      >
-                        💬 {t('orders', 'contactSeller')}
-                      </Button>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -367,7 +354,7 @@ export default function ClientOrdersPage() {
                   {/* Order Number and Status */}
                   <div>
                     <p className="text-sm text-muted-foreground">{t('orders', 'orderNumber')}</p>
-                    <p className="font-semibold text-lg">{selectedOrder.orderNumber}</p>
+                    <p className="font-semibold text-lg">#{selectedOrder.id.slice(0, 8).toUpperCase()}</p>
                     <Badge className={`${STATUS_COLORS[selectedOrder.status]} mt-2`}>
                       {getStatusLabel(selectedOrder.status)}
                     </Badge>
@@ -393,19 +380,24 @@ export default function ClientOrdersPage() {
                     <div className="space-y-3">
                       {(selectedOrder.items ?? []).map((item) => (
                         <div key={item.id} className="flex items-center gap-4 p-3 bg-background rounded-lg">
-                          <img
-                            src={item.productImage}
-                            alt={item.productName}
-                            className="w-20 h-20 object-cover rounded"
-                          />
+                          {item.product?.images?.[0] ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.product.images[0]}
+                              alt={item.product?.name || 'Produit'}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded bg-muted" />
+                          )}
                           <div className="flex-1">
-                            <p className="font-medium">{item.productName}</p>
+                            <p className="font-medium">{item.product?.name || '—'}</p>
                             <p className="text-sm text-muted-foreground">
-                              {item.quantity} × {Number(item.price)}€
+                              {item.quantity} × {Number(item.unitPrice).toFixed(2)}€
                             </p>
                           </div>
                           <p className="font-semibold">
-                            {(item.quantity * Number(item.price)).toFixed(2)}€
+                            {Number(item.totalPrice).toFixed(2)}€
                           </p>
                         </div>
                       ))}
@@ -416,11 +408,7 @@ export default function ClientOrdersPage() {
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">{t('orders', 'shippingAddress')}</p>
                     <div className="p-3 bg-background rounded-lg">
-                      <p className="font-medium">{selectedOrder.shippingAddress.address}</p>
-                      <p className="text-foreground">
-                        {selectedOrder.shippingAddress.postalCode} {selectedOrder.shippingAddress.city}
-                      </p>
-                      <p className="text-foreground">{selectedOrder.shippingAddress.country}</p>
+                      <p className="font-medium whitespace-pre-line">{selectedOrder.shippingAddress}</p>
                     </div>
                   </div>
 
@@ -436,12 +424,24 @@ export default function ClientOrdersPage() {
                     </div>
                   )}
 
-                  {/* Total */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex justify-between items-center">
+                  {/* Total (détail TVA + livraison) */}
+                  <div className="pt-4 border-t border-border space-y-1">
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>{t('cart', 'subtotal') || 'Sous-total'}</span>
+                      <span>{Number(selectedOrder.subtotal).toFixed(2)}€</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>{t('checkout', 'vat') || 'TVA'}</span>
+                      <span>{Number(selectedOrder.vat).toFixed(2)}€</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>{t('checkout', 'shipping') || 'Livraison'}</span>
+                      <span>{Number(selectedOrder.shippingCost).toFixed(2)}€</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2">
                       <span className="text-lg font-medium">{t('cart', 'total')}</span>
                       <span className="text-2xl font-bold text-foreground">
-                        {selectedOrder.totalAmount}€
+                        {Number(selectedOrder.total).toFixed(2)}€
                       </span>
                     </div>
                   </div>
