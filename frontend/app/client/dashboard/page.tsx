@@ -152,7 +152,7 @@ export default function ClientDashboard() {
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <Link
             href="/client/missions/new"
-            className="bg-primary text-primary-foreground p-6 rounded-lg hover:bg-primary/90 transition"
+            className="bg-primary text-primary-foreground p-6 rounded-2xl hover:bg-primary/90 transition"
           >
             <Wrench className="h-7 w-7 mb-2" />
             <h3 className="text-xl font-semibold mb-2">{t('clientDashboard', 'newRequest')}</h3>
@@ -161,20 +161,20 @@ export default function ClientDashboard() {
 
           <Link
             href="/client/artisans"
-            className="bg-green-600 text-white p-6 rounded-lg hover:bg-green-700 transition"
+            className="bg-card border border-border text-foreground p-6 rounded-2xl hover:bg-accent transition"
           >
             <HardHat className="h-7 w-7 mb-2" />
             <h3 className="text-xl font-semibold mb-2">{t('clientDashboard', 'findArtisan')}</h3>
-            <p className="text-green-100">{t('clientDashboard', 'findArtisanDesc')}</p>
+            <p className="text-muted-foreground">{t('clientDashboard', 'findArtisanDesc')}</p>
           </Link>
 
           <Link
             href="/client/marketplace"
-            className="bg-purple-600 text-white p-6 rounded-lg hover:bg-purple-700 transition"
+            className="bg-card border border-border text-foreground p-6 rounded-2xl hover:bg-accent transition"
           >
             <ShoppingCart className="h-7 w-7 mb-2" />
             <h3 className="text-xl font-semibold mb-2">{t('marketplace', 'title')}</h3>
-            <p className="text-purple-100">{t('clientDashboard', 'marketplaceDesc')}</p>
+            <p className="text-muted-foreground">{t('clientDashboard', 'marketplaceDesc')}</p>
           </Link>
         </div>
 
