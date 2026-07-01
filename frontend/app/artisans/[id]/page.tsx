@@ -70,7 +70,26 @@ export default function ArtisanPublicProfilePage() {
   const loadProfile = async () => {
     try {
       const response = await apiClient.get(`/users/artisans/${artisanId}`);
-      setProfile(response.data);
+      // Normalisation : l'API imbrique sous artisanProfile/receivedReviews ; la page lit à plat.
+      const data = response.data || {};
+      const ap = data.artisanProfile || {};
+      setProfile({
+        ...data,
+        ...ap,
+        id: data.id, // conserver l'id utilisateur (messagerie), pas celui du profil
+        rating: Number(ap.rating ?? 0),
+        reviewCount: ap.reviewCount ?? 0,
+        verified: ap.businessVerified ?? false,
+        portfolio: ap.portfolio ?? [],
+        specialties: (ap.specialties ?? []).map((s: any) => (typeof s === 'string' ? s : s?.name)).filter(Boolean),
+        certifications: ap.certifications ?? [],
+        companyName: ap.companyName || `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() || 'Artisan',
+        reviews: (data.receivedReviews ?? []).map((r: any) => ({
+          ...r,
+          rating: r.overallRating ?? 0,
+          comment: r.comment ?? '',
+        })),
+      } as any);
     } catch (error) {
       console.error('Error loading artisan profile:', error);
     } finally {

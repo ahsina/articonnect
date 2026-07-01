@@ -150,9 +150,41 @@ export default function ArtisanDetailsPage() {
 
   const loadArtisan = async () => {
     try {
-      // Fetch artisan data from API
+      // Fetch artisan data from API + normalisation (l'API renvoie une forme imbriquée différente
+      // de celle attendue par la page : specialties=objets, receivedReviews, businessVerified, etc.).
       const data = await userApi.getArtisanById(artisanId);
-      setArtisan(data);
+      const ap = data.artisanProfile || {};
+      const normalized = {
+        ...data,
+        artisanProfile: {
+          ...ap,
+          rating: Number(ap.rating ?? 0),
+          reviewCount: ap.reviewCount ?? 0,
+          completedMissions: ap.missionCount ?? data.completedMissions ?? 0,
+          verified: ap.businessVerified ?? false,
+          responseTime: ap.responseTime ?? '—',
+          portfolio: ap.portfolio ?? [],
+          specialties: (ap.specialties ?? []).map((s: any) => (typeof s === 'string' ? s : s?.name)).filter(Boolean),
+          address: ap.baseAddress ?? '',
+          city: ap.city ?? '',
+          postalCode: ap.postalCode ?? '',
+        },
+        reviews: (data.receivedReviews ?? []).map((r: any) => ({
+          id: r.id,
+          rating: r.overallRating ?? 0,
+          comment: r.comment ?? '',
+          createdAt: r.createdAt,
+          client: r.reviewer
+            ? { firstName: r.reviewer.firstName, lastName: r.reviewer.lastName, avatar: r.reviewer.avatar }
+            : { firstName: '—', lastName: '' },
+          mission: r.mission,
+        })),
+        availability: data.availability ?? {
+          monday: !!ap.available, tuesday: !!ap.available, wednesday: !!ap.available,
+          thursday: !!ap.available, friday: !!ap.available, saturday: false, sunday: false,
+        },
+      };
+      setArtisan(normalized as any);
     } catch (error: any) {
       console.error('Error loading artisan:', error);
       // If artisan not found or error, user will see "Artisan not found" message
@@ -410,7 +442,7 @@ export default function ArtisanDetailsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(artisan.availability).map(([day, available]) => (
+                  {Object.entries(artisan.availability || {}).map(([day, available]) => (
                     <div key={day} className="flex items-center justify-between text-sm">
                       <span className={available ? 'text-foreground' : 'text-muted-foreground'}>
                         {getDayName(day)}
