@@ -501,6 +501,40 @@ export default function MissionDetailPage() {
         </div>
       </div>
 
+      {/* Timeline de statut (côté artisan) */}
+      {(() => {
+        const steps = ['Reçue', 'Acceptée', 'En cours', 'Terminée', 'Payée'];
+        const s = mission.status;
+        const active =
+          ['OPEN', 'PENDING', 'ASSIGNED', 'NEGOTIATING'].includes(s) ? 1 :
+          ['ACCEPTED', 'PAID', 'PENDING_DEPOSIT'].includes(s) ? 2 :
+          ['IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s) ? 3 :
+          ['COMPLETED'].includes(s) ? 4 :
+          ['VALIDATED', 'AUTO_VALIDATED'].includes(s) ? 5 : 1;
+        return (
+          <div className="mb-6 rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center">
+              {steps.map((label, i) => {
+                const n = i + 1;
+                const done = active > n;
+                const now = active === n;
+                return (
+                  <div key={label} className="relative flex flex-1 flex-col items-center">
+                    {i < steps.length - 1 && (
+                      <div className={`absolute left-1/2 top-[13px] h-0.5 w-full ${active > n ? 'bg-primary' : 'bg-border'}`} />
+                    )}
+                    <div className={`font-display relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${done ? 'bg-primary text-primary-foreground' : now ? 'bg-primary text-primary-foreground ring-4 ring-muted' : 'bg-muted text-muted-foreground'}`}>
+                      {done ? '✓' : n}
+                    </div>
+                    <div className={`font-display mt-2 text-[11px] font-bold ${active >= n ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Action Buttons based on status */}
       <Card className="mb-6">
         <CardContent className="py-4">
