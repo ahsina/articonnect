@@ -230,39 +230,29 @@ export default function NewMissionPage() {
           </p>
         </div>
 
-        {/* Progress Steps */}
+        {/* Progress bar (style Uber : une barre nette + libellés + réassurance) */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                    step >= s
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {s}
-                </div>
-                {s < 3 && (
-                  <div
-                    className={`h-1 w-24 mx-2 ${
-                      step > s ? 'bg-primary' : 'bg-muted'
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${(step / 3) * 100}%` }}
+            />
           </div>
-          <div className="flex justify-between mt-2 text-sm">
-            <span className={step >= 1 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
+          <div className="mt-3 flex items-center justify-between text-[13px] font-semibold">
+            <span className={step >= 1 ? 'text-foreground' : 'text-muted-foreground'}>
               {t('missions', 'categoryStep')}
             </span>
-            <span className={step >= 2 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
+            <span className={step >= 2 ? 'text-foreground' : 'text-muted-foreground'}>
               {t('missions', 'detailsStep')}
             </span>
-            <span className={step >= 3 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
+            <span className={step >= 3 ? 'text-foreground' : 'text-muted-foreground'}>
               {t('missions', 'confirmationStep')}
+            </span>
+          </div>
+          <div className="mt-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold text-green-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
+              {t('landing', 'ctaFinalSubtitle') || 'Gratuit · sans engagement'}
             </span>
           </div>
         </div>
@@ -402,7 +392,7 @@ export default function NewMissionPage() {
                   <textarea
                     required
                     rows={4}
-                    className="w-full border border-border rounded-md px-3 py-2"
+                    className="w-full rounded-lg border-[1.5px] border-transparent bg-muted px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground focus:bg-card"
                     placeholder={t('missions', 'descriptionPlaceholder')}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -450,7 +440,7 @@ export default function NewMissionPage() {
                       {t('common', 'country')} *
                     </label>
                     <select
-                      className="w-full border border-border rounded-md px-3 py-2 h-10"
+                      className="h-11 w-full rounded-lg border-[1.5px] border-transparent bg-muted px-3 text-sm font-medium text-foreground outline-none focus:border-foreground focus:bg-card"
                       value={formData.country}
                       onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     >
