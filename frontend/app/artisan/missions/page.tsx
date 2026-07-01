@@ -203,13 +203,13 @@ export default function ArtisanMissionsPage() {
                             </div>
                             <div>
                               <span className="text-muted-foreground">{t('artisan', 'price')}:</span>
-                              <p className="font-semibold text-green-600">
-                                {mission.price}€
+                              <p className="font-semibold text-foreground">
+                                {mission.price ? `${mission.price}€` : (t('artisan', 'toDefine') || 'À définir')}
                               </p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">{t('artisan', 'distance')}:</span>
-                              <p className="font-semibold">{mission.distance} km</p>
+                              <p className="font-semibold">{mission.distance ? `${mission.distance} km` : '—'}</p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">{t('artisan', 'address')}:</span>
