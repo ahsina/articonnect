@@ -435,6 +435,39 @@ export default function MissionDetailsPage() {
           </div>
         </div>
 
+        {/* Timeline de statut (parcours mission) */}
+        {(() => {
+          const steps = ['Publié', 'Offres', 'Paiement', 'Réalisation', 'Validation'];
+          const s = mission.status;
+          const active =
+            ['PENDING', 'NEGOTIATING'].includes(s) ? 2 :
+            ['PENDING_DEPOSIT'].includes(s) ? 3 :
+            ['ACCEPTED', 'PAID', 'IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s) ? 4 :
+            ['COMPLETED', 'AUTO_VALIDATED', 'VALIDATED'].includes(s) ? 5 : 2;
+          return (
+            <div className="mb-8 rounded-2xl border border-border bg-card p-5">
+              <div className="flex items-center">
+                {steps.map((label, i) => {
+                  const n = i + 1;
+                  const done = active > n;
+                  const now = active === n;
+                  return (
+                    <div key={label} className="relative flex flex-1 flex-col items-center">
+                      {i < steps.length - 1 && (
+                        <div className={`absolute left-1/2 top-[13px] h-0.5 w-full ${active > n ? 'bg-primary' : 'bg-border'}`} />
+                      )}
+                      <div className={`font-display relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${done ? 'bg-primary text-primary-foreground' : now ? 'bg-primary text-primary-foreground ring-4 ring-muted' : 'bg-muted text-muted-foreground'}`}>
+                        {done ? '✓' : n}
+                      </div>
+                      <div className={`font-display mt-2 text-[11px] font-bold ${active >= n ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
