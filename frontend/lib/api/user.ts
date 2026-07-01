@@ -48,6 +48,16 @@ export interface UpdateNotificationPreferencesDto {
 }
 
 export const userApi = {
+  // RGPD
+  exportMyData: async () => {
+    const response = await apiClient.get('/users/gdpr/export');
+    return response.data;
+  },
+  requestAccountDeletion: async () => {
+    const response = await apiClient.post('/users/gdpr/request-deletion');
+    return response.data;
+  },
+
   getProfile: async () => {
     const response = await apiClient.get('/users/profile');
     return response.data;

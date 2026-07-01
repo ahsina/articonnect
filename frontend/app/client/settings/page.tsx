@@ -46,7 +46,34 @@ export default function ClientSettingsPage() {
   const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+
+  const handleExportData = async () => {
+    try {
+      const data = await userApi.exportMyData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `krafolt-mes-donnees-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: t('common', 'success'), description: t('privacy', 'exportDone') || 'Export téléchargé.' });
+    } catch {
+      toast({ title: t('common', 'error'), description: t('privacy', 'exportError') || 'Échec de l\'export.', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm(t('privacy', 'deleteConfirm') || 'Supprimer définitivement votre compte ? Cette action déclenche l\'effacement de vos données (hors obligations légales de conservation).')) return;
+    try {
+      await userApi.requestAccountDeletion();
+      toast({ title: t('common', 'success'), description: t('privacy', 'deleteRequested') || 'Demande enregistrée. Vous allez être déconnecté.' });
+      setTimeout(() => logout(), 1500);
+    } catch {
+      toast({ title: t('common', 'error'), description: t('common', 'error'), variant: 'destructive' });
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -420,6 +447,35 @@ export default function ClientSettingsPage() {
                 <option value="it">Italiano</option>
                 <option value="pt">Português</option>
               </select>
+            </CardContent>
+          </Card>
+
+          {/* Confidentialité / RGPD */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('privacy', 'title') || 'Confidentialité (RGPD)'}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-muted-foreground">
+                  {t('privacy', 'exportDesc') || 'Téléchargez une copie de toutes vos données personnelles.'}
+                </p>
+                <div>
+                  <Button variant="outline" onClick={handleExportData}>
+                    {t('privacy', 'exportButton') || 'Exporter mes données'}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1 border-t border-border pt-4">
+                <p className="text-sm text-muted-foreground">
+                  {t('privacy', 'deleteDesc') || 'Demandez la suppression de votre compte et l\'effacement de vos données (hors pièces à conservation légale).'}
+                </p>
+                <div>
+                  <Button variant="destructive" onClick={handleDeleteAccount}>
+                    {t('privacy', 'deleteButton') || 'Supprimer mon compte'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

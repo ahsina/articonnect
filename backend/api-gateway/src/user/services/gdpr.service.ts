@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
@@ -86,20 +87,46 @@ export class GdprService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    // In production, this would typically create a deletion request
-    // that gets processed after a grace period (e.g., 30 days)
-    // For now, we'll just mark the account for deletion
+    if (user.status === 'DELETED') {
+      return { message: 'Ce compte a déjà été supprimé.' };
+    }
 
+    // ERASURE RGPD réelle : on anonymise les données personnelles (le record est conservé pour les
+    // obligations légales — factures, comptabilité — mais ne contient plus de PII identifiante).
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        status: 'SUSPENDED',
+        email: `deleted-${userId}@krafolt.invalid`,
+        firstName: 'Compte',
+        lastName: 'supprimé',
+        phone: null,
+        avatar: null,
+        password: randomBytes(32).toString('hex'), // verrouille toute connexion
+        twoFactorSecret: null,
+        twoFactorEnabled: false,
+        outlookAccessToken: null,
+        outlookRefreshToken: null,
+        outlookTokenExpiry: null,
+        fcmTokens: [],
+        deviceFingerprints: [],
+        lastUserAgent: null,
+        lastIpAddress: null,
+        lastSessionId: null,
+        lastSessionLocation: null,
+        status: 'DELETED',
+        deletedAt: new Date(),
       },
     });
 
+    // Anonymise aussi le profil artisan (adresse, coordonnées, SIRET) si présent.
+    await this.prisma.artisanProfile.updateMany({
+      where: { userId },
+      data: { baseAddress: 'Adresse supprimée', latitude: 0, longitude: 0, description: null, website: null },
+    });
+
     return {
-      message: 'Demande de suppression enregistrée. Votre compte sera supprimé dans 30 jours.',
-      deletionDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      message: 'Votre compte et vos données personnelles ont été supprimés. Les pièces à conservation légale (factures) sont anonymisées et conservées selon la réglementation.',
+      deletedAt: new Date().toISOString(),
     };
   }
 
