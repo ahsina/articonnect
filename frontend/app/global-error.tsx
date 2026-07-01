@@ -24,14 +24,14 @@ export default function GlobalError({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#0e1014',
-          color: '#f5f6f7',
+          background: '#ffffff',
+          color: '#0f0f0f',
           fontFamily: 'Inter, system-ui, sans-serif',
           textAlign: 'center',
           padding: '0 1.5rem',
         }}
       >
-        <p style={{ fontSize: '3.5rem', fontWeight: 700, color: '#FFD500', margin: 0 }}>Oups</p>
+        <p style={{ fontSize: '3.5rem', fontWeight: 800, color: '#000000', margin: 0 }}>Oups</p>
         <h1 style={{ marginTop: '1rem', fontSize: '1.5rem' }}>Une erreur critique est survenue</h1>
         <p style={{ marginTop: '0.5rem', maxWidth: '28rem', color: '#9aa0a6' }}>
           L&apos;application a rencontré un problème. Veuillez réessayer.
@@ -41,8 +41,8 @@ export default function GlobalError({
           style={{
             marginTop: '2rem',
             borderRadius: '1rem',
-            background: '#FFD500',
-            color: '#16181d',
+            background: '#000000',
+            color: '#ffffff',
             border: 'none',
             padding: '0.75rem 1.5rem',
             fontWeight: 600,

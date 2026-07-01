@@ -143,19 +143,18 @@ export default function HomePage() {
 
       {/* CTA FINAL */}
       <section className="container mx-auto px-4 py-24">
-        <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/15 to-yellow-600/5 p-10 text-center sm:p-16">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-[100px]" />
+        <div className="relative overflow-hidden rounded-3xl bg-foreground p-10 text-center text-background sm:p-16">
           <h2 className="font-display relative text-3xl font-bold sm:text-5xl">
             {t('landing', 'ctaFinalTitle')}
           </h2>
-          <p className="relative mx-auto mt-4 max-w-xl text-muted-foreground">
+          <p className="relative mx-auto mt-4 max-w-xl text-background/70">
             {t('landing', 'ctaFinalSubtitle')}
           </p>
           <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/auth/register?role=client" className="w-full rounded-2xl bg-primary px-8 py-4 font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-glow active:scale-[0.98] sm:w-auto">
+            <Link href="/auth/register?role=client" className="w-full rounded-2xl bg-background px-8 py-4 font-semibold text-foreground transition-all hover:opacity-90 active:scale-[0.98] sm:w-auto">
               {t('landing', 'ctaStartNow')}
             </Link>
-            <Link href="/auth/login" className="w-full rounded-2xl border border-border bg-card px-8 py-4 font-semibold transition-colors hover:bg-accent sm:w-auto">
+            <Link href="/auth/login" className="w-full rounded-2xl border border-background/25 bg-transparent px-8 py-4 font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto">
               {t('landing', 'ctaHaveAccount')}
             </Link>
           </div>

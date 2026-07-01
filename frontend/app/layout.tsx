@@ -1,13 +1,13 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Inter, Manrope } from 'next/font/google';
 import { Providers } from './providers';
 import CookieConsent from '@/components/shared/CookieConsent';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const spaceGrotesk = Space_Grotesk({
+const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
+  weight: ['500', '600', '700', '800'],
   variable: '--font-display',
   display: 'swap',
 });
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: 'Krafolt - Trouvez des artisans locaux',
   description: 'Plateforme de mise en relation entre clients et artisans',
   manifest: '/manifest.json',
-  themeColor: '#0E0F12',
+  themeColor: '#FFFFFF',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -62,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable} dark`} suppressHydrationWarning>
+    <html lang="fr" className={`${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground">
         <Providers>{children}</Providers>
         <CookieConsent />

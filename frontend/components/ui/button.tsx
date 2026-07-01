@@ -60,17 +60,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+          'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:opacity-50 disabled:pointer-events-none',
           'active:scale-[0.98] transition-transform duration-100',
           {
-            'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-glow font-semibold': variant === 'default',
-            'border border-border bg-card hover:bg-accent text-foreground':
+            'bg-primary text-primary-foreground hover:bg-primary/90': variant === 'default',
+            'bg-card text-foreground shadow-[inset_0_0_0_1.5px_hsl(var(--foreground))] hover:bg-accent':
               variant === 'outline',
             'hover:bg-accent text-foreground': variant === 'ghost',
-            'bg-red-600 text-white hover:bg-red-700 shadow-sm': variant === 'destructive',
-            'text-primary underline-offset-4 hover:underline': variant === 'link',
+            'bg-destructive text-destructive-foreground hover:bg-destructive/90': variant === 'destructive',
+            'text-foreground underline-offset-4 hover:underline': variant === 'link',
           },
           {
             // Updated sizes with 44px minimum for touch targets

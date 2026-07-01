@@ -152,7 +152,7 @@ export default function ArtisanPublicProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-yellow-600 text-primary-foreground">
+      <div className="bg-foreground text-background">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Button
             variant="ghost"

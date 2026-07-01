@@ -22,13 +22,13 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
           'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors',
           {
             'bg-primary text-primary-foreground': variant === 'default',
-            'bg-green-500/15 text-green-400': variant === 'success',
-            'bg-yellow-500/15 text-yellow-400': variant === 'warning',
-            'bg-red-500/15 text-red-400': variant === 'error',
-            'bg-primary/10 text-primary': variant === 'info',
+            'bg-green-100 text-green-700': variant === 'success',
+            'bg-amber-100 text-amber-800': variant === 'warning',
+            'bg-red-100 text-red-700': variant === 'error',
+            'bg-blue-100 text-blue-700': variant === 'info',
             'border border-border bg-transparent text-foreground': variant === 'outline',
             'bg-muted text-foreground': variant === 'secondary',
-            'bg-red-600 text-white': variant === 'destructive',
+            'bg-destructive text-destructive-foreground': variant === 'destructive',
           },
           className,
         )}
