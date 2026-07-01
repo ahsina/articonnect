@@ -279,15 +279,43 @@ export class ArtisanService {
   async getQuotations(userId: string, params: { page?: number; limit?: number; status?: string }) {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) || 20;
-    const where: any = { artisanId: userId };
-    if (params.status) where.status = params.status;
-    const [data, total] = await Promise.all([
-      this.prisma.quote.findMany({
-        where, skip: (page - 1) * limit, take: limit, orderBy: { createdAt: 'desc' },
-        include: { client: { select: { firstName: true, lastName: true, email: true } }, lineItems: true },
+    // Les « devis » de l'artisan = ses offres de prix (négociations) envoyées.
+    // (Auparavant on lisait la table Quote, jamais alimentée par le parcours artisan -> page vide.)
+    const where: any = { senderId: userId };
+    if (params.status === 'ACCEPTED') where.accepted = true;
+    else if (params.status === 'REJECTED') where.accepted = false;
+    else if (params.status === 'PENDING') where.accepted = null;
+
+    const [rows, total] = await Promise.all([
+      this.prisma.negotiation.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          mission: {
+            select: {
+              id: true,
+              title: true,
+              category: true,
+              client: { select: { firstName: true, lastName: true, email: true } },
+            },
+          },
+        },
       }),
-      this.prisma.quote.count({ where }),
+      this.prisma.negotiation.count({ where }),
     ]);
+
+    const data = rows.map((n) => ({
+      id: n.id,
+      amount: Number(n.proposedPrice),
+      status: n.accepted === true ? 'ACCEPTED' : n.accepted === false ? 'REJECTED' : 'PENDING',
+      validUntil: n.expiresAt,
+      message: n.message,
+      createdAt: n.createdAt,
+      mission: n.mission,
+    }));
+
     return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
