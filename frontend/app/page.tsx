@@ -57,8 +57,10 @@ export default function HomePage() {
             <Link href="/auth/register?role=artisan" className="rounded-lg px-3.5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t('landing', 'ctaIamArtisan')}</Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <LanguageSwitcher />
-            <Link href="/auth/login" className="rounded-lg px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground">
+            <span className="hidden sm:block">
+              <LanguageSwitcher />
+            </span>
+            <Link href="/auth/login" className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground sm:block">
               {t('landing', 'login')}
             </Link>
             <Link href="/auth/register" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
