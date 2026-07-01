@@ -106,7 +106,12 @@ export default function ClientDisputesPage() {
 
     setSubmitting(true);
     try {
-      const response = await apiClient.post('/disputes', newDispute);
+      // Le backend attend `reason` (pas `type`) : on mappe le motif choisi.
+      const response = await apiClient.post('/disputes', {
+        missionId: newDispute.missionId,
+        reason: newDispute.type,
+        description: newDispute.description,
+      });
       setDisputes([response.data, ...disputes]);
       setShowNewDispute(false);
       setNewDispute({ missionId: '', type: '', description: '' });

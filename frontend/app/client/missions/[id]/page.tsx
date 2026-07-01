@@ -202,29 +202,6 @@ export default function MissionDetailsPage() {
     }
   };
 
-  const handleComplete = async () => {
-    if (!confirm(t('missions', 'confirmComplete') || 'Confirmer que la mission est terminée ?')) {
-      return;
-    }
-
-    try {
-      await missionsApi.complete(missionId);
-      toast({
-        title: t('common', 'success'),
-        description: t('missions', 'missionCompleted') || 'Mission terminée',
-      });
-      loadData();
-      setShowReviewForm(true);
-    } catch (error) {
-      console.error('Error completing mission:', error);
-      toast({
-        title: t('common', 'error'),
-        description: t('missions', 'completeError') || 'Erreur',
-        variant: 'destructive',
-      });
-    }
-  };
-
   const handleValidate = async () => {
     if (!confirm(t('validation', 'confirmValidate') || 'Confirmer que le travail est satisfaisant ?')) {
       return;
@@ -970,9 +947,12 @@ export default function MissionDetailsPage() {
 
                 {(mission.status === 'ACCEPTED' || mission.status === 'IN_PROGRESS') && (
                   <>
-                    <Button className="w-full" onClick={handleComplete}>
-                      {t('missions', 'markCompleted') || 'Marquer comme terminée'}
-                    </Button>
+                    {/* La complétion est déclenchée par l'ARTISAN (route ARTISAN-only). Le client
+                        validera ensuite le travail via la carte de validation. */}
+                    <p className="text-sm text-muted-foreground">
+                      {t('missions', 'awaitingArtisanCompletion') ||
+                        'En attente de la finalisation par l\'artisan. Vous pourrez valider le travail une fois terminé.'}
+                    </p>
                     <Button className="w-full" variant="destructive" onClick={handleShowCancelModal}>
                       {t('missions', 'cancelMission') || 'Annuler la mission'}
                     </Button>

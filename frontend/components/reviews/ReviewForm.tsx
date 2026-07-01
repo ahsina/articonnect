@@ -43,7 +43,7 @@ export function ReviewForm({
     try {
       await reviewsApi.create({
         missionId,
-        rating,
+        overallRating: rating,
         comment,
       });
 

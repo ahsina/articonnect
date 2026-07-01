@@ -20,7 +20,7 @@ export interface Review {
 
 export interface CreateReviewDto {
   missionId: string;
-  rating: number;
+  overallRating: number;
   comment: string;
 }
 

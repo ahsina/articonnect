@@ -176,9 +176,7 @@ export class TimeTrackingController {
 
   // Helper to get employee ID from user
   private async getEmployeeId(userId: string): Promise<string> {
-    // This would typically query the database
-    // For now, we'll use userId as a proxy
-    // In real implementation, find the employee record for this user
-    return userId;
+    // Résout le vrai CompanyEmployee.id depuis l'utilisateur (plus de proxy userId).
+    return this.timeTrackingService.getEmployeeIdByUser(userId);
   }
 }

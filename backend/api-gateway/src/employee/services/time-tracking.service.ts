@@ -74,6 +74,21 @@ export class TimeTrackingService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Résout l'identifiant CompanyEmployee à partir de l'utilisateur connecté.
+   * (Corrige le stub qui renvoyait directement le userId → « Employé non trouvé ».)
+   */
+  async getEmployeeIdByUser(userId: string): Promise<string> {
+    const employee = await this.prisma.companyEmployee.findFirst({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!employee) {
+      throw new NotFoundException("Aucun profil employé trouvé pour cet utilisateur");
+    }
+    return employee.id;
+  }
+
+  /**
    * Clock in an employee
    */
   async clockIn(data: ClockInData): Promise<TimeEntry> {
