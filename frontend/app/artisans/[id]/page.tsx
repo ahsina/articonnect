@@ -81,7 +81,7 @@ export default function ArtisanPublicProfilePage() {
         reviewCount: ap.reviewCount ?? 0,
         verified: ap.businessVerified ?? false,
         portfolio: ap.portfolio ?? [],
-        specialties: (ap.specialties ?? []).map((s: any) => (typeof s === 'string' ? s : s?.name)).filter(Boolean),
+        specialties: ap.specialties ?? [], // objets {id,name,icon,category} — la page rend .name/.icon
         certifications: ap.certifications ?? [],
         companyName: ap.companyName || `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() || 'Artisan',
         reviews: (data.receivedReviews ?? []).map((r: any) => ({
@@ -221,7 +221,7 @@ export default function ArtisanPublicProfilePage() {
               <Button
                 size="lg"
                 className="w-full md:w-auto bg-card text-primary hover:bg-primary/10"
-                onClick={() => router.push(`/client/request?artisan=${artisanId}`)}
+                onClick={() => router.push(`/client/missions/new?artisanId=${artisanId}`)}
               >
                 {t('artisan', 'requestQuote') || 'Request a Quote'}
               </Button>
@@ -366,7 +366,7 @@ export default function ArtisanPublicProfilePage() {
                 <CardContent className="space-y-3">
                   <Button
                     className="w-full"
-                    onClick={() => router.push(`/client/request?artisan=${artisanId}`)}
+                    onClick={() => router.push(`/client/missions/new?artisanId=${artisanId}`)}
                   >
                     {t('artisan', 'requestQuote') || 'Request a Quote'}
                   </Button>
@@ -487,7 +487,7 @@ export default function ArtisanPublicProfilePage() {
             {t('artisan', 'contactArtisan') ||
               'Contact this artisan to discuss your needs and get a personalized quote.'}
           </p>
-          <Button size="lg" onClick={() => router.push(`/client/request?artisan=${artisanId}`)}>
+          <Button size="lg" onClick={() => router.push(`/client/missions/new?artisanId=${artisanId}`)}>
             {t('artisan', 'requestQuote') || 'Request a Quote'}
           </Button>
         </div>

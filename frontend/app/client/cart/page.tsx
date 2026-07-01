@@ -231,22 +231,36 @@ export default function CartPage() {
                   />
                 </div>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-foreground">
-                    <span>{t('cart', 'subtotal')}</span>
-                    <span>{getTotalPrice().toFixed(2)}€</span>
-                  </div>
-                  <div className="flex justify-between text-foreground">
-                    <span>{t('cart', 'shipping')}</span>
-                    <span>{t('cart', 'free')}</span>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-xl font-bold text-foreground">
-                      <span>{t('cart', 'total')}</span>
-                      <span>{getTotalPrice().toFixed(2)}€</span>
+                {/* Doit refléter le calcul serveur : sous-total + TVA (17% LU) + livraison forfaitaire 5.99€ */}
+                {(() => {
+                  const subtotal = getTotalPrice();
+                  const VAT_RATE = 0.17;
+                  const SHIPPING = 5.99;
+                  const vat = subtotal * VAT_RATE;
+                  const total = subtotal + vat + SHIPPING;
+                  return (
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between text-foreground">
+                        <span>{t('cart', 'subtotal')}</span>
+                        <span>{subtotal.toFixed(2)}€</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>{t('checkout', 'vat') || 'TVA (17%)'}</span>
+                        <span>{vat.toFixed(2)}€</span>
+                      </div>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>{t('cart', 'shipping')}</span>
+                        <span>{SHIPPING.toFixed(2)}€</span>
+                      </div>
+                      <div className="border-t pt-3">
+                        <div className="flex justify-between text-xl font-bold text-foreground">
+                          <span>{t('cart', 'total')}</span>
+                          <span>{total.toFixed(2)}€</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 <Button
                   className="w-full mb-3"
