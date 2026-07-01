@@ -34,9 +34,9 @@ interface Quotation {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
-  ACCEPTED: 'bg-green-500/15 text-green-400',
-  REJECTED: 'bg-red-500/15 text-red-400',
+  PENDING: 'bg-amber-100 text-amber-800',
+  ACCEPTED: 'bg-green-100 text-green-700',
+  REJECTED: 'bg-red-100 text-red-700',
   EXPIRED: 'bg-muted text-foreground',
   SIGNED: 'bg-primary/10 text-primary',
 };
@@ -358,7 +358,7 @@ export default function QuotationsPage() {
                           {translateQuotationStatus(quotation.status, t)}
                         </Badge>
                         {quotation.status === 'PENDING' && isExpiringSoon(quotation.validUntil) && (
-                          <Badge className="bg-yellow-500/15 text-yellow-400">
+                          <Badge className="bg-amber-100 text-amber-800">
                             ⏰ {t('artisan', 'expiringSoon') || 'Expiring Soon'}
                           </Badge>
                         )}
@@ -411,7 +411,7 @@ export default function QuotationsPage() {
                           </Button>
                         )}
                         {quotation.signedByArtisan && quotation.signedByClient && (
-                          <Badge className="bg-green-500/15 text-green-400 justify-center">
+                          <Badge className="bg-green-100 text-green-700 justify-center">
                             ✓ {t('quotations', 'fullySigned') || 'Fully Signed'}
                           </Badge>
                         )}

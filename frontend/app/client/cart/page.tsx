@@ -192,7 +192,7 @@ export default function CartPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeItem(item.productId, item.variantId)}
-                          className="ml-auto text-red-600 hover:text-red-400"
+                          className="ml-auto text-red-600 hover:text-red-700"
                         >
                           {t('cart', 'remove')}
                         </Button>

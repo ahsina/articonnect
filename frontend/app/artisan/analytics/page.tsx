@@ -224,16 +224,16 @@ export default function ArtisanAnalyticsPage() {
 
       {/* KPI Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-green-600 mb-1">
               {t('analytics', 'totalEarnings') || 'Total Earnings'}
             </div>
-            <div className="text-3xl font-bold text-green-400">
+            <div className="text-3xl font-bold text-green-700">
               {data.earnings.total.toLocaleString()}€
             </div>
             <div className="flex items-center gap-1 mt-2">
-              <Badge className={data.earnings.growth >= 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}>
+              <Badge className={data.earnings.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
                 {data.earnings.growth >= 0 ? '↑' : '↓'} {Math.abs(data.earnings.growth)}%
               </Badge>
               <span className="text-xs text-muted-foreground">{t('artisanAnalytics', 'vsLastMonth') || 'vs last month'}</span>
@@ -253,12 +253,12 @@ export default function ArtisanAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
+        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-amber-200">
           <CardContent className="p-4">
             <div className="text-sm text-yellow-600 mb-1">
               {t('analytics', 'averageRating') || 'Average Rating'}
             </div>
-            <div className="text-3xl font-bold text-yellow-400">
+            <div className="text-3xl font-bold text-amber-800">
               ⭐ {data.performance.averageRating}
             </div>
             <div className="text-xs text-muted-foreground mt-2">
@@ -267,12 +267,12 @@ export default function ArtisanAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
           <CardContent className="p-4">
             <div className="text-sm text-purple-600 mb-1">
               {t('analytics', 'repeatClients') || 'Repeat Clients'}
             </div>
-            <div className="text-3xl font-bold text-purple-400">
+            <div className="text-3xl font-bold text-purple-700">
               {data.performance.repeatClientRate}%
             </div>
             <div className="text-xs text-muted-foreground mt-2">

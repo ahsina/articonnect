@@ -74,11 +74,11 @@ export default function NoShowsPage() {
   const getStatusColor = (status: NoShowStatus) => {
     switch (status) {
       case NoShowStatus.PENDING:
-        return 'bg-yellow-500/15 text-yellow-400';
+        return 'bg-amber-100 text-amber-800';
       case NoShowStatus.VALIDATED:
-        return 'bg-green-500/15 text-green-400';
+        return 'bg-green-100 text-green-700';
       case NoShowStatus.REJECTED:
-        return 'bg-red-500/15 text-red-400';
+        return 'bg-red-100 text-red-700';
       default:
         return 'bg-muted text-foreground';
     }
@@ -141,7 +141,7 @@ export default function NoShowsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -255,7 +255,7 @@ export default function NoShowsPage() {
                           <div className="flex gap-2">
                             {noShow.evidence.gpsVerified && (
                               <span
-                                className="px-2 py-1 text-xs bg-green-500/15 text-green-400 rounded"
+                                className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded"
                                 title={t('adminNoShows', 'gpsVerified')}
                               >
                                 GPS
@@ -268,14 +268,14 @@ export default function NoShowsPage() {
                               {noShow.evidence.waitTime}min
                             </span>
                             <span
-                              className="px-2 py-1 text-xs bg-purple-500/15 text-purple-400 rounded"
+                              className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded"
                               title={t('adminNoShows', 'contactAttempts')}
                             >
                               {noShow.evidence.contactAttempts} {t('adminNoShows', 'calls')}
                             </span>
                             {noShow.evidence.photos && noShow.evidence.photos.length > 0 && (
                               <span
-                                className="px-2 py-1 text-xs bg-yellow-500/15 text-yellow-400 rounded"
+                                className="px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded"
                                 title={t('adminNoShows', 'photos')}
                               >
                                 {noShow.evidence.photos.length} {t('adminNoShows', 'pics')}
@@ -308,7 +308,7 @@ export default function NoShowsPage() {
                                 <button
                                   onClick={() => handleValidate(noShow.id)}
                                   disabled={processingId === noShow.id}
-                                  className="text-green-600 hover:text-green-400 disabled:opacity-50"
+                                  className="text-green-600 hover:text-green-700 disabled:opacity-50"
                                 >
                                   {t('adminNoShows', 'validate')}
                                 </button>
@@ -318,7 +318,7 @@ export default function NoShowsPage() {
                                     setShowRejectModal(true);
                                   }}
                                   disabled={processingId === noShow.id}
-                                  className="text-red-600 hover:text-red-400 disabled:opacity-50"
+                                  className="text-red-600 hover:text-red-700 disabled:opacity-50"
                                 >
                                   {t('adminNoShows', 'reject')}
                                 </button>
@@ -392,7 +392,7 @@ export default function NoShowsPage() {
                         </p>
                         <p className="text-sm text-muted-foreground">{selectedNoShow.artisan?.email}</p>
                       </div>
-                      <div className="p-4 bg-yellow-500/10 rounded-lg">
+                      <div className="p-4 bg-amber-100 rounded-lg">
                         <p className="text-sm text-yellow-600 font-medium">{t('adminNoShows', 'clientNoShow')}</p>
                         <p className="font-medium text-foreground">
                           {selectedNoShow.client?.firstName} {selectedNoShow.client?.lastName}
@@ -446,15 +446,15 @@ export default function NoShowsPage() {
                         {t('adminNoShows', 'compensationTitle')}
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-green-500/10 rounded-lg">
+                        <div className="p-4 bg-green-100 rounded-lg">
                           <p className="text-sm text-green-600">{t('adminNoShows', 'artisanCompensation')}</p>
-                          <p className="text-xl font-bold text-green-400">
+                          <p className="text-xl font-bold text-green-700">
                             {formatCurrency(selectedNoShow.compensation.artisanAmount)}
                           </p>
                         </div>
-                        <div className="p-4 bg-red-500/10 rounded-lg">
+                        <div className="p-4 bg-red-100 rounded-lg">
                           <p className="text-sm text-red-600">{t('adminNoShows', 'clientPenalty')}</p>
-                          <p className="text-xl font-bold text-red-400">
+                          <p className="text-xl font-bold text-red-700">
                             {formatCurrency(selectedNoShow.compensation.clientPenalty)}
                           </p>
                         </div>

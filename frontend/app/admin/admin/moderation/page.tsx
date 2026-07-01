@@ -257,7 +257,7 @@ export default function ModerationPage() {
                             e.stopPropagation();
                             handleDelete(report.id);
                           }}
-                          className="text-red-600 hover:text-red-400 text-sm"
+                          className="text-red-600 hover:text-red-700 text-sm"
                         >
                           {t('adminModeration', 'delete')}
                         </button>

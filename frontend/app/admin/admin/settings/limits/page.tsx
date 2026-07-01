@@ -122,7 +122,7 @@ export default function RateLimitsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+        <div className="p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             {t('adminSettingsLimits', 'dismiss')}
@@ -130,7 +130,7 @@ export default function RateLimitsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
+        <div className="p-4 bg-green-100 border border-green-200 rounded-lg text-green-700">
           {success}
         </div>
       )}
@@ -394,12 +394,12 @@ export default function RateLimitsPage() {
                 {settings.blockedCountries.map((code) => (
                   <span
                     key={code}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-red-500/15 text-red-400 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm"
                   >
                     {code}
                     <button
                       onClick={() => removeBlockedCountry(code)}
-                      className="text-red-500 hover:text-red-400"
+                      className="text-red-500 hover:text-red-700"
                     >
                       x
                     </button>
@@ -436,12 +436,12 @@ export default function RateLimitsPage() {
                 {settings.allowedCountries.map((code) => (
                   <span
                     key={code}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/15 text-green-400 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
                   >
                     {code}
                     <button
                       onClick={() => removeAllowedCountry(code)}
-                      className="text-green-500 hover:text-green-400"
+                      className="text-green-500 hover:text-green-700"
                     >
                       x
                     </button>

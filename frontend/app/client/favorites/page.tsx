@@ -77,7 +77,7 @@ export default function ClientFavoritesPage() {
           <span
             key={star}
             className={`text-lg ${
-              star <= rating ? 'text-yellow-400' : 'text-gray-300'
+              star <= rating ? 'text-amber-800' : 'text-gray-300'
             }`}
           >
             ★
@@ -170,7 +170,7 @@ export default function ClientFavoritesPage() {
                     </div>
 
                     {artisan.artisanProfile.verified && (
-                      <Badge className="bg-green-500/15 text-green-400 mb-3">
+                      <Badge className="bg-green-100 text-green-700 mb-3">
                         ✓ {t('artisan', 'verified')}
                       </Badge>
                     )}

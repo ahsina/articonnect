@@ -167,11 +167,11 @@ export default function FeatureFlagsPage() {
   const getStatusColor = (status: FeatureFlagStatus) => {
     switch (status) {
       case FeatureFlagStatus.ACTIVE:
-        return 'bg-green-500/15 text-green-400';
+        return 'bg-green-100 text-green-700';
       case FeatureFlagStatus.INACTIVE:
         return 'bg-muted text-muted-foreground';
       case FeatureFlagStatus.ARCHIVED:
-        return 'bg-red-500/15 text-red-600';
+        return 'bg-red-100 text-red-600';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -229,7 +229,7 @@ export default function FeatureFlagsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -336,7 +336,7 @@ export default function FeatureFlagsPage() {
             filteredFlags.map((flag) => (
               <Card
                 key={flag.key}
-                className={`${flag.value.enabled ? 'border-green-500/20' : 'border-border'}`}
+                className={`${flag.value.enabled ? 'border-green-200' : 'border-border'}`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -362,7 +362,7 @@ export default function FeatureFlagsPage() {
                         )}
                         <div className="mt-3 flex flex-wrap gap-2">
                           {flag.type === FeatureFlagType.PERCENTAGE && (
-                            <span className="text-xs bg-purple-500/15 text-purple-400 px-2 py-1 rounded">
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
                               {flag.value.percentage}% {t('adminFeatureFlags', 'rollout')}
                             </span>
                           )}
@@ -397,7 +397,7 @@ export default function FeatureFlagsPage() {
                       <button
                         onClick={() => handleDelete(flag.key)}
                         disabled={actionLoading === flag.key}
-                        className="text-red-600 hover:text-red-400 disabled:opacity-50"
+                        className="text-red-600 hover:text-red-700 disabled:opacity-50"
                       >
                         {t('adminFeatureFlags', 'delete')}
                       </button>

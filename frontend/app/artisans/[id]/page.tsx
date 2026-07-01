@@ -105,13 +105,13 @@ export default function ArtisanPublicProfilePage() {
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(
-          <span key={i} className="text-yellow-400">
+          <span key={i} className="text-amber-800">
             ★
           </span>,
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
-          <span key={i} className="text-yellow-400">
+          <span key={i} className="text-amber-800">
             ☆
           </span>,
         );
@@ -435,7 +435,7 @@ export default function ArtisanPublicProfilePage() {
                               {new Date(review.createdAt).toLocaleDateString()}
                             </div>
                           </div>
-                          <div className="text-yellow-400 mb-2">{renderStars(review.rating)}</div>
+                          <div className="text-amber-800 mb-2">{renderStars(review.rating)}</div>
                           {review.comment && <p className="text-foreground">{review.comment}</p>}
                         </div>
                       </div>

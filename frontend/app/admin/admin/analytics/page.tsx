@@ -442,11 +442,11 @@ export default function AnalyticsPage() {
                         <span
                           className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${
                             index === 0
-                              ? 'bg-yellow-500/15 text-yellow-400'
+                              ? 'bg-amber-100 text-amber-800'
                               : index === 1
                               ? 'bg-muted text-foreground'
                               : index === 2
-                              ? 'bg-yellow-500/15 text-yellow-400'
+                              ? 'bg-amber-100 text-amber-800'
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
@@ -491,10 +491,10 @@ function MetricCard({
   const { t } = useLanguage();
   const colorClasses: Record<string, string> = {
     blue: 'bg-primary/10 border-primary/20',
-    green: 'bg-green-500/10 border-green-500/30',
-    yellow: 'bg-yellow-500/10 border-yellow-500/20',
-    purple: 'bg-purple-500/10 border-purple-500/20',
-    red: 'bg-red-500/10 border-red-500/20',
+    green: 'bg-green-100 border-green-500/30',
+    yellow: 'bg-amber-100 border-amber-200',
+    purple: 'bg-purple-100 border-purple-200',
+    red: 'bg-red-100 border-red-200',
   };
 
   return (

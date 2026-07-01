@@ -121,21 +121,21 @@ export default function EmployeeDetailPage() {
 
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
-      OWNER: 'bg-purple-500/15 text-purple-400',
+      OWNER: 'bg-purple-100 text-purple-700',
       MANAGER: 'bg-primary/10 text-primary',
-      SUPERVISOR: 'bg-green-500/15 text-green-400',
+      SUPERVISOR: 'bg-green-100 text-green-700',
       TECHNICIAN: 'bg-muted text-foreground',
-      CONTRACTOR: 'bg-yellow-500/15 text-yellow-400',
+      CONTRACTOR: 'bg-amber-100 text-amber-800',
     };
     return colors[role] || 'bg-muted text-foreground';
   };
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      ACTIVE: 'bg-green-500/15 text-green-400',
-      PENDING: 'bg-yellow-500/15 text-yellow-400',
+      ACTIVE: 'bg-green-100 text-green-700',
+      PENDING: 'bg-amber-100 text-amber-800',
       INACTIVE: 'bg-muted text-foreground',
-      TERMINATED: 'bg-red-500/15 text-red-400',
+      TERMINATED: 'bg-red-100 text-red-700',
     };
     return colors[status] || 'bg-muted text-foreground';
   };
@@ -230,7 +230,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'totalMissions') || 'Total Missions'}
                   </div>
                 </div>
-                <div className="bg-green-500/10 p-4 rounded-lg">
+                <div className="bg-green-100 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
                     {stats?.completedMissions || 0}
                   </div>
@@ -238,13 +238,13 @@ export default function EmployeeDetailPage() {
                     {t('company', 'completed') || 'Completed'}
                   </div>
                 </div>
-                <div className="bg-yellow-500/10 p-4 rounded-lg">
+                <div className="bg-amber-100 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-yellow-600">
                     {stats?.activeMissions || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">{t('company', 'active') || 'Active'}</div>
                 </div>
-                <div className="bg-purple-500/10 p-4 rounded-lg">
+                <div className="bg-purple-100 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
                     {stats?.averageRating ? stats.averageRating.toFixed(1) : 'N/A'}
                   </div>
@@ -556,9 +556,9 @@ export default function EmployeeDetailPage() {
                           <Badge
                             className={
                               earning.status === 'PAID'
-                                ? 'bg-green-500/15 text-green-400'
+                                ? 'bg-green-100 text-green-700'
                                 : earning.status === 'PENDING'
-                                  ? 'bg-yellow-500/15 text-yellow-400'
+                                  ? 'bg-amber-100 text-amber-800'
                                   : 'bg-muted text-foreground'
                             }
                           >

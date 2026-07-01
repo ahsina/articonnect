@@ -202,7 +202,7 @@ export default function SpecialtiesPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
             <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
               {t('adminSpecialties', 'dismiss')}
@@ -324,7 +324,7 @@ export default function SpecialtiesPage() {
                             setSelectedSpecialty(specialty);
                             setShowDeleteModal(true);
                           }}
-                          className="p-1 text-red-600 hover:text-red-400"
+                          className="p-1 text-red-600 hover:text-red-700"
                           title={t('adminSpecialties', 'delete')}
                         >
                           🗑️
@@ -336,7 +336,7 @@ export default function SpecialtiesPage() {
                       <span
                         className={`px-2 py-0.5 rounded ${
                           specialty.isActive
-                            ? 'bg-green-500/15 text-green-400'
+                            ? 'bg-green-100 text-green-700'
                             : 'bg-muted text-muted-foreground'
                         }`}
                       >
@@ -532,8 +532,8 @@ export default function SpecialtiesPage() {
                   {t('adminSpecialties', 'deleteConfirmPrefix')} <strong>{selectedSpecialty.name}</strong>{t('adminSpecialties', 'deleteConfirmSuffix')}
                 </p>
                 {selectedSpecialty._count?.artisans && selectedSpecialty._count.artisans > 0 && (
-                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-4">
-                    <p className="text-yellow-400">
+                  <div className="p-4 bg-amber-100 border border-amber-200 rounded-lg mb-4">
+                    <p className="text-amber-800">
                       {t('adminSpecialties', 'warningPrefix')} {selectedSpecialty._count.artisans} {t('adminSpecialties', 'warningSuffix')}
                     </p>
                   </div>

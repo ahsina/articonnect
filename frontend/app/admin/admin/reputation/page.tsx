@@ -98,12 +98,12 @@ export default function ReputationPage() {
 
   const getLevelBadge = (level: string) => {
     const colors: Record<string, string> = {
-      GOLD: 'bg-yellow-500/15 text-yellow-400',
+      GOLD: 'bg-amber-100 text-amber-800',
       SILVER: 'bg-muted text-foreground',
-      BRONZE: 'bg-yellow-500/15 text-yellow-400',
+      BRONZE: 'bg-amber-100 text-amber-800',
       NEW: 'bg-primary/10 text-primary',
-      TRUSTED: 'bg-green-500/15 text-green-400',
-      WARNING: 'bg-red-500/15 text-red-400',
+      TRUSTED: 'bg-green-100 text-green-700',
+      WARNING: 'bg-red-100 text-red-700',
     };
     return colors[level] || 'bg-muted text-foreground';
   };
@@ -162,7 +162,7 @@ export default function ReputationPage() {
 
         {/* Alerts */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
             <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
               {t('adminReputation', 'dismiss')}
@@ -170,7 +170,7 @@ export default function ReputationPage() {
           </div>
         )}
         {success && (
-          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
+          <div className="mb-6 p-4 bg-green-100 border border-green-200 rounded-lg text-green-700">
             {success}
             <button onClick={() => setSuccess(null)} className="ml-4 text-green-300 font-medium">
               {t('adminReputation', 'dismiss')}
@@ -226,23 +226,23 @@ export default function ReputationPage() {
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'totalMissions')}</p>
                       <p className="text-xl font-bold text-foreground">{reputation.totalMissions}</p>
                     </div>
-                    <div className="p-4 bg-green-500/10 rounded-lg">
+                    <div className="p-4 bg-green-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'completed')}</p>
                       <p className="text-xl font-bold text-green-600">
                         {reputation.completedMissions}
                       </p>
                     </div>
-                    <div className="p-4 bg-red-500/10 rounded-lg">
+                    <div className="p-4 bg-red-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'cancelled')}</p>
                       <p className="text-xl font-bold text-red-600">
                         {reputation.cancelledMissions}
                       </p>
                     </div>
-                    <div className="p-4 bg-yellow-500/10 rounded-lg">
+                    <div className="p-4 bg-amber-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'noShows')}</p>
                       <p className="text-xl font-bold text-yellow-600">{reputation.noShowCount}</p>
                     </div>
-                    <div className="p-4 bg-yellow-500/10 rounded-lg">
+                    <div className="p-4 bg-amber-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'avgRating')}</p>
                       <p className="text-xl font-bold text-yellow-600">
                         {reputation.averageRating.toFixed(1)} / 5
@@ -289,8 +289,8 @@ export default function ReputationPage() {
                           }}
                           className={`px-3 py-1 text-xs rounded-full ${
                             preset.value > 0
-                              ? 'bg-green-500/15 text-green-400 hover:bg-green-200'
-                              : 'bg-red-500/15 text-red-400 hover:bg-red-200'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-red-100 text-red-700 hover:bg-red-200'
                           }`}
                         >
                           {preset.label} ({preset.value > 0 ? '+' : ''}
@@ -308,13 +308,13 @@ export default function ReputationPage() {
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev - 5)}
-                        className="px-3 py-1 bg-red-500/15 text-red-400 rounded hover:bg-red-200"
+                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                       >
                         -5
                       </button>
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev - 1)}
-                        className="px-3 py-1 bg-red-500/15 text-red-400 rounded hover:bg-red-200"
+                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                       >
                         -1
                       </button>
@@ -326,13 +326,13 @@ export default function ReputationPage() {
                       />
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev + 1)}
-                        className="px-3 py-1 bg-green-500/15 text-green-400 rounded hover:bg-green-200"
+                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
                       >
                         +1
                       </button>
                       <button
                         onClick={() => setAdjustmentAmount((prev) => prev + 5)}
-                        className="px-3 py-1 bg-green-500/15 text-green-400 rounded hover:bg-green-200"
+                        className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
                       >
                         +5
                       </button>
@@ -404,8 +404,8 @@ export default function ReputationPage() {
                           <span
                             className={`px-2 py-1 text-sm font-medium rounded ${
                               adj.adjustment > 0
-                                ? 'bg-green-500/15 text-green-400'
-                                : 'bg-red-500/15 text-red-400'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
                             }`}
                           >
                             {adj.adjustment > 0 ? '+' : ''}

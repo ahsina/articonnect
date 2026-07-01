@@ -29,10 +29,10 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PENDING: 'bg-amber-100 text-amber-800',
   ACCEPTED: 'bg-primary/10 text-primary',
-  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
-  COMPLETED: 'bg-green-500/15 text-green-400',
+  IN_PROGRESS: 'bg-purple-100 text-purple-700',
+  COMPLETED: 'bg-green-100 text-green-700',
 };
 
 export default function MissionAssignmentsPage() {

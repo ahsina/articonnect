@@ -79,7 +79,7 @@ export default function MissionsManagementPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -241,15 +241,15 @@ export default function MissionsManagementPage() {
                 <div className="text-2xl font-bold text-foreground">{metrics.noShows.total}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'totalReports')}</div>
               </div>
-              <div className="text-center p-4 bg-yellow-500/10 rounded-lg">
+              <div className="text-center p-4 bg-amber-100 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">{metrics.noShows.pending}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'pending')}</div>
               </div>
-              <div className="text-center p-4 bg-green-500/10 rounded-lg">
+              <div className="text-center p-4 bg-green-100 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">{metrics.noShows.validated}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'validated')}</div>
               </div>
-              <div className="text-center p-4 bg-red-500/10 rounded-lg">
+              <div className="text-center p-4 bg-red-100 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">{metrics.noShows.rejected}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'rejected')}</div>
               </div>
@@ -273,7 +273,7 @@ export default function MissionsManagementPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="text-center p-4 bg-green-500/10 rounded-lg">
+              <div className="text-center p-4 bg-green-100 rounded-lg">
                 <div className="text-3xl font-bold text-green-600">
                   {metrics.revenue.total.toLocaleString('fr-FR')}€
                 </div>
@@ -285,7 +285,7 @@ export default function MissionsManagementPage() {
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'today')}</div>
               </div>
-              <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+              <div className="text-center p-4 bg-purple-100 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
                   {metrics.revenue.thisWeek.toLocaleString('fr-FR')}€
                 </div>
@@ -321,7 +321,7 @@ export default function MissionsManagementPage() {
             <div className="flex flex-wrap gap-4">
               <button
                 onClick={() => router.push('/admin/moderation')}
-                className="flex items-center gap-2 px-4 py-3 bg-yellow-500/15 text-yellow-400 rounded-lg hover:bg-yellow-200"
+                className="flex items-center gap-2 px-4 py-3 bg-amber-100 text-amber-800 rounded-lg hover:bg-yellow-200"
               >
                 <span>⚠️</span>
                 <span>{t('adminMissions', 'viewDisputes')}</span>
@@ -335,14 +335,14 @@ export default function MissionsManagementPage() {
               </button>
               <button
                 onClick={() => router.push('/admin/monitoring')}
-                className="flex items-center gap-2 px-4 py-3 bg-green-500/15 text-green-400 rounded-lg hover:bg-green-200"
+                className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
               >
                 <span>📊</span>
                 <span>{t('adminMissions', 'viewMonitoring')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/analytics')}
-                className="flex items-center gap-2 px-4 py-3 bg-purple-500/15 text-purple-400 rounded-lg hover:bg-purple-200"
+                className="flex items-center gap-2 px-4 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
               >
                 <span>📈</span>
                 <span>{t('adminMissions', 'analyticsDashboard')}</span>

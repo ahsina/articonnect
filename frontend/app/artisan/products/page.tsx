@@ -172,7 +172,7 @@ export default function ArtisanProductsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {product.status === 'ACTIVE' ? (
-                            <Badge variant="success" className="bg-green-500/15 text-green-400">
+                            <Badge variant="success" className="bg-green-100 text-green-700">
                               {t('artisan', 'activeStatus')}
                             </Badge>
                           ) : (
@@ -181,7 +181,7 @@ export default function ArtisanProductsPage() {
                             </Badge>
                           )}
                           {product.stock === 0 && (
-                            <Badge variant="error" className="bg-red-500/15 text-red-400">
+                            <Badge variant="error" className="bg-red-100 text-red-700">
                               {t('artisan', 'outOfStockStatus')}
                             </Badge>
                           )}
@@ -236,7 +236,7 @@ export default function ArtisanProductsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-400"
+                          className="text-red-600 hover:text-red-700"
                         >
                           🗑️ {t('common', 'delete')}
                         </Button>

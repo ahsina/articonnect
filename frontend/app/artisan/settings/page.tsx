@@ -262,7 +262,7 @@ export default function ArtisanSettingsPage() {
           <CardTitle className="flex items-center gap-2">
             {t('settings', 'phoneVerification') || 'Phone Verification'}
             {phoneVerified && (
-              <Badge className="bg-green-500/15 text-green-400">
+              <Badge className="bg-green-100 text-green-700">
                 {t('settings', 'verified') || 'Verified'}
               </Badge>
             )}
@@ -315,9 +315,9 @@ export default function ArtisanSettingsPage() {
             )}
 
             {phoneVerified && (
-              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-2">
+              <div className="p-3 bg-green-100 border border-green-200 rounded-lg flex items-center gap-2">
                 <span className="text-green-600 text-lg">✓</span>
-                <span className="text-green-400 text-sm">
+                <span className="text-green-700 text-sm">
                   {t('settings', 'phoneVerifiedMessage') || 'Your phone number is verified'}
                 </span>
               </div>

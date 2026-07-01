@@ -57,13 +57,13 @@ export default function MonitoringPage() {
   const getHealthColor = (status: string) => {
     switch (status) {
       case 'EXCELLENT':
-        return 'text-green-600 bg-green-500/15';
+        return 'text-green-600 bg-green-100';
       case 'GOOD':
         return 'text-primary bg-primary/10';
       case 'FAIR':
-        return 'text-yellow-600 bg-yellow-500/15';
+        return 'text-yellow-600 bg-amber-100';
       case 'POOR':
-        return 'text-red-600 bg-red-500/15';
+        return 'text-red-600 bg-red-100';
       default:
         return 'text-muted-foreground bg-muted';
     }
@@ -72,9 +72,9 @@ export default function MonitoringPage() {
   const getAlertColor = (level: string) => {
     switch (level) {
       case 'CRITICAL':
-        return 'border-red-500 bg-red-500/10';
+        return 'border-red-500 bg-red-100';
       case 'WARNING':
-        return 'border-yellow-500 bg-yellow-500/10';
+        return 'border-yellow-500 bg-amber-100';
       case 'INFO':
         return 'border-primary bg-primary/10';
       default:
@@ -153,13 +153,13 @@ export default function MonitoringPage() {
                 {alerts && (
                   <>
                     {alerts.critical > 0 && (
-                      <div className="text-center px-4 py-2 bg-red-500/15 rounded-lg">
+                      <div className="text-center px-4 py-2 bg-red-100 rounded-lg">
                         <div className="text-2xl font-bold text-red-600">{alerts.critical}</div>
                         <div className="text-xs text-red-600">{t('adminMonitoring', 'critical')}</div>
                       </div>
                     )}
                     {alerts.warnings > 0 && (
-                      <div className="text-center px-4 py-2 bg-yellow-500/15 rounded-lg">
+                      <div className="text-center px-4 py-2 bg-amber-100 rounded-lg">
                         <div className="text-2xl font-bold text-yellow-600">{alerts.warnings}</div>
                         <div className="text-xs text-yellow-600">{t('adminMonitoring', 'warnings')}</div>
                       </div>
@@ -343,7 +343,7 @@ export default function MonitoringPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="text-center p-4 bg-green-500/10 rounded-lg">
+              <div className="text-center p-4 bg-green-100 rounded-lg">
                 <div className="text-3xl font-bold text-green-600">
                   {dashboard.autoValidation.total}
                 </div>
@@ -355,7 +355,7 @@ export default function MonitoringPage() {
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'totalAmount')}</div>
               </div>
-              <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+              <div className="text-center p-4 bg-purple-100 rounded-lg">
                 <div className="text-3xl font-bold text-purple-600">
                   {dashboard.autoValidation.avgDelayHours}
                 </div>
@@ -471,8 +471,8 @@ export default function MonitoringPage() {
               </div>
             </div>
             {dashboard.cleanup.nextCleanupRecommended && (
-              <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <span className="text-yellow-400">
+              <div className="mt-4 p-3 bg-amber-100 border border-amber-200 rounded-lg">
+                <span className="text-amber-800">
                   {t('adminMonitoring', 'cleanupRecommended')}
                 </span>
               </div>

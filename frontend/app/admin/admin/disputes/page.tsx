@@ -66,11 +66,11 @@ export default function DisputesPage() {
   const getStatusColor = (status: DisputeStatus) => {
     switch (status) {
       case DisputeStatus.OPEN:
-        return 'bg-yellow-500/15 text-yellow-400';
+        return 'bg-amber-100 text-amber-800';
       case DisputeStatus.IN_REVIEW:
         return 'bg-primary/10 text-primary';
       case DisputeStatus.RESOLVED:
-        return 'bg-green-500/15 text-green-400';
+        return 'bg-green-100 text-green-700';
       case DisputeStatus.CANCELLED:
         return 'bg-muted text-muted-foreground';
       default:
@@ -81,13 +81,13 @@ export default function DisputesPage() {
   const getPriorityColor = (priority: DisputePriority) => {
     switch (priority) {
       case DisputePriority.CRITICAL:
-        return 'bg-red-500/15 text-red-400 border-red-500/30';
+        return 'bg-red-100 text-red-700 border-red-500/30';
       case DisputePriority.HIGH:
-        return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
+        return 'bg-amber-100 text-amber-800 border-yellow-500/30';
       case DisputePriority.MEDIUM:
-        return 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
+        return 'bg-amber-100 text-amber-800 border-yellow-500/30';
       case DisputePriority.LOW:
-        return 'bg-green-500/15 text-green-400 border-green-500/30';
+        return 'bg-green-100 text-green-700 border-green-500/30';
       default:
         return 'bg-muted text-foreground border-border';
     }
@@ -154,7 +154,7 @@ export default function DisputesPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -167,7 +167,7 @@ export default function DisputesPage() {
               <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statTotal')}</p>
             </CardContent>
           </Card>
-          <Card className="border-yellow-500/20">
+          <Card className="border-amber-200">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-yellow-600">{stats.open}</p>
               <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statOpen')}</p>
@@ -179,19 +179,19 @@ export default function DisputesPage() {
               <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statInReview')}</p>
             </CardContent>
           </Card>
-          <Card className="border-green-500/20">
+          <Card className="border-green-200">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
               <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statResolved')}</p>
             </CardContent>
           </Card>
-          <Card className="border-red-500/20">
+          <Card className="border-red-200">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-red-600">{stats.critical}</p>
               <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statCritical')}</p>
             </CardContent>
           </Card>
-          <Card className="border-yellow-500/20">
+          <Card className="border-amber-200">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-bold text-yellow-600">{stats.high}</p>
               <p className="text-sm text-muted-foreground">{t('adminDisputes', 'statHighPriority')}</p>
@@ -307,8 +307,8 @@ export default function DisputesPage() {
                       )}
                     </div>
                     {dispute.status === DisputeStatus.RESOLVED && dispute.resolution && (
-                      <div className="mt-3 p-3 bg-green-500/10 rounded-lg">
-                        <p className="text-sm text-green-400">
+                      <div className="mt-3 p-3 bg-green-100 rounded-lg">
+                        <p className="text-sm text-green-700">
                           <strong>{t('adminDisputes', 'resolution')}:</strong> {dispute.resolution}
                         </p>
                         {dispute.resolvedAt && (
@@ -402,9 +402,9 @@ export default function DisputesPage() {
                 </div>
 
                 {selectedDispute.status === DisputeStatus.RESOLVED ? (
-                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <h4 className="font-medium text-green-400 mb-2">{t('adminDisputes', 'resolution')}</h4>
-                    <p className="text-green-400">{selectedDispute.resolution}</p>
+                  <div className="p-4 bg-green-100 border border-green-200 rounded-lg">
+                    <h4 className="font-medium text-green-700 mb-2">{t('adminDisputes', 'resolution')}</h4>
+                    <p className="text-green-700">{selectedDispute.resolution}</p>
                     {selectedDispute.resolvedAt && (
                       <p className="text-sm text-green-600 mt-2">
                         {t('adminDisputes', 'resolvedOn')}: {new Date(selectedDispute.resolvedAt).toLocaleString('fr-FR')}

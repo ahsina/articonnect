@@ -192,7 +192,7 @@ export default function HomePage() {
           <div className="flex flex-col gap-4">
             {PERKS.map(([b, s]) => (
               <div key={b} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm text-green-400">✓</span>
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm text-green-700">✓</span>
                 <div>
                   <div className="font-display font-bold">{b}</div>
                   <div className="text-sm text-background/60">{s}</div>

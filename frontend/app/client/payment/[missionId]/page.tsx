@@ -39,7 +39,13 @@ export default function MissionPaymentPage() {
         const stripe = await getStripe();
         if (!stripe || cancelled) return;
         stripeRef.current = stripe;
-        const elements = stripe.elements({ clientSecret, appearance: { theme: 'stripe' } });
+        const elements = stripe.elements({
+          clientSecret,
+          appearance: {
+            theme: 'stripe',
+            variables: { colorPrimary: '#000000', borderRadius: '10px', fontFamily: 'Manrope, Inter, sans-serif' },
+          },
+        });
         elementsRef.current = elements;
         const paymentElement = elements.create('payment');
         if (!cancelled && !mountedRef.current) {
@@ -78,9 +84,17 @@ export default function MissionPaymentPage() {
     <div className="min-h-screen bg-background py-10">
       <div className="max-w-lg mx-auto px-4">
         <button onClick={() => router.back()} className="text-sm text-muted-foreground mb-4">← {t('clientPayment', 'back')}</button>
-        <div className="bg-card rounded-xl shadow p-6">
-          <h1 className="text-2xl font-bold mb-1">{t('clientPayment', 'title')}</h1>
-          <p className="text-muted-foreground mb-6">{t('clientPayment', 'securedByStripe')}</p>
+        <div className="bg-card rounded-2xl border border-border shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.05)] p-6">
+          <h1 className="font-display text-2xl font-extrabold mb-1">{t('clientPayment', 'title')}</h1>
+          <p className="text-muted-foreground mb-4">{t('clientPayment', 'securedByStripe')}</p>
+
+          {/* Réassurance séquestre */}
+          <div className="mb-6 flex items-start gap-2.5 rounded-xl bg-green-100 p-3.5 text-sm text-green-800">
+            <span className="text-base leading-none">🔒</span>
+            <span className="font-medium">
+              {t('clientPayment', 'escrowNotice') || 'Paiement sécurisé sous séquestre — l’artisan n’est payé qu’une fois le travail validé par vous.'}
+            </span>
+          </div>
 
           {loading && <div className="py-10 text-center text-muted-foreground" role="status">{t('clientPayment', 'preparing')}</div>}
 
@@ -93,7 +107,7 @@ export default function MissionPaymentPage() {
           ) : (
             <>
               <div id="payment-element" className={loading ? 'hidden' : ''} />
-              {error && <div className="mt-4 bg-red-500/10 text-red-400 text-sm rounded-lg p-3" role="alert">{error}</div>}
+              {error && <div className="mt-4 bg-red-100 text-red-700 text-sm rounded-lg p-3" role="alert">{error}</div>}
               {!loading && !error && (
                 <Button className="w-full mt-6" onClick={handlePay} disabled={submitting}>
                   {submitting ? t('clientPayment', 'processing') : t('clientPayment', 'payNow')}

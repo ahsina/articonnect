@@ -45,9 +45,9 @@ interface Invoice {
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: 'bg-muted text-foreground',
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
-  PAID: 'bg-green-500/15 text-green-400',
-  OVERDUE: 'bg-red-500/15 text-red-400',
+  PENDING: 'bg-amber-100 text-amber-800',
+  PAID: 'bg-green-100 text-green-700',
+  OVERDUE: 'bg-red-100 text-red-700',
   CANCELLED: 'bg-muted text-foreground',
 };
 

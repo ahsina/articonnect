@@ -161,11 +161,11 @@ export default function TwoFactorAuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                <p className="text-sm text-yellow-400 font-medium mb-2">
+              <div className="bg-amber-100 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800 font-medium mb-2">
                   ⚠️ {t('common', 'important')}
                 </p>
-                <p className="text-sm text-yellow-400">
+                <p className="text-sm text-amber-800">
                   {t('common', 'backupCodesWarning')}
                 </p>
               </div>

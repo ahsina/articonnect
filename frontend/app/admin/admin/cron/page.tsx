@@ -115,7 +115,7 @@ export default function CronJobsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -126,7 +126,7 @@ export default function CronJobsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div
-                  className={`px-4 py-2 rounded-lg ${health.status === 'healthy' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}
+                  className={`px-4 py-2 rounded-lg ${health.status === 'healthy' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
                 >
                   {health.status === 'healthy' ? `🟢 ${t('adminCron', 'healthy')}` : `🔴 ${t('adminCron', 'unhealthy')}`}
                 </div>
@@ -147,14 +147,14 @@ export default function CronJobsPage() {
 
         {/* Last Trigger Result */}
         {lastResult && (
-          <Card className="mb-8 border-green-500/20 bg-green-500/10">
+          <Card className="mb-8 border-green-200 bg-green-100">
             <CardHeader>
-              <CardTitle className="text-green-400">
+              <CardTitle className="text-green-700">
                 {t('adminCron', 'autoValidationCompleted')}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-green-400 mb-4">
+              <p className="text-green-700 mb-4">
                 Successfully auto-validated {lastResult.autoValidatedCount} mission(s)
               </p>
               {lastResult.missions.length > 0 && (
@@ -196,7 +196,7 @@ export default function CronJobsPage() {
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-foreground">{job.name}</h3>
                           {job.enabled ? (
-                            <span className="px-2 py-0.5 text-xs bg-green-500/15 text-green-400 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
                               {t('adminCron', 'active')}
                             </span>
                           ) : (

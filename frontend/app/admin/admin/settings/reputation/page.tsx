@@ -88,7 +88,7 @@ export default function ReputationRulesPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+        <div className="p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             {t('adminSettingsReputation', 'dismiss')}
@@ -96,7 +96,7 @@ export default function ReputationRulesPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
+        <div className="p-4 bg-green-100 border border-green-200 rounded-lg text-green-700">
           {success}
         </div>
       )}
@@ -153,8 +153,8 @@ export default function ReputationRulesPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <label className="block text-sm font-medium text-yellow-400 mb-1">{t('adminSettingsReputation', 'levelGold')}</label>
+            <div className="p-4 bg-amber-100 rounded-lg border border-amber-200">
+              <label className="block text-sm font-medium text-amber-800 mb-1">{t('adminSettingsReputation', 'levelGold')}</label>
               <input
                 type="number"
                 value={settings.goldThreshold}
@@ -177,8 +177,8 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsReputation', 'scoreGte')} {settings.silverThreshold}</p>
             </div>
-            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <label className="block text-sm font-medium text-yellow-400 mb-1">{t('adminSettingsReputation', 'levelBronze')}</label>
+            <div className="p-4 bg-amber-100 rounded-lg border border-amber-200">
+              <label className="block text-sm font-medium text-amber-800 mb-1">{t('adminSettingsReputation', 'levelBronze')}</label>
               <input
                 type="number"
                 value={settings.bronzeThreshold}
@@ -189,8 +189,8 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-yellow-600">{t('adminSettingsReputation', 'scoreGte')} {settings.bronzeThreshold}</p>
             </div>
-            <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-              <label className="block text-sm font-medium text-green-400 mb-1">{t('adminSettingsReputation', 'levelTrusted')}</label>
+            <div className="p-4 bg-green-100 rounded-lg border border-green-200">
+              <label className="block text-sm font-medium text-green-700 mb-1">{t('adminSettingsReputation', 'levelTrusted')}</label>
               <input
                 type="number"
                 value={settings.trustedThreshold}
@@ -201,8 +201,8 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-green-600">{t('adminSettingsReputation', 'scoreGte')} {settings.trustedThreshold}</p>
             </div>
-            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
-              <label className="block text-sm font-medium text-red-400 mb-1">{t('adminSettingsReputation', 'levelWarning')}</label>
+            <div className="p-4 bg-red-100 rounded-lg border border-red-200">
+              <label className="block text-sm font-medium text-red-700 mb-1">{t('adminSettingsReputation', 'levelWarning')}</label>
               <input
                 type="number"
                 value={settings.warningThreshold}
@@ -282,7 +282,7 @@ export default function ReputationRulesPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-green-500/10 rounded-lg">
+            <div className="p-4 bg-green-100 rounded-lg">
               <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'fiveStars')}</label>
               <input
                 type="number"
@@ -293,7 +293,7 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-green-600">+{settings.fiveStarReviewBonus}</p>
             </div>
-            <div className="p-4 bg-green-500/10 rounded-lg">
+            <div className="p-4 bg-green-100 rounded-lg">
               <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'fourStars')}</label>
               <input
                 type="number"
@@ -317,7 +317,7 @@ export default function ReputationRulesPage() {
                 {settings.threeStarReviewBonus}
               </p>
             </div>
-            <div className="p-4 bg-red-500/10 rounded-lg">
+            <div className="p-4 bg-red-100 rounded-lg">
               <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'twoStars')}</label>
               <input
                 type="number"
@@ -328,7 +328,7 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-red-600">-{settings.twoStarReviewPenalty}</p>
             </div>
-            <div className="p-4 bg-red-500/10 rounded-lg">
+            <div className="p-4 bg-red-100 rounded-lg">
               <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'oneStar')}</label>
               <input
                 type="number"

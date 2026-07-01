@@ -173,13 +173,13 @@ export default function CertificationsPage() {
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-foreground">{cert.name}</h4>
                         {cert.verified && (
-                          <Badge className="bg-green-500/15 text-green-400">✓ {t('artisanCertifications', 'verified') || 'Verified'}</Badge>
+                          <Badge className="bg-green-100 text-green-700">✓ {t('artisanCertifications', 'verified') || 'Verified'}</Badge>
                         )}
                         {isExpired(cert.expiryDate) && (
-                          <Badge className="bg-red-500/15 text-red-400">{t('artisanCertifications', 'expired') || 'Expired'}</Badge>
+                          <Badge className="bg-red-100 text-red-700">{t('artisanCertifications', 'expired') || 'Expired'}</Badge>
                         )}
                         {isExpiringSoon(cert.expiryDate) && !isExpired(cert.expiryDate) && (
-                          <Badge className="bg-yellow-500/15 text-yellow-400">{t('artisanCertifications', 'expiringSoon') || 'Expiring Soon'}</Badge>
+                          <Badge className="bg-amber-100 text-amber-800">{t('artisanCertifications', 'expiringSoon') || 'Expiring Soon'}</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{cert.issuer}</p>

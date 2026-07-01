@@ -40,12 +40,12 @@ interface Order {
 
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PENDING: 'bg-amber-100 text-amber-800',
   PAID: 'bg-primary/10 text-primary',
-  PROCESSING: 'bg-blue-500/15 text-blue-400',
-  SHIPPED: 'bg-purple-500/15 text-purple-400',
-  DELIVERED: 'bg-green-500/15 text-green-400',
-  CANCELLED: 'bg-red-500/15 text-red-400',
+  PROCESSING: 'bg-blue-100 text-blue-700',
+  SHIPPED: 'bg-purple-100 text-purple-700',
+  DELIVERED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-red-100 text-red-700',
   REFUNDED: 'bg-muted text-muted-foreground',
 };
 
@@ -320,7 +320,7 @@ export default function ClientOrdersPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleCancelOrder(order.id)}
-                        className="text-red-600 hover:text-red-400"
+                        className="text-red-600 hover:text-red-700"
                       >
                         {t('orders', 'cancelOrder')}
                       </Button>

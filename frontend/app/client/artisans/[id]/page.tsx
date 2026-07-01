@@ -411,7 +411,7 @@ export default function ArtisanDetailsPage() {
                     variant="outline"
                     onClick={handleToggleFavorite}
                     disabled={favoriteLoading}
-                    className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-500/10' : ''}
+                    className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-100' : ''}
                   >
                     {favoriteLoading ? '...' : isFavorite ? '❤️' : '🤍'} {t('favorites', isFavorite ? 'saved' : 'save')}
                   </Button>

@@ -34,12 +34,12 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PENDING: 'bg-amber-100 text-amber-800',
   NEGOTIATING: 'bg-primary/10 text-primary',
-  ACCEPTED: 'bg-green-500/15 text-green-400',
-  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
+  ACCEPTED: 'bg-green-100 text-green-700',
+  IN_PROGRESS: 'bg-purple-100 text-purple-700',
   COMPLETED: 'bg-muted text-foreground',
-  CANCELLED: 'bg-red-500/15 text-red-400',
+  CANCELLED: 'bg-red-100 text-red-700',
 };
 
 type StatusFilter = 'all' | 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';

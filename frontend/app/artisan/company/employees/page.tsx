@@ -17,18 +17,18 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
 const ROLE_COLORS: Record<string, string> = {
-  OWNER: 'bg-purple-500/15 text-purple-400',
+  OWNER: 'bg-purple-100 text-purple-700',
   MANAGER: 'bg-primary/10 text-primary',
   SUPERVISOR: 'bg-primary/15 text-primary',
-  TECHNICIAN: 'bg-green-500/15 text-green-400',
+  TECHNICIAN: 'bg-green-100 text-green-700',
   CONTRACTOR: 'bg-muted text-foreground',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'bg-green-500/15 text-green-400',
+  ACTIVE: 'bg-green-100 text-green-700',
   INACTIVE: 'bg-muted text-foreground',
-  TERMINATED: 'bg-red-500/15 text-red-400',
-  PENDING_INVITATION: 'bg-yellow-500/15 text-yellow-400',
+  TERMINATED: 'bg-red-100 text-red-700',
+  PENDING_INVITATION: 'bg-amber-100 text-amber-800',
 };
 
 export default function EmployeesPage() {

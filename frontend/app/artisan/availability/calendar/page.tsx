@@ -275,8 +275,8 @@ export default function AvailabilityCalendarPage() {
                       <Badge
                         className={
                           slot.isAvailable
-                            ? 'bg-green-500/15 text-green-400'
-                            : 'bg-red-500/15 text-red-400'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                         }
                       >
                         {slot.isAvailable ? 'Available' : 'Unavailable'}

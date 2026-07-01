@@ -28,11 +28,11 @@ interface Mission {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PENDING: 'bg-amber-100 text-amber-800',
   ACCEPTED: 'bg-primary/10 text-primary',
-  IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
-  COMPLETED: 'bg-green-500/15 text-green-400',
-  CANCELLED: 'bg-red-500/15 text-red-400',
+  IN_PROGRESS: 'bg-purple-100 text-purple-700',
+  COMPLETED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-red-100 text-red-700',
 };
 
 export default function ArtisanDashboard() {
@@ -172,7 +172,7 @@ export default function ArtisanDashboard() {
               {t('artisan', 'averageRating') || 'Rating'}
             </div>
             <div className="flex items-center gap-1.5 text-2xl font-bold text-foreground">
-              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" /> {stats.rating}
+              <Star className="h-5 w-5 fill-yellow-400 text-amber-800" /> {stats.rating}
             </div>
           </CardContent>
         </Card>
@@ -180,9 +180,9 @@ export default function ArtisanDashboard() {
 
       {/* Earnings Card */}
       {earnings && (
-        <Card className="mb-6 bg-gradient-to-r from-green-500/10 to-green-500/5 border-green-500/20">
+        <Card className="mb-6 bg-gradient-to-r from-green-500/10 to-green-500/5 border-green-200">
           <CardHeader>
-            <CardTitle className="text-green-400">
+            <CardTitle className="text-green-700">
               {t('artisan', 'earningsOverview') || 'Earnings Overview'}
             </CardTitle>
           </CardHeader>
@@ -192,7 +192,7 @@ export default function ArtisanDashboard() {
                 <div className="text-sm text-green-600">
                   {t('artisan', 'totalEarnings') || 'Total Earnings'}
                 </div>
-                <div className="text-2xl font-bold text-green-400">
+                <div className="text-2xl font-bold text-green-700">
                   {earnings.totalEarnings.toFixed(2)}€
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function ArtisanDashboard() {
                 <div className="text-sm text-green-600">
                   {t('artisan', 'thisMonth') || 'This Month'}
                 </div>
-                <div className="text-2xl font-bold text-green-400">
+                <div className="text-2xl font-bold text-green-700">
                   {earnings.thisMonthEarnings.toFixed(2)}€
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function ArtisanDashboard() {
                 <div className="text-sm text-green-600">
                   {t('artisan', 'avgPerMission') || 'Avg per Mission'}
                 </div>
-                <div className="text-2xl font-bold text-green-400">
+                <div className="text-2xl font-bold text-green-700">
                   {earnings.averagePerMission.toFixed(2)}€
                 </div>
               </div>
@@ -225,7 +225,7 @@ export default function ArtisanDashboard() {
               <Link href="/artisan/earnings">
                 <Button
                   variant="outline"
-                  className="border-green-600 text-green-600 hover:bg-green-500/10"
+                  className="border-green-600 text-green-600 hover:bg-green-100"
                 >
                   {t('artisan', 'viewAllEarnings') || 'View All Earnings'}
                 </Button>

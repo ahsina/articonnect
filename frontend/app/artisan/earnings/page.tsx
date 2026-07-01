@@ -11,10 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { translatePaymentStatus } from '@/lib/utils/enum-translations';
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-500/15 text-yellow-400',
+  PENDING: 'bg-amber-100 text-amber-800',
   PROCESSING: 'bg-primary/10 text-primary',
-  PAID: 'bg-green-500/15 text-green-400',
-  FAILED: 'bg-red-500/15 text-red-400',
+  PAID: 'bg-green-100 text-green-700',
+  FAILED: 'bg-red-100 text-red-700',
 };
 
 export default function ArtisanEarningsPage() {
@@ -157,22 +157,22 @@ export default function ArtisanEarningsPage() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
             <CardContent className="p-4">
               <div className="text-sm text-green-600">
                 {t('artisan', 'totalEarnings') || 'Total Earnings'}
               </div>
-              <div className="text-2xl font-bold text-green-400">
+              <div className="text-2xl font-bold text-green-700">
                 {formatCurrency(summary.totalEarnings)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
+          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-amber-200">
             <CardContent className="p-4">
               <div className="text-sm text-yellow-600">
                 {t('artisan', 'pendingEarnings') || 'Pending'}
               </div>
-              <div className="text-2xl font-bold text-yellow-400">
+              <div className="text-2xl font-bold text-amber-800">
                 {formatCurrency(summary.pendingEarnings)}
               </div>
             </CardContent>
@@ -187,12 +187,12 @@ export default function ArtisanEarningsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
             <CardContent className="p-4">
               <div className="text-sm text-purple-600">
                 {t('artisan', 'lastMonth') || 'Last Month'}
               </div>
-              <div className="text-2xl font-bold text-purple-400">
+              <div className="text-2xl font-bold text-purple-700">
                 {formatCurrency(summary.lastMonthEarnings)}
               </div>
             </CardContent>

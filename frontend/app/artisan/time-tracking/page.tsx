@@ -181,7 +181,7 @@ export default function ArtisanTimeTrackingPage() {
       </div>
 
       {/* Active Timer Card */}
-      <Card className={`${activeEntry ? 'bg-green-500/10 border-green-500/30' : 'bg-background'}`}>
+      <Card className={`${activeEntry ? 'bg-green-100 border-green-500/30' : 'bg-background'}`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -239,22 +239,22 @@ export default function ArtisanTimeTrackingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-green-600">{t('timeTracking', 'weekHours') || 'This Week'}</div>
-            <div className="text-2xl font-bold text-green-400">{formatDuration(totalWeekHours)}</div>
+            <div className="text-2xl font-bold text-green-700">{formatDuration(totalWeekHours)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
           <CardContent className="p-4">
             <div className="text-sm text-purple-600">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
-            <div className="text-2xl font-bold text-purple-400">{totalWeekEarnings.toFixed(2)}EUR</div>
+            <div className="text-2xl font-bold text-purple-700">{totalWeekEarnings.toFixed(2)}EUR</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-500/5 border-yellow-500/20">
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-500/5 border-amber-200">
           <CardContent className="p-4">
             <div className="text-sm text-yellow-600">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
-            <div className="text-2xl font-bold text-yellow-400">
+            <div className="text-2xl font-bold text-amber-800">
               {totalWeekHours > 0 ? (totalWeekEarnings / totalWeekHours).toFixed(2) : 0}EUR/h
             </div>
           </CardContent>
@@ -356,10 +356,10 @@ export default function ArtisanTimeTrackingPage() {
                         <Badge
                           className={
                             entry.status === 'APPROVED'
-                              ? 'bg-green-500/15 text-green-400'
+                              ? 'bg-green-100 text-green-700'
                               : entry.status === 'COMPLETED'
                               ? 'bg-primary/10 text-primary'
-                              : 'bg-yellow-500/15 text-yellow-400'
+                              : 'bg-amber-100 text-amber-800'
                           }
                         >
                           {translateTimeEntryStatus(entry.status, t)}

@@ -84,11 +84,11 @@ export default function StripeOnboardingPage() {
               </CardDescription>
             </div>
             {status?.onboarded ? (
-              <Badge className="bg-green-500/15 text-green-400">
+              <Badge className="bg-green-100 text-green-700">
                 ✓ {t('artisan', 'active') || 'Active'}
               </Badge>
             ) : status?.accountId ? (
-              <Badge className="bg-yellow-500/15 text-yellow-400">
+              <Badge className="bg-amber-100 text-amber-800">
                 ⏳ {t('artisan', 'incomplete') || 'Incomplete'}
               </Badge>
             ) : (
@@ -102,8 +102,8 @@ export default function StripeOnboardingPage() {
           {status?.onboarded ? (
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 bg-green-500/10 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-400">
+                <div className="p-4 bg-green-100 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-700">
                     <span className="text-xl">✓</span>
                     <span className="font-medium">
                       {t('artisan', 'chargesEnabled') || 'Charges Enabled'}
@@ -113,8 +113,8 @@ export default function StripeOnboardingPage() {
                     {t('artisan', 'canReceivePayments') || 'You can receive payments from clients'}
                   </p>
                 </div>
-                <div className="p-4 bg-green-500/10 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-400">
+                <div className="p-4 bg-green-100 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-700">
                     <span className="text-xl">✓</span>
                     <span className="font-medium">
                       {t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
@@ -137,21 +137,21 @@ export default function StripeOnboardingPage() {
             </div>
           ) : status?.accountId ? (
             <div className="space-y-4">
-              <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <h4 className="font-medium text-yellow-400">
+              <div className="p-4 bg-amber-100 border border-amber-200 rounded-lg">
+                <h4 className="font-medium text-amber-800">
                   {t('artisan', 'onboardingIncomplete') || 'Onboarding Incomplete'}
                 </h4>
-                <p className="text-sm text-yellow-400 mt-1">
+                <p className="text-sm text-amber-800 mt-1">
                   {t('artisan', 'completeOnboarding') ||
                     'Please complete your Stripe onboarding to start receiving payments.'}
                 </p>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div
-                  className={`p-4 rounded-lg ${status.chargesEnabled ? 'bg-green-500/10' : 'bg-background'}`}
+                  className={`p-4 rounded-lg ${status.chargesEnabled ? 'bg-green-100' : 'bg-background'}`}
                 >
                   <div
-                    className={`flex items-center gap-2 ${status.chargesEnabled ? 'text-green-400' : 'text-muted-foreground'}`}
+                    className={`flex items-center gap-2 ${status.chargesEnabled ? 'text-green-700' : 'text-muted-foreground'}`}
                   >
                     <span className="text-xl">{status.chargesEnabled ? '✓' : '○'}</span>
                     <span className="font-medium">
@@ -160,10 +160,10 @@ export default function StripeOnboardingPage() {
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg ${status.payoutsEnabled ? 'bg-green-500/10' : 'bg-background'}`}
+                  className={`p-4 rounded-lg ${status.payoutsEnabled ? 'bg-green-100' : 'bg-background'}`}
                 >
                   <div
-                    className={`flex items-center gap-2 ${status.payoutsEnabled ? 'text-green-400' : 'text-muted-foreground'}`}
+                    className={`flex items-center gap-2 ${status.payoutsEnabled ? 'text-green-700' : 'text-muted-foreground'}`}
                   >
                     <span className="text-xl">{status.payoutsEnabled ? '✓' : '○'}</span>
                     <span className="font-medium">

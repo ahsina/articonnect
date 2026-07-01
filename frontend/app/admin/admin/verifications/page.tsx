@@ -92,11 +92,11 @@ export default function VerificationsPage() {
   const getStatusColor = (status?: string) => {
     switch (status?.toUpperCase()) {
       case 'VERIFIED':
-        return 'bg-green-500/15 text-green-400';
+        return 'bg-green-100 text-green-700';
       case 'PENDING':
-        return 'bg-yellow-500/15 text-yellow-400';
+        return 'bg-amber-100 text-amber-800';
       case 'FAILED':
-        return 'bg-red-500/15 text-red-400';
+        return 'bg-red-100 text-red-700';
       default:
         return 'bg-muted text-foreground';
     }
@@ -154,7 +154,7 @@ export default function VerificationsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -302,7 +302,7 @@ export default function VerificationsPage() {
                               <button
                                 onClick={() => handleReverify(artisan.id)}
                                 disabled={reverifyingId === artisan.id}
-                                className="text-green-600 hover:text-green-400 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-700 disabled:opacity-50"
                               >
                                 {reverifyingId === artisan.id ? t('adminVerifications', 'verifying') : t('adminVerifications', 'verify')}
                               </button>
@@ -377,7 +377,7 @@ export default function VerificationsPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-500/15 text-yellow-400">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
                               {t('adminVerifications', 'needsReverification')}
                             </span>
                           </td>
@@ -392,7 +392,7 @@ export default function VerificationsPage() {
                               <button
                                 onClick={() => handleReverify(artisan.id)}
                                 disabled={reverifyingId === artisan.id}
-                                className="text-green-600 hover:text-green-400 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-700 disabled:opacity-50"
                               >
                                 {reverifyingId === artisan.id ? t('adminVerifications', 'verifying') : t('adminVerifications', 'reverify')}
                               </button>
@@ -451,8 +451,8 @@ export default function VerificationsPage() {
                         <span
                           className={`px-2 py-1 text-xs rounded-full ${
                             kycStatus.kycVerified
-                              ? 'bg-green-500/15 text-green-400'
-                              : 'bg-red-500/15 text-red-400'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
                           }`}
                         >
                           {kycStatus.kycVerified ? t('adminVerifications', 'verified') : t('adminVerifications', 'notVerified')}
@@ -498,10 +498,10 @@ export default function VerificationsPage() {
                             <span
                               className={`px-2 py-1 text-xs font-medium rounded-full ${
                                 doc.status === 'APPROVED'
-                                  ? 'bg-green-500/15 text-green-400'
+                                  ? 'bg-green-100 text-green-700'
                                   : doc.status === 'PENDING'
-                                    ? 'bg-yellow-500/15 text-yellow-400'
-                                    : 'bg-red-500/15 text-red-400'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-red-100 text-red-700'
                               }`}
                             >
                               {doc.status}

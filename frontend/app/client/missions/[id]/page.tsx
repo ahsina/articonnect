@@ -351,12 +351,12 @@ export default function MissionDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-500/15 text-yellow-400',
-      NEGOTIATING: 'bg-primary/10 text-primary',
-      ACCEPTED: 'bg-green-500/15 text-green-400',
-      IN_PROGRESS: 'bg-purple-500/15 text-purple-400',
-      COMPLETED: 'bg-muted text-foreground',
-      CANCELLED: 'bg-red-500/15 text-red-400',
+      PENDING: 'bg-amber-100 text-amber-800',
+      NEGOTIATING: 'bg-secondary text-foreground',
+      ACCEPTED: 'bg-green-100 text-green-700',
+      IN_PROGRESS: 'bg-blue-100 text-blue-700',
+      COMPLETED: 'bg-primary text-primary-foreground',
+      CANCELLED: 'bg-red-100 text-red-700',
     };
     return (
       <Badge className={colors[status] || 'bg-muted text-foreground'}>
@@ -687,7 +687,7 @@ export default function MissionDetailsPage() {
 
             {/* Negotiation Section */}
             {(mission.status === 'PENDING' || mission.status === 'NEGOTIATING' || negotiations.length > 0) && (
-              <Card className="border-yellow-500/20">
+              <Card className="border-amber-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -735,11 +735,11 @@ export default function MissionDetailsPage() {
                           return (
                             <div
                               key={neg.id}
-                              className={`p-3 rounded-lg border ${
+                              className={`p-3 rounded-xl border ${
                                 isFromMe
-                                  ? 'bg-primary/10 border-primary/20 ml-4'
-                                  : 'bg-yellow-500/10 border-yellow-500/20 mr-4'
-                              } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
+                                  ? 'bg-muted border-border ml-4'
+                                  : 'bg-card border-border mr-4'
+                              } ${neg.accepted === true ? 'ring-2 ring-green-500' : ''} ${
                                 neg.accepted === false ? 'opacity-60' : ''
                               }`}
                             >
@@ -754,22 +754,22 @@ export default function MissionDetailsPage() {
                                 </div>
                                 <div className="text-right">
                                   {neg.accepted === true && (
-                                    <Badge className="bg-green-500/15 text-green-400">
+                                    <Badge className="bg-green-100 text-green-700">
                                       {t('negotiations', 'accepted') || 'Acceptée'}
                                     </Badge>
                                   )}
                                   {neg.accepted === false && (
-                                    <Badge className="bg-red-500/15 text-red-400">
+                                    <Badge className="bg-red-100 text-red-700">
                                       {t('negotiations', 'rejected') || 'Refusée'}
                                     </Badge>
                                   )}
                                   {isPending && isExpired && (
-                                    <Badge className="bg-muted text-foreground">
+                                    <Badge className="bg-muted text-muted-foreground">
                                       {t('negotiations', 'expired') || 'Expirée'}
                                     </Badge>
                                   )}
                                   {isPending && !isExpired && (
-                                    <Badge className="bg-yellow-500/15 text-yellow-400">
+                                    <Badge className="bg-amber-100 text-amber-800">
                                       {t('negotiations', 'pending') || 'En attente'}
                                     </Badge>
                                   )}
@@ -800,7 +800,7 @@ export default function MissionDetailsPage() {
                                     size="sm"
                                     onClick={() => handleAcceptNegotiation(neg.id)}
                                     disabled={negotiationLoading}
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    className="flex-1"
                                   >
                                     {t('negotiations', 'accept') || 'Accepter'}
                                   </Button>
@@ -905,9 +905,9 @@ export default function MissionDetailsPage() {
           <div className="space-y-6">
             {/* Validation Section - shown when mission is completed but not validated */}
             {needsValidation && (
-              <Card className="border-green-500/20 bg-green-500/10/50">
+              <Card className="border-green-200 bg-green-100/50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-400">
+                  <CardTitle className="flex items-center gap-2 text-green-700">
                     ✅ {t('validation', 'workCompleted') || 'Travail terminé'}
                   </CardTitle>
                   <CardDescription>
@@ -935,8 +935,8 @@ export default function MissionDetailsPage() {
                     </div>
                   )}
 
-                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                    <p className="text-sm text-yellow-400">
+                  <div className="p-3 bg-amber-100 border border-amber-200 rounded-xl">
+                    <p className="text-sm text-amber-800">
                       {t('validation', 'autoValidateWarning') ||
                         'Si vous ne validez pas dans les 7 jours, la mission sera automatiquement validée.'}
                     </p>
@@ -952,7 +952,7 @@ export default function MissionDetailsPage() {
                     <Button
                       onClick={handleDispute}
                       variant="outline"
-                      className="flex-1 text-red-600 border-red-500/30 hover:bg-red-500/10"
+                      className="flex-1 text-red-600 border-red-500/30 hover:bg-red-100"
                     >
                       {t('validation', 'reportProblem') || 'Signaler un problème'}
                     </Button>
@@ -1031,7 +1031,7 @@ export default function MissionDetailsPage() {
 
                   {mission.acceptedAt && (
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-500/15 flex items-center justify-center text-green-600">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                         ✓
                       </div>
                       <div>
@@ -1045,7 +1045,7 @@ export default function MissionDetailsPage() {
 
                   {mission.completedAt && (
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-500/15 flex items-center justify-center text-purple-600">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
                         ✓
                       </div>
                       <div>
@@ -1081,8 +1081,8 @@ export default function MissionDetailsPage() {
               <div
                 className={`p-4 rounded-lg ${
                   (cancellationFees?.fee || 0) > 0
-                    ? 'bg-yellow-500/10 border border-yellow-500/20'
-                    : 'bg-green-500/10 border border-green-500/20'
+                    ? 'bg-amber-100 border border-amber-200'
+                    : 'bg-green-100 border border-green-200'
                 }`}
               >
                 <p className="font-medium text-foreground mb-2">
@@ -1090,7 +1090,7 @@ export default function MissionDetailsPage() {
                 </p>
                 <p
                   className={`text-lg font-bold ${
-                    (cancellationFees?.fee || 0) > 0 ? 'text-yellow-400' : 'text-green-400'
+                    (cancellationFees?.fee || 0) > 0 ? 'text-amber-800' : 'text-green-700'
                   }`}
                 >
                   {(cancellationFees?.fee || 0) > 0

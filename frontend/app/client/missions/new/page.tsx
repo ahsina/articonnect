@@ -299,12 +299,12 @@ export default function NewMissionPage() {
                       onClick={() => setFormData({ ...formData, type: 'EMERGENCY' })}
                       className={`p-4 border-2 rounded-lg text-center transition-all ${
                         formData.type === 'EMERGENCY'
-                          ? 'border-red-500 bg-red-500/10'
+                          ? 'border-red-500 bg-red-100'
                           : 'border-border hover:border-red-500/30'
                       }`}
                     >
                       <span className="text-2xl">🚨</span>
-                      <p className={`font-medium ${formData.type === 'EMERGENCY' ? 'text-red-400' : 'text-foreground'}`}>
+                      <p className={`font-medium ${formData.type === 'EMERGENCY' ? 'text-red-700' : 'text-foreground'}`}>
                         {t('missions', 'emergency') || 'Urgence'}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -333,12 +333,12 @@ export default function NewMissionPage() {
                       onClick={() => setFormData({ ...formData, type: 'QUOTE' })}
                       className={`p-4 border-2 rounded-lg text-center transition-all ${
                         formData.type === 'QUOTE'
-                          ? 'border-green-500 bg-green-500/10'
+                          ? 'border-green-500 bg-green-100'
                           : 'border-border hover:border-green-500/30'
                       }`}
                     >
                       <span className="text-2xl">📝</span>
-                      <p className={`font-medium ${formData.type === 'QUOTE' ? 'text-green-400' : 'text-foreground'}`}>
+                      <p className={`font-medium ${formData.type === 'QUOTE' ? 'text-green-700' : 'text-foreground'}`}>
                         {t('missions', 'quote') || 'Devis'}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -350,14 +350,14 @@ export default function NewMissionPage() {
 
                 {/* Emergency Alert */}
                 {formData.type === 'EMERGENCY' && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <div className="p-4 bg-red-100 border border-red-200 rounded-lg">
                     <div className="flex items-start gap-3">
                       <span className="text-red-500 text-xl">⚡</span>
                       <div>
-                        <h4 className="font-semibold text-red-400">
+                        <h4 className="font-semibold text-red-700">
                           {t('emergency', 'urgentRequest') || 'Demande Urgente'}
                         </h4>
-                        <p className="text-sm text-red-400 mt-1">
+                        <p className="text-sm text-red-700 mt-1">
                           {t('emergency', 'urgentDesc') ||
                             'Votre demande sera envoyée immédiatement aux artisans disponibles à proximité. Des frais supplémentaires peuvent s\'appliquer pour les interventions en urgence.'}
                         </p>

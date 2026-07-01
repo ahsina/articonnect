@@ -43,16 +43,16 @@ export default function AdminDashboardPage() {
   const getActionColor = (action: string) => {
     const actionLower = action.toLowerCase();
     if (actionLower.includes('create') || actionLower.includes('register')) {
-      return 'bg-green-500/15 text-green-400';
+      return 'bg-green-100 text-green-700';
     }
     if (actionLower.includes('delete') || actionLower.includes('remove')) {
-      return 'bg-red-500/15 text-red-400';
+      return 'bg-red-100 text-red-700';
     }
     if (actionLower.includes('update') || actionLower.includes('edit')) {
       return 'bg-primary/10 text-primary';
     }
     if (actionLower.includes('login') || actionLower.includes('auth')) {
-      return 'bg-purple-500/15 text-purple-400';
+      return 'bg-purple-100 text-purple-700';
     }
     return 'bg-muted text-foreground';
   };
@@ -93,7 +93,7 @@ export default function AdminDashboardPage() {
   if (!stats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-400">{t('admin', 'errorLoadingStats')}</div>
+        <div className="text-red-700">{t('admin', 'errorLoadingStats')}</div>
       </div>
     );
   }
@@ -113,10 +113,10 @@ export default function AdminDashboardPage() {
   }) => {
     const colorClasses: Record<string, string> = {
       blue: 'bg-primary/10 text-primary',
-      green: 'bg-green-500/15 text-green-400',
-      yellow: 'bg-yellow-500/15 text-yellow-400',
-      purple: 'bg-purple-500/15 text-purple-400',
-      red: 'bg-red-500/15 text-red-400',
+      green: 'bg-green-100 text-green-700',
+      yellow: 'bg-amber-100 text-amber-800',
+      purple: 'bg-purple-100 text-purple-700',
+      red: 'bg-red-100 text-red-700',
     };
 
     return (

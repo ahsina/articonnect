@@ -439,14 +439,14 @@ export default function MissionDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-500/15 text-yellow-400',
+      PENDING: 'bg-amber-100 text-amber-800',
       OPEN: 'bg-primary/10 text-primary',
-      ASSIGNED: 'bg-purple-500/15 text-purple-400',
+      ASSIGNED: 'bg-purple-100 text-purple-700',
       ACCEPTED: 'bg-primary/15 text-primary',
-      IN_PROGRESS: 'bg-yellow-500/15 text-yellow-400',
-      COMPLETED: 'bg-green-500/15 text-green-400',
-      CANCELLED: 'bg-red-500/15 text-red-400',
-      DISPUTED: 'bg-red-500/15 text-red-400',
+      IN_PROGRESS: 'bg-amber-100 text-amber-800',
+      COMPLETED: 'bg-green-100 text-green-700',
+      CANCELLED: 'bg-red-100 text-red-700',
+      DISPUTED: 'bg-red-100 text-red-700',
     };
     return colors[status] || 'bg-muted text-foreground';
   };
@@ -455,8 +455,8 @@ export default function MissionDetailPage() {
     const colors: Record<string, string> = {
       LOW: 'bg-muted text-foreground',
       NORMAL: 'bg-primary/10 text-primary',
-      HIGH: 'bg-yellow-500/15 text-yellow-400',
-      URGENT: 'bg-red-500/15 text-red-400',
+      HIGH: 'bg-amber-100 text-amber-800',
+      URGENT: 'bg-red-100 text-red-700',
     };
     return colors[priority] || 'bg-muted text-foreground';
   };
@@ -713,7 +713,7 @@ export default function MissionDetailPage() {
 
           {/* Negotiation Section */}
           {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
-            <Card className="md:col-span-2 border-yellow-500/20">
+            <Card className="md:col-span-2 border-amber-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -753,7 +753,7 @@ export default function MissionDetailPage() {
                             key={neg.id}
                             className={`p-3 rounded-lg border ${
                               isFromMe
-                                ? 'bg-green-500/10 border-green-500/30 ml-4'
+                                ? 'bg-green-100 border-green-500/30 ml-4'
                                 : 'bg-primary/10 border-primary/20 mr-4'
                             } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
                               neg.accepted === false ? 'opacity-60' : ''
@@ -778,12 +778,12 @@ export default function MissionDetailPage() {
                               </div>
                               <div className="text-right">
                                 {neg.accepted === true && (
-                                  <Badge className="bg-green-500/15 text-green-400">
+                                  <Badge className="bg-green-100 text-green-700">
                                     {t('negotiations', 'accepted') || 'Acceptée'}
                                   </Badge>
                                 )}
                                 {neg.accepted === false && (
-                                  <Badge className="bg-red-500/15 text-red-400">
+                                  <Badge className="bg-red-100 text-red-700">
                                     {t('negotiations', 'rejected') || 'Refusée'}
                                   </Badge>
                                 )}
@@ -793,7 +793,7 @@ export default function MissionDetailPage() {
                                   </Badge>
                                 )}
                                 {isPending && !isExpired && (
-                                  <Badge className="bg-yellow-500/15 text-yellow-400">
+                                  <Badge className="bg-amber-100 text-amber-800">
                                     {t('negotiations', 'pending') || 'En attente'}
                                   </Badge>
                                 )}
@@ -1072,7 +1072,7 @@ export default function MissionDetailPage() {
                         className="hidden"
                         disabled={uploadingPhoto}
                       />
-                      <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/15 transition-colors">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
                         {uploadingPhoto ? (
                           <>
                             <span className="animate-spin">⏳</span>
@@ -1101,7 +1101,7 @@ export default function MissionDetailPage() {
                           <img
                             src={url}
                             alt={`After photo ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border-2 border-green-500/20"
+                            className="w-full h-24 object-cover rounded-lg border-2 border-green-200"
                           />
                           <button
                             type="button"
@@ -1211,11 +1211,11 @@ export default function MissionDetailPage() {
                 <Badge
                   className={
                     mission.quotation.status === 'ACCEPTED'
-                      ? 'bg-green-500/15 text-green-400'
+                      ? 'bg-green-100 text-green-700'
                       : mission.quotation.status === 'PENDING'
-                        ? 'bg-yellow-500/15 text-yellow-400'
+                        ? 'bg-amber-100 text-amber-800'
                         : mission.quotation.status === 'REJECTED'
-                          ? 'bg-red-500/15 text-red-400'
+                          ? 'bg-red-100 text-red-700'
                           : 'bg-muted text-foreground'
                   }
                 >

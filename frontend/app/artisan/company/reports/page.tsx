@@ -121,30 +121,30 @@ export default function CompanyReportsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+            <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
               <CardContent className="p-4">
                 <div className="text-sm text-green-600">
                   {t('company', 'completedMissions') || 'Completed Missions'}
                 </div>
-                <div className="text-2xl font-bold text-green-400">{stats.completedMissions}</div>
+                <div className="text-2xl font-bold text-green-700">{stats.completedMissions}</div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
+            <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-amber-200">
               <CardContent className="p-4">
                 <div className="text-sm text-yellow-600">
                   {t('company', 'averageRating') || 'Average Rating'}
                 </div>
-                <div className="text-2xl font-bold text-yellow-400">
+                <div className="text-2xl font-bold text-amber-800">
                   ⭐ {Number(stats.averageRating).toFixed(1)}
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+            <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
               <CardContent className="p-4">
                 <div className="text-sm text-purple-600">
                   {t('company', 'totalReviews') || 'Total Reviews'}
                 </div>
-                <div className="text-2xl font-bold text-purple-400">{stats.totalReviews}</div>
+                <div className="text-2xl font-bold text-purple-700">{stats.totalReviews}</div>
               </CardContent>
             </Card>
           </div>

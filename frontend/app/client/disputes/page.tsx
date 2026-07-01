@@ -30,10 +30,10 @@ interface Dispute {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'bg-yellow-500/15 text-yellow-400',
+  OPEN: 'bg-amber-100 text-amber-800',
   UNDER_REVIEW: 'bg-primary/10 text-primary',
-  RESOLVED: 'bg-green-500/15 text-green-400',
-  ESCALATED: 'bg-red-500/15 text-red-400',
+  RESOLVED: 'bg-green-100 text-green-700',
+  ESCALATED: 'bg-red-100 text-red-700',
   CLOSED: 'bg-muted text-foreground',
 };
 
@@ -351,11 +351,11 @@ export default function ClientDisputesPage() {
                   </div>
 
                   {dispute.resolution && (
-                    <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg mb-4">
-                      <div className="text-sm font-medium text-green-400 mb-1">
+                    <div className="bg-green-100 border border-green-200 p-4 rounded-lg mb-4">
+                      <div className="text-sm font-medium text-green-700 mb-1">
                         {t('disputes', 'resolution')}
                       </div>
-                      <p className="text-green-400">{dispute.resolution}</p>
+                      <p className="text-green-700">{dispute.resolution}</p>
                       {dispute.resolvedAt && (
                         <p className="text-xs text-green-600 mt-2">
                           {t('disputes', 'resolvedOn')} {formatDate(dispute.resolvedAt)}

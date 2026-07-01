@@ -76,19 +76,19 @@ export default function AuditLogsPage() {
   const getActionColor = (action: string) => {
     const actionLower = action.toLowerCase();
     if (actionLower.includes('create') || actionLower.includes('register')) {
-      return 'bg-green-500/15 text-green-400';
+      return 'bg-green-100 text-green-700';
     }
     if (actionLower.includes('delete') || actionLower.includes('remove')) {
-      return 'bg-red-500/15 text-red-400';
+      return 'bg-red-100 text-red-700';
     }
     if (actionLower.includes('update') || actionLower.includes('edit')) {
       return 'bg-primary/10 text-primary';
     }
     if (actionLower.includes('login') || actionLower.includes('auth')) {
-      return 'bg-purple-500/15 text-purple-400';
+      return 'bg-purple-100 text-purple-700';
     }
     if (actionLower.includes('suspend') || actionLower.includes('block')) {
-      return 'bg-yellow-500/15 text-yellow-400';
+      return 'bg-amber-100 text-amber-800';
     }
     return 'bg-muted text-foreground';
   };
@@ -142,7 +142,7 @@ export default function AuditLogsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}

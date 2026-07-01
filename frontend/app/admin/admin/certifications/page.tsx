@@ -145,7 +145,7 @@ export default function CertificationsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -302,8 +302,8 @@ export default function CertificationsPage() {
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                               cert.verified
-                                ? 'bg-green-500/15 text-green-400'
-                                : 'bg-yellow-500/15 text-yellow-400'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-amber-100 text-amber-800'
                             }`}
                           >
                             {cert.verified ? t('adminCertifications', 'statusVerified') : t('adminCertifications', 'statusPending')}
@@ -321,7 +321,7 @@ export default function CertificationsPage() {
                               <button
                                 onClick={() => handleUnverify(cert.id)}
                                 disabled={processingId === cert.id}
-                                className="text-red-600 hover:text-red-400 disabled:opacity-50"
+                                className="text-red-600 hover:text-red-700 disabled:opacity-50"
                               >
                                 {t('adminCertifications', 'unverify')}
                               </button>
@@ -329,7 +329,7 @@ export default function CertificationsPage() {
                               <button
                                 onClick={() => handleVerify(cert.id)}
                                 disabled={processingId === cert.id}
-                                className="text-green-600 hover:text-green-400 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-700 disabled:opacity-50"
                               >
                                 {t('adminCertifications', 'verify')}
                               </button>
@@ -387,8 +387,8 @@ export default function CertificationsPage() {
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${
                             selectedCert.verified
-                              ? 'bg-green-500/15 text-green-400'
-                              : 'bg-yellow-500/15 text-yellow-400'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-amber-100 text-amber-800'
                           }`}
                         >
                           {selectedCert.verified ? t('adminCertifications', 'statusVerified') : t('adminCertifications', 'statusPending')}
@@ -407,7 +407,7 @@ export default function CertificationsPage() {
                       </div>
                       <div
                         className={`p-4 rounded-lg ${
-                          isExpired(selectedCert.expiryDate) ? 'bg-red-500/10' : 'bg-background'
+                          isExpired(selectedCert.expiryDate) ? 'bg-red-100' : 'bg-background'
                         }`}
                       >
                         <p className="text-sm text-muted-foreground">{t('adminCertifications', 'expiryDate')}</p>
@@ -425,7 +425,7 @@ export default function CertificationsPage() {
                         <p className="font-medium">{formatDate(selectedCert.createdAt)}</p>
                       </div>
                       {selectedCert.verifiedAt && (
-                        <div className="p-4 bg-green-500/10 rounded-lg">
+                        <div className="p-4 bg-green-100 rounded-lg">
                           <p className="text-sm text-muted-foreground">{t('adminCertifications', 'verifiedOn')}</p>
                           <p className="font-medium">{formatDate(selectedCert.verifiedAt)}</p>
                         </div>
