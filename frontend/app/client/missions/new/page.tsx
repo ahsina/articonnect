@@ -40,6 +40,7 @@ export default function NewMissionPage() {
   const [useDifferentBilling, setUseDifferentBilling] = useState(false);
   const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showOptionalDetails, setShowOptionalDetails] = useState(false);
   const [formData, setFormData] = useState({
     type: 'SCHEDULED',
     category: '',
@@ -481,6 +482,17 @@ export default function NewMissionPage() {
                   </p>
                 </div>
 
+                {/* Détails facultatifs repliés par défaut (raccourcit le formulaire) */}
+                {!showOptionalDetails && (
+                  <button
+                    type="button"
+                    onClick={() => setShowOptionalDetails(true)}
+                    className="w-full rounded-xl border border-dashed border-border py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
+                  >
+                    + {t('missions', 'addOptionalDetails') || 'Ajouter des photos et options de facturation (facultatif)'}
+                  </button>
+                )}
+                {showOptionalDetails && (<>
                 {/* Photos Avant - Before Photos */}
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center gap-2 mb-4">
@@ -647,6 +659,8 @@ export default function NewMissionPage() {
                     </div>
                   </div>
                 )}
+
+                </>)}
 
                 <div className="flex gap-4">
                   <Button type="button" variant="outline" onClick={() => setStep(1)}>
