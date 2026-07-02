@@ -732,7 +732,7 @@ function ArtisanProfileContent() {
                   {badges.map((badge) => (
                     <div
                       key={badge.id}
-                      className="p-4 bg-gradient-to-br from-yellow-500/10 to-yellow-50 border border-amber-200 rounded-lg text-center hover:shadow-md transition-shadow"
+                      className="p-4 bg-muted border border-amber-200 rounded-lg text-center hover:shadow-md transition-shadow"
                     >
                       <div className="text-4xl mb-2">{badge.icon}</div>
                       <div className="font-semibold text-foreground">{badge.name}</div>

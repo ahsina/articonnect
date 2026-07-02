@@ -269,7 +269,7 @@ export default function AdminDashboardPage() {
         <div className="mt-8">
           <button
             onClick={() => router.push('/admin/settings')}
-            className="w-full p-6 bg-gradient-to-r from-primary to-yellow-600 rounded-2xl hover:shadow-glow transition-all text-left"
+            className="w-full p-6 bg-muted rounded-2xl hover:shadow-glow transition-all text-left"
           >
             <div className="flex items-center gap-4 text-primary-foreground">
               <Settings className="h-9 w-9 flex-shrink-0" />

@@ -231,7 +231,7 @@ export default function ArtisanTimeTrackingPage() {
 
       {/* Summary Cards */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="bg-muted border-primary/20">
           <CardContent className="p-4">
             <div className="text-sm text-primary">{t('timeTracking', 'todayHours') || "Today's Hours"}</div>
             <div className="text-2xl font-bold text-primary">
@@ -239,19 +239,19 @@ export default function ArtisanTimeTrackingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
+        <Card className="bg-muted border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-green-600">{t('timeTracking', 'weekHours') || 'This Week'}</div>
             <div className="text-2xl font-bold text-green-700">{formatDuration(totalWeekHours)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
+        <Card className="bg-muted border-purple-200">
           <CardContent className="p-4">
             <div className="text-sm text-purple-600">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
             <div className="text-2xl font-bold text-purple-700">{totalWeekEarnings.toFixed(2)}EUR</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-500/5 border-amber-200">
+        <Card className="bg-muted border-amber-200">
           <CardContent className="p-4">
             <div className="text-sm text-yellow-600">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
             <div className="text-2xl font-bold text-amber-800">

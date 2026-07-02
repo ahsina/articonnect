@@ -10,16 +10,17 @@ import { userApi } from '@/lib/api/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Wrench, Zap, Hammer, Paintbrush, KeyRound, Snowflake, Flame, Boxes } from 'lucide-react';
 
 const CATEGORIES = [
-  { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
-  { id: 'electricite', name: 'Électricité', icon: '⚡' },
-  { id: 'menuiserie', name: 'Menuiserie', icon: '🪚' },
-  { id: 'peinture', name: 'Peinture', icon: '🎨' },
-  { id: 'serrurerie', name: 'Serrurerie', icon: '🔐' },
-  { id: 'climatisation', name: 'Climatisation', icon: '❄️' },
-  { id: 'chauffage', name: 'Chauffage', icon: '🔥' },
-  { id: 'autre', name: 'Autre', icon: '🛠️' },
+  { id: 'plomberie', name: 'Plomberie', Icon: Wrench },
+  { id: 'electricite', name: 'Électricité', Icon: Zap },
+  { id: 'menuiserie', name: 'Menuiserie', Icon: Hammer },
+  { id: 'peinture', name: 'Peinture', Icon: Paintbrush },
+  { id: 'serrurerie', name: 'Serrurerie', Icon: KeyRound },
+  { id: 'climatisation', name: 'Climatisation', Icon: Snowflake },
+  { id: 'chauffage', name: 'Chauffage', Icon: Flame },
+  { id: 'autre', name: 'Autre', Icon: Boxes },
 ];
 
 interface ClientProfile {
@@ -270,9 +271,9 @@ export default function NewMissionPage() {
                   <button
                     key={cat.id}
                     onClick={() => handleCategorySelect(cat.name)}
-                    className="p-6 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/10 transition text-left"
+                    className="p-6 border-2 border-border rounded-xl hover:border-foreground transition text-left"
                   >
-                    <div className="text-4xl mb-2">{cat.icon}</div>
+                    <cat.Icon className="mb-2 h-7 w-7 text-foreground" strokeWidth={1.75} />
                     <div className="font-semibold text-foreground">{cat.name}</div>
                   </button>
                 ))}

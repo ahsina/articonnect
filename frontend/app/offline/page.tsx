@@ -31,7 +31,7 @@ export default function OfflinePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-card to-muted flex items-center justify-center px-4">
+    <div className="min-h-screen bg-muted flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="bg-card rounded-2xl shadow-lg p-8 text-center">
           <div className="text-6xl mb-6">📡</div>

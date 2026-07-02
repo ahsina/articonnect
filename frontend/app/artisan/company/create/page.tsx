@@ -79,7 +79,7 @@ export default function CreateCompanyPage() {
       </div>
 
       {/* Benefits Card */}
-      <Card className="mb-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+      <Card className="mb-6 bg-muted border-primary/20">
         <CardHeader>
           <CardTitle className="text-primary">
             {t('company', 'whyCreateCompany') || 'Why Create a Company?'}

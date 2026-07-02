@@ -3,19 +3,20 @@
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Wrench, Zap, Paintbrush, Hammer, Blocks, Snowflake, Sprout, KeyRound } from 'lucide-react';
 
 export default function HomePage() {
   const { t } = useLanguage();
 
   const CATEGORIES = [
-    { icon: '🔧', label: t('landing', 'categoryPlumbing'), count: '320' },
-    { icon: '⚡', label: t('landing', 'categoryElectricity'), count: '210' },
-    { icon: '🎨', label: t('landing', 'categoryPainting'), count: '175' },
-    { icon: '🪵', label: t('landing', 'categoryCarpentry'), count: '140' },
-    { icon: '🧱', label: t('landing', 'categoryMasonry'), count: '98' },
-    { icon: '❄️', label: t('landing', 'categoryHeating'), count: '64' },
-    { icon: '🌿', label: t('landing', 'categoryGardening'), count: '112' },
-    { icon: '🔑', label: t('landing', 'categoryLocksmith'), count: '57' },
+    { Icon: Wrench, label: t('landing', 'categoryPlumbing'), count: '320' },
+    { Icon: Zap, label: t('landing', 'categoryElectricity'), count: '210' },
+    { Icon: Paintbrush, label: t('landing', 'categoryPainting'), count: '175' },
+    { Icon: Hammer, label: t('landing', 'categoryCarpentry'), count: '140' },
+    { Icon: Blocks, label: t('landing', 'categoryMasonry'), count: '98' },
+    { Icon: Snowflake, label: t('landing', 'categoryHeating'), count: '64' },
+    { Icon: Sprout, label: t('landing', 'categoryGardening'), count: '112' },
+    { Icon: KeyRound, label: t('landing', 'categoryLocksmith'), count: '57' },
   ];
 
   const STEPS = [
@@ -154,7 +155,7 @@ export default function HomePage() {
         <div className="mt-8 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
           {CATEGORIES.map((c) => (
             <Link href="/auth/register?role=client" key={c.label} className="group rounded-2xl border border-border p-5 transition-all hover:-translate-y-0.5 hover:border-foreground">
-              <div className="text-2xl">{c.icon}</div>
+              <c.Icon className="h-6 w-6 text-foreground" strokeWidth={1.75} />
               <div className="font-display mt-3 font-extrabold">{c.label}</div>
               <div className="text-[13px] font-semibold text-muted-foreground">{c.count} artisans</div>
             </Link>

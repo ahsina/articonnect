@@ -180,7 +180,7 @@ export default function ArtisanDashboard() {
 
       {/* Earnings Card */}
       {earnings && (
-        <Card className="mb-6 bg-gradient-to-r from-green-500/10 to-green-500/5 border-green-200">
+        <Card className="mb-6 bg-muted border-green-200">
           <CardHeader>
             <CardTitle className="text-green-700">
               {t('artisan', 'earningsOverview') || 'Earnings Overview'}

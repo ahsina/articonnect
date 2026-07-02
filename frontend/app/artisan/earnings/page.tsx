@@ -157,7 +157,7 @@ export default function ArtisanEarningsPage() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
+          <Card className="bg-muted border-green-200">
             <CardContent className="p-4">
               <div className="text-sm text-green-600">
                 {t('artisan', 'totalEarnings') || 'Total Earnings'}
@@ -167,7 +167,7 @@ export default function ArtisanEarningsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-amber-200">
+          <Card className="bg-muted border-amber-200">
             <CardContent className="p-4">
               <div className="text-sm text-yellow-600">
                 {t('artisan', 'pendingEarnings') || 'Pending'}
@@ -177,7 +177,7 @@ export default function ArtisanEarningsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+          <Card className="bg-muted border-primary/20">
             <CardContent className="p-4">
               <div className="text-sm text-primary">
                 {t('artisan', 'thisMonth') || 'This Month'}
@@ -187,7 +187,7 @@ export default function ArtisanEarningsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
+          <Card className="bg-muted border-purple-200">
             <CardContent className="p-4">
               <div className="text-sm text-purple-600">
                 {t('artisan', 'lastMonth') || 'Last Month'}

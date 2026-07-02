@@ -224,7 +224,7 @@ export default function ArtisanAnalyticsPage() {
 
       {/* KPI Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-200">
+        <Card className="bg-muted border-green-200">
           <CardContent className="p-4">
             <div className="text-sm text-green-600 mb-1">
               {t('analytics', 'totalEarnings') || 'Total Earnings'}
@@ -241,7 +241,7 @@ export default function ArtisanAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="bg-muted border-primary/20">
           <CardContent className="p-4">
             <div className="text-sm text-primary mb-1">
               {t('analytics', 'completedMissions') || 'Completed Missions'}
@@ -253,7 +253,7 @@ export default function ArtisanAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-amber-200">
+        <Card className="bg-muted border-amber-200">
           <CardContent className="p-4">
             <div className="text-sm text-yellow-600 mb-1">
               {t('analytics', 'averageRating') || 'Average Rating'}
@@ -267,7 +267,7 @@ export default function ArtisanAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-200">
+        <Card className="bg-muted border-purple-200">
           <CardContent className="p-4">
             <div className="text-sm text-purple-600 mb-1">
               {t('analytics', 'repeatClients') || 'Repeat Clients'}

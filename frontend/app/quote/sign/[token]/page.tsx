@@ -183,7 +183,7 @@ export default function SignQuotePage() {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Quote Details */}
           <div className="bg-card rounded-xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-700 to-gray-900 px-6 py-4">
+            <div className="bg-muted px-6 py-4">
               <h2 className="text-lg font-bold text-white">{t('quoteSign', 'quoteDetails')}</h2>
             </div>
 
