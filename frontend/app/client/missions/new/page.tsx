@@ -12,14 +12,15 @@ import {
   MapPin, Search, MessageSquare, Zap as Bolt, Calendar, ImagePlus, ChevronLeft,
 } from 'lucide-react';
 
+// test = mots-clés multilingues (FR + EN + racines communes) pour la détection auto du métier.
 const CATEGORIES = [
-  { id: 'plomberie', name: 'Plomberie', Icon: Wrench, test: /plomb|fuite|évier|robinet|chauffe.?eau|canalisation|wc|toilette|siphon|tuyau/i },
-  { id: 'electricite', name: 'Électricité', Icon: Zap, test: /electr|électr|prise|disjonct|tableau|court.?circuit|lumière|interrupteur|compteur/i },
-  { id: 'menuiserie', name: 'Menuiserie', Icon: Hammer, test: /menuis|bois|porte|fenêtre|placard|meuble|parquet|étagère/i },
-  { id: 'peinture', name: 'Peinture', Icon: Paintbrush, test: /peint|mur|enduit|papier peint|tapisser|plafond/i },
-  { id: 'serrurerie', name: 'Serrurerie', Icon: KeyRound, test: /serrur|clé|porte bloqu|verrou|cadenas|coffre/i },
-  { id: 'climatisation', name: 'Climatisation', Icon: Snowflake, test: /clim|climatis|air|ventil|fraîch/i },
-  { id: 'chauffage', name: 'Chauffage', Icon: Flame, test: /chauff|radiateur|chaudière|gaz|thermostat|froid/i },
+  { id: 'plomberie', name: 'Plomberie', Icon: Wrench, test: /plomb|plumb|fuite|leak|évier|sink|robinet|faucet|tap|chauffe.?eau|water.?heater|canalisation|drain|pipe|wc|toilet|siphon|tuyau|water/i },
+  { id: 'electricite', name: 'Électricité', Icon: Zap, test: /electr|électr|prise|socket|outlet|disjonct|breaker|tableau|court.?circuit|short.?circuit|lumière|light|interrupteur|switch|compteur|wiring|câbl|cabl/i },
+  { id: 'menuiserie', name: 'Menuiserie', Icon: Hammer, test: /menuis|carpent|bois|wood|porte|door|fenêtre|window|placard|cabinet|meuble|furnitur|parquet|floor|étagère|shelf/i },
+  { id: 'peinture', name: 'Peinture', Icon: Paintbrush, test: /peint|paint|mur|wall|enduit|papier peint|wallpaper|tapisser|plafond|ceiling/i },
+  { id: 'serrurerie', name: 'Serrurerie', Icon: KeyRound, test: /serrur|lock|clé|key|porte bloqu|locked|verrou|bolt|cadenas|padlock|coffre|safe/i },
+  { id: 'climatisation', name: 'Climatisation', Icon: Snowflake, test: /clim|air.?con|cooling|ventil|fan|fraîch|cool/i },
+  { id: 'chauffage', name: 'Chauffage', Icon: Flame, test: /chauff|heat|radiateur|radiator|chaudière|boiler|gaz|gas|thermostat|froid|cold/i },
   { id: 'autre', name: 'Autre', Icon: Boxes, test: /.*/ },
 ];
 
