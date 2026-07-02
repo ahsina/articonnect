@@ -226,7 +226,7 @@ export default function ArtisanAnalyticsPage() {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-muted">
           <CardContent className="p-4">
-            <div className="text-sm text-green-600 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t('analytics', 'totalEarnings') || 'Total Earnings'}
             </div>
             <div className="text-3xl font-bold text-foreground">
@@ -269,7 +269,7 @@ export default function ArtisanAnalyticsPage() {
 
         <Card className="bg-muted">
           <CardContent className="p-4">
-            <div className="text-sm text-purple-600 mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               {t('analytics', 'repeatClients') || 'Repeat Clients'}
             </div>
             <div className="text-3xl font-bold text-foreground">
@@ -410,7 +410,7 @@ export default function ArtisanAnalyticsPage() {
                       </div>
                     </td>
                     <td className="text-right py-3 px-4">{city.count}</td>
-                    <td className="text-right py-3 px-4 font-medium text-green-600">
+                    <td className="text-right py-3 px-4 font-medium text-foreground">
                       {city.revenue.toLocaleString()}€
                     </td>
                     <td className="text-right py-3 px-4 text-muted-foreground">
