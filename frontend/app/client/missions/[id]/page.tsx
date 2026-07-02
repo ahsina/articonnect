@@ -735,6 +735,24 @@ export default function MissionDetailsPage() {
                     )}
                   </div>
 
+                  {/* État rassurant : en attente d'offres (crédibilité de l'offre) */}
+                  {negotiations.length === 0 && (mission.status === 'PENDING' || mission.status === 'NEGOTIATING') && (
+                    <div className="rounded-2xl border border-dashed border-border bg-muted/50 p-6 text-center">
+                      <div className="text-3xl">📣</div>
+                      <p className="mt-2 font-display font-bold text-foreground">
+                        {t('negotiations', 'waitingTitle') || 'Votre demande est diffusée aux artisans vérifiés à proximité'}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t('negotiations', 'waitingDesc') || 'Première réponse en ~15 min en moyenne. Vous serez notifié à chaque offre reçue — vous pourrez alors comparer et choisir.'}
+                      </p>
+                      <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-muted-foreground">
+                        <span className="flex items-center gap-1"><span className="text-green-600">●</span> Artisans vérifiés</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-1"><span className="text-green-600">●</span> Paiement sécurisé</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Negotiations List */}
                   {negotiations.length > 0 && (
                     <div className="space-y-3">
