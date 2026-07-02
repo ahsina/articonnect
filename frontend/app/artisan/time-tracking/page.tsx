@@ -155,8 +155,8 @@ export default function ArtisanTimeTrackingPage() {
     return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const totalWeekHours = summary.reduce((sum, s) => sum + s.totalHours, 0);
-  const totalWeekEarnings = summary.reduce((sum, s) => sum + s.earnings, 0);
+  const totalWeekHours = summary.reduce((sum, s) => sum + (Number(s.totalHours) || 0), 0);
+  const totalWeekEarnings = summary.reduce((sum, s) => sum + (Number(s.earnings) || 0), 0);
 
   if (loading) {
     return (
@@ -239,23 +239,23 @@ export default function ArtisanTimeTrackingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-muted border-green-200">
+        <Card className="bg-muted">
           <CardContent className="p-4">
-            <div className="text-sm text-green-600">{t('timeTracking', 'weekHours') || 'This Week'}</div>
-            <div className="text-2xl font-bold text-green-700">{formatDuration(totalWeekHours)}</div>
+            <div className="text-sm text-muted-foreground">{t('timeTracking', 'weekHours') || 'This Week'}</div>
+            <div className="text-2xl font-bold text-foreground">{formatDuration(totalWeekHours)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-muted border-purple-200">
+        <Card className="bg-muted">
           <CardContent className="p-4">
-            <div className="text-sm text-purple-600">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
-            <div className="text-2xl font-bold text-purple-700">{totalWeekEarnings.toFixed(2)}EUR</div>
+            <div className="text-sm text-muted-foreground">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
+            <div className="text-2xl font-bold text-foreground">{totalWeekEarnings.toFixed(2)} €</div>
           </CardContent>
         </Card>
-        <Card className="bg-muted border-amber-200">
+        <Card className="bg-muted">
           <CardContent className="p-4">
-            <div className="text-sm text-yellow-600">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
-            <div className="text-2xl font-bold text-amber-800">
-              {totalWeekHours > 0 ? (totalWeekEarnings / totalWeekHours).toFixed(2) : 0}EUR/h
+            <div className="text-sm text-muted-foreground">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
+            <div className="text-2xl font-bold text-foreground">
+              {totalWeekHours > 0 ? (totalWeekEarnings / totalWeekHours).toFixed(2) : 0} €/h
             </div>
           </CardContent>
         </Card>
