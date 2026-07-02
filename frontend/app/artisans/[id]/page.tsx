@@ -1,5 +1,6 @@
 'use client';
 
+import { TradeIcon } from '@/components/shared/TradeIcon';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -209,7 +210,7 @@ export default function ArtisanPublicProfilePage() {
               <div className="flex flex-wrap gap-2 mt-3">
                 {profile.specialties.slice(0, 5).map((specialty) => (
                   <Badge key={specialty.id} className="bg-white/20 text-white border-white/30">
-                    {specialty.icon && <span className="mr-1">{specialty.icon}</span>}
+                    <TradeIcon name={specialty.name} className="mr-1 inline h-3.5 w-3.5" />
                     {specialty.name}
                   </Badge>
                 ))}
@@ -316,7 +317,7 @@ export default function ArtisanPublicProfilePage() {
                         key={specialty.id}
                         className="flex items-center gap-2 p-3 bg-background rounded-lg"
                       >
-                        {specialty.icon && <span className="text-2xl">{specialty.icon}</span>}
+                        <TradeIcon name={specialty.name} className="h-6 w-6" />
                         <div>
                           <div className="font-medium">{specialty.name}</div>
                           <div className="text-xs text-muted-foreground">{specialty.category}</div>

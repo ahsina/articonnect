@@ -1,5 +1,6 @@
 'use client';
 
+import { TradeIcon } from '@/components/shared/TradeIcon';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -227,7 +228,7 @@ export default function MarketplacePage() {
                     : 'bg-card text-foreground hover:bg-accent'
                 }`}
               >
-                <span>{category.icon}</span>
+                <TradeIcon name={category.name} className="h-4 w-4" />
                 <span className="text-sm font-medium">{category.name}</span>
               </button>
             ))}

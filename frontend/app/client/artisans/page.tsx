@@ -1,5 +1,6 @@
 'use client';
 
+import { TradeIcon } from '@/components/shared/TradeIcon';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -188,7 +189,7 @@ export default function ArtisansListPage() {
                     : 'bg-card text-foreground hover:bg-accent'
                 }`}
               >
-                <span>{specialty.icon}</span>
+                <TradeIcon name={specialty.name} className="h-4 w-4" />
                 <span className="text-sm font-medium">{specialty.name}</span>
               </button>
             ))}
@@ -255,8 +256,8 @@ export default function ArtisansListPage() {
                     {artisan.artisanProfile.specialties.slice(0, 3).map((specialty) => {
                       const spec = SPECIALTIES.find((s) => s.id === specialty);
                       return (
-                        <Badge key={specialty} variant="default" className="text-xs">
-                          {spec?.icon} {spec?.name}
+                        <Badge key={specialty} variant="default" className="text-xs inline-flex items-center gap-1">
+                          <TradeIcon name={spec?.name} className="h-3 w-3" /> {spec?.name}
                         </Badge>
                       );
                     })}
