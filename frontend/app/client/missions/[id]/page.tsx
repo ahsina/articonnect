@@ -75,6 +75,19 @@ interface Negotiation {
   rejectedReason?: string;
   expiresAt?: string;
   createdAt: string;
+  sender?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    reputationScore?: number;
+    artisanProfile?: {
+      companyName?: string;
+      rating?: number;
+      reviewCount?: number;
+      businessVerified?: boolean;
+    };
+  };
 }
 
 export default function MissionDetailsPage() {
@@ -731,6 +744,8 @@ export default function MissionDetailsPage() {
                           const isExpired = isNegotiationExpired(neg.expiresAt);
                           const isPending = neg.accepted === null || neg.accepted === undefined;
                           const isLastAndPending = index === negotiations.length - 1 && isPending && !isExpired;
+                          // Multi-offres : le client peut accepter TOUTE offre d'artisan en attente (pas seulement la dernière).
+                          const canAcceptOffer = isPending && !isExpired && !isFromMe;
 
                           return (
                             <div
@@ -745,12 +760,34 @@ export default function MissionDetailsPage() {
                             >
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <span className="text-xs text-muted-foreground">
-                                    {isFromMe
-                                      ? t('negotiations', 'yourOffer') || 'Votre offre'
-                                      : t('negotiations', 'artisanOffer') || "Offre de l'artisan"}
-                                  </span>
-                                  <div className="font-bold text-lg">{neg.proposedPrice}€</div>
+                                  {isFromMe ? (
+                                    <span className="text-xs text-muted-foreground">
+                                      {t('negotiations', 'yourOffer') || 'Votre offre'}
+                                    </span>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground">
+                                        {(neg.sender?.artisanProfile?.companyName || neg.sender?.firstName || 'A').charAt(0)}
+                                      </span>
+                                      <div>
+                                        <div className="font-display text-sm font-bold leading-tight">
+                                          {neg.sender?.artisanProfile?.companyName ||
+                                            `${neg.sender?.firstName ?? ''} ${neg.sender?.lastName ?? ''}`.trim() ||
+                                            (t('negotiations', 'artisanOffer') || "Offre de l'artisan")}
+                                          {neg.sender?.artisanProfile?.businessVerified && (
+                                            <span className="ml-1 text-green-600">✓</span>
+                                          )}
+                                        </div>
+                                        {neg.sender?.artisanProfile?.rating != null && (
+                                          <div className="text-[11px] font-semibold text-muted-foreground">
+                                            <span className="text-amber-500">★</span> {Number(neg.sender.artisanProfile.rating).toFixed(1)}
+                                            {neg.sender?.artisanProfile?.reviewCount ? ` (${neg.sender.artisanProfile.reviewCount})` : ''}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="font-bold text-lg mt-1">{neg.proposedPrice}€</div>
                                 </div>
                                 <div className="text-right">
                                   {neg.accepted === true && (
@@ -794,7 +831,7 @@ export default function MissionDetailsPage() {
                               )}
 
                               {/* Actions for pending offers from artisan */}
-                              {isLastAndPending && !isFromMe && (
+                              {canAcceptOffer && (
                                 <div className="flex gap-2 mt-3 pt-3 border-t">
                                   <Button
                                     size="sm"

@@ -26,23 +26,37 @@ export class NegotiationService {
       throw new NotFoundException('Mission introuvable');
     }
 
-    // Check negotiation limit (max 5 exchanges per mission)
-    const existingNegotiationsCount = await this.prisma.negotiation.count({
-      where: { missionId: createDto.missionId },
+    // Limite d'échanges PAR PARTICIPANT (5) — permet à plusieurs artisans d'offrir sur une même mission
+    // ouverte sans épuiser un quota global.
+    const myExchangesCount = await this.prisma.negotiation.count({
+      where: { missionId: createDto.missionId, senderId: userId },
     });
 
-    if (existingNegotiationsCount >= 5) {
+    if (myExchangesCount >= 5) {
       throw new BadRequestException(
-        'Limite de négociations atteinte (maximum 5 échanges). Veuillez accepter une offre ou créer une nouvelle demande.'
+        'Limite de négociations atteinte (maximum 5 échanges de votre part sur cette mission).'
       );
     }
 
     // Determine sender and receiver
     let receiverId: string;
+    const missionOpen = ['PENDING', 'NEGOTIATING'].includes(mission.status as string);
     if (mission.clientId === userId) {
+      // Client négocie avec l'artisan assigné (s'il y en a un)
       receiverId = mission.artisanId;
     } else if (mission.artisanId === userId) {
+      // Artisan déjà assigné
       receiverId = mission.clientId;
+    } else if (!mission.artisanId && missionOpen) {
+      // Artisan CANDIDAT : fait une offre sur une mission ouverte (aucun artisan encore choisi).
+      // Le client comparera toutes les offres reçues et en choisira une.
+      receiverId = mission.clientId;
+      if (mission.status === 'PENDING') {
+        await this.prisma.mission.update({
+          where: { id: mission.id },
+          data: { status: 'NEGOTIATING' },
+        });
+      }
     } else {
       throw new ForbiddenException('Vous n\'êtes pas autorisé à négocier sur cette mission');
     }
@@ -131,12 +145,30 @@ export class NegotiationService {
 
     // If accepted, update mission and check for price anomalies
     if (dto.accepted) {
+      // L'artisan gagnant = le participant qui n'est pas le client.
+      const artisanParticipant =
+        negotiation.senderId === negotiation.mission.clientId
+          ? negotiation.receiverId
+          : negotiation.senderId;
+
       await this.prisma.mission.update({
         where: { id: negotiation.missionId },
         data: {
           agreedPrice: negotiation.proposedPrice,
           status: 'ACCEPTED',
+          // Assigner l'artisan choisi (si pas déjà assigné) — cœur du choix multi-offres.
+          ...(negotiation.mission.artisanId ? {} : { artisanId: artisanParticipant }),
         },
+      });
+
+      // Rejeter automatiquement les autres offres en attente sur cette mission.
+      await this.prisma.negotiation.updateMany({
+        where: {
+          missionId: negotiation.missionId,
+          id: { not: negotiationId },
+          accepted: null,
+        },
+        data: { accepted: false, rejectedReason: 'Une autre offre a été acceptée par le client.' },
       });
 
       // Price Anomaly Detection (if enabled)
@@ -200,6 +232,20 @@ export class NegotiationService {
     return this.prisma.negotiation.findMany({
       where: { missionId },
       orderBy: { createdAt: 'asc' },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+            reputationScore: true,
+            artisanProfile: {
+              select: { companyName: true, rating: true, reviewCount: true, businessVerified: true },
+            },
+          },
+        },
+      },
     });
   }
 }

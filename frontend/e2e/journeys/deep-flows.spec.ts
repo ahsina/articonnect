@@ -48,15 +48,14 @@ test.describe.serial('Sous-flux métier (API authentifiée, multi-personas)', ()
     expect(missionId).toBeTruthy();
   });
 
-  test('3. Autorisation : un artisan non assigné NE PEUT PAS négocier (règle métier)', async () => {
-    // L'enchère initiale passe par l'acceptation de mission (gated vérif. téléphone/Twilio).
-    // Ici on vérifie que la règle d'autorisation est bien appliquée (403 attendu).
+  test('3. Devis multi-artisans : un artisan PEUT offrir sur une mission ouverte (feature) ; client sans contrepartie -> 400', async () => {
+    // Nouveau modèle : plusieurs artisans peuvent faire une offre sur une mission ouverte (PENDING),
+    // le client compare et choisit. Un artisan candidat est donc AUTORISÉ (201).
     const r = await artisan.post(`/api/missions/${missionId}/negotiations`, {
       data: { missionId, proposedPrice: 230, message: 'Proposition e2e' },
     });
-    expect(r.status(), 'un artisan non assigné doit être refusé').toBe(403);
-    // Le client (propriétaire) est autorisé, mais sans artisan assigné il n'y a pas de
-    // contrepartie : on attend un refus PROPRE (400), pas un crash 500.
+    expect([200, 201].includes(r.status()), `un artisan doit pouvoir offrir sur une mission ouverte, reçu ${r.status()}`).toBeTruthy();
+    // Le client (propriétaire) n'a pas de contrepartie (aucun artisan assigné) : refus PROPRE (400), pas un 500.
     const c = await client.post(`/api/missions/${missionId}/negotiations`, {
       data: { missionId, proposedPrice: 240, message: 'Contre-proposition client e2e' },
     });
