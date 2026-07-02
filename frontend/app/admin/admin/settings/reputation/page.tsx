@@ -88,7 +88,7 @@ export default function ReputationRulesPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-100 border rounded-lg text-red-700">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             {t('adminSettingsReputation', 'dismiss')}
@@ -96,7 +96,7 @@ export default function ReputationRulesPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-100 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-100 border rounded-lg text-green-700">
           {success}
         </div>
       )}
@@ -153,7 +153,7 @@ export default function ReputationRulesPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-amber-100 rounded-lg border border-amber-200">
+            <div className="p-4 bg-amber-100 rounded-lg border">
               <label className="block text-sm font-medium text-amber-800 mb-1">{t('adminSettingsReputation', 'levelGold')}</label>
               <input
                 type="number"
@@ -177,7 +177,7 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsReputation', 'scoreGte')} {settings.silverThreshold}</p>
             </div>
-            <div className="p-4 bg-amber-100 rounded-lg border border-amber-200">
+            <div className="p-4 bg-amber-100 rounded-lg border">
               <label className="block text-sm font-medium text-amber-800 mb-1">{t('adminSettingsReputation', 'levelBronze')}</label>
               <input
                 type="number"
@@ -189,7 +189,7 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-yellow-600">{t('adminSettingsReputation', 'scoreGte')} {settings.bronzeThreshold}</p>
             </div>
-            <div className="p-4 bg-green-100 rounded-lg border border-green-200">
+            <div className="p-4 bg-green-100 rounded-lg border">
               <label className="block text-sm font-medium text-green-700 mb-1">{t('adminSettingsReputation', 'levelTrusted')}</label>
               <input
                 type="number"
@@ -201,7 +201,7 @@ export default function ReputationRulesPage() {
               />
               <p className="mt-1 text-xs text-green-600">{t('adminSettingsReputation', 'scoreGte')} {settings.trustedThreshold}</p>
             </div>
-            <div className="p-4 bg-red-100 rounded-lg border border-red-200">
+            <div className="p-4 bg-red-100 rounded-lg border">
               <label className="block text-sm font-medium text-red-700 mb-1">{t('adminSettingsReputation', 'levelWarning')}</label>
               <input
                 type="number"

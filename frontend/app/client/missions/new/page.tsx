@@ -352,7 +352,7 @@ export default function NewMissionPage() {
 
                 {/* Emergency Alert */}
                 {formData.type === 'EMERGENCY' && (
-                  <div className="p-4 bg-red-100 border border-red-200 rounded-lg">
+                  <div className="p-4 bg-red-100 border rounded-lg">
                     <div className="flex items-start gap-3">
                       <span className="text-red-500 text-xl"></span>
                       <div>

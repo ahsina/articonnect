@@ -467,13 +467,13 @@ export default function ClientProfilePage() {
 
           {/* Messages */}
           {message && (
-            <div className="p-4 bg-green-100 border border-green-200 rounded-lg">
+            <div className="p-4 bg-green-100 border rounded-lg">
               <p className="text-sm text-green-600">{message}</p>
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-red-100 border border-red-200 rounded-lg">
+            <div className="p-4 bg-red-100 border rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}

@@ -79,7 +79,7 @@ export default function MissionsManagementPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -103,7 +103,7 @@ export default function MissionsManagementPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminMissions', 'pending')}</p>
-                  <p className="text-3xl font-bold text-yellow-600">{metrics.missions.pending}</p>
+                  <p className="text-3xl font-bold text-foreground">{metrics.missions.pending}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
               </div>
@@ -127,7 +127,7 @@ export default function MissionsManagementPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminMissions', 'completed')}</p>
-                  <p className="text-3xl font-bold text-green-600">{metrics.missions.completed}</p>
+                  <p className="text-3xl font-bold text-foreground">{metrics.missions.completed}</p>
                 </div>
                 <span className="text-4xl"></span>
               </div>
@@ -242,15 +242,15 @@ export default function MissionsManagementPage() {
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'totalReports')}</div>
               </div>
               <div className="text-center p-4 bg-amber-100 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">{metrics.noShows.pending}</div>
+                <div className="text-2xl font-bold text-foreground">{metrics.noShows.pending}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'pending')}</div>
               </div>
               <div className="text-center p-4 bg-green-100 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{metrics.noShows.validated}</div>
+                <div className="text-2xl font-bold text-foreground">{metrics.noShows.validated}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'validated')}</div>
               </div>
               <div className="text-center p-4 bg-red-100 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">{metrics.noShows.rejected}</div>
+                <div className="text-2xl font-bold text-foreground">{metrics.noShows.rejected}</div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'rejected')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
@@ -274,7 +274,7 @@ export default function MissionsManagementPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center p-4 bg-green-100 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">
+                <div className="text-3xl font-bold text-foreground">
                   {metrics.revenue.total.toLocaleString('fr-FR')}€
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'totalRevenue')}</div>
@@ -286,7 +286,7 @@ export default function MissionsManagementPage() {
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'today')}</div>
               </div>
               <div className="text-center p-4 bg-purple-100 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-2xl font-bold text-foreground">
                   {metrics.revenue.thisWeek.toLocaleString('fr-FR')}€
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'thisWeek')}</div>

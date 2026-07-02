@@ -276,7 +276,7 @@ export default function ClientDisputesPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-foreground">
                 {disputes.filter((d) => d.status === 'OPEN').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('status', 'open')}</div>
@@ -292,7 +292,7 @@ export default function ClientDisputesPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-foreground">
                 {disputes.filter((d) => d.status === 'RESOLVED').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('status', 'resolved')}</div>
@@ -351,7 +351,7 @@ export default function ClientDisputesPage() {
                   </div>
 
                   {dispute.resolution && (
-                    <div className="bg-green-100 border border-green-200 p-4 rounded-lg mb-4">
+                    <div className="bg-green-100 border p-4 rounded-lg mb-4">
                       <div className="text-sm font-medium text-green-700 mb-1">
                         {t('disputes', 'resolution')}
                       </div>

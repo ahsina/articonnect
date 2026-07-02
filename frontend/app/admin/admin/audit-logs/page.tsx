@@ -142,7 +142,7 @@ export default function AuditLogsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}

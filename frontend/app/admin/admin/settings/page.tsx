@@ -134,7 +134,7 @@ export default function SettingsOverviewPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-green-600">200+</p>
+              <p className="text-3xl font-bold text-foreground">200+</p>
               <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configurableSettings')}</p>
             </div>
           </CardContent>
@@ -142,7 +142,7 @@ export default function SettingsOverviewPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-purple-600">{t('adminSettingsOverview', 'active')}</p>
+              <p className="text-3xl font-bold text-foreground">{t('adminSettingsOverview', 'active')}</p>
               <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'platformStatus')}</p>
             </div>
           </CardContent>
@@ -150,7 +150,7 @@ export default function SettingsOverviewPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-yellow-600">v1.0</p>
+              <p className="text-3xl font-bold text-foreground">v1.0</p>
               <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configVersion')}</p>
             </div>
           </CardContent>

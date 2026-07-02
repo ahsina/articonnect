@@ -245,7 +245,7 @@ export default function ArtisanPublicProfilePage() {
           </Card>
           <Card className="shadow-lg">
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-yellow-600">
+              <div className="text-3xl font-bold text-foreground">
                 {profile.emergencyRate ? `EUR ${profile.emergencyRate}` : 'N/A'}
               </div>
               <div className="text-muted-foreground">
@@ -255,7 +255,7 @@ export default function ArtisanPublicProfilePage() {
           </Card>
           <Card className="shadow-lg">
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-green-600">{profile.serviceRadius} km</div>
+              <div className="text-3xl font-bold text-foreground">{profile.serviceRadius} km</div>
               <div className="text-muted-foreground">{t('artisan', 'serviceArea') || 'service area'}</div>
             </CardContent>
           </Card>

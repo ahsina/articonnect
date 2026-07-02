@@ -332,7 +332,7 @@ export default function AnalyticsPage() {
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">{t('adminAnalytics', 'resolutionRate')}</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-foreground">
                     {metrics.disputes.resolutionRate}%
                   </p>
                 </div>
@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
               <div className="mt-4 text-center">
                 <p className="text-sm text-muted-foreground">{t('adminAnalytics', 'validationRate')}</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-foreground">
                   {metrics.noShows.validationRate}%
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -387,7 +387,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm text-muted-foreground mb-2">
                   {t('adminAnalytics', 'successRate')}
                 </p>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-3xl font-bold text-foreground">
                   {metrics.payments.successRate}%
                 </p>
               </div>
@@ -401,7 +401,7 @@ export default function AnalyticsPage() {
               </div>
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-2">{t('adminAnalytics', 'averageTransaction')}</p>
-                <p className="text-3xl font-bold text-purple-600">
+                <p className="text-3xl font-bold text-foreground">
                   {metrics.payments.averageTransaction.toLocaleString('fr-FR')}€
                 </p>
               </div>
@@ -409,7 +409,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm text-muted-foreground mb-2">
                   {t('adminAnalytics', 'failedTransactions')}
                 </p>
-                <p className="text-3xl font-bold text-red-600">
+                <p className="text-3xl font-bold text-foreground">
                   {metrics.payments.failedTransactions}
                 </p>
               </div>
@@ -492,9 +492,9 @@ function MetricCard({
   const colorClasses: Record<string, string> = {
     blue: 'bg-primary/10 border-primary/20',
     green: 'bg-green-100 border-green-500/30',
-    yellow: 'bg-amber-100 border-amber-200',
-    purple: 'bg-purple-100 border-purple-200',
-    red: 'bg-red-100 border-red-200',
+    yellow: 'bg-amber-100',
+    purple: 'bg-purple-100',
+    red: 'bg-red-100',
   };
 
   return (

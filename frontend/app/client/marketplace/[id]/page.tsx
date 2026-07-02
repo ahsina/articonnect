@@ -407,7 +407,7 @@ export default function ProductDetailsPage() {
 
             {/* Stock Warning */}
             {getCurrentStock() < 5 && (
-              <div className="mb-6 p-3 bg-amber-100 border border-amber-200 rounded-lg">
+              <div className="mb-6 p-3 bg-amber-100 border rounded-lg">
                 <p className="text-sm text-amber-800">
                   {t('marketplace', 'stockLimited')} {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'exemplarPlural') : t('marketplace', 'exemplar')}{' '}
                   {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}.

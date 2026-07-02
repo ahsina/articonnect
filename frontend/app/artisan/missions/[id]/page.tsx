@@ -747,7 +747,7 @@ export default function MissionDetailPage() {
 
           {/* Negotiation Section */}
           {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
-            <Card className="md:col-span-2 border-amber-200">
+            <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
@@ -1106,7 +1106,7 @@ export default function MissionDetailPage() {
                         className="hidden"
                         disabled={uploadingPhoto}
                       />
-                      <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 border rounded-lg hover:bg-green-100 transition-colors">
                         {uploadingPhoto ? (
                           <>
                             <span className="animate-spin">⏳</span>
@@ -1135,7 +1135,7 @@ export default function MissionDetailPage() {
                           <img
                             src={url}
                             alt={`After photo ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border-2 border-green-200"
+                            className="w-full h-24 object-cover rounded-lg border-2"
                           />
                           <button
                             type="button"
@@ -1236,7 +1236,7 @@ export default function MissionDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b">
                 <span className="text-muted-foreground">{t('artisan', 'amount') || 'Amount'}</span>
-                <span className="text-2xl font-bold text-green-600">
+                <span className="text-2xl font-bold text-foreground">
                   EUR {mission.quotation.amount.toLocaleString()}
                 </span>
               </div>

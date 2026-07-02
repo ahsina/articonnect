@@ -121,30 +121,30 @@ export default function CompanyReportsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-muted border-green-200">
+            <Card className="bg-muted">
               <CardContent className="p-4">
                 <div className="text-sm text-green-600">
                   {t('company', 'completedMissions') || 'Completed Missions'}
                 </div>
-                <div className="text-2xl font-bold text-green-700">{stats.completedMissions}</div>
+                <div className="text-2xl font-bold text-foreground">{stats.completedMissions}</div>
               </CardContent>
             </Card>
-            <Card className="bg-muted border-amber-200">
+            <Card className="bg-muted">
               <CardContent className="p-4">
                 <div className="text-sm text-yellow-600">
                   {t('company', 'averageRating') || 'Average Rating'}
                 </div>
-                <div className="text-2xl font-bold text-amber-800">
+                <div className="text-2xl font-bold text-foreground">
                   {Number(stats.averageRating).toFixed(1)}
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-muted border-purple-200">
+            <Card className="bg-muted">
               <CardContent className="p-4">
                 <div className="text-sm text-purple-600">
                   {t('company', 'totalReviews') || 'Total Reviews'}
                 </div>
-                <div className="text-2xl font-bold text-purple-700">{stats.totalReviews}</div>
+                <div className="text-2xl font-bold text-foreground">{stats.totalReviews}</div>
               </CardContent>
             </Card>
           </div>

@@ -139,9 +139,9 @@ export default function EmployeeShiftsPage() {
   const getShiftTypeColor = (type: string) => {
     const colors: Record<string, string> = {
       REGULAR: 'bg-primary/10 text-primary border-primary/20',
-      OVERTIME: 'bg-amber-100 text-amber-800 border-amber-200',
-      ON_CALL: 'bg-purple-100 text-purple-700 border-purple-200',
-      TRAINING: 'bg-green-100 text-green-700 border-green-200',
+      OVERTIME: 'bg-amber-100 text-amber-800',
+      ON_CALL: 'bg-purple-100 text-purple-700',
+      TRAINING: 'bg-green-100 text-green-700',
     };
     return colors[type] || 'bg-muted text-foreground border-border';
   };
@@ -264,15 +264,15 @@ export default function EmployeeShiftsPage() {
               <span className="text-sm">{t('company', 'regular') || 'Regular'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-amber-100 border border-amber-200" />
+              <div className="w-4 h-4 rounded bg-amber-100 border" />
               <span className="text-sm">{t('company', 'overtime') || 'Overtime'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-purple-100 border border-purple-200" />
+              <div className="w-4 h-4 rounded bg-purple-100 border" />
               <span className="text-sm">{t('company', 'onCall') || 'On Call'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-100 border border-green-200" />
+              <div className="w-4 h-4 rounded bg-green-100 border" />
               <span className="text-sm">{t('company', 'training') || 'Training'}</span>
             </div>
           </div>

@@ -162,7 +162,7 @@ export default function ReputationPage() {
 
         {/* Alerts */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
             <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
               {t('adminReputation', 'dismiss')}
@@ -170,7 +170,7 @@ export default function ReputationPage() {
           </div>
         )}
         {success && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-200 rounded-lg text-green-700">
+          <div className="mb-6 p-4 bg-green-100 border rounded-lg text-green-700">
             {success}
             <button onClick={() => setSuccess(null)} className="ml-4 text-green-300 font-medium">
               {t('adminReputation', 'dismiss')}
@@ -228,23 +228,23 @@ export default function ReputationPage() {
                     </div>
                     <div className="p-4 bg-green-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'completed')}</p>
-                      <p className="text-xl font-bold text-green-600">
+                      <p className="text-xl font-bold text-foreground">
                         {reputation.completedMissions}
                       </p>
                     </div>
                     <div className="p-4 bg-red-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'cancelled')}</p>
-                      <p className="text-xl font-bold text-red-600">
+                      <p className="text-xl font-bold text-foreground">
                         {reputation.cancelledMissions}
                       </p>
                     </div>
                     <div className="p-4 bg-amber-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'noShows')}</p>
-                      <p className="text-xl font-bold text-yellow-600">{reputation.noShowCount}</p>
+                      <p className="text-xl font-bold text-foreground">{reputation.noShowCount}</p>
                     </div>
                     <div className="p-4 bg-amber-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'avgRating')}</p>
-                      <p className="text-xl font-bold text-yellow-600">
+                      <p className="text-xl font-bold text-foreground">
                         {reputation.averageRating.toFixed(1)} / 5
                       </p>
                     </div>

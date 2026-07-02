@@ -202,7 +202,7 @@ export default function SpecialtiesPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
             <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
               {t('adminSpecialties', 'dismiss')}
@@ -229,7 +229,7 @@ export default function SpecialtiesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'categories')}</p>
-                  <p className="text-3xl font-bold text-purple-600">{categories.length}</p>
+                  <p className="text-3xl font-bold text-foreground">{categories.length}</p>
                 </div>
                 <span className="text-4xl"></span>
               </div>
@@ -241,7 +241,7 @@ export default function SpecialtiesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'active')}</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {specialties.filter((s) => s.isActive).length}
                   </p>
                 </div>
@@ -532,7 +532,7 @@ export default function SpecialtiesPage() {
                   {t('adminSpecialties', 'deleteConfirmPrefix')} <strong>{selectedSpecialty.name}</strong>{t('adminSpecialties', 'deleteConfirmSuffix')}
                 </p>
                 {selectedSpecialty._count?.artisans && selectedSpecialty._count.artisans > 0 && (
-                  <div className="p-4 bg-amber-100 border border-amber-200 rounded-lg mb-4">
+                  <div className="p-4 bg-amber-100 border rounded-lg mb-4">
                     <p className="text-amber-800">
                       {t('adminSpecialties', 'warningPrefix')} {selectedSpecialty._count.artisans} {t('adminSpecialties', 'warningSuffix')}
                     </p>

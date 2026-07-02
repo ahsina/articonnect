@@ -154,13 +154,13 @@ export default function MonitoringPage() {
                   <>
                     {alerts.critical > 0 && (
                       <div className="text-center px-4 py-2 bg-red-100 rounded-lg">
-                        <div className="text-2xl font-bold text-red-600">{alerts.critical}</div>
+                        <div className="text-2xl font-bold text-foreground">{alerts.critical}</div>
                         <div className="text-xs text-red-600">{t('adminMonitoring', 'critical')}</div>
                       </div>
                     )}
                     {alerts.warnings > 0 && (
                       <div className="text-center px-4 py-2 bg-amber-100 rounded-lg">
-                        <div className="text-2xl font-bold text-yellow-600">{alerts.warnings}</div>
+                        <div className="text-2xl font-bold text-foreground">{alerts.warnings}</div>
                         <div className="text-xs text-yellow-600">{t('adminMonitoring', 'warnings')}</div>
                       </div>
                     )}
@@ -199,7 +199,7 @@ export default function MonitoringPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'autoValidated')}</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {dashboard.overview.autoValidatedMissions}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -216,7 +216,7 @@ export default function MonitoringPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'pendingValidations')}</p>
-                  <p className="text-3xl font-bold text-yellow-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {dashboard.overview.pendingValidations}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">{t('adminMonitoring', 'awaitingClient')}</p>
@@ -231,7 +231,7 @@ export default function MonitoringPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminMonitoring', 'cancelled')}</p>
-                  <p className="text-3xl font-bold text-red-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {dashboard.overview.cancelledMissions}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">{t('adminMonitoring', 'bySystemUsers')}</p>
@@ -344,7 +344,7 @@ export default function MonitoringPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="text-center p-4 bg-green-100 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">
+                <div className="text-3xl font-bold text-foreground">
                   {dashboard.autoValidation.total}
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'totalAutoValidated')}</div>
@@ -356,7 +356,7 @@ export default function MonitoringPage() {
                 <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'totalAmount')}</div>
               </div>
               <div className="text-center p-4 bg-purple-100 rounded-lg">
-                <div className="text-3xl font-bold text-purple-600">
+                <div className="text-3xl font-bold text-foreground">
                   {dashboard.autoValidation.avgDelayHours}
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMonitoring', 'avgDelay')}</div>
@@ -471,7 +471,7 @@ export default function MonitoringPage() {
               </div>
             </div>
             {dashboard.cleanup.nextCleanupRecommended && (
-              <div className="mt-4 p-3 bg-amber-100 border border-amber-200 rounded-lg">
+              <div className="mt-4 p-3 bg-amber-100 border rounded-lg">
                 <span className="text-amber-800">
                   {t('adminMonitoring', 'cleanupRecommended')}
                 </span>

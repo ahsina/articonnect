@@ -217,13 +217,13 @@ export default function FraudSettingsPage() {
 
     const colors: Record<string, string> = {
       blue: 'bg-primary/10 border-primary/20',
-      yellow: 'bg-amber-100 border-amber-200',
+      yellow: 'bg-amber-100',
       green: 'bg-green-100 border-green-500/30',
-      purple: 'bg-purple-100 border-purple-200',
-      red: 'bg-red-100 border-red-200',
+      purple: 'bg-purple-100',
+      red: 'bg-red-100',
       indigo: 'bg-primary/10 border-primary/20',
       teal: 'bg-teal-500/10 border-teal-500/20',
-      orange: 'bg-amber-100 border-amber-200',
+      orange: 'bg-amber-100',
       gray: 'bg-background border-border',
     };
 
@@ -269,7 +269,7 @@ export default function FraudSettingsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -281,7 +281,7 @@ export default function FraudSettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'featuresEnabled')}</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {fraudFeatures.filter((f) => config[f.key] as boolean).length}
                   </p>
                 </div>

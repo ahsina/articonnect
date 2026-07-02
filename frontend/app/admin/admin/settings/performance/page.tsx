@@ -94,7 +94,7 @@ export default function PerformanceSettingsPage() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-100 border rounded-lg text-red-700">
           {error}
           <button onClick={() => setError(null)} className="ml-4 font-medium">
             {t('adminSettingsPerformance', 'dismiss')}
@@ -102,7 +102,7 @@ export default function PerformanceSettingsPage() {
         </div>
       )}
       {success && (
-        <div className="p-4 bg-green-100 border border-green-200 rounded-lg text-green-700">
+        <div className="p-4 bg-green-100 border rounded-lg text-green-700">
           {success}
         </div>
       )}

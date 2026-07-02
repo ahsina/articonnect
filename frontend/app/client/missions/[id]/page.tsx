@@ -993,7 +993,7 @@ export default function MissionDetailsPage() {
                     </div>
                   )}
 
-                  <div className="p-3 bg-amber-100 border border-amber-200 rounded-xl">
+                  <div className="p-3 bg-amber-100 border rounded-xl">
                     <p className="text-sm text-amber-800">
                       {t('validation', 'autoValidateWarning') ||
                         'Si vous ne validez pas dans les 7 jours, la mission sera automatiquement validée.'}
@@ -1139,8 +1139,8 @@ export default function MissionDetailsPage() {
               <div
                 className={`p-4 rounded-lg ${
                   (cancellationFees?.fee || 0) > 0
-                    ? 'bg-amber-100 border border-amber-200'
-                    : 'bg-green-100 border border-green-200'
+                    ? 'bg-amber-100 border'
+                    : 'bg-green-100 border'
                 }`}
               >
                 <p className="font-medium text-foreground mb-2">

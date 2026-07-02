@@ -210,7 +210,7 @@ export default function ClientInvoicesPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('invoices', 'paidAmount')}</div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(totalPaid)}
               </div>
             </CardContent>
@@ -218,7 +218,7 @@ export default function ClientInvoicesPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('invoices', 'overdue')}</div>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-foreground">
                 {invoices.filter((inv) => inv.status === 'OVERDUE').length}
               </div>
             </CardContent>

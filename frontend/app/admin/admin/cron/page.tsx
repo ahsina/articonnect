@@ -115,7 +115,7 @@ export default function CronJobsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -147,7 +147,7 @@ export default function CronJobsPage() {
 
         {/* Last Trigger Result */}
         {lastResult && (
-          <Card className="mb-8 border-green-200 bg-green-100">
+          <Card className="mb-8 bg-green-100">
             <CardHeader>
               <CardTitle className="text-green-700">
                 {t('adminCron', 'autoValidationCompleted')}

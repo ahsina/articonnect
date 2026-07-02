@@ -438,7 +438,7 @@ function ArtisanProfileContent() {
             </Card>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg">
+              <div className="mb-6 p-4 bg-red-100 border rounded-lg">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -505,7 +505,7 @@ function ArtisanProfileContent() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{profile.missionCount}</div>
+              <div className="text-3xl font-bold text-foreground">{profile.missionCount}</div>
               <div className="text-sm text-muted-foreground">{t('artisan', 'missions') || 'Missions'}</div>
             </div>
           </CardContent>
@@ -513,7 +513,7 @@ function ArtisanProfileContent() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{profile.serviceRadius}km</div>
+              <div className="text-3xl font-bold text-foreground">{profile.serviceRadius}km</div>
               <div className="text-sm text-muted-foreground">
                 {t('artisan', 'serviceRadius') || 'Service Area'}
               </div>
@@ -523,7 +523,7 @@ function ArtisanProfileContent() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-600">
+              <div className="text-3xl font-bold text-foreground">
                 {profile.certifications?.length || 0}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -652,7 +652,7 @@ function ArtisanProfileContent() {
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
                 <div
-                  className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-green-100 border-green-500/30' : 'bg-amber-100 border-amber-200'}`}
+                  className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-green-100 border-green-500/30' : 'bg-amber-100'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.businessVerified ? '' : '⏳'}</span>
@@ -669,7 +669,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-green-100 border-green-500/30' : 'bg-amber-100 border-amber-200'}`}
+                  className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-green-100 border-green-500/30' : 'bg-amber-100'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.stripeOnboarded ? '' : '⏳'}</span>
@@ -733,7 +733,7 @@ function ArtisanProfileContent() {
                   {badges.map((badge) => (
                     <div
                       key={badge.id}
-                      className="p-4 bg-muted border border-amber-200 rounded-lg text-center hover:shadow-md transition-shadow"
+                      className="p-4 bg-muted border rounded-lg text-center hover:shadow-md transition-shadow"
                     >
                       <div className="text-4xl mb-2">{badge.icon}</div>
                       <div className="font-semibold text-foreground">{badge.name}</div>

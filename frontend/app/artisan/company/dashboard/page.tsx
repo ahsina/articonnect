@@ -104,30 +104,30 @@ export default function CompanyDashboardPage() {
               <div className="text-2xl font-bold text-primary">{stats.totalMissions}</div>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-green-200">
+          <Card className="bg-muted">
             <CardContent className="p-4">
               <div className="text-sm text-green-600">
                 {t('company', 'completedMissions') || 'Completed'}
               </div>
-              <div className="text-2xl font-bold text-green-700">{stats.completedMissions}</div>
+              <div className="text-2xl font-bold text-foreground">{stats.completedMissions}</div>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-purple-200">
+          <Card className="bg-muted">
             <CardContent className="p-4">
               <div className="text-sm text-purple-600">
                 {t('company', 'totalRevenue') || 'Total Revenue'}
               </div>
-              <div className="text-2xl font-bold text-purple-700">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(stats.totalRevenue)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-amber-200">
+          <Card className="bg-muted">
             <CardContent className="p-4">
               <div className="text-sm text-yellow-600">
                 {t('company', 'employees') || 'Employees'}
               </div>
-              <div className="text-2xl font-bold text-amber-800">{stats.employeeCount}</div>
+              <div className="text-2xl font-bold text-foreground">{stats.employeeCount}</div>
             </CardContent>
           </Card>
         </div>
@@ -149,7 +149,7 @@ export default function CompanyDashboardPage() {
               <div className="text-sm text-muted-foreground">
                 {t('company', 'averageRating') || 'Average Rating'}
               </div>
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-foreground">
                 {Number(stats.averageRating).toFixed(1)}
               </div>
             </CardContent>

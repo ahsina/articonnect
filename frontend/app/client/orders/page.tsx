@@ -147,7 +147,7 @@ export default function ClientOrdersPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('common', 'pending')}</div>
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-foreground">
                 {orders.filter((o) => o.status === 'PENDING').length}
               </div>
             </CardContent>
@@ -163,7 +163,7 @@ export default function ClientOrdersPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('orders', 'delivered')}</div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-foreground">
                 {orders.filter((o) => o.status === 'DELIVERED').length}
               </div>
             </CardContent>

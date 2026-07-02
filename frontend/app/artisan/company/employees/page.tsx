@@ -192,7 +192,7 @@ export default function EmployeesPage() {
             <div className="text-sm text-muted-foreground">
               {t('company', 'activeEmployees') || 'Active'}
             </div>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-foreground">
               {employees.filter((e) => e.status === 'ACTIVE').length}
             </div>
           </CardContent>
@@ -202,7 +202,7 @@ export default function EmployeesPage() {
             <div className="text-sm text-muted-foreground">
               {t('company', 'pendingInvitations') || 'Pending'}
             </div>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-foreground">
               {employees.filter((e) => e.status === 'PENDING_INVITATION').length}
             </div>
           </CardContent>

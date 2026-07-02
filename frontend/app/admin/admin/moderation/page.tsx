@@ -182,7 +182,7 @@ export default function ModerationPage() {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">{t('adminModeration', 'pending')}</p>
-              <p className="text-3xl font-bold text-yellow-600">
+              <p className="text-3xl font-bold text-foreground">
                 {reports.filter((r) => r.status === 'PENDING').length}
               </p>
             </CardContent>
@@ -198,7 +198,7 @@ export default function ModerationPage() {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">{t('adminModeration', 'resolved')}</p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="text-3xl font-bold text-foreground">
                 {reports.filter((r) => r.status === 'RESOLVED').length}
               </p>
             </CardContent>

@@ -231,7 +231,7 @@ export default function EmployeeDetailPage() {
                   </div>
                 </div>
                 <div className="bg-green-100 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-foreground">
                     {stats?.completedMissions || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -239,13 +239,13 @@ export default function EmployeeDetailPage() {
                   </div>
                 </div>
                 <div className="bg-amber-100 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">
+                  <div className="text-2xl font-bold text-foreground">
                     {stats?.activeMissions || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">{t('company', 'active') || 'Active'}</div>
                 </div>
                 <div className="bg-purple-100 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-foreground">
                     {stats?.averageRating ? stats.averageRating.toFixed(1) : 'N/A'}
                   </div>
                   <div className="text-sm text-muted-foreground">{t('company', 'rating') || 'Rating'}</div>

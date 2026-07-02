@@ -110,7 +110,7 @@ export default function ArtisanProductsPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('artisan', 'active')}</div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-foreground">
                 {products.filter((p) => p.status === 'ACTIVE').length}
               </div>
             </CardContent>
@@ -118,7 +118,7 @@ export default function ArtisanProductsPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('artisan', 'outOfStock')}</div>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-foreground">
                 {products.filter((p) => p.stock === 0).length}
               </div>
             </CardContent>

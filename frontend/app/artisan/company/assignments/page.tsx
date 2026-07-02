@@ -134,7 +134,7 @@ export default function MissionAssignmentsPage() {
             <div className="text-sm text-muted-foreground">
               {t('company', 'unassignedMissions') || 'Unassigned'}
             </div>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-foreground">
               {
                 missions.filter(
                   (m) => !m.assignedToId && ['PENDING', 'ACCEPTED'].includes(m.status),
@@ -158,7 +158,7 @@ export default function MissionAssignmentsPage() {
             <div className="text-sm text-muted-foreground">
               {t('company', 'availableEmployees') || 'Available Employees'}
             </div>
-            <div className="text-2xl font-bold text-green-600">{employees.length}</div>
+            <div className="text-2xl font-bold text-foreground">{employees.length}</div>
           </CardContent>
         </Card>
       </div>

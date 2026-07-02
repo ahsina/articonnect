@@ -161,7 +161,7 @@ export default function TwoFactorAuthPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-amber-100 border border-amber-200 rounded-lg p-4">
+              <div className="bg-amber-100 border rounded-lg p-4">
                 <p className="text-sm text-amber-800 font-medium mb-2">
                   {t('common', 'important')}
                 </p>

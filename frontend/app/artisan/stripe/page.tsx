@@ -137,7 +137,7 @@ export default function StripeOnboardingPage() {
             </div>
           ) : status?.accountId ? (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-100 border border-amber-200 rounded-lg">
+              <div className="p-4 bg-amber-100 border rounded-lg">
                 <h4 className="font-medium text-amber-800">
                   {t('artisan', 'onboardingIncomplete') || 'Onboarding Incomplete'}
                 </h4>

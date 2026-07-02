@@ -281,13 +281,13 @@ export default function QuotationsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">{t('artisan', 'pending') || 'Pending'}</div>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">{t('artisan', 'accepted') || 'Accepted'}</div>
-            <div className="text-2xl font-bold text-green-600">{stats.accepted}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.accepted}</div>
           </CardContent>
         </Card>
         <Card>

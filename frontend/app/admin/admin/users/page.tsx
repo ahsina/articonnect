@@ -183,7 +183,7 @@ export default function AdminUsersPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-foreground">
                 {users.filter((u) => u.role === 'ARTISAN').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('admin', 'artisans')}</div>
@@ -191,7 +191,7 @@ export default function AdminUsersPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-foreground">
                 {users.filter((u) => u.suspended).length}
               </div>
               <div className="text-sm text-muted-foreground">{t('admin', 'suspended')}</div>

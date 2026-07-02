@@ -145,7 +145,7 @@ export default function CertificationsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -169,7 +169,7 @@ export default function CertificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminCertifications', 'pendingReview')}</p>
-                  <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
+                  <p className="text-3xl font-bold text-foreground">{pendingCount}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
               </div>
@@ -181,7 +181,7 @@ export default function CertificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminCertifications', 'verified')}</p>
-                  <p className="text-3xl font-bold text-green-600">{verifiedCount}</p>
+                  <p className="text-3xl font-bold text-foreground">{verifiedCount}</p>
                 </div>
                 <span className="text-4xl"></span>
               </div>
@@ -193,7 +193,7 @@ export default function CertificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminCertifications', 'expired')}</p>
-                  <p className="text-3xl font-bold text-red-600">{expiredCount}</p>
+                  <p className="text-3xl font-bold text-foreground">{expiredCount}</p>
                 </div>
                 <span className="text-4xl"></span>
               </div>

@@ -229,7 +229,7 @@ export default function FeatureFlagsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -252,7 +252,7 @@ export default function FeatureFlagsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'enabled')}</p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {flags.filter((f) => f.value.enabled).length}
                   </p>
                 </div>
@@ -278,7 +278,7 @@ export default function FeatureFlagsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'percentageRollouts')}</p>
-                  <p className="text-3xl font-bold text-purple-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {flags.filter((f) => f.type === FeatureFlagType.PERCENTAGE).length}
                   </p>
                 </div>

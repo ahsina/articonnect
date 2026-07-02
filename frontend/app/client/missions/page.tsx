@@ -119,7 +119,7 @@ export default function ClientMissionsPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-foreground">
                 {missions.filter((m) => m.status === 'PENDING').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('status', 'pending')}</div>
@@ -127,7 +127,7 @@ export default function ClientMissionsPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-foreground">
                 {missions.filter((m) => m.status === 'IN_PROGRESS').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('status', 'inProgress')}</div>
@@ -135,7 +135,7 @@ export default function ClientMissionsPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-foreground">
                 {missions.filter((m) => m.status === 'COMPLETED').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('status', 'completed')}</div>
@@ -143,7 +143,7 @@ export default function ClientMissionsPage() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-foreground">
                 {missions.filter((m) => m.status === 'CANCELLED').length}
               </div>
               <div className="text-sm text-muted-foreground">{t('status', 'cancelled')}</div>

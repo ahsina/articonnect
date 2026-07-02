@@ -141,7 +141,7 @@ export default function NoShowsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -153,7 +153,7 @@ export default function NoShowsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminNoShows', 'pendingReview')}</p>
-                  <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
+                  <p className="text-3xl font-bold text-foreground">{pendingCount}</p>
                 </div>
                 <span className="text-4xl">⏳</span>
               </div>
@@ -177,7 +177,7 @@ export default function NoShowsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminNoShows', 'actionRequired')}</p>
-                  <p className="text-3xl font-bold text-red-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {pendingCount > 0 ? t('adminNoShows', 'yes') : t('adminNoShows', 'no')}
                   </p>
                 </div>
@@ -448,13 +448,13 @@ export default function NoShowsPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-green-100 rounded-lg">
                           <p className="text-sm text-green-600">{t('adminNoShows', 'artisanCompensation')}</p>
-                          <p className="text-xl font-bold text-green-700">
+                          <p className="text-xl font-bold text-foreground">
                             {formatCurrency(selectedNoShow.compensation.artisanAmount)}
                           </p>
                         </div>
                         <div className="p-4 bg-red-100 rounded-lg">
                           <p className="text-sm text-red-600">{t('adminNoShows', 'clientPenalty')}</p>
-                          <p className="text-xl font-bold text-red-700">
+                          <p className="text-xl font-bold text-foreground">
                             {formatCurrency(selectedNoShow.compensation.clientPenalty)}
                           </p>
                         </div>
