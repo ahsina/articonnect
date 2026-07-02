@@ -149,7 +149,7 @@ export default function ClientFavoritesPage() {
                             {artisan.firstName} {artisan.lastName}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {artisan.artisanProfile.companyName}
+                            {artisan.artisanProfile?.companyName || "Artisan"}
                           </p>
                         </div>
                       </div>
@@ -157,43 +157,41 @@ export default function ClientFavoritesPage() {
                         onClick={(e) => handleRemoveFavorite(artisan.id, e)}
                         className="text-red-500 hover:text-red-600 text-xl"
                         title={t('favorites', 'remove')}
-                      >
-                        
-                      </button>
+                      >×</button>
                     </div>
 
                     <div className="mb-3">
-                      {renderStars(artisan.artisanProfile.rating)}
+                      {renderStars(artisan.artisanProfile?.rating || 0)}
                       <span className="text-sm text-muted-foreground ml-2">
-                        {artisan.artisanProfile.reviewCount} {t('common', 'reviews')}
+                        {artisan.artisanProfile?.reviewCount || 0} {t('common', 'reviews')}
                       </span>
                     </div>
 
-                    {artisan.artisanProfile.verified && (
+                    {artisan.artisanProfile?.verified && (
                       <Badge className="bg-green-100 text-green-700 mb-3">
                         {t('artisan', 'verified')}
                       </Badge>
                     )}
 
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {artisan.artisanProfile.specialties.slice(0, 3).map((spec) => (
+                      {(artisan.artisanProfile?.specialties || []).slice(0, 3).map((spec) => (
                         <Badge key={spec.id} variant="outline">
                           {spec.name}
                         </Badge>
                       ))}
-                      {artisan.artisanProfile.specialties.length > 3 && (
+                      {(artisan.artisanProfile?.specialties?.length || 0) > 3 && (
                         <Badge variant="outline">
-                          +{artisan.artisanProfile.specialties.length - 3}
+                          +{(artisan.artisanProfile?.specialties?.length || 0) - 3}
                         </Badge>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between pt-3 border-t">
                       <span className="text-sm text-muted-foreground">
-                        {artisan.artisanProfile.city}
+                        {artisan.artisanProfile?.city || ""}
                       </span>
                       <span className="font-semibold text-primary">
-                        {artisan.artisanProfile.hourlyRate}€/h
+                        {artisan.artisanProfile?.hourlyRate || "—"}€/h
                       </span>
                     </div>
                   </CardContent>
