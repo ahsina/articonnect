@@ -157,22 +157,22 @@ export default function ArtisanEarningsPage() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-muted border-green-200">
+          <Card className="bg-muted">
             <CardContent className="p-4">
-              <div className="text-sm text-green-600">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'totalEarnings') || 'Total Earnings'}
               </div>
-              <div className="text-2xl font-bold text-green-700">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(summary.totalEarnings)}
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-amber-200">
+          <Card className="bg-muted">
             <CardContent className="p-4">
-              <div className="text-sm text-yellow-600">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'pendingEarnings') || 'Pending'}
               </div>
-              <div className="text-2xl font-bold text-amber-800">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(summary.pendingEarnings)}
               </div>
             </CardContent>
@@ -187,12 +187,12 @@ export default function ArtisanEarningsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-muted border-purple-200">
+          <Card className="bg-muted">
             <CardContent className="p-4">
-              <div className="text-sm text-purple-600">
+              <div className="text-sm text-muted-foreground">
                 {t('artisan', 'lastMonth') || 'Last Month'}
               </div>
-              <div className="text-2xl font-bold text-purple-700">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(summary.lastMonthEarnings)}
               </div>
             </CardContent>
@@ -226,7 +226,7 @@ export default function ArtisanEarningsPage() {
               <div className="text-sm text-muted-foreground">
                 {t('artisan', 'paidEarnings') || 'Paid Out'}
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(summary.paidEarnings)}
               </div>
             </CardContent>
@@ -331,10 +331,10 @@ export default function ArtisanEarningsPage() {
                       <td className="py-3 px-4 text-right text-foreground">
                         {formatCurrency(earning.grossAmount)}
                       </td>
-                      <td className="py-3 px-4 text-right text-red-600">
+                      <td className="py-3 px-4 text-right text-muted-foreground">
                         -{formatCurrency(earning.platformFee)}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-green-600">
+                      <td className="py-3 px-4 text-right font-bold text-foreground">
                         {formatCurrency(earning.netAmount)}
                       </td>
                       <td className="py-3 px-4 text-center">
