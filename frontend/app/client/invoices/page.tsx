@@ -126,8 +126,11 @@ export default function ClientInvoicesPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -199,7 +202,7 @@ export default function ClientInvoicesPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('invoices', 'pendingAmount')}</div>
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-foreground">
                 {formatCurrency(totalPending)}
               </div>
             </CardContent>
