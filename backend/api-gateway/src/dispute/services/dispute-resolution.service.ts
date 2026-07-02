@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { DisputeStatus, DisputePriority } from '@prisma/client';
 import { NotificationService } from '../../notification/services/notification.service';
+import { PaymentService } from '../../payment/services/payment.service';
 
 export interface ResolutionEvidence {
   type: 'PHOTO' | 'DOCUMENT' | 'MESSAGE' | 'OTHER';
@@ -30,9 +31,12 @@ export interface ResolutionOutcome {
 
 @Injectable()
 export class DisputeResolutionService {
+  private readonly logger = new Logger(DisputeResolutionService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   /**
@@ -269,13 +273,28 @@ export class DisputeResolutionService {
       },
     });
 
-    // Apply outcome
-    if (outcome.refundAmount && outcome.refundAmount > 0) {
-      // Implement refund logic here
+    // Apply outcome — REMBOURSEMENT RÉEL du client via l'escrow (Stripe).
+    if (outcome.refundAmount && outcome.refundAmount > 0 && dispute.missionId) {
+      try {
+        const res = await this.paymentService.refundForCancellation(
+          dispute.missionId,
+          outcome.refundAmount,
+        );
+        this.logger.log(
+          `Litige ${disputeId} résolu : remboursement client ${res.refunded}€ (demandé ${outcome.refundAmount}€).`,
+        );
+      } catch (e) {
+        this.logger.error(`Échec du remboursement de litige ${disputeId}`, e as any);
+        throw e; // ne pas marquer résolu si l'argent ne bouge pas
+      }
     }
 
     if (outcome.compensationAmount && outcome.compensationAmount > 0) {
-      // Implement compensation logic here
+      // Compensation artisan = virement Connect (nécessite comptes Connect onboardés / clés live).
+      // Tracé pour exécution une fois Stripe Connect configuré.
+      this.logger.warn(
+        `Litige ${disputeId} : compensation artisan de ${outcome.compensationAmount}€ à verser (Stripe Connect requis).`,
+      );
     }
 
     // Apply reputation impacts
@@ -378,8 +397,21 @@ export class DisputeResolutionService {
    * Private: Execute settlement terms
    */
   private async executeSettlement(disputeId: string, terms: any): Promise<void> {
-    // Implementation for executing refunds, compensation, etc.
-    // This would integrate with PaymentService
+    const dispute = await this.prisma.dispute.findUnique({ where: { id: disputeId } });
+    if (dispute?.missionId && terms?.refundAmount > 0) {
+      try {
+        const res = await this.paymentService.refundForCancellation(dispute.missionId, terms.refundAmount);
+        this.logger.log(`Règlement litige ${disputeId} : remboursé ${res.refunded}€.`);
+      } catch (e) {
+        this.logger.error(`Échec du règlement de litige ${disputeId}`, e as any);
+        throw e;
+      }
+    }
+    if (terms?.compensationAmount > 0) {
+      this.logger.warn(
+        `Règlement litige ${disputeId} : compensation artisan ${terms.compensationAmount}€ (Stripe Connect requis).`,
+      );
+    }
   }
 
   /**
