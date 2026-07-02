@@ -896,6 +896,20 @@ export class MissionService {
     ) {
       throw new BadRequestException('Cette mission ne peut plus être annulée');
     }
+    // Barème d'annulation (même logique que getCancellationFees) + remboursement RÉEL.
+    const basePrice = Number(mission.agreedPrice || mission.clientBudget || 0);
+    let feeRate = 0;
+    if (mission.status === MissionStatus.ACCEPTED || mission.status === MissionStatus.IN_TRANSIT) {
+      feeRate = 0.1;
+    } else if (mission.status === MissionStatus.IN_PROGRESS) {
+      feeRate = 0.25;
+    }
+    const cancellationFee = Math.round(basePrice * feeRate * 100) / 100;
+    const refundable = Math.round((basePrice - cancellationFee) * 100) / 100;
+
+    // Rembourser le montant remboursable AVANT d'annuler (si le paiement échoue, on n'annule pas).
+    const refundResult = await this.paymentService.refundForCancellation(missionId, refundable);
+
     const updated = await this.prisma.mission.update({
       where: { id: missionId },
       data: { status: MissionStatus.CANCELLED, cancelledAt: new Date() },
@@ -909,9 +923,9 @@ export class MissionService {
       MissionStatus.CANCELLED,
       userId,
       user?.role || 'CLIENT',
-      reason || 'Mission annulée',
+      `${reason || 'Mission annulée'} — frais ${cancellationFee}€, remboursé ${refundResult.refunded}€`,
     );
-    return updated;
+    return { ...updated, cancellationFee, refunded: refundResult.refunded };
   }
 
   async getCancellationFees(missionId: string, userId: string) {

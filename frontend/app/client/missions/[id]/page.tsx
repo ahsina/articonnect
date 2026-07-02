@@ -154,13 +154,16 @@ export default function MissionDetailsPage() {
 
   const handleShowCancelModal = async () => {
     try {
-      // Get cancellation fees first
-      const fees = await missionsApi.getCancellationFees(missionId).catch(() => ({
-        canCancel: true,
-        fee: 0,
-        feePercentage: 0,
-        reason: getCancellationFeeReason(),
-      }));
+      // Récupère le barème backend ({cancellationFee, feeRate, basePrice, refundable}) et le mappe
+      // vers la forme attendue par le modal ({fee, feePercentage, totalRefund}).
+      const raw: any = await missionsApi.getCancellationFees(missionId).catch(() => ({}));
+      const fees = {
+        canCancel: raw.canCancel ?? true,
+        fee: raw.cancellationFee ?? raw.fee ?? 0,
+        feePercentage: raw.feeRate != null ? Math.round(raw.feeRate * 100) : (raw.feePercentage ?? 0),
+        reason: raw.reason ?? getCancellationFeeReason(),
+        totalRefund: raw.refundable ?? raw.totalRefund,
+      };
       setCancellationFees(fees);
       setShowCancelModal(true);
     } catch (error) {

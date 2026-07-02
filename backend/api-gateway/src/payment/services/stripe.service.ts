@@ -76,9 +76,10 @@ export class StripeService {
     });
   }
 
-  async refundPayment(paymentIntentId: string) {
+  async refundPayment(paymentIntentId: string, amountCents?: number) {
     return this.stripe.refunds.create({
       payment_intent: paymentIntentId,
+      ...(amountCents && amountCents > 0 ? { amount: Math.round(amountCents) } : {}),
     });
   }
 

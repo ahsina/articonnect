@@ -1321,4 +1321,41 @@ export class PaymentService {
       }
     }
   }
+
+  /**
+   * Remboursement lié à une ANNULATION : rembourse le montant remboursable (prix - frais d'annulation)
+   * sur le paiement escrow s'il existe. Retourne { refunded } (0 si aucun paiement à rembourser).
+   * Idempotent-safe : si aucun paiement capturé, ne fait rien (pas d'erreur).
+   */
+  async refundForCancellation(missionId: string, refundableAmount: number): Promise<{ refunded: number }> {
+    if (!refundableAmount || refundableAmount <= 0) return { refunded: 0 };
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      include: { payments: true },
+    });
+    const payment =
+      mission?.payments.find((p) => p.type === 'FULL_PAYMENT') ||
+      mission?.payments.find((p) => p.type === 'DEPOSIT');
+    if (!payment || !payment.stripePaymentIntentId) {
+      // Aucun paiement encaissé : rien à rembourser (annulation avant paiement).
+      return { refunded: 0 };
+    }
+    const capped = Math.min(refundableAmount, Number(payment.amount));
+    try {
+      const refund = await this.stripeService.refundPayment(payment.stripePaymentIntentId, capped * 100);
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          refundedAmount: capped,
+          refundedAt: new Date(),
+          ...(refund?.id ? { stripeRefundId: refund.id } : {}),
+        },
+      });
+      this.logger.log(`Remboursement annulation mission ${missionId}: ${capped}€`);
+      return { refunded: capped };
+    } catch (e) {
+      this.logger.error(`Échec remboursement annulation mission ${missionId}`, e as any);
+      throw new BadRequestException('Le remboursement a échoué. Réessayez ou contactez le support.');
+    }
+  }
 }
