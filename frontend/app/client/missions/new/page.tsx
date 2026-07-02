@@ -31,10 +31,11 @@ function detectCategory(text: string): string {
 }
 
 // key = identifiant UI ; type = MissionType backend valide (EMERGENCY | SCHEDULED uniquement).
+// nameKey/descKey/tagKey = clés i18n (namespace missions), résolues au rendu.
 const INTERVENTIONS = [
-  { key: 'DEVIS', type: 'SCHEDULED', name: 'Devis', desc: "Comparez plusieurs offres d'artisans", tag: 'Recommandé', Icon: MessageSquare },
-  { key: 'EMERGENCY', type: 'EMERGENCY', name: 'Urgence', desc: 'Un artisan au plus vite (~30 min)', tag: 'Prioritaire', Icon: Bolt },
-  { key: 'SCHEDULED', type: 'SCHEDULED', name: 'Planifié', desc: 'Choisissez une date et une heure', tag: 'Flexible', Icon: Calendar },
+  { key: 'DEVIS', type: 'SCHEDULED', nameKey: 'intDevisName', descKey: 'intDevisDesc', tagKey: 'intDevisTag', Icon: MessageSquare },
+  { key: 'EMERGENCY', type: 'EMERGENCY', nameKey: 'intUrgenceName', descKey: 'intUrgenceDesc', tagKey: 'intUrgenceTag', Icon: Bolt },
+  { key: 'SCHEDULED', type: 'SCHEDULED', nameKey: 'intPlanifieName', descKey: 'intPlanifieDesc', tagKey: 'intPlanifieTag', Icon: Calendar },
 ];
 
 interface ClientProfile {
@@ -252,9 +253,9 @@ export default function NewMissionPage() {
                   <div className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${on ? 'bg-foreground' : 'bg-muted'}`}>
                     <it.Icon className={`h-[18px] w-[18px] ${on ? 'text-background' : 'text-foreground'}`} strokeWidth={1.9} />
                   </div>
-                  <div className="font-display text-sm font-extrabold">{it.name}</div>
-                  <div className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{it.desc}</div>
-                  <span className={`mt-2 inline-block rounded-full px-2 py-0.5 font-display text-[10.5px] font-bold ${on ? 'bg-foreground text-background' : 'bg-muted text-foreground'}`}>{it.tag}</span>
+                  <div className="font-display text-sm font-extrabold">{t('missions', it.nameKey)}</div>
+                  <div className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{t('missions', it.descKey)}</div>
+                  <span className={`mt-2 inline-block rounded-full px-2 py-0.5 font-display text-[10.5px] font-bold ${on ? 'bg-foreground text-background' : 'bg-muted text-foreground'}`}>{t('missions', it.tagKey)}</span>
                 </button>
               );
             })}
