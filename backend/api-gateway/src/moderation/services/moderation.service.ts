@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateReportDto } from '../dto/create-report.dto';
 import { ResolveReportDto } from '../dto/resolve-report.dto';
@@ -7,6 +7,7 @@ import { ReportType, ReportStatus, UserRole } from '@prisma/client';
 
 @Injectable()
 export class ModerationService {
+  private readonly logger = new Logger(ModerationService.name);
   constructor(private prisma: PrismaService) {}
 
   /**
@@ -357,8 +358,11 @@ export class ModerationService {
     switch (actionTaken) {
       case 'CONTENT_REMOVED':
         if (report.reviewId) {
-          // Optionally soft-delete or mark review as hidden
-          // await this.prisma.review.delete({ where: { id: report.reviewId } });
+          // Masquer l'avis signalé (soft-hide, pas de suppression destructive).
+          await this.prisma.review.update({
+            where: { id: report.reviewId },
+            data: { hidden: true, hiddenReason: 'Masqué suite à modération' },
+          });
         } else if (report.productId) {
           await this.prisma.product.update({
             where: { id: report.productId },
@@ -368,20 +372,27 @@ export class ModerationService {
         break;
 
       case 'USER_WARNED':
-        // Could send notification to user
+        // Avertissement soft : tracé (notification non bloquante).
+        this.logger.warn(`Utilisateur ${report.reportedUserId} averti (modération, report ${report.id}).`);
         break;
 
       case 'USER_SUSPENDED':
         if (report.reportedUserId) {
-          // Implement user suspension logic
-          // This might involve setting a suspended flag or expiry date
+          // Suspension RÉELLE : bloque la connexion (cf. login qui refuse les comptes SUSPENDED).
+          await this.prisma.user.update({
+            where: { id: report.reportedUserId },
+            data: { status: 'SUSPENDED' },
+          });
         }
         break;
 
       case 'USER_BANNED':
         if (report.reportedUserId) {
-          // Implement user ban logic
-          // This might involve deactivating the account
+          // Bannissement : compte SUSPENDED (statut bloquant ; l'enum ne comporte pas BANNED).
+          await this.prisma.user.update({
+            where: { id: report.reportedUserId },
+            data: { status: 'SUSPENDED' },
+          });
         }
         break;
 
