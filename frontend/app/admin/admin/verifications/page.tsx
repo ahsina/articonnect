@@ -154,7 +154,7 @@ export default function VerificationsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
             {error}
           </div>
         )}
@@ -166,7 +166,7 @@ export default function VerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminVerifications', 'tabUnverified')}</p>
-                  <p className="text-3xl font-bold text-yellow-600">{unverifiedArtisans.length}</p>
+                  <p className="text-3xl font-bold text-foreground">{unverifiedArtisans.length}</p>
                 </div>
                 <span className="text-4xl"></span>
               </div>
@@ -178,7 +178,7 @@ export default function VerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminVerifications', 'tabReverification')}</p>
-                  <p className="text-3xl font-bold text-yellow-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {reverificationNeeded.length}
                   </p>
                 </div>
@@ -192,7 +192,7 @@ export default function VerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('adminVerifications', 'totalPending')}</p>
-                  <p className="text-3xl font-bold text-red-600">
+                  <p className="text-3xl font-bold text-foreground">
                     {unverifiedArtisans.length + reverificationNeeded.length}
                   </p>
                 </div>
