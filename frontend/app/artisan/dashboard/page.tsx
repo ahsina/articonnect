@@ -147,7 +147,7 @@ export default function ArtisanDashboard() {
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground mb-1">{t('artisan', 'pending') || 'Pending'}</div>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card>
@@ -163,7 +163,7 @@ export default function ArtisanDashboard() {
             <div className="text-sm text-muted-foreground mb-1">
               {t('missions', 'completed') || 'Completed'}
             </div>
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.completed}</div>
           </CardContent>
         </Card>
         <Card>
@@ -172,7 +172,7 @@ export default function ArtisanDashboard() {
               {t('artisan', 'averageRating') || 'Rating'}
             </div>
             <div className="flex items-center gap-1.5 text-2xl font-bold text-foreground">
-              <Star className="h-5 w-5 fill-yellow-400 text-amber-800" /> {stats.rating}
+              <Star className="h-5 w-5 fill-foreground text-foreground" /> {stats.rating}
             </div>
           </CardContent>
         </Card>
@@ -180,43 +180,43 @@ export default function ArtisanDashboard() {
 
       {/* Earnings Card */}
       {earnings && (
-        <Card className="mb-6 bg-muted border-green-200">
+        <Card className="mb-6 bg-muted">
           <CardHeader>
-            <CardTitle className="text-green-700">
+            <CardTitle className="text-foreground">
               {t('artisan', 'earningsOverview') || 'Earnings Overview'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-4 gap-4">
               <div>
-                <div className="text-sm text-green-600">
+                <div className="text-sm text-muted-foreground">
                   {t('artisan', 'totalEarnings') || 'Total Earnings'}
                 </div>
-                <div className="text-2xl font-bold text-green-700">
+                <div className="text-2xl font-bold text-foreground">
                   {earnings.totalEarnings.toFixed(2)}€
                 </div>
               </div>
               <div>
-                <div className="text-sm text-green-600">
+                <div className="text-sm text-muted-foreground">
                   {t('artisan', 'pendingEarnings') || 'Pending'}
                 </div>
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="text-2xl font-bold text-foreground">
                   {earnings.pendingEarnings.toFixed(2)}€
                 </div>
               </div>
               <div>
-                <div className="text-sm text-green-600">
+                <div className="text-sm text-muted-foreground">
                   {t('artisan', 'thisMonth') || 'This Month'}
                 </div>
-                <div className="text-2xl font-bold text-green-700">
+                <div className="text-2xl font-bold text-foreground">
                   {earnings.thisMonthEarnings.toFixed(2)}€
                 </div>
               </div>
               <div>
-                <div className="text-sm text-green-600">
+                <div className="text-sm text-muted-foreground">
                   {t('artisan', 'avgPerMission') || 'Avg per Mission'}
                 </div>
-                <div className="text-2xl font-bold text-green-700">
+                <div className="text-2xl font-bold text-foreground">
                   {earnings.averagePerMission.toFixed(2)}€
                 </div>
               </div>
@@ -225,7 +225,7 @@ export default function ArtisanDashboard() {
               <Link href="/artisan/earnings">
                 <Button
                   variant="outline"
-                  className="border-green-600 text-green-600 hover:bg-green-100"
+                  className="border-foreground text-foreground hover:bg-muted"
                 >
                   {t('artisan', 'viewAllEarnings') || 'View All Earnings'}
                 </Button>
@@ -266,7 +266,7 @@ export default function ArtisanDashboard() {
                           <MapPin className="inline h-4 w-4 -mt-0.5" /> {mission.city} • {mission.category}
                         </p>
                         {mission.clientBudget && (
-                          <p className="text-sm text-green-600 font-medium mt-1">
+                          <p className="text-sm text-muted-foreground font-medium mt-1">
                             Budget: {mission.clientBudget}€
                           </p>
                         )}

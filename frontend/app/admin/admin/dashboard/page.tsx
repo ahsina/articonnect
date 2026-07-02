@@ -111,12 +111,13 @@ export default function AdminDashboardPage() {
     icon: LucideIcon;
     color?: string;
   }) => {
+    // Uber : fonds d'icônes monochromes (gris) quelle que soit la "couleur" demandée.
     const colorClasses: Record<string, string> = {
-      blue: 'bg-primary/10 text-primary',
-      green: 'bg-green-100 text-green-700',
-      yellow: 'bg-amber-100 text-amber-800',
-      purple: 'bg-purple-100 text-purple-700',
-      red: 'bg-red-100 text-red-700',
+      blue: 'bg-muted text-foreground',
+      green: 'bg-muted text-foreground',
+      yellow: 'bg-muted text-foreground',
+      purple: 'bg-muted text-foreground',
+      red: 'bg-muted text-foreground',
     };
 
     return (
@@ -170,9 +171,9 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard title={t('admin', 'completedMissions')} value={stats.completedMissions} subtitle={`${Math.round((stats.completedMissions / stats.totalMissions) * 100)}% ${t('admin', 'ofTotal')}`} icon={CheckCircle2} color="green" />
+          <StatCard title={t('admin', 'completedMissions')} value={stats.completedMissions} subtitle={`${stats.totalMissions > 0 ? Math.round((stats.completedMissions / stats.totalMissions) * 100) : 0}% ${t('admin', 'ofTotal')}`} icon={CheckCircle2} color="green" />
           <StatCard title={t('admin', 'totalRevenue')} value={`${stats.totalRevenue.toLocaleString('fr-FR')}€`} subtitle={t('admin', 'businessVolume')} icon={Wallet} color="green" />
-          <StatCard title={t('admin', 'platformCommission')} value={`${stats.platformRevenue.toLocaleString('fr-FR')}€`} subtitle={`${Math.round((stats.platformRevenue / stats.totalRevenue) * 100)}% ${t('admin', 'commission')}`} icon={CreditCard} color="blue" />
+          <StatCard title={t('admin', 'platformCommission')} value={`${stats.platformRevenue.toLocaleString('fr-FR')}€`} subtitle={`${stats.totalRevenue > 0 ? Math.round((stats.platformRevenue / stats.totalRevenue) * 100) : 0}% ${t('admin', 'commission')}`} icon={CreditCard} color="blue" />
           <StatCard title={t('admin', 'activeUsers')} value={stats.activeUsers30d} subtitle={t('admin', 'last30Days')} icon={TrendingUp} color="purple" />
         </div>
 
