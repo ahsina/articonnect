@@ -357,7 +357,7 @@ export default function ClientDisputesPage() {
                       </div>
                       <p className="text-green-700">{dispute.resolution}</p>
                       {dispute.resolvedAt && (
-                        <p className="text-xs text-green-600 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                           {t('disputes', 'resolvedOn')} {formatDate(dispute.resolvedAt)}
                         </p>
                       )}

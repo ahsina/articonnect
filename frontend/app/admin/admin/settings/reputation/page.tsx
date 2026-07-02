@@ -199,7 +199,7 @@ export default function ReputationRulesPage() {
                 max="100"
                 className="w-full px-3 py-2 border border-green-500/30 rounded-lg focus:ring-2 focus:ring-green-500"
               />
-              <p className="mt-1 text-xs text-green-600">{t('adminSettingsReputation', 'scoreGte')} {settings.trustedThreshold}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('adminSettingsReputation', 'scoreGte')} {settings.trustedThreshold}</p>
             </div>
             <div className="p-4 bg-red-100 rounded-lg border">
               <label className="block text-sm font-medium text-red-700 mb-1">{t('adminSettingsReputation', 'levelWarning')}</label>
@@ -236,7 +236,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 +{settings.completedMissionBonus} {t('adminSettingsReputation', 'points')}
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 +{settings.responseTimeBonus} {t('adminSettingsReputation', 'forFastResponse')}
               </p>
             </div>
@@ -266,7 +266,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">
+              <p className="mt-1 text-xs text-muted-foreground">
                 +{settings.verificationBonus} {t('adminSettingsReputation', 'oneTimeBonus')}
               </p>
             </div>
@@ -291,7 +291,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">+{settings.fiveStarReviewBonus}</p>
+              <p className="mt-1 text-xs text-muted-foreground">+{settings.fiveStarReviewBonus}</p>
             </div>
             <div className="p-4 bg-green-100 rounded-lg">
               <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'fourStars')}</label>
@@ -302,7 +302,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">+{settings.fourStarReviewBonus}</p>
+              <p className="mt-1 text-xs text-muted-foreground">+{settings.fourStarReviewBonus}</p>
             </div>
             <div className="p-4 bg-background rounded-lg">
               <label className="block text-sm font-medium text-foreground mb-1">{t('adminSettingsReputation', 'threeStars')}</label>
@@ -428,7 +428,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">+{settings.disputeWinBonus} {t('adminSettingsReputation', 'points')}</p>
+              <p className="mt-1 text-xs text-muted-foreground">+{settings.disputeWinBonus} {t('adminSettingsReputation', 'points')}</p>
             </div>
           </div>
         </CardContent>
@@ -451,7 +451,7 @@ export default function ReputationRulesPage() {
                 min="0"
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
-              <p className="mt-1 text-xs text-green-600">+{settings.streakBonus} {t('adminSettingsReputation', 'points')}</p>
+              <p className="mt-1 text-xs text-muted-foreground">+{settings.streakBonus} {t('adminSettingsReputation', 'points')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">

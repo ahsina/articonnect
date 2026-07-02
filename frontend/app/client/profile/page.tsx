@@ -468,7 +468,7 @@ export default function ClientProfilePage() {
           {/* Messages */}
           {message && (
             <div className="p-4 bg-green-100 border rounded-lg">
-              <p className="text-sm text-green-600">{message}</p>
+              <p className="text-sm text-muted-foreground">{message}</p>
             </div>
           )}
 

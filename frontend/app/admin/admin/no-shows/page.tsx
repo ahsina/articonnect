@@ -447,7 +447,7 @@ export default function NoShowsPage() {
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-green-100 rounded-lg">
-                          <p className="text-sm text-green-600">{t('adminNoShows', 'artisanCompensation')}</p>
+                          <p className="text-sm text-muted-foreground">{t('adminNoShows', 'artisanCompensation')}</p>
                           <p className="text-xl font-bold text-foreground">
                             {formatCurrency(selectedNoShow.compensation.artisanAmount)}
                           </p>

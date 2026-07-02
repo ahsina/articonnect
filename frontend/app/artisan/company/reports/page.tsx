@@ -123,7 +123,7 @@ export default function CompanyReportsPage() {
             </Card>
             <Card className="bg-muted">
               <CardContent className="p-4">
-                <div className="text-sm text-green-600">
+                <div className="text-sm text-muted-foreground">
                   {t('company', 'completedMissions') || 'Completed Missions'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">{stats.completedMissions}</div>
@@ -141,7 +141,7 @@ export default function CompanyReportsPage() {
             </Card>
             <Card className="bg-muted">
               <CardContent className="p-4">
-                <div className="text-sm text-purple-600">
+                <div className="text-sm text-muted-foreground">
                   {t('company', 'totalReviews') || 'Total Reviews'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">{stats.totalReviews}</div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Stripe, StripeElements } from '@stripe/stripe-js';
@@ -89,8 +90,8 @@ export default function MissionPaymentPage() {
           <p className="text-muted-foreground mb-4">{t('clientPayment', 'securedByStripe')}</p>
 
           {/* Réassurance séquestre */}
-          <div className="mb-6 flex items-start gap-2.5 rounded-xl bg-green-100 p-3.5 text-sm text-green-800">
-            <span className="text-base leading-none"></span>
+          <div className="mb-6 flex items-start gap-2.5 rounded-xl bg-muted p-3.5 text-sm text-foreground">
+            <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0" strokeWidth={2} />
             <span className="font-medium">
               {t('clientPayment', 'escrowNotice') || 'Paiement sécurisé sous séquestre — l’artisan n’est payé qu’une fois le travail validé par vous.'}
             </span>
@@ -100,7 +101,7 @@ export default function MissionPaymentPage() {
 
           {success ? (
             <div className="py-8 text-center">
-              <div className="text-green-600 text-4xl mb-2"></div>
+              <CheckCircle2 className="mx-auto mb-2 h-12 w-12 text-foreground" strokeWidth={1.75} />
               <p className="font-semibold text-foreground">{t('clientPayment', 'paymentDone')}</p>
               <p className="text-muted-foreground text-sm">{t('clientPayment', 'redirecting')}</p>
             </div>

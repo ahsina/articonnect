@@ -106,7 +106,7 @@ export default function CompanyDashboardPage() {
           </Card>
           <Card className="bg-muted">
             <CardContent className="p-4">
-              <div className="text-sm text-green-600">
+              <div className="text-sm text-muted-foreground">
                 {t('company', 'completedMissions') || 'Completed'}
               </div>
               <div className="text-2xl font-bold text-foreground">{stats.completedMissions}</div>
@@ -114,7 +114,7 @@ export default function CompanyDashboardPage() {
           </Card>
           <Card className="bg-muted">
             <CardContent className="p-4">
-              <div className="text-sm text-purple-600">
+              <div className="text-sm text-muted-foreground">
                 {t('company', 'totalRevenue') || 'Total Revenue'}
               </div>
               <div className="text-2xl font-bold text-foreground">

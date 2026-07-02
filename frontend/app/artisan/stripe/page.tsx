@@ -109,7 +109,7 @@ export default function StripeOnboardingPage() {
                       {t('artisan', 'chargesEnabled') || 'Charges Enabled'}
                     </span>
                   </div>
-                  <p className="text-sm text-green-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {t('artisan', 'canReceivePayments') || 'You can receive payments from clients'}
                   </p>
                 </div>
@@ -120,7 +120,7 @@ export default function StripeOnboardingPage() {
                       {t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
                     </span>
                   </div>
-                  <p className="text-sm text-green-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {t('artisan', 'canReceivePayouts') ||
                       'You can receive payouts to your bank account'}
                   </p>

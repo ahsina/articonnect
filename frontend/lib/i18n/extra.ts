@@ -1764,6 +1764,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "photos"
     },
     "clientPayment": {
+      "escrowNotice": "Paiement sécurisé sous séquestre — l'artisan n'est payé qu'une fois le travail validé par vous.",
       "notConfigured": "Le paiement n'est pas configuré (clé Stripe absente).",
       "noClientSecret": "Aucun clientSecret renvoyé par le serveur.",
       "prepError": "Erreur lors de la préparation du paiement.",
@@ -4284,6 +4285,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "photos"
     },
     "clientPayment": {
+      "escrowNotice": "Secure escrow payment — the tradesperson is only paid once you've approved the work.",
       "notConfigured": "Payment is not configured (Stripe key missing).",
       "noClientSecret": "No clientSecret returned by the server.",
       "prepError": "Error while preparing the payment.",
@@ -6804,6 +6806,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "Fotos"
     },
     "clientPayment": {
+      "escrowNotice": "Sichere Treuhandzahlung — der Handwerker wird erst bezahlt, wenn Sie die Arbeit freigegeben haben.",
       "notConfigured": "Die Zahlung ist nicht konfiguriert (Stripe-Schlüssel fehlt).",
       "noClientSecret": "Kein clientSecret vom Server zurückgegeben.",
       "prepError": "Fehler bei der Vorbereitung der Zahlung.",
@@ -9324,6 +9327,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "foto's"
     },
     "clientPayment": {
+      "escrowNotice": "Veilige escrow-betaling — de vakman wordt pas betaald nadat u het werk hebt goedgekeurd.",
       "notConfigured": "Betaling is niet geconfigureerd (Stripe-sleutel ontbreekt).",
       "noClientSecret": "Geen clientSecret geretourneerd door de server.",
       "prepError": "Fout bij het voorbereiden van de betaling.",
@@ -11844,6 +11848,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "fotos"
     },
     "clientPayment": {
+      "escrowNotice": "Pago seguro en depósito de garantía — el artesano solo cobra una vez que usted valida el trabajo.",
       "notConfigured": "El pago no está configurado (falta la clave de Stripe).",
       "noClientSecret": "El servidor no devolvió ningún clientSecret.",
       "prepError": "Error al preparar el pago.",
@@ -14364,6 +14369,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "foto"
     },
     "clientPayment": {
+      "escrowNotice": "Pagamento sicuro in deposito a garanzia — l'artigiano viene pagato solo dopo la tua approvazione del lavoro.",
       "notConfigured": "Il pagamento non è configurato (chiave Stripe mancante).",
       "noClientSecret": "Nessun clientSecret restituito dal server.",
       "prepError": "Errore durante la preparazione del pagamento.",
@@ -16884,6 +16890,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "photos": "fotos"
     },
     "clientPayment": {
+      "escrowNotice": "Pagamento seguro em garantia — o artesão só é pago depois de você validar o trabalho.",
       "notConfigured": "O pagamento não está configurado (chave Stripe ausente).",
       "noClientSecret": "Nenhum clientSecret devolvido pelo servidor.",
       "prepError": "Erro ao preparar o pagamento.",

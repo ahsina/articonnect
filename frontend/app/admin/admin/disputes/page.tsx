@@ -312,7 +312,7 @@ export default function DisputesPage() {
                           <strong>{t('adminDisputes', 'resolution')}:</strong> {dispute.resolution}
                         </p>
                         {dispute.resolvedAt && (
-                          <p className="text-xs text-green-600 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {t('adminDisputes', 'resolvedLabel')}: {new Date(dispute.resolvedAt).toLocaleString('fr-FR')}
                           </p>
                         )}
@@ -406,7 +406,7 @@ export default function DisputesPage() {
                     <h4 className="font-medium text-green-700 mb-2">{t('adminDisputes', 'resolution')}</h4>
                     <p className="text-green-700">{selectedDispute.resolution}</p>
                     {selectedDispute.resolvedAt && (
-                      <p className="text-sm text-green-600 mt-2">
+                      <p className="text-sm text-muted-foreground mt-2">
                         {t('adminDisputes', 'resolvedOn')}: {new Date(selectedDispute.resolvedAt).toLocaleString('fr-FR')}
                       </p>
                     )}

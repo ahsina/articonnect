@@ -725,7 +725,7 @@ export default function MissionDetailsPage() {
                     </div>
                     {mission.agreedPrice && (
                       <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                        <span className="text-sm text-green-600 font-medium">
+                        <span className="text-sm text-muted-foreground font-medium">
                           {t('negotiations', 'agreedPrice') || 'Prix convenu'}
                         </span>
                         <span className="font-bold text-lg text-green-600">
