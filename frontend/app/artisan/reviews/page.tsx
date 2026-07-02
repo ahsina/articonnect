@@ -93,7 +93,7 @@ export default function ReviewsPage() {
   };
 
   const renderStars = (rating: number) => {
-    return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+    return ''.repeat(rating) + ''.repeat(5 - rating);
   };
 
   if (loading) {
@@ -132,7 +132,7 @@ export default function ReviewsPage() {
                 {[5, 4, 3, 2, 1].map((star) => (
                   <div key={star} className="flex items-center gap-2">
                     <span className="text-sm w-4">{star}</span>
-                    <span className="text-yellow-500">⭐</span>
+                    <span className="text-yellow-500"></span>
                     <div className="flex-1 bg-muted rounded-full h-2">
                       <div
                         className="bg-yellow-500 rounded-full h-2"
@@ -262,7 +262,7 @@ export default function ReviewsPage() {
                     </div>
                   ) : (
                     <Button size="sm" variant="outline" onClick={() => setRespondingTo(review.id)}>
-                      💬 {t('artisan', 'respond') || 'Respond'}
+                      {t('artisan', 'respond') || 'Respond'}
                     </Button>
                   )}
                 </div>

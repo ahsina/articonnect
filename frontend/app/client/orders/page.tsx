@@ -209,7 +209,7 @@ export default function ClientOrdersPage() {
           {filteredOrders.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <div className="text-4xl mb-4">📦</div>
+                <div className="text-4xl mb-4"></div>
                 <p className="text-muted-foreground mb-4">{t('orders', 'noOrders')}</p>
                 <Button onClick={() => router.push('/client/marketplace')}>
                   {t('orders', 'discoverMarketplace')}
@@ -345,7 +345,7 @@ export default function ClientOrdersPage() {
                     size="sm"
                     onClick={() => setSelectedOrder(null)}
                   >
-                    ✕
+                    
                   </Button>
                 </div>
               </CardHeader>

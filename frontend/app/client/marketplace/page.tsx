@@ -23,13 +23,13 @@ export default function MarketplacePage() {
   const { toast } = useToast();
 
   const CATEGORIES = [
-    { id: 'all', name: t('marketplace', 'all'), icon: '🔍' },
-    { id: 'tools', name: t('marketplace', 'tools'), icon: '🔧' },
-    { id: 'materials', name: t('marketplace', 'materials'), icon: '🧱' },
-    { id: 'decorations', name: t('marketplace', 'decorations'), icon: '🎨' },
-    { id: 'furniture', name: t('marketplace', 'furniture'), icon: '🪑' },
-    { id: 'equipment', name: t('marketplace', 'equipment'), icon: '⚙️' },
-    { id: 'lighting', name: t('marketplace', 'lighting'), icon: '💡' },
+    { id: 'all', name: t('marketplace', 'all'), icon: '' },
+    { id: 'tools', name: t('marketplace', 'tools'), icon: '' },
+    { id: 'materials', name: t('marketplace', 'materials'), icon: '' },
+    { id: 'decorations', name: t('marketplace', 'decorations'), icon: '' },
+    { id: 'furniture', name: t('marketplace', 'furniture'), icon: '' },
+    { id: 'equipment', name: t('marketplace', 'equipment'), icon: '' },
+    { id: 'lighting', name: t('marketplace', 'lighting'), icon: '' },
   ];
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -203,7 +203,7 @@ export default function MarketplacePage() {
               onClick={() => setShowFilters(!showFilters)}
               className="whitespace-nowrap"
             >
-              {showFilters ? `✕ ${t('clientMarketplace', 'hide')}` : `🔍 ${t('clientMarketplace', 'advancedFilters')}`}
+              {showFilters ? `${t('clientMarketplace', 'hide')}` : `${t('clientMarketplace', 'advancedFilters')}`}
             </Button>
             <select
               value={sortBy}
@@ -279,7 +279,7 @@ export default function MarketplacePage() {
                         }`}
                       >
                         <span className="text-sm font-medium">
-                          {rating === 0 ? t('clientMarketplace', 'all') : `${rating}★+`}
+                          {rating === 0 ? t('clientMarketplace', 'all') : `${rating}+`}
                         </span>
                       </button>
                     ))}
@@ -359,7 +359,7 @@ export default function MarketplacePage() {
                       />
                     ) : (
                       <div className="flex h-48 w-full items-center justify-center rounded-t-lg bg-muted text-5xl text-muted-foreground">
-                        📦
+                        
                       </div>
                     )}
                     {product.stock < 5 && (
@@ -382,7 +382,7 @@ export default function MarketplacePage() {
 
                     {/* Artisan */}
                     <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-                      <span>👤</span>
+                      <span></span>
                       <span className="truncate">{product.artisan?.companyName || t('clientMarketplace', 'artisan')}</span>
                     </div>
 
@@ -420,7 +420,7 @@ export default function MarketplacePage() {
                 disabled={!pagination.hasPreviousPage}
                 onClick={() => setCurrentPage(currentPage - 1)}
               >
-                ← {t('clientMarketplace', 'previous')}
+                {t('clientMarketplace', 'previous')}
               </Button>
 
               <div className="flex gap-1">
@@ -458,7 +458,7 @@ export default function MarketplacePage() {
                 disabled={!pagination.hasNextPage}
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
-                {t('clientMarketplace', 'next')} →
+                {t('clientMarketplace', 'next')} 
               </Button>
             </div>
           )}

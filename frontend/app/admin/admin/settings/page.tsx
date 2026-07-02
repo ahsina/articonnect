@@ -13,19 +13,19 @@ const settingsCategories = [
         href: '/admin/settings/fees',
         labelKey: 'platformFees',
         descriptionKey: 'platformFeesDesc',
-        icon: '💰',
+        icon: '',
       },
       {
         href: '/admin/settings/payments',
         labelKey: 'paymentConfig',
         descriptionKey: 'paymentConfigDesc',
-        icon: '💳',
+        icon: '',
       },
       {
         href: '/admin/settings/tax',
         labelKey: 'taxRates',
         descriptionKey: 'taxRatesDesc',
-        icon: '🧾',
+        icon: '',
       },
     ],
   },
@@ -37,19 +37,19 @@ const settingsCategories = [
         href: '/admin/settings/missions',
         labelKey: 'missionSettings',
         descriptionKey: 'missionSettingsDesc',
-        icon: '📋',
+        icon: '',
       },
       {
         href: '/admin/settings/reputation',
         labelKey: 'reputationRules',
         descriptionKey: 'reputationRulesDesc',
-        icon: '⭐',
+        icon: '',
       },
       {
         href: '/admin/settings/no-show',
         labelKey: 'noShowConfig',
         descriptionKey: 'noShowConfigDesc',
-        icon: '🚫',
+        icon: '',
       },
     ],
   },
@@ -61,19 +61,19 @@ const settingsCategories = [
         href: '/admin/settings/limits',
         labelKey: 'rateLimitsSecurity',
         descriptionKey: 'rateLimitsSecurityDesc',
-        icon: '🔒',
+        icon: '',
       },
       {
         href: '/admin/settings/content',
         labelKey: 'contentModeration',
         descriptionKey: 'contentModerationDesc',
-        icon: '📝',
+        icon: '',
       },
       {
         href: '/admin/settings/compliance',
         labelKey: 'complianceSettings',
         descriptionKey: 'complianceSettingsDesc',
-        icon: '📜',
+        icon: '',
       },
     ],
   },
@@ -85,13 +85,13 @@ const settingsCategories = [
         href: '/admin/settings/users',
         labelKey: 'userSettings',
         descriptionKey: 'userSettingsDesc',
-        icon: '👤',
+        icon: '',
       },
       {
         href: '/admin/settings/notifications',
         labelKey: 'notificationSettings',
         descriptionKey: 'notificationSettingsDesc',
-        icon: '🔔',
+        icon: '',
       },
     ],
   },
@@ -103,13 +103,13 @@ const settingsCategories = [
         href: '/admin/settings/integrations',
         labelKey: 'integrations',
         descriptionKey: 'integrationsDesc',
-        icon: '🔌',
+        icon: '',
       },
       {
         href: '/admin/settings/performance',
         labelKey: 'performanceCache',
         descriptionKey: 'performanceCacheDesc',
-        icon: '🚀',
+        icon: '',
       },
     ],
   },
@@ -237,7 +237,7 @@ export default function SettingsOverviewPage() {
                   <p className="font-medium text-foreground">{change.setting}</p>
                   <p className="text-sm text-muted-foreground">
                     <span className="text-red-500">{change.oldValue}</span>
-                    <span className="mx-2">→</span>
+                    <span className="mx-2"></span>
                     <span className="text-green-500">{change.newValue}</span>
                   </p>
                 </div>

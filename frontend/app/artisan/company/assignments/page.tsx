@@ -210,14 +210,14 @@ export default function MissionAssignmentsPage() {
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">{mission.description}</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>📍 {mission.city}</span>
-                        <span>🏷️ {mission.category}</span>
+                        <span>{mission.city}</span>
+                        <span>{mission.category}</span>
                         {mission.scheduledDate && (
-                          <span>📅 {formatDate(mission.scheduledDate)}</span>
+                          <span>{formatDate(mission.scheduledDate)}</span>
                         )}
                         {mission.agreedPrice && (
                           <span className="text-green-600 font-medium">
-                            💰 {mission.agreedPrice}€
+                            {mission.agreedPrice}€
                           </span>
                         )}
                       </div>

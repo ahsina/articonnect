@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
             <button onClick={() => router.push('/admin/audit-logs')} className="text-sm text-primary hover:underline">
-              {t('adminDashboard', 'viewAll')} →
+              {t('adminDashboard', 'viewAll')} 
             </button>
           </CardHeader>
           <CardContent>

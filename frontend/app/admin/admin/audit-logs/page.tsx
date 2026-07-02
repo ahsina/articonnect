@@ -95,15 +95,15 @@ export default function AuditLogsPage() {
 
   const getResourceIcon = (resource: string) => {
     const resourceLower = resource.toLowerCase();
-    if (resourceLower.includes('user')) return '👤';
-    if (resourceLower.includes('mission')) return '📋';
-    if (resourceLower.includes('payment')) return '💳';
-    if (resourceLower.includes('review')) return '⭐';
-    if (resourceLower.includes('auth') || resourceLower.includes('session')) return '🔐';
-    if (resourceLower.includes('dispute')) return '⚠️';
-    if (resourceLower.includes('message')) return '💬';
-    if (resourceLower.includes('config') || resourceLower.includes('setting')) return '⚙️';
-    return '📄';
+    if (resourceLower.includes('user')) return '';
+    if (resourceLower.includes('mission')) return '';
+    if (resourceLower.includes('payment')) return '';
+    if (resourceLower.includes('review')) return '';
+    if (resourceLower.includes('auth') || resourceLower.includes('session')) return '';
+    if (resourceLower.includes('dispute')) return '';
+    if (resourceLower.includes('message')) return '';
+    if (resourceLower.includes('config') || resourceLower.includes('setting')) return '';
+    return '';
   };
 
   if (loading && !response) {
@@ -124,7 +124,7 @@ export default function AuditLogsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {t('adminAuditLogs', 'back')}
+              {t('adminAuditLogs', 'back')}
             </button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t('adminAuditLogs', 'title')}</h1>
@@ -209,7 +209,7 @@ export default function AuditLogsPage() {
                     <p className="text-sm text-muted-foreground">{t('adminAuditLogs', 'totalLogs')}</p>
                     <p className="text-3xl font-bold text-foreground">{response.meta.total}</p>
                   </div>
-                  <span className="text-3xl">📊</span>
+                  <span className="text-3xl"></span>
                 </div>
               </CardContent>
             </Card>
@@ -222,7 +222,7 @@ export default function AuditLogsPage() {
                       {response.meta.page} / {response.meta.totalPages}
                     </p>
                   </div>
-                  <span className="text-3xl">📄</span>
+                  <span className="text-3xl"></span>
                 </div>
               </CardContent>
             </Card>
@@ -233,7 +233,7 @@ export default function AuditLogsPage() {
                     <p className="text-sm text-muted-foreground">{t('adminAuditLogs', 'perPage')}</p>
                     <p className="text-3xl font-bold text-muted-foreground">{response.meta.limit}</p>
                   </div>
-                  <span className="text-3xl">📋</span>
+                  <span className="text-3xl"></span>
                 </div>
               </CardContent>
             </Card>
@@ -312,7 +312,7 @@ export default function AuditLogsPage() {
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                <span className="text-6xl block mb-4">📋</span>
+                <span className="text-6xl block mb-4"></span>
                 <p>{t('adminAuditLogs', 'noLogs')}</p>
                 <p className="text-sm mt-2">{t('adminAuditLogs', 'tryAdjusting')}</p>
               </div>
@@ -353,7 +353,7 @@ export default function AuditLogsPage() {
                   onClick={() => setSelectedLog(null)}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  ✕
+                  
                 </button>
               </div>
               <div className="p-6 space-y-4">

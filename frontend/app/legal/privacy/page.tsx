@@ -47,7 +47,7 @@ export default function PrivacyPage() {
       <p>
         Vous disposez des droits d&apos;accès, de rectification, d&apos;effacement, de limitation,
         d&apos;opposition et de portabilité. Vous pouvez exporter ou demander la suppression de vos données
-        directement depuis <strong>Paramètres → Confidentialité</strong>, ou en écrivant à{' '}
+        directement depuis <strong>Paramètres Confidentialité</strong>, ou en écrivant à{' '}
         <a href="mailto:dpo@krafolt.com">dpo@krafolt.com</a>. Vous pouvez introduire une réclamation auprès de
         votre autorité de contrôle (CNPD au Luxembourg, CNIL en France, APD en Belgique).
       </p>

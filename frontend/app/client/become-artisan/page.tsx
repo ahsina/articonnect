@@ -132,14 +132,14 @@ export default function BecomeArtisanPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← {t('common', 'back')}
+          {t('common', 'back')}
         </Button>
 
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🔨</span>
+                <span className="text-2xl"></span>
               </div>
               <div>
                 <CardTitle className="text-2xl">{t('common', 'becomeArtisan')}</CardTitle>

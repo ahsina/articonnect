@@ -56,7 +56,7 @@ export default function CompanyDashboardPage() {
       <div className="p-6">
         <Card>
           <CardContent className="p-8 text-center">
-            <div className="text-5xl mb-4">🏢</div>
+            <div className="text-5xl mb-4"></div>
             <h2 className="text-xl font-bold text-foreground mb-2">
               {t('company', 'noCompany') || 'No Company Found'}
             </h2>
@@ -83,7 +83,7 @@ export default function CompanyDashboardPage() {
         <div className="flex gap-2">
           {company.businessVerified ? (
             <Badge className="bg-green-100 text-green-700">
-              ✓ {t('company', 'verified') || 'Verified'}
+              {t('company', 'verified') || 'Verified'}
             </Badge>
           ) : (
             <Badge className="bg-amber-100 text-amber-800">
@@ -150,7 +150,7 @@ export default function CompanyDashboardPage() {
                 {t('company', 'averageRating') || 'Average Rating'}
               </div>
               <div className="text-2xl font-bold text-yellow-600">
-                ⭐ {Number(stats.averageRating).toFixed(1)}
+                {Number(stats.averageRating).toFixed(1)}
               </div>
             </CardContent>
           </Card>
@@ -175,22 +175,22 @@ export default function CompanyDashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <Link href="/artisan/company/employees">
                 <Button variant="outline" className="w-full justify-start">
-                  👥 {t('company', 'manageEmployees') || 'Manage Employees'}
+                  {t('company', 'manageEmployees') || 'Manage Employees'}
                 </Button>
               </Link>
               <Link href="/artisan/company/assignments">
                 <Button variant="outline" className="w-full justify-start">
-                  📋 {t('company', 'assignMissions') || 'Assign Missions'}
+                  {t('company', 'assignMissions') || 'Assign Missions'}
                 </Button>
               </Link>
               <Link href="/artisan/company/reports">
                 <Button variant="outline" className="w-full justify-start">
-                  📈 {t('company', 'viewReports') || 'View Reports'}
+                  {t('company', 'viewReports') || 'View Reports'}
                 </Button>
               </Link>
               <Link href="/artisan/company/settings">
                 <Button variant="outline" className="w-full justify-start">
-                  ⚙️ {t('company', 'companySettings') || 'Settings'}
+                  {t('company', 'companySettings') || 'Settings'}
                 </Button>
               </Link>
             </div>

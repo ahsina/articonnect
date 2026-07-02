@@ -83,7 +83,7 @@ export default function MonitoringPage() {
   };
 
   const getCheckStatusIcon = (status: string) => {
-    return status === 'OK' ? '✅' : '⚠️';
+    return status === 'OK' ? '' : '';
   };
 
   if (loading) {
@@ -112,7 +112,7 @@ export default function MonitoringPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {t('adminMonitoring', 'back')}
+              {t('adminMonitoring', 'back')}
             </button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t('adminMonitoring', 'title')}</h1>
@@ -189,7 +189,7 @@ export default function MonitoringPage() {
                     {dashboard.overview.missionsLast24h} {t('adminMonitoring', 'today')}
                   </p>
                 </div>
-                <span className="text-4xl">📋</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -206,7 +206,7 @@ export default function MonitoringPage() {
                     {dashboard.overview.autoValidationRate} {t('adminMonitoring', 'rate')}
                   </p>
                 </div>
-                <span className="text-4xl">✅</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -236,7 +236,7 @@ export default function MonitoringPage() {
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">{t('adminMonitoring', 'bySystemUsers')}</p>
                 </div>
-                <span className="text-4xl">❌</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -248,7 +248,7 @@ export default function MonitoringPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span>🔍</span>
+                <span></span>
                 {t('adminMonitoring', 'healthChecks')}
               </CardTitle>
             </CardHeader>
@@ -276,7 +276,7 @@ export default function MonitoringPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span>💡</span>
+                <span></span>
                 {t('adminMonitoring', 'recommendations')}
               </CardTitle>
             </CardHeader>
@@ -284,7 +284,7 @@ export default function MonitoringPage() {
               <div className="space-y-3">
                 {health.recommendations.map((rec, idx) => (
                   <div key={idx} className="flex items-start gap-3 py-2">
-                    <span className="text-primary mt-0.5">→</span>
+                    <span className="text-primary mt-0.5"></span>
                     <span className="text-foreground">{rec}</span>
                   </div>
                 ))}
@@ -298,7 +298,7 @@ export default function MonitoringPage() {
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span>🚨</span>
+                <span></span>
                 {t('adminMonitoring', 'activeAlerts')} ({alerts.total})
               </CardTitle>
             </CardHeader>
@@ -319,7 +319,7 @@ export default function MonitoringPage() {
                           onClick={() => router.push(alert.actionUrl!)}
                           className="text-sm text-primary hover:text-primary"
                         >
-                          {t('adminMonitoring', 'takeAction')} →
+                          {t('adminMonitoring', 'takeAction')} 
                         </button>
                       )}
                     </div>
@@ -334,7 +334,7 @@ export default function MonitoringPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>📊</span>
+              <span></span>
               {t('adminMonitoring', 'autoValidationStats')}
             </CardTitle>
             <CardDescription>
@@ -393,7 +393,7 @@ export default function MonitoringPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>📈</span>
+              <span></span>
               {t('adminMonitoring', 'trendsPredictions')}
             </CardTitle>
           </CardHeader>
@@ -445,7 +445,7 @@ export default function MonitoringPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>🧹</span>
+              <span></span>
               {t('adminMonitoring', 'systemCleanup')}
             </CardTitle>
           </CardHeader>

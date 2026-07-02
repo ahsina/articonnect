@@ -223,7 +223,7 @@ export default function ArtisanMissionsPage() {
                             <div className="mt-3 text-sm">
                               <span className="text-muted-foreground">{t('artisan', 'scheduledDate')}:</span>
                               <p className="font-semibold">
-                                📅 {formatDate(mission.scheduledDate)}
+                                {formatDate(mission.scheduledDate)}
                               </p>
                             </div>
                           )}
@@ -270,7 +270,7 @@ export default function ArtisanMissionsPage() {
                               size="sm"
                               onClick={() => router.push(`/client/messages?userId=${mission.client}`)}
                             >
-                              💬 {t('artisan', 'contact')}
+                              {t('artisan', 'contact')}
                             </Button>
                           </div>
                         </div>

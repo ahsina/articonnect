@@ -79,7 +79,7 @@ export default function CompanyReportsPage() {
             {t('company', 'reportsDesc') || 'View your company performance metrics'}
           </p>
         </div>
-        <Button variant="outline" onClick={handleExport}>📥 {t('company', 'exportReport') || 'Export Report'}</Button>
+        <Button variant="outline" onClick={handleExport}>{t('company', 'exportReport') || 'Export Report'}</Button>
       </div>
 
       {/* Date Range Filter */}
@@ -135,7 +135,7 @@ export default function CompanyReportsPage() {
                   {t('company', 'averageRating') || 'Average Rating'}
                 </div>
                 <div className="text-2xl font-bold text-amber-800">
-                  ⭐ {Number(stats.averageRating).toFixed(1)}
+                  {Number(stats.averageRating).toFixed(1)}
                 </div>
               </CardContent>
             </Card>
@@ -245,7 +245,7 @@ export default function CompanyReportsPage() {
             <CardContent>
               <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
-                  <div className="text-4xl mb-2">📊</div>
+                  <div className="text-4xl mb-2"></div>
                   <p>
                     {t('company', 'chartPlaceholder') || 'Chart visualization would appear here'}
                   </p>

@@ -96,15 +96,15 @@ export default function DisputesPage() {
   const getPriorityIcon = (priority: DisputePriority) => {
     switch (priority) {
       case DisputePriority.CRITICAL:
-        return '🔴';
+        return '';
       case DisputePriority.HIGH:
-        return '🟠';
+        return '';
       case DisputePriority.MEDIUM:
-        return '🟡';
+        return '';
       case DisputePriority.LOW:
-        return '🟢';
+        return '';
       default:
-        return '⚪';
+        return '';
     }
   };
 
@@ -136,7 +136,7 @@ export default function DisputesPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {t('adminDisputes', 'back')}
+              {t('adminDisputes', 'back')}
             </button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t('adminDisputes', 'title')}</h1>
@@ -323,7 +323,7 @@ export default function DisputesPage() {
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                <span className="text-6xl block mb-4">⚖️</span>
+                <span className="text-6xl block mb-4"></span>
                 <p className="text-lg font-medium">{t('adminDisputes', 'emptyTitle')}</p>
                 <p className="text-sm mt-2">{t('adminDisputes', 'emptyDesc')}</p>
               </div>
@@ -345,7 +345,7 @@ export default function DisputesPage() {
                     }}
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    ✕
+                    
                   </button>
                 </div>
               </div>

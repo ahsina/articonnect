@@ -10,14 +10,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
 const NOTIFICATION_ICONS: Record<string, string> = {
-  MISSION_UPDATE: '📋',
-  MISSION_ACCEPTED: '✅',
-  MISSION_COMPLETED: '🎉',
-  NEW_MESSAGE: '💬',
-  PAYMENT_RECEIVED: '💰',
-  REVIEW_RECEIVED: '⭐',
-  ORDER_UPDATE: '📦',
-  SYSTEM: '🔔',
+  MISSION_UPDATE: '',
+  MISSION_ACCEPTED: '',
+  MISSION_COMPLETED: '',
+  NEW_MESSAGE: '',
+  PAYMENT_RECEIVED: '',
+  REVIEW_RECEIVED: '',
+  ORDER_UPDATE: '',
+  SYSTEM: '',
 };
 
 export default function ClientNotificationsPage() {
@@ -112,7 +112,7 @@ export default function ClientNotificationsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← {t('common', 'back')}
+          {t('common', 'back')}
         </Button>
 
         <div className="flex items-center justify-between mb-6">
@@ -153,7 +153,7 @@ export default function ClientNotificationsPage() {
         {filteredNotifications.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <div className="text-6xl mb-4">🔔</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('notifications', 'noNotifications')}
               </h3>
@@ -173,7 +173,7 @@ export default function ClientNotificationsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className="text-2xl">
-                      {NOTIFICATION_ICONS[notification.type] || '🔔'}
+                      {NOTIFICATION_ICONS[notification.type] || ''}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">

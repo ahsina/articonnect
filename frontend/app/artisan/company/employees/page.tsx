@@ -291,7 +291,7 @@ export default function EmployeesPage() {
                           size="sm"
                           onClick={() => handleRemoveEmployee(employee.id)}
                         >
-                          🗑️
+                          
                         </Button>
                       )}
                     </div>

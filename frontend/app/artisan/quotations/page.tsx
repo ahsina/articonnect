@@ -335,7 +335,7 @@ export default function QuotationsPage() {
         <CardContent>
           {quotations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <div className="text-4xl mb-2">📄</div>
+              <div className="text-4xl mb-2"></div>
               <p>{t('artisan', 'noQuotations') || 'No quotations found'}</p>
               <p className="text-sm mt-2">
                 {t('artisan', 'createQuotationHint') || 'Create quotations from mission requests'}
@@ -398,7 +398,7 @@ export default function QuotationsPage() {
                             className="bg-primary hover:bg-primary/90"
                             onClick={() => openSignatureModal(quotation)}
                           >
-                            ✍️ {t('quotations', 'sign') || 'Sign'}
+                            {t('quotations', 'sign') || 'Sign'}
                           </Button>
                         )}
                         {quotation.status === 'ACCEPTED' && quotation.signedByArtisan && !quotation.signedByClient && (
@@ -407,12 +407,12 @@ export default function QuotationsPage() {
                             size="sm"
                             onClick={() => sendSignatureRequest(quotation)}
                           >
-                            📧 {t('quotations', 'requestClientSignature') || 'Request Client Signature'}
+                            {t('quotations', 'requestClientSignature') || 'Request Client Signature'}
                           </Button>
                         )}
                         {quotation.signedByArtisan && quotation.signedByClient && (
                           <Badge className="bg-green-100 text-green-700 justify-center">
-                            ✓ {t('quotations', 'fullySigned') || 'Fully Signed'}
+                            {t('quotations', 'fullySigned') || 'Fully Signed'}
                           </Badge>
                         )}
                       </div>
@@ -462,7 +462,7 @@ export default function QuotationsPage() {
                 onClick={closeSignatureModal}
                 className="text-muted-foreground hover:text-foreground"
               >
-                ✕
+                
               </button>
             </div>
 

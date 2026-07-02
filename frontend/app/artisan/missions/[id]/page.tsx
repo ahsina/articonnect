@@ -488,7 +488,7 @@ export default function MissionDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => router.push('/artisan/missions')}>
-            ← {t('common', 'back') || 'Back'}
+            {t('common', 'back') || 'Back'}
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{mission.title}</h1>
@@ -524,7 +524,7 @@ export default function MissionDetailPage() {
                       <div className={`absolute left-1/2 top-[13px] h-0.5 w-full ${active > n ? 'bg-primary' : 'bg-border'}`} />
                     )}
                     <div className={`font-display relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${done ? 'bg-primary text-primary-foreground' : now ? 'bg-primary text-primary-foreground ring-4 ring-muted' : 'bg-muted text-muted-foreground'}`}>
-                      {done ? '✓' : n}
+                      {done ? '' : n}
                     </div>
                     <div className={`font-display mt-2 text-[11px] font-bold ${active >= n ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</div>
                   </div>
@@ -684,7 +684,7 @@ export default function MissionDetailPage() {
                 </div>
                 {mission.distance && (
                   <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
-                    <span className="text-2xl">📍</span>
+                    <span className="text-2xl"></span>
                     <div>
                       <div className="font-medium text-primary">
                         {mission.distance.toFixed(1)} km away
@@ -750,7 +750,7 @@ export default function MissionDetailPage() {
             <Card className="md:col-span-2 border-amber-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
+                  {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
                 </CardTitle>
                 <CardDescription>
                   {t('negotiations', 'artisanNegotiationDesc') || 'Proposez un prix au client pour cette mission'}
@@ -1114,7 +1114,7 @@ export default function MissionDetailPage() {
                           </>
                         ) : (
                           <>
-                            <span>📷</span>
+                            <span></span>
                             {t('missions', 'addPhotos') || 'Ajouter des photos'}
                           </>
                         )}
@@ -1142,7 +1142,7 @@ export default function MissionDetailPage() {
                             onClick={() => removeAfterPhoto(index)}
                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                           >
-                            ✕
+                            
                           </button>
                         </div>
                       ))}

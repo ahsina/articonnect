@@ -227,7 +227,7 @@ export default function ProductDetailsPage() {
     });
 
     // Show success message and option to go to cart
-    if (confirm(`✅ ${t('marketplace', 'productAddedToCart')}\n\n${t('marketplace', 'goToCart')}`)) {
+    if (confirm(`${t('marketplace', 'productAddedToCart')}\n\n${t('marketplace', 'goToCart')}`)) {
       router.push('/client/cart');
     }
   };
@@ -331,8 +331,8 @@ export default function ProductDetailsPage() {
             <div className="flex items-center gap-2 mb-6">
               <div className="flex items-center">
                 <span className="text-yellow-500 text-xl">
-                  {'★'.repeat(Math.round(averageRating))}
-                  {'☆'.repeat(5 - Math.round(averageRating))}
+                  {''.repeat(Math.round(averageRating))}
+                  {''.repeat(5 - Math.round(averageRating))}
                 </span>
                 <span className="text-muted-foreground ml-2">
                   {averageRating.toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
@@ -409,7 +409,7 @@ export default function ProductDetailsPage() {
             {getCurrentStock() < 5 && (
               <div className="mb-6 p-3 bg-amber-100 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800">
-                  ⚠️ {t('marketplace', 'stockLimited')} {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'exemplarPlural') : t('marketplace', 'exemplar')}{' '}
+                  {t('marketplace', 'stockLimited')} {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'exemplarPlural') : t('marketplace', 'exemplar')}{' '}
                   {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}.
                 </p>
               </div>
@@ -421,7 +421,7 @@ export default function ProductDetailsPage() {
                 {t('marketplace', 'addToCart')} - {(getCurrentPrice() * quantity).toFixed(2)}€
               </Button>
               <Button variant="outline" className="w-full" size="lg">
-                💬 {t('marketplace', 'contactForCustomization')}
+                {t('marketplace', 'contactForCustomization')}
               </Button>
             </div>
 
@@ -437,7 +437,7 @@ export default function ProductDetailsPage() {
                   <div className="flex-1">
                     <p className="font-semibold">{product.artisan.companyName}</p>
                     <p className="text-sm text-muted-foreground">
-                      {product.artisan.city} • ★ {product.artisan.rating}
+                      {product.artisan.city} • {product.artisan.rating}
                     </p>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleContactArtisan}>
@@ -495,8 +495,8 @@ export default function ProductDetailsPage() {
                             </div>
                             <div className="flex items-center">
                               <span className="text-yellow-500 font-semibold">
-                                {'★'.repeat(review.rating)}
-                                {'☆'.repeat(5 - review.rating)}
+                                {''.repeat(review.rating)}
+                                {''.repeat(5 - review.rating)}
                               </span>
                             </div>
                           </div>
@@ -543,7 +543,7 @@ export default function ProductDetailsPage() {
               className="absolute top-4 right-4 text-white text-2xl"
               onClick={() => setImageModalOpen(false)}
             >
-              ✕
+              
             </button>
             <img
               src={product.images[selectedImage]}

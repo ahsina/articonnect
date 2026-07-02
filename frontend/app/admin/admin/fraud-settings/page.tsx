@@ -27,7 +27,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'multi-account',
     titleKey: 'multiAccountTitle',
     descriptionKey: 'multiAccountDesc',
-    icon: '👥',
+    icon: '',
     color: 'blue',
     thresholdKey: 'multiAccountRiskThreshold',
     thresholdLabelKey: 'riskThreshold',
@@ -37,7 +37,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'review-fraud',
     titleKey: 'reviewFraudTitle',
     descriptionKey: 'reviewFraudDesc',
-    icon: '⭐',
+    icon: '',
     color: 'yellow',
     thresholdKey: 'reviewFraudScoreThreshold',
     thresholdLabelKey: 'fraudScoreThreshold',
@@ -49,7 +49,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'payout-fraud',
     titleKey: 'payoutFraudTitle',
     descriptionKey: 'payoutFraudDesc',
-    icon: '💳',
+    icon: '',
     color: 'green',
     thresholdKey: 'payoutRiskThreshold',
     thresholdLabelKey: 'riskThreshold',
@@ -61,7 +61,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'price-anomaly',
     titleKey: 'priceAnomalyTitle',
     descriptionKey: 'priceAnomalyDesc',
-    icon: '📊',
+    icon: '',
     color: 'purple',
     thresholdKey: 'priceDeviationThreshold',
     thresholdLabelKey: 'deviationThreshold',
@@ -73,7 +73,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'refund-abuse',
     titleKey: 'refundAbuseTitle',
     descriptionKey: 'refundAbuseDesc',
-    icon: '↩️',
+    icon: '',
     color: 'red',
     thresholdKey: 'refundAbuseScoreThreshold',
     thresholdLabelKey: 'abuseScoreThreshold',
@@ -85,7 +85,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'session-anomaly',
     titleKey: 'sessionAnomalyTitle',
     descriptionKey: 'sessionAnomalyDesc',
-    icon: '🔐',
+    icon: '',
     color: 'indigo',
     autoActionKey: 'sessionAutoLogoutEnabled',
     autoActionLabelKey: 'sessionAutoLogout',
@@ -95,7 +95,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'kyc',
     titleKey: 'kycTitle',
     descriptionKey: 'kycDesc',
-    icon: '🪪',
+    icon: '',
     color: 'teal',
     thresholdKey: 'kycSingleTransactionThreshold',
     thresholdLabelKey: 'singleTransactionLimit',
@@ -107,7 +107,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'bot-detection',
     titleKey: 'botTitle',
     descriptionKey: 'botDesc',
-    icon: '🤖',
+    icon: '',
     color: 'orange',
     thresholdKey: 'botScoreThreshold',
     thresholdLabelKey: 'botScoreThreshold',
@@ -119,7 +119,7 @@ const fraudFeatures: FraudFeature[] = [
     toggleKey: 'business-verification',
     titleKey: 'businessVerificationTitle',
     descriptionKey: 'businessVerificationDesc',
-    icon: '🏢',
+    icon: '',
     color: 'gray',
     autoActionKey: 'businessVerificationAutoReject',
     autoActionLabelKey: 'businessVerificationAutoReject',
@@ -256,7 +256,7 @@ export default function FraudSettingsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {t('adminFraudSettings', 'back')}
+              {t('adminFraudSettings', 'back')}
             </button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t('adminFraudSettings', 'pageTitle')}</h1>
@@ -285,7 +285,7 @@ export default function FraudSettingsPage() {
                     {fraudFeatures.filter((f) => config[f.key] as boolean).length}
                   </p>
                 </div>
-                <span className="text-4xl">🛡️</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -298,7 +298,7 @@ export default function FraudSettingsPage() {
                     {fraudFeatures.filter((f) => !(config[f.key] as boolean)).length}
                   </p>
                 </div>
-                <span className="text-4xl">⏸️</span>
+                <span className="text-4xl">⏸</span>
               </div>
             </CardContent>
           </Card>
@@ -311,7 +311,7 @@ export default function FraudSettingsPage() {
                     {new Date(config.updatedAt).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
-                <span className="text-4xl">🕐</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -395,7 +395,7 @@ export default function FraudSettingsPage() {
         <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              <span className="text-2xl">📧</span>
+              <span className="text-2xl"></span>
               {t('adminFraudSettings', 'alertNotifications')}
             </CardTitle>
             <CardDescription>

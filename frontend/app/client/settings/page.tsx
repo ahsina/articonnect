@@ -170,7 +170,7 @@ export default function ClientSettingsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← {t('common', 'back')}
+          {t('common', 'back')}
         </Button>
 
         <h1 className="text-3xl font-bold text-foreground mb-6">{t('settings', 'title')}</h1>
@@ -195,7 +195,7 @@ export default function ClientSettingsPage() {
                       : 'border-border hover:border-border'
                   }`}
                 >
-                  <div className="text-2xl mb-2">👤</div>
+                  <div className="text-2xl mb-2"></div>
                   <div className="font-semibold">{t('settings', 'individual')}</div>
                   <div className="text-sm text-muted-foreground">{t('settings', 'individualDescription')}</div>
                 </button>
@@ -208,7 +208,7 @@ export default function ClientSettingsPage() {
                       : 'border-border hover:border-border'
                   }`}
                 >
-                  <div className="text-2xl mb-2">🏢</div>
+                  <div className="text-2xl mb-2"></div>
                   <div className="font-semibold">{t('settings', 'professional')}</div>
                   <div className="text-sm text-muted-foreground">{t('settings', 'professionalDescription')}</div>
                 </button>
@@ -412,7 +412,7 @@ export default function ClientSettingsPage() {
                     <div className="font-medium">{t('settings', 'twoFactorAuth')}</div>
                     <div className="text-sm text-muted-foreground">{t('settings', 'twoFactorAuthDesc')}</div>
                   </div>
-                  <span className="text-muted-foreground">→</span>
+                  <span className="text-muted-foreground"></span>
                 </div>
               </Link>
 
@@ -422,7 +422,7 @@ export default function ClientSettingsPage() {
                     <div className="font-medium">{t('settings', 'changePassword')}</div>
                     <div className="text-sm text-muted-foreground">{t('settings', 'changePasswordDesc')}</div>
                   </div>
-                  <span className="text-muted-foreground">→</span>
+                  <span className="text-muted-foreground"></span>
                 </div>
               </Link>
             </CardContent>

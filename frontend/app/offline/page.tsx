@@ -34,7 +34,7 @@ export default function OfflinePage() {
     <div className="min-h-screen bg-muted flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="bg-card rounded-2xl shadow-lg p-8 text-center">
-          <div className="text-6xl mb-6">📡</div>
+          <div className="text-6xl mb-6"></div>
 
           <h1 className="text-2xl font-bold text-foreground mb-2">
             {isOnline
@@ -80,23 +80,23 @@ export default function OfflinePage() {
               </h3>
               <ul className="text-sm text-muted-foreground space-y-2">
                 <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
+                  <span className="text-green-500"></span>
                   {t('offlinePage', 'featSavedMissions') || 'Consulter vos missions enregistrées'}
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
+                  <span className="text-green-500"></span>
                   {t('offlinePage', 'featProfile') || 'Voir votre profil'}
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
+                  <span className="text-green-500"></span>
                   {t('offlinePage', 'featCachedMessages') || 'Accéder aux messages en cache'}
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-muted-foreground">✗</span>
+                  <span className="text-muted-foreground"></span>
                   <span className="text-muted-foreground">{t('offlinePage', 'featSendMessages') || 'Envoyer de nouveaux messages'}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-muted-foreground">✗</span>
+                  <span className="text-muted-foreground"></span>
                   <span className="text-muted-foreground">{t('offlinePage', 'featAcceptMissions') || 'Accepter des missions'}</span>
                 </li>
               </ul>

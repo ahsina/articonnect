@@ -80,7 +80,7 @@ export default function ClientFavoritesPage() {
               star <= rating ? 'text-amber-800' : 'text-gray-300'
             }`}
           >
-            ★
+            
           </span>
         ))}
         <span className="ml-1 text-sm text-muted-foreground">({rating.toFixed(1)})</span>
@@ -100,7 +100,7 @@ export default function ClientFavoritesPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← {t('common', 'back')}
+          {t('common', 'back')}
         </Button>
 
         <div className="flex items-center justify-between mb-6">
@@ -118,7 +118,7 @@ export default function ClientFavoritesPage() {
         {favorites.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <div className="text-6xl mb-4">❤️</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('favorites', 'noFavorites')}
               </h3>
@@ -158,7 +158,7 @@ export default function ClientFavoritesPage() {
                         className="text-red-500 hover:text-red-600 text-xl"
                         title={t('favorites', 'remove')}
                       >
-                        ❤️
+                        
                       </button>
                     </div>
 
@@ -171,7 +171,7 @@ export default function ClientFavoritesPage() {
 
                     {artisan.artisanProfile.verified && (
                       <Badge className="bg-green-100 text-green-700 mb-3">
-                        ✓ {t('artisan', 'verified')}
+                        {t('artisan', 'verified')}
                       </Badge>
                     )}
 

@@ -83,14 +83,14 @@ export default function MissionPaymentPage() {
   return (
     <div className="min-h-screen bg-background py-10">
       <div className="max-w-lg mx-auto px-4">
-        <button onClick={() => router.back()} className="text-sm text-muted-foreground mb-4">← {t('clientPayment', 'back')}</button>
+        <button onClick={() => router.back()} className="text-sm text-muted-foreground mb-4">{t('clientPayment', 'back')}</button>
         <div className="bg-card rounded-2xl border border-border shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.05)] p-6">
           <h1 className="font-display text-2xl font-extrabold mb-1">{t('clientPayment', 'title')}</h1>
           <p className="text-muted-foreground mb-4">{t('clientPayment', 'securedByStripe')}</p>
 
           {/* Réassurance séquestre */}
           <div className="mb-6 flex items-start gap-2.5 rounded-xl bg-green-100 p-3.5 text-sm text-green-800">
-            <span className="text-base leading-none">🔒</span>
+            <span className="text-base leading-none"></span>
             <span className="font-medium">
               {t('clientPayment', 'escrowNotice') || 'Paiement sécurisé sous séquestre — l’artisan n’est payé qu’une fois le travail validé par vous.'}
             </span>
@@ -100,7 +100,7 @@ export default function MissionPaymentPage() {
 
           {success ? (
             <div className="py-8 text-center">
-              <div className="text-green-600 text-4xl mb-2">✓</div>
+              <div className="text-green-600 text-4xl mb-2"></div>
               <p className="font-semibold text-foreground">{t('clientPayment', 'paymentDone')}</p>
               <p className="text-muted-foreground text-sm">{t('clientPayment', 'redirecting')}</p>
             </div>

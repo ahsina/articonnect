@@ -85,7 +85,7 @@ export default function StripeOnboardingPage() {
             </div>
             {status?.onboarded ? (
               <Badge className="bg-green-100 text-green-700">
-                ✓ {t('artisan', 'active') || 'Active'}
+                {t('artisan', 'active') || 'Active'}
               </Badge>
             ) : status?.accountId ? (
               <Badge className="bg-amber-100 text-amber-800">
@@ -104,7 +104,7 @@ export default function StripeOnboardingPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="p-4 bg-green-100 rounded-lg">
                   <div className="flex items-center gap-2 text-green-700">
-                    <span className="text-xl">✓</span>
+                    <span className="text-xl"></span>
                     <span className="font-medium">
                       {t('artisan', 'chargesEnabled') || 'Charges Enabled'}
                     </span>
@@ -115,7 +115,7 @@ export default function StripeOnboardingPage() {
                 </div>
                 <div className="p-4 bg-green-100 rounded-lg">
                   <div className="flex items-center gap-2 text-green-700">
-                    <span className="text-xl">✓</span>
+                    <span className="text-xl"></span>
                     <span className="font-medium">
                       {t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
                     </span>
@@ -153,7 +153,7 @@ export default function StripeOnboardingPage() {
                   <div
                     className={`flex items-center gap-2 ${status.chargesEnabled ? 'text-green-700' : 'text-muted-foreground'}`}
                   >
-                    <span className="text-xl">{status.chargesEnabled ? '✓' : '○'}</span>
+                    <span className="text-xl">{status.chargesEnabled ? '' : '○'}</span>
                     <span className="font-medium">
                       {t('artisan', 'chargesEnabled') || 'Charges Enabled'}
                     </span>
@@ -165,7 +165,7 @@ export default function StripeOnboardingPage() {
                   <div
                     className={`flex items-center gap-2 ${status.payoutsEnabled ? 'text-green-700' : 'text-muted-foreground'}`}
                   >
-                    <span className="text-xl">{status.payoutsEnabled ? '✓' : '○'}</span>
+                    <span className="text-xl">{status.payoutsEnabled ? '' : '○'}</span>
                     <span className="font-medium">
                       {t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
                     </span>

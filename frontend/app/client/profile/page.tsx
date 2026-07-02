@@ -230,7 +230,7 @@ export default function ClientProfilePage() {
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" onClick={() => router.back()}>
-            ← {t('common', 'back')}
+            {t('common', 'back')}
           </Button>
         </div>
 

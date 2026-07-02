@@ -219,7 +219,7 @@ export default function SpecialtiesPage() {
                   <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'totalSpecialties')}</p>
                   <p className="text-3xl font-bold text-primary">{specialties.length}</p>
                 </div>
-                <span className="text-4xl">🛠️</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -231,7 +231,7 @@ export default function SpecialtiesPage() {
                   <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'categories')}</p>
                   <p className="text-3xl font-bold text-purple-600">{categories.length}</p>
                 </div>
-                <span className="text-4xl">📁</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -245,7 +245,7 @@ export default function SpecialtiesPage() {
                     {specialties.filter((s) => s.isActive).length}
                   </p>
                 </div>
-                <span className="text-4xl">✅</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -298,7 +298,7 @@ export default function SpecialtiesPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{specialty.icon || '🔧'}</span>
+                        <span className="text-2xl">{specialty.icon || ''}</span>
                         <div>
                           <h4 className="font-medium text-foreground">{specialty.name}</h4>
                           {specialty.description && (
@@ -317,7 +317,7 @@ export default function SpecialtiesPage() {
                           className="p-1 text-primary hover:text-primary"
                           title={t('adminSpecialties', 'edit')}
                         >
-                          ✏️
+                          
                         </button>
                         <button
                           onClick={() => {
@@ -327,7 +327,7 @@ export default function SpecialtiesPage() {
                           className="p-1 text-red-600 hover:text-red-700"
                           title={t('adminSpecialties', 'delete')}
                         >
-                          🗑️
+                          
                         </button>
                       </div>
                     </div>
@@ -353,7 +353,7 @@ export default function SpecialtiesPage() {
         {filteredSpecialties.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
-              <span className="text-4xl block mb-2">🛠️</span>
+              <span className="text-4xl block mb-2"></span>
               <p>{t('adminSpecialties', 'noSpecialtiesFound')}</p>
             </CardContent>
           </Card>
@@ -414,7 +414,7 @@ export default function SpecialtiesPage() {
                       type="text"
                       value={formData.icon}
                       onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      placeholder="e.g., 🔧"
+                      placeholder="e.g., "
                       className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>

@@ -163,7 +163,7 @@ export default function EmployeeShiftsPage() {
             variant="outline"
             onClick={() => router.push(`/artisan/company/employees/${employeeId}`)}
           >
-            ← {t('common', 'back') || 'Back'}
+            {t('common', 'back') || 'Back'}
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
@@ -184,7 +184,7 @@ export default function EmployeeShiftsPage() {
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => navigateWeek('prev')}>
-              ← {t('company', 'previousWeek') || 'Previous Week'}
+              {t('company', 'previousWeek') || 'Previous Week'}
             </Button>
             <div className="text-center">
               <div className="font-semibold text-lg">
@@ -195,7 +195,7 @@ export default function EmployeeShiftsPage() {
               </div>
             </div>
             <Button variant="outline" onClick={() => navigateWeek('next')}>
-              {t('company', 'nextWeek') || 'Next Week'} →
+              {t('company', 'nextWeek') || 'Next Week'} 
             </Button>
           </div>
         </CardContent>

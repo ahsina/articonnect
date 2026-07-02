@@ -180,7 +180,7 @@ export default function ClientMissionsPage() {
         {filteredMissions.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <div className="text-6xl mb-4">📋</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('missions', 'noMissions')}
               </h3>
@@ -255,7 +255,7 @@ export default function ClientMissionsPage() {
                             router.push(`/client/payment/${mission.id}`);
                           }}
                         >
-                          💳 Payer
+                          Payer
                         </Button>
                       )}
                     </div>

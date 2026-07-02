@@ -114,13 +114,13 @@ export default function ModerationPage() {
 
   const getReasonIcon = (reason: string) => {
     const iconMap: Record<string, string> = {
-      SPAM: '⚠️',
-      INAPPROPRIATE: '🚫',
-      FRAUD: '🔴',
-      OFFENSIVE: '😡',
-      OTHER: '❓',
+      SPAM: '',
+      INAPPROPRIATE: '',
+      FRAUD: '',
+      OFFENSIVE: '',
+      OTHER: '',
     };
-    return iconMap[reason] || '📝';
+    return iconMap[reason] || '';
   };
 
   const getTypeLabel = (type: string) => {
@@ -285,7 +285,7 @@ export default function ModerationPage() {
                     }}
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    ✕
+                    
                   </button>
                 </div>
 

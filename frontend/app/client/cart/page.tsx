@@ -79,7 +79,7 @@ export default function CartPage() {
           </h1>
           <Card>
             <CardContent className="p-12 text-center">
-              <div className="text-6xl mb-4">🛒</div>
+              <div className="text-6xl mb-4"></div>
               <p className="text-xl text-muted-foreground mb-6">
                 {t('cart', 'emptyCart')}
               </p>

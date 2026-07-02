@@ -120,9 +120,9 @@ export default function VerificationsPage() {
   }
 
   const tabs: { id: TabType; label: string; icon: string }[] = [
-    { id: 'unverified', label: t('adminVerifications', 'tabUnverified'), icon: '❓' },
-    { id: 'reverification', label: t('adminVerifications', 'tabReverification'), icon: '🔄' },
-    { id: 'kycLookup', label: t('adminVerifications', 'tabKycLookup'), icon: '🔍' },
+    { id: 'unverified', label: t('adminVerifications', 'tabUnverified'), icon: '' },
+    { id: 'reverification', label: t('adminVerifications', 'tabReverification'), icon: '' },
+    { id: 'kycLookup', label: t('adminVerifications', 'tabKycLookup'), icon: '' },
   ];
 
   return (
@@ -168,7 +168,7 @@ export default function VerificationsPage() {
                   <p className="text-sm text-muted-foreground">{t('adminVerifications', 'tabUnverified')}</p>
                   <p className="text-3xl font-bold text-yellow-600">{unverifiedArtisans.length}</p>
                 </div>
-                <span className="text-4xl">❓</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -182,7 +182,7 @@ export default function VerificationsPage() {
                     {reverificationNeeded.length}
                   </p>
                 </div>
-                <span className="text-4xl">🔄</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -196,7 +196,7 @@ export default function VerificationsPage() {
                     {unverifiedArtisans.length + reverificationNeeded.length}
                   </p>
                 </div>
-                <span className="text-4xl">📋</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -315,7 +315,7 @@ export default function VerificationsPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <span className="text-4xl block mb-2">✅</span>
+                  <span className="text-4xl block mb-2"></span>
                   <p>{t('adminVerifications', 'allVerified')}</p>
                 </div>
               )}
@@ -405,7 +405,7 @@ export default function VerificationsPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <span className="text-4xl block mb-2">✅</span>
+                  <span className="text-4xl block mb-2"></span>
                   <p>{t('adminVerifications', 'noReverification')}</p>
                 </div>
               )}
@@ -487,7 +487,7 @@ export default function VerificationsPage() {
                             className="flex items-center justify-between p-3 bg-background rounded-lg"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">📄</span>
+                              <span className="text-2xl"></span>
                               <div>
                                 <p className="font-medium text-foreground">{doc.type}</p>
                                 <p className="text-sm text-muted-foreground">

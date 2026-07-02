@@ -50,14 +50,14 @@ function ArtisanProfileContent() {
   });
 
   const SPECIALTIES = [
-    { id: 'plomberie', name: t('artisan', 'plumbing') || 'Plumbing', icon: '🔧' },
-    { id: 'electricite', name: t('artisan', 'electricity') || 'Electrical', icon: '⚡' },
-    { id: 'peinture', name: t('artisan', 'painting') || 'Painting', icon: '🎨' },
-    { id: 'menuiserie', name: t('artisan', 'carpentry') || 'Carpentry', icon: '🪚' },
-    { id: 'maconnerie', name: t('artisan', 'masonry') || 'Masonry', icon: '🧱' },
-    { id: 'jardinage', name: t('artisan', 'gardening') || 'Gardening', icon: '🌿' },
-    { id: 'climatisation', name: t('artisan', 'airConditioning') || 'HVAC', icon: '❄️' },
-    { id: 'serrurerie', name: t('artisan', 'locksmith') || 'Locksmith', icon: '🔐' },
+    { id: 'plomberie', name: t('artisan', 'plumbing') || 'Plumbing', icon: '' },
+    { id: 'electricite', name: t('artisan', 'electricity') || 'Electrical', icon: '' },
+    { id: 'peinture', name: t('artisan', 'painting') || 'Painting', icon: '' },
+    { id: 'menuiserie', name: t('artisan', 'carpentry') || 'Carpentry', icon: '' },
+    { id: 'maconnerie', name: t('artisan', 'masonry') || 'Masonry', icon: '' },
+    { id: 'jardinage', name: t('artisan', 'gardening') || 'Gardening', icon: '' },
+    { id: 'climatisation', name: t('artisan', 'airConditioning') || 'HVAC', icon: '' },
+    { id: 'serrurerie', name: t('artisan', 'locksmith') || 'Locksmith', icon: '' },
   ];
 
   useEffect(() => {
@@ -79,19 +79,19 @@ function ArtisanProfileContent() {
       } else {
         // Use demo badges if API not available
         setBadges([
-          { id: '1', name: 'First Mission', description: 'Completed your first mission', icon: '🎯', earnedAt: '2024-01-15', type: 'MILESTONE' },
-          { id: '2', name: 'Top Rated', description: 'Maintained 4.5+ rating', icon: '⭐', earnedAt: '2024-02-20', type: 'ACHIEVEMENT' },
-          { id: '3', name: '10 Missions', description: 'Completed 10 missions', icon: '🏆', earnedAt: '2024-03-10', type: 'MILESTONE' },
-          { id: '4', name: 'Quick Responder', description: 'Average response time under 2 hours', icon: '⚡', earnedAt: '2024-04-05', type: 'ACHIEVEMENT' },
+          { id: '1', name: 'First Mission', description: 'Completed your first mission', icon: '', earnedAt: '2024-01-15', type: 'MILESTONE' },
+          { id: '2', name: 'Top Rated', description: 'Maintained 4.5+ rating', icon: '', earnedAt: '2024-02-20', type: 'ACHIEVEMENT' },
+          { id: '3', name: '10 Missions', description: 'Completed 10 missions', icon: '', earnedAt: '2024-03-10', type: 'MILESTONE' },
+          { id: '4', name: 'Quick Responder', description: 'Average response time under 2 hours', icon: '', earnedAt: '2024-04-05', type: 'ACHIEVEMENT' },
         ]);
       }
     } catch (error) {
       console.log('Using demo badges');
       setBadges([
-        { id: '1', name: 'First Mission', description: 'Completed your first mission', icon: '🎯', earnedAt: '2024-01-15', type: 'MILESTONE' },
-        { id: '2', name: 'Top Rated', description: 'Maintained 4.5+ rating', icon: '⭐', earnedAt: '2024-02-20', type: 'ACHIEVEMENT' },
-        { id: '3', name: '10 Missions', description: 'Completed 10 missions', icon: '🏆', earnedAt: '2024-03-10', type: 'MILESTONE' },
-        { id: '4', name: 'Quick Responder', description: 'Average response time under 2 hours', icon: '⚡', earnedAt: '2024-04-05', type: 'ACHIEVEMENT' },
+        { id: '1', name: 'First Mission', description: 'Completed your first mission', icon: '', earnedAt: '2024-01-15', type: 'MILESTONE' },
+        { id: '2', name: 'Top Rated', description: 'Maintained 4.5+ rating', icon: '', earnedAt: '2024-02-20', type: 'ACHIEVEMENT' },
+        { id: '3', name: '10 Missions', description: 'Completed 10 missions', icon: '', earnedAt: '2024-03-10', type: 'MILESTONE' },
+        { id: '4', name: 'Quick Responder', description: 'Average response time under 2 hours', icon: '', earnedAt: '2024-04-05', type: 'ACHIEVEMENT' },
       ]);
     }
   };
@@ -486,7 +486,7 @@ function ArtisanProfileContent() {
             onClick={handleToggleAvailability}
             className={profile.available ? 'bg-green-600 hover:bg-green-700' : ''}
           >
-            {profile.available ? `✓ ${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
+            {profile.available ? `${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
           </Button>
         </div>
       </div>
@@ -655,7 +655,7 @@ function ArtisanProfileContent() {
                   className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-green-100 border-green-500/30' : 'bg-amber-100 border-amber-200'}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{profile.businessVerified ? '✓' : '⏳'}</span>
+                    <span className="text-2xl">{profile.businessVerified ? '' : '⏳'}</span>
                     <div>
                       <div className="font-medium">
                         {t('artisan', 'businessVerification') || 'Business Verification'}
@@ -672,7 +672,7 @@ function ArtisanProfileContent() {
                   className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-green-100 border-green-500/30' : 'bg-amber-100 border-amber-200'}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{profile.stripeOnboarded ? '✓' : '⏳'}</span>
+                    <span className="text-2xl">{profile.stripeOnboarded ? '' : '⏳'}</span>
                     <div>
                       <div className="font-medium">
                         {t('artisan', 'paymentSetup') || 'Payment Setup'}
@@ -690,7 +690,7 @@ function ArtisanProfileContent() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
-                      {profile.certifications && profile.certifications.length > 0 ? '✓' : '📜'}
+                      {profile.certifications && profile.certifications.length > 0 ? '' : ''}
                     </span>
                     <div>
                       <div className="font-medium">
@@ -722,7 +722,7 @@ function ArtisanProfileContent() {
             <CardContent>
               {badges.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <div className="text-4xl mb-4">🏅</div>
+                  <div className="text-4xl mb-4"></div>
                   <p>{t('artisan', 'noBadges') || 'No badges earned yet'}</p>
                   <p className="text-sm mt-2">
                     {t('artisan', 'completeMissions') || 'Complete missions and maintain high ratings to earn badges'}
@@ -762,7 +762,7 @@ function ArtisanProfileContent() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
-                  <div className="text-3xl opacity-50">🌟</div>
+                  <div className="text-3xl opacity-50"></div>
                   <div className="flex-1">
                     <div className="font-medium text-foreground">{t('artisanProfile', 'badge50Missions')}</div>
                     <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badge50MissionsDesc')}</div>
@@ -773,7 +773,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
-                  <div className="text-3xl opacity-50">💎</div>
+                  <div className="text-3xl opacity-50"></div>
                   <div className="flex-1">
                     <div className="font-medium text-foreground">{t('artisanProfile', 'badgePerfectRating')}</div>
                     <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badgePerfectRatingDesc')}</div>
@@ -783,7 +783,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-3 bg-background rounded-lg">
-                  <div className="text-3xl opacity-50">🔥</div>
+                  <div className="text-3xl opacity-50"></div>
                   <div className="flex-1">
                     <div className="font-medium text-foreground">{t('artisanProfile', 'badgeVerifiedExpert')}</div>
                     <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badgeVerifiedExpertDesc')}</div>
@@ -959,7 +959,7 @@ function ArtisanProfileContent() {
 
               <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">ℹ️</span>
+                  <span className="text-2xl">ℹ</span>
                   <div>
                     <div className="font-medium text-primary">
                       {t('artisan', 'updateBusinessInfo') || 'Need to update business information?'}

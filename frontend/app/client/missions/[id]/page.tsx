@@ -433,7 +433,7 @@ export default function MissionDetailsPage() {
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            ← {t('common', 'back')}
+            {t('common', 'back')}
           </Button>
           <div className="flex items-start justify-between">
             <div>
@@ -441,7 +441,7 @@ export default function MissionDetailsPage() {
                 <h1 className="text-3xl font-bold text-foreground">{mission.title}</h1>
                 {isProfessional && (
                   <Badge variant="outline" className="text-primary border-blue-300">
-                    🏢 Pro
+                    Pro
                   </Badge>
                 )}
               </div>
@@ -473,7 +473,7 @@ export default function MissionDetailsPage() {
                         <div className={`absolute left-1/2 top-[13px] h-0.5 w-full ${active > n ? 'bg-primary' : 'bg-border'}`} />
                       )}
                       <div className={`font-display relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${done ? 'bg-primary text-primary-foreground' : now ? 'bg-primary text-primary-foreground ring-4 ring-muted' : 'bg-muted text-muted-foreground'}`}>
-                        {done ? '✓' : n}
+                        {done ? '' : n}
                       </div>
                       <div className={`font-display mt-2 text-[11px] font-bold ${active >= n ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</div>
                     </div>
@@ -503,7 +503,7 @@ export default function MissionDetailsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    📷 {t('missions', 'photos') || 'Photos'}
+                    {t('missions', 'photos') || 'Photos'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -565,7 +565,7 @@ export default function MissionDetailsPage() {
               <Card className="border-primary/20 bg-primary/10/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-primary">
-                    🏢 {t('missions', 'professionalInfo') || 'Informations professionnelles'}
+                    {t('missions', 'professionalInfo') || 'Informations professionnelles'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -706,7 +706,7 @@ export default function MissionDetailsPage() {
               <Card className="border-amber-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    💰 {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
+                    {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
                   </CardTitle>
                   <CardDescription>
                     {t('negotiations', 'negotiationDesc') || 'Échangez avec l\'artisan pour convenir d\'un prix'}
@@ -738,7 +738,7 @@ export default function MissionDetailsPage() {
                   {/* État rassurant : en attente d'offres (crédibilité de l'offre) */}
                   {negotiations.length === 0 && (mission.status === 'PENDING' || mission.status === 'NEGOTIATING') && (
                     <div className="rounded-2xl border border-dashed border-border bg-muted/50 p-6 text-center">
-                      <div className="text-3xl">📣</div>
+                      <div className="text-3xl"></div>
                       <p className="mt-2 font-display font-bold text-foreground">
                         {t('negotiations', 'waitingTitle') || 'Votre demande est diffusée aux artisans vérifiés à proximité'}
                       </p>
@@ -796,12 +796,12 @@ export default function MissionDetailsPage() {
                                             `${neg.sender?.firstName ?? ''} ${neg.sender?.lastName ?? ''}`.trim() ||
                                             (t('negotiations', 'artisanOffer') || "Offre de l'artisan")}
                                           {neg.sender?.artisanProfile?.businessVerified && (
-                                            <span className="ml-1 text-green-600">✓</span>
+                                            <span className="ml-1 text-green-600"></span>
                                           )}
                                         </div>
                                         {neg.sender?.artisanProfile?.rating != null && (
                                           <div className="text-[11px] font-semibold text-muted-foreground">
-                                            <span className="text-amber-500">★</span> {Number(neg.sender.artisanProfile.rating).toFixed(1)}
+                                            <span className="text-amber-500"></span> {Number(neg.sender.artisanProfile.rating).toFixed(1)}
                                             {neg.sender?.artisanProfile?.reviewCount ? ` (${neg.sender.artisanProfile.reviewCount})` : ''}
                                           </div>
                                         )}
@@ -966,7 +966,7 @@ export default function MissionDetailsPage() {
               <Card className="border-green-200 bg-green-100/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-700">
-                    ✅ {t('validation', 'workCompleted') || 'Travail terminé'}
+                    {t('validation', 'workCompleted') || 'Travail terminé'}
                   </CardTitle>
                   <CardDescription>
                     {t('validation', 'validateDesc') || 'L\'artisan a terminé le travail. Vérifiez et validez.'}
@@ -1077,7 +1077,7 @@ export default function MissionDetailsPage() {
                 <div className="space-y-4">
                   <div className="flex gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      ✓
+                      
                     </div>
                     <div>
                       <p className="font-medium text-foreground">
@@ -1090,7 +1090,7 @@ export default function MissionDetailsPage() {
                   {mission.acceptedAt && (
                     <div className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                        ✓
+                        
                       </div>
                       <div>
                         <p className="font-medium text-foreground">
@@ -1104,7 +1104,7 @@ export default function MissionDetailsPage() {
                   {mission.completedAt && (
                     <div className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                        ✓
+                        
                       </div>
                       <div>
                         <p className="font-medium text-foreground">
@@ -1127,7 +1127,7 @@ export default function MissionDetailsPage() {
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
-                ⚠️ {t('cancellation', 'cancelMission') || 'Annuler la mission'}
+                {t('cancellation', 'cancelMission') || 'Annuler la mission'}
               </CardTitle>
               <CardDescription>
                 {t('cancellation', 'cancelWarning') ||

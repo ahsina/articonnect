@@ -271,7 +271,7 @@ export default function ReputationPage() {
             <CardContent>
               {!reputation ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <span className="text-4xl block mb-2">🔍</span>
+                  <span className="text-4xl block mb-2"></span>
                   <p>{t('adminReputation', 'lookupFirst')}</p>
                 </div>
               ) : (

@@ -147,7 +147,7 @@ export default function ArtisanEarningsPage() {
           disabled={exportingFec}
           className="flex items-center gap-2"
         >
-          <span>📊</span>
+          <span></span>
           {exportingFec
             ? t('earnings', 'exporting') || 'Exporting...'
             : t('earnings', 'exportFec') || 'Export FEC'}

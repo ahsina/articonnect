@@ -305,7 +305,7 @@ export default function NewMissionPage() {
                           : 'border-border hover:border-red-500/30'
                       }`}
                     >
-                      <span className="text-2xl">🚨</span>
+                      <span className="text-2xl"></span>
                       <p className={`font-medium ${formData.type === 'EMERGENCY' ? 'text-red-700' : 'text-foreground'}`}>
                         {t('missions', 'emergency') || 'Urgence'}
                       </p>
@@ -322,7 +322,7 @@ export default function NewMissionPage() {
                           : 'border-border hover:border-blue-300'
                       }`}
                     >
-                      <span className="text-2xl">📅</span>
+                      <span className="text-2xl"></span>
                       <p className={`font-medium ${formData.type === 'SCHEDULED' ? 'text-primary' : 'text-foreground'}`}>
                         {t('missions', 'scheduled') || 'Planifiée'}
                       </p>
@@ -339,7 +339,7 @@ export default function NewMissionPage() {
                           : 'border-border hover:border-green-500/30'
                       }`}
                     >
-                      <span className="text-2xl">📝</span>
+                      <span className="text-2xl"></span>
                       <p className={`font-medium ${formData.type === 'QUOTE' ? 'text-green-700' : 'text-foreground'}`}>
                         {t('missions', 'quote') || 'Devis'}
                       </p>
@@ -354,7 +354,7 @@ export default function NewMissionPage() {
                 {formData.type === 'EMERGENCY' && (
                   <div className="p-4 bg-red-100 border border-red-200 rounded-lg">
                     <div className="flex items-start gap-3">
-                      <span className="text-red-500 text-xl">⚡</span>
+                      <span className="text-red-500 text-xl"></span>
                       <div>
                         <h4 className="font-semibold text-red-700">
                           {t('emergency', 'urgentRequest') || 'Demande Urgente'}
@@ -497,7 +497,7 @@ export default function NewMissionPage() {
                 {/* Photos Avant - Before Photos */}
                 <div className="border-t pt-4 mt-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg">📷</span>
+                    <span className="text-lg"></span>
                     <h3 className="text-lg font-semibold text-foreground">
                       {t('missions', 'beforePhotos') || 'Photos avant travaux'}
                     </h3>
@@ -521,7 +521,7 @@ export default function NewMissionPage() {
                             onClick={() => removePhoto(index)}
                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            ✕
+                            
                           </button>
                         </div>
                       ))}
@@ -546,7 +546,7 @@ export default function NewMissionPage() {
                           </span>
                         ) : (
                           <>
-                            <span>📤</span>
+                            <span></span>
                             <span className="text-foreground">
                               {t('missions', 'addPhotos') || 'Ajouter des photos'}
                             </span>
@@ -564,7 +564,7 @@ export default function NewMissionPage() {
                 {isProfessional && (
                   <div className="border-t pt-4 mt-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <span className="text-lg">🏢</span>
+                      <span className="text-lg"></span>
                       <h3 className="text-lg font-semibold text-foreground">
                         {t('missions', 'professionalInfo') || 'Informations professionnelles'}
                       </h3>
@@ -713,7 +713,7 @@ export default function NewMissionPage() {
                 {isProfessional && (formData.purchaseOrderNumber || formData.internalReference) && (
                   <div className="border-t pt-3 mt-3">
                     <p className="text-sm font-medium text-primary mb-2">
-                      🏢 {t('missions', 'professionalInfo') || 'Informations professionnelles'}
+                      {t('missions', 'professionalInfo') || 'Informations professionnelles'}
                     </p>
                     {formData.purchaseOrderNumber && (
                       <div>
@@ -738,7 +738,7 @@ export default function NewMissionPage() {
                 {useDifferentBilling && formData.billingCompanyName && (
                   <div className="border-t pt-3 mt-3">
                     <p className="text-sm font-medium text-muted-foreground mb-2">
-                      📄 {t('missions', 'billingInfo') || 'Informations de facturation'}
+                      {t('missions', 'billingInfo') || 'Informations de facturation'}
                     </p>
                     <p className="font-semibold">{formData.billingCompanyName}</p>
                     {formData.billingAddress && (
@@ -754,9 +754,9 @@ export default function NewMissionPage() {
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
                 <h4 className="font-semibold text-primary mb-2">{t('missions', 'nextSteps')}:</h4>
                 <ul className="text-sm text-primary space-y-1">
-                  <li>✓ {t('missions', 'step1')}</li>
-                  <li>✓ {t('missions', 'step2')}</li>
-                  <li>✓ {t('missions', 'step3')}</li>
+                  <li>{t('missions', 'step1')}</li>
+                  <li>{t('missions', 'step2')}</li>
+                  <li>{t('missions', 'step3')}</li>
                 </ul>
               </div>
 

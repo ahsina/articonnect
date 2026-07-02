@@ -152,15 +152,15 @@ export default function FeatureFlagsPage() {
   const getTypeIcon = (type: FeatureFlagType) => {
     switch (type) {
       case FeatureFlagType.BOOLEAN:
-        return '🔘';
+        return '';
       case FeatureFlagType.PERCENTAGE:
-        return '📊';
+        return '';
       case FeatureFlagType.USER_LIST:
-        return '👥';
+        return '';
       case FeatureFlagType.ENVIRONMENT:
-        return '🌍';
+        return '';
       default:
-        return '🏷️';
+        return '';
     }
   };
 
@@ -243,7 +243,7 @@ export default function FeatureFlagsPage() {
                   <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'totalFlags')}</p>
                   <p className="text-3xl font-bold text-foreground">{flags.length}</p>
                 </div>
-                <span className="text-3xl">🏳️</span>
+                <span className="text-3xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -256,7 +256,7 @@ export default function FeatureFlagsPage() {
                     {flags.filter((f) => f.value.enabled).length}
                   </p>
                 </div>
-                <span className="text-3xl">✅</span>
+                <span className="text-3xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -269,7 +269,7 @@ export default function FeatureFlagsPage() {
                     {flags.filter((f) => !f.value.enabled).length}
                   </p>
                 </div>
-                <span className="text-3xl">⏸️</span>
+                <span className="text-3xl">⏸</span>
               </div>
             </CardContent>
           </Card>
@@ -282,7 +282,7 @@ export default function FeatureFlagsPage() {
                     {flags.filter((f) => f.type === FeatureFlagType.PERCENTAGE).length}
                   </p>
                 </div>
-                <span className="text-3xl">📊</span>
+                <span className="text-3xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -327,7 +327,7 @@ export default function FeatureFlagsPage() {
           {filteredFlags.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <span className="text-6xl mb-4 block">🏳️</span>
+                <span className="text-6xl mb-4 block"></span>
                 <h3 className="text-lg font-medium text-foreground mb-2">{t('adminFeatureFlags', 'noFlagsFound')}</h3>
                 <p className="text-muted-foreground">{t('adminFeatureFlags', 'noFlagsHint')}</p>
               </CardContent>

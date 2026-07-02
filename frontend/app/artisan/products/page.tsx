@@ -138,7 +138,7 @@ export default function ArtisanProductsPage() {
           {products.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <div className="text-4xl mb-4">📦</div>
+                <div className="text-4xl mb-4"></div>
                 <p className="text-muted-foreground mb-4">
                   {t('artisan', 'noProducts')}
                 </p>
@@ -216,21 +216,21 @@ export default function ArtisanProductsPage() {
                           size="sm"
                           onClick={() => router.push(`/client/marketplace/${product.id}`)}
                         >
-                          👁️ {t('artisan', 'view')}
+                          {t('artisan', 'view')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setEditingProduct(product)}
                         >
-                          ✏️ {t('common', 'edit')}
+                          {t('common', 'edit')}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleToggleActive(product.id)}
                         >
-                          {product.status === 'ACTIVE' ? `⏸️ ${t('artisan', 'deactivate')}` : `▶️ ${t('artisan', 'activate')}`}
+                          {product.status === 'ACTIVE' ? `⏸${t('artisan', 'deactivate')}` : `▶${t('artisan', 'activate')}`}
                         </Button>
                         <Button
                           variant="outline"
@@ -238,7 +238,7 @@ export default function ArtisanProductsPage() {
                           onClick={() => handleDeleteProduct(product.id)}
                           className="text-red-600 hover:text-red-700"
                         >
-                          🗑️ {t('common', 'delete')}
+                          {t('common', 'delete')}
                         </Button>
                       </div>
                     </div>

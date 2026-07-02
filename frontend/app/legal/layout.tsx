@@ -17,7 +17,7 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
             Krafolt
           </Link>
           <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-            ← Retour à l&apos;accueil
+            Retour à l&apos;accueil
           </Link>
         </div>
       </header>
@@ -40,7 +40,7 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
         </article>
 
         <p className="mt-12 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
-          ⚠️ Ces documents constituent une base structurée et doivent être <strong>validés par un conseil
+          Ces documents constituent une base structurée et doivent être <strong>validés par un conseil
           juridique</strong> avant ouverture publique (LU/FR/BE). Dernière mise à jour : juin 2026.
         </p>
       </div>

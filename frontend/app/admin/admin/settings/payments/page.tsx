@@ -105,10 +105,10 @@ export default function PaymentSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { key: 'stripeEnabled' as const, label: 'Stripe', icon: '💳' },
-              { key: 'paypalEnabled' as const, label: 'PayPal', icon: '🅿️' },
-              { key: 'bankTransferEnabled' as const, label: t('adminSettingsPayments', 'bankTransfer'), icon: '🏦' },
-              { key: 'walletEnabled' as const, label: t('adminSettingsPayments', 'wallet'), icon: '👛' },
+              { key: 'stripeEnabled' as const, label: 'Stripe', icon: '' },
+              { key: 'paypalEnabled' as const, label: 'PayPal', icon: '🅿' },
+              { key: 'bankTransferEnabled' as const, label: t('adminSettingsPayments', 'bankTransfer'), icon: '' },
+              { key: 'walletEnabled' as const, label: t('adminSettingsPayments', 'wallet'), icon: '' },
             ].map((provider) => (
               <div
                 key={provider.key}

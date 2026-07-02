@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
           <CardHeader className="space-y-1 text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-3xl">✓</span>
+                <span className="text-3xl"></span>
               </div>
             </div>
             <CardTitle className="text-2xl">{t('auth', 'emailSentTitle')}</CardTitle>

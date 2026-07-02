@@ -107,19 +107,19 @@ export default function ArtisanPublicProfilePage() {
       if (i < fullStars) {
         stars.push(
           <span key={i} className="text-amber-800">
-            ★
+            
           </span>,
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
           <span key={i} className="text-amber-800">
-            ☆
+            
           </span>,
         );
       } else {
         stars.push(
           <span key={i} className="text-gray-300">
-            ★
+            
           </span>,
         );
       }
@@ -160,7 +160,7 @@ export default function ArtisanPublicProfilePage() {
             onClick={() => router.back()}
             className="text-white hover:bg-white/10 mb-4"
           >
-            ← {t('common', 'back') || 'Back'}
+            {t('common', 'back') || 'Back'}
           </Button>
 
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -175,7 +175,7 @@ export default function ArtisanPublicProfilePage() {
                 <h1 className="text-3xl font-bold">{profile.companyName}</h1>
                 {profile.businessVerified && (
                   <Badge className="bg-green-500 text-white">
-                    ✓ {t('artisan', 'verified') || 'Verified'}
+                    {t('artisan', 'verified') || 'Verified'}
                   </Badge>
                 )}
                 {profile.available ? (
@@ -202,7 +202,7 @@ export default function ArtisanPublicProfilePage() {
                 {profile.city && (
                   <>
                     <span>•</span>
-                    <span>📍 {profile.city}</span>
+                    <span>{profile.city}</span>
                   </>
                 )}
               </div>
@@ -342,7 +342,7 @@ export default function ArtisanPublicProfilePage() {
                       {profile.certifications.map((cert) => (
                         <div key={cert.id} className="flex items-start gap-2">
                           <span className={cert.verified ? 'text-green-600' : 'text-muted-foreground'}>
-                            {cert.verified ? '✓' : '○'}
+                            {cert.verified ? '' : '○'}
                           </span>
                           <div>
                             <div className="font-medium">{cert.name}</div>
@@ -401,7 +401,7 @@ export default function ArtisanPublicProfilePage() {
                     <div className="space-y-2">
                       {[5, 4, 3, 2, 1].map((star) => (
                         <div key={star} className="flex items-center gap-2">
-                          <span className="w-8 text-sm text-muted-foreground">{star} ★</span>
+                          <span className="w-8 text-sm text-muted-foreground">{star} </span>
                           <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                             <div
                               className="h-full bg-yellow-400 rounded-full"

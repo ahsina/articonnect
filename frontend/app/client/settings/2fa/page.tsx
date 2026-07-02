@@ -150,7 +150,7 @@ export default function TwoFactorAuthPage() {
       <div className="min-h-screen bg-background py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-            ← {t('common', 'back')}
+            {t('common', 'back')}
           </Button>
 
           <Card>
@@ -163,7 +163,7 @@ export default function TwoFactorAuthPage() {
             <CardContent className="space-y-4">
               <div className="bg-amber-100 border border-amber-200 rounded-lg p-4">
                 <p className="text-sm text-amber-800 font-medium mb-2">
-                  ⚠️ {t('common', 'important')}
+                  {t('common', 'important')}
                 </p>
                 <p className="text-sm text-amber-800">
                   {t('common', 'backupCodesWarning')}
@@ -180,7 +180,7 @@ export default function TwoFactorAuthPage() {
 
               <div className="flex gap-3">
                 <Button onClick={downloadBackupCodes} className="flex-1">
-                  📥 {t('common', 'downloadCodes')}
+                  {t('common', 'downloadCodes')}
                 </Button>
                 <Button
                   variant="outline"
@@ -205,7 +205,7 @@ export default function TwoFactorAuthPage() {
       <div className="min-h-screen bg-background py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button variant="ghost" onClick={() => setShowSetup(false)} className="mb-6">
-            ← {t('common', 'back')}
+            {t('common', 'back')}
           </Button>
 
           <Card>
@@ -274,7 +274,7 @@ export default function TwoFactorAuthPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← {t('common', 'back')}
+          {t('common', 'back')}
         </Button>
 
         <Card>

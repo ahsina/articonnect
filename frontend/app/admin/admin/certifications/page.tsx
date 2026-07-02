@@ -159,7 +159,7 @@ export default function CertificationsPage() {
                   <p className="text-sm text-muted-foreground">{t('adminCertifications', 'total')}</p>
                   <p className="text-3xl font-bold text-primary">{certifications.length}</p>
                 </div>
-                <span className="text-4xl">📜</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -183,7 +183,7 @@ export default function CertificationsPage() {
                   <p className="text-sm text-muted-foreground">{t('adminCertifications', 'verified')}</p>
                   <p className="text-3xl font-bold text-green-600">{verifiedCount}</p>
                 </div>
-                <span className="text-4xl">✅</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -195,7 +195,7 @@ export default function CertificationsPage() {
                   <p className="text-sm text-muted-foreground">{t('adminCertifications', 'expired')}</p>
                   <p className="text-3xl font-bold text-red-600">{expiredCount}</p>
                 </div>
-                <span className="text-4xl">⚠️</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -343,7 +343,7 @@ export default function CertificationsPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <span className="text-4xl block mb-2">📜</span>
+                <span className="text-4xl block mb-2"></span>
                 <p>{t('adminCertifications', 'noneFound')}</p>
               </div>
             )}
@@ -454,7 +454,7 @@ export default function CertificationsPage() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-blue-200"
                       >
-                        <span>📄</span>
+                        <span></span>
                         {t('adminCertifications', 'viewDocument')}
                       </a>
                     </div>

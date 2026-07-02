@@ -234,7 +234,7 @@ export default function ArtisanAnalyticsPage() {
             </div>
             <div className="flex items-center gap-1 mt-2">
               <Badge className={data.earnings.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                {data.earnings.growth >= 0 ? '↑' : '↓'} {Math.abs(data.earnings.growth)}%
+                {data.earnings.growth >= 0 ? '' : ''} {Math.abs(data.earnings.growth)}%
               </Badge>
               <span className="text-xs text-muted-foreground">{t('artisanAnalytics', 'vsLastMonth') || 'vs last month'}</span>
             </div>
@@ -259,7 +259,7 @@ export default function ArtisanAnalyticsPage() {
               {t('analytics', 'averageRating') || 'Average Rating'}
             </div>
             <div className="text-3xl font-bold text-amber-800">
-              ⭐ {data.performance.averageRating}
+              {data.performance.averageRating}
             </div>
             <div className="text-xs text-muted-foreground mt-2">
               {data.performance.totalReviews} {t('analytics', 'reviews') || 'reviews'}
@@ -405,7 +405,7 @@ export default function ArtisanAnalyticsPage() {
                   <tr key={city.city} className="border-b hover:bg-accent">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][index]}</span>
+                        <span className="text-lg">{['', '', '', '4⃣', '5⃣'][index]}</span>
                         <span className="font-medium">{city.city}</span>
                       </div>
                     </td>
@@ -432,7 +432,7 @@ export default function ArtisanAnalyticsPage() {
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-background rounded-lg">
-              <div className="text-4xl mb-2">⚡</div>
+              <div className="text-4xl mb-2"></div>
               <div className="text-2xl font-bold text-foreground">
                 {data.performance.responseTime}h
               </div>
@@ -441,7 +441,7 @@ export default function ArtisanAnalyticsPage() {
               </div>
             </div>
             <div className="text-center p-4 bg-background rounded-lg">
-              <div className="text-4xl mb-2">✅</div>
+              <div className="text-4xl mb-2"></div>
               <div className="text-2xl font-bold text-foreground">
                 {data.performance.completionRate}%
               </div>
@@ -450,7 +450,7 @@ export default function ArtisanAnalyticsPage() {
               </div>
             </div>
             <div className="text-center p-4 bg-background rounded-lg">
-              <div className="text-4xl mb-2">📍</div>
+              <div className="text-4xl mb-2"></div>
               <div className="text-2xl font-bold text-foreground">
                 {data.geography.averageDistance} km
               </div>

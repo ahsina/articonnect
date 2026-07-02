@@ -173,7 +173,7 @@ export default function ClientDisputesPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          ← {t('common', 'back')}
+          {t('common', 'back')}
         </Button>
 
         <div className="flex items-center justify-between mb-6">
@@ -304,7 +304,7 @@ export default function ClientDisputesPage() {
         {disputes.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <div className="text-6xl mb-4">⚖️</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 {t('disputes', 'noDisputes')}
               </h3>

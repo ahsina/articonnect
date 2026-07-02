@@ -102,7 +102,7 @@ function TwoFactorVerifyForm() {
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">🔐</span>
+              <span className="text-2xl font-bold text-white"></span>
             </div>
           </div>
           <CardTitle className="text-2xl text-center">{t('auth', 'twoFactorAuth')}</CardTitle>

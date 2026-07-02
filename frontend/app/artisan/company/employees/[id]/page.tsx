@@ -169,7 +169,7 @@ export default function EmployeeDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => router.push('/artisan/company/employees')}>
-            ← {t('common', 'back') || 'Back'}
+            {t('common', 'back') || 'Back'}
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
@@ -334,7 +334,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'canAcceptMissions') || 'Can Accept Missions'}
                   </span>
                   <span className={employee.canAcceptMissions ? 'text-green-600' : 'text-red-600'}>
-                    {employee.canAcceptMissions ? `✓ ${t('companyEmployeeDetail', 'yes')}` : `✗ ${t('companyEmployeeDetail', 'no')}`}
+                    {employee.canAcceptMissions ? `${t('companyEmployeeDetail', 'yes')}` : `${t('companyEmployeeDetail', 'no')}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b">
@@ -342,7 +342,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'canViewFinancials') || 'Can View Financials'}
                   </span>
                   <span className={employee.canViewFinancials ? 'text-green-600' : 'text-red-600'}>
-                    {employee.canViewFinancials ? `✓ ${t('companyEmployeeDetail', 'yes')}` : `✗ ${t('companyEmployeeDetail', 'no')}`}
+                    {employee.canViewFinancials ? `${t('companyEmployeeDetail', 'yes')}` : `${t('companyEmployeeDetail', 'no')}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
@@ -350,7 +350,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'canManageTeam') || 'Can Manage Team'}
                   </span>
                   <span className={employee.canManageTeam ? 'text-green-600' : 'text-red-600'}>
-                    {employee.canManageTeam ? `✓ ${t('companyEmployeeDetail', 'yes')}` : `✗ ${t('companyEmployeeDetail', 'no')}`}
+                    {employee.canManageTeam ? `${t('companyEmployeeDetail', 'yes')}` : `${t('companyEmployeeDetail', 'no')}`}
                   </span>
                 </div>
               </div>

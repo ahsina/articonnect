@@ -316,7 +316,7 @@ export default function ArtisanSettingsPage() {
 
             {phoneVerified && (
               <div className="p-3 bg-green-100 border border-green-200 rounded-lg flex items-center gap-2">
-                <span className="text-green-600 text-lg">✓</span>
+                <span className="text-green-600 text-lg"></span>
                 <span className="text-green-700 text-sm">
                   {t('settings', 'phoneVerifiedMessage') || 'Your phone number is verified'}
                 </span>

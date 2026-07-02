@@ -32,15 +32,15 @@ interface Artisan {
 type ArtisanSortOption = 'rating' | 'distance' | 'price';
 
 const SPECIALTIES = [
-  { id: 'all', name: 'Tous', icon: '🔍' },
-  { id: 'plomberie', name: 'Plomberie', icon: '🔧' },
-  { id: 'electricite', name: 'Électricité', icon: '⚡' },
-  { id: 'peinture', name: 'Peinture', icon: '🎨' },
-  { id: 'menuiserie', name: 'Menuiserie', icon: '🪚' },
-  { id: 'maconnerie', name: 'Maçonnerie', icon: '🧱' },
-  { id: 'jardinage', name: 'Jardinage', icon: '🌿' },
-  { id: 'climatisation', name: 'Climatisation', icon: '❄️' },
-  { id: 'serrurerie', name: 'Serrurerie', icon: '🔐' },
+  { id: 'all', name: 'Tous', icon: '' },
+  { id: 'plomberie', name: 'Plomberie', icon: '' },
+  { id: 'electricite', name: 'Électricité', icon: '' },
+  { id: 'peinture', name: 'Peinture', icon: '' },
+  { id: 'menuiserie', name: 'Menuiserie', icon: '' },
+  { id: 'maconnerie', name: 'Maçonnerie', icon: '' },
+  { id: 'jardinage', name: 'Jardinage', icon: '' },
+  { id: 'climatisation', name: 'Climatisation', icon: '' },
+  { id: 'serrurerie', name: 'Serrurerie', icon: '' },
 ];
 
 export default function ArtisansListPage() {
@@ -229,7 +229,7 @@ export default function ArtisansListPage() {
                     </div>
                     {artisan.artisanProfile.verified && (
                       <Badge variant="success" className="text-xs">
-                        ✓ {t('artisans', 'verified')}
+                        {t('artisans', 'verified')}
                       </Badge>
                     )}
                   </div>
@@ -271,7 +271,7 @@ export default function ArtisansListPage() {
                   {/* Info */}
                   <div className="space-y-2 mb-4 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <span>📍</span>
+                      <span></span>
                       <span>
                         {artisan.artisanProfile.city}, {artisan.artisanProfile.country}
                       </span>
@@ -281,7 +281,7 @@ export default function ArtisansListPage() {
                     </div>
                     {artisan.artisanProfile.hourlyRate && (
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <span>💰</span>
+                        <span></span>
                         <span>~{artisan.artisanProfile.hourlyRate}€/h</span>
                       </div>
                     )}

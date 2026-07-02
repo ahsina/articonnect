@@ -459,7 +459,7 @@ export default function AnalyticsPage() {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span className="inline-flex items-center gap-1">
-                          <span className="text-yellow-500">⭐</span>
+                          <span className="text-yellow-500"></span>
                           <span className="font-semibold">
                             {artisan.rating.toFixed(1)}
                           </span>
@@ -508,7 +508,7 @@ function MetricCard({
               trend >= 0 ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            <span>{trend >= 0 ? '↑' : '↓'}</span>
+            <span>{trend >= 0 ? '' : ''}</span>
             <span>
               {Math.abs(trend).toFixed(1)}% {t('adminAnalytics', 'vsLastMonth')}
             </span>

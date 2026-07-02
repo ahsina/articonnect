@@ -146,7 +146,7 @@ export default function CertificationsPage() {
       {certifications.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <div className="text-5xl mb-4">📜</div>
+            <div className="text-5xl mb-4"></div>
             <h3 className="text-lg font-medium text-foreground mb-2">
               {t('artisan', 'noCertifications') || 'No Certifications'}
             </h3>
@@ -167,13 +167,13 @@ export default function CertificationsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
-                      📜
+                      
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-foreground">{cert.name}</h4>
                         {cert.verified && (
-                          <Badge className="bg-green-100 text-green-700">✓ {t('artisanCertifications', 'verified') || 'Verified'}</Badge>
+                          <Badge className="bg-green-100 text-green-700">{t('artisanCertifications', 'verified') || 'Verified'}</Badge>
                         )}
                         {isExpired(cert.expiryDate) && (
                           <Badge className="bg-red-100 text-red-700">{t('artisanCertifications', 'expired') || 'Expired'}</Badge>
@@ -195,7 +195,7 @@ export default function CertificationsPage() {
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => handleDelete(cert.id)}>
-                    🗑️
+                    
                   </Button>
                 </div>
                 {cert.document && (
@@ -206,7 +206,7 @@ export default function CertificationsPage() {
                       rel="noopener noreferrer"
                       className="text-sm text-primary hover:underline"
                     >
-                      📄 {t('artisan', 'viewDocument') || 'View Document'}
+                      {t('artisan', 'viewDocument') || 'View Document'}
                     </a>
                   </div>
                 )}

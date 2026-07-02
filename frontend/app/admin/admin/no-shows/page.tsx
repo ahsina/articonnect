@@ -167,7 +167,7 @@ export default function NoShowsPage() {
                   <p className="text-sm text-muted-foreground">{t('adminNoShows', 'totalReports')}</p>
                   <p className="text-3xl font-bold text-primary">{noShows.length}</p>
                 </div>
-                <span className="text-4xl">📋</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -181,7 +181,7 @@ export default function NoShowsPage() {
                     {pendingCount > 0 ? t('adminNoShows', 'yes') : t('adminNoShows', 'no')}
                   </p>
                 </div>
-                <span className="text-4xl">{pendingCount > 0 ? '🚨' : '✅'}</span>
+                <span className="text-4xl">{pendingCount > 0 ? '' : ''}</span>
               </div>
             </CardContent>
           </Card>
@@ -333,7 +333,7 @@ export default function NoShowsPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <span className="text-4xl block mb-2">✅</span>
+                <span className="text-4xl block mb-2"></span>
                 <p>{t('adminNoShows', 'emptyState')}</p>
               </div>
             )}
@@ -420,7 +420,7 @@ export default function NoShowsPage() {
                       </div>
                       <div className="p-4 bg-background rounded-lg text-center">
                         <p className="text-2xl">
-                          {selectedNoShow.evidence.gpsVerified ? '✅' : '❌'}
+                          {selectedNoShow.evidence.gpsVerified ? '' : ''}
                         </p>
                         <p className="text-sm text-muted-foreground">{t('adminNoShows', 'gpsVerified')}</p>
                       </div>

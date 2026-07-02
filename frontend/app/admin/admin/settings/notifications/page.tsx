@@ -115,10 +115,10 @@ export default function NotificationSettingsPage() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { key: 'emailEnabled' as const, label: t('adminSettingsNotifications', 'channelEmail'), icon: '📧' },
-              { key: 'smsEnabled' as const, label: 'SMS', icon: '📱' },
-              { key: 'pushEnabled' as const, label: t('adminSettingsNotifications', 'channelPush'), icon: '🔔' },
-              { key: 'inAppEnabled' as const, label: t('adminSettingsNotifications', 'channelInApp'), icon: '💬' },
+              { key: 'emailEnabled' as const, label: t('adminSettingsNotifications', 'channelEmail'), icon: '' },
+              { key: 'smsEnabled' as const, label: 'SMS', icon: '' },
+              { key: 'pushEnabled' as const, label: t('adminSettingsNotifications', 'channelPush'), icon: '' },
+              { key: 'inAppEnabled' as const, label: t('adminSettingsNotifications', 'channelInApp'), icon: '' },
             ].map((channel) => (
               <div
                 key={channel.key}

@@ -88,7 +88,7 @@ export default function CreateCompanyPage() {
         <CardContent>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="p-4 bg-card rounded-lg">
-              <div className="text-2xl mb-2">👥</div>
+              <div className="text-2xl mb-2"></div>
               <h4 className="font-medium text-foreground">
                 {t('company', 'hireEmployees') || 'Hire Employees'}
               </h4>
@@ -98,7 +98,7 @@ export default function CreateCompanyPage() {
               </p>
             </div>
             <div className="p-4 bg-card rounded-lg">
-              <div className="text-2xl mb-2">📈</div>
+              <div className="text-2xl mb-2"></div>
               <h4 className="font-medium text-foreground">
                 {t('company', 'scaleUp') || 'Scale Your Business'}
               </h4>
@@ -107,7 +107,7 @@ export default function CreateCompanyPage() {
               </p>
             </div>
             <div className="p-4 bg-card rounded-lg">
-              <div className="text-2xl mb-2">💼</div>
+              <div className="text-2xl mb-2"></div>
               <h4 className="font-medium text-foreground">
                 {t('company', 'professionalProfile') || 'Professional Profile'}
               </h4>

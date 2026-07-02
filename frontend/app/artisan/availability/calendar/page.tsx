@@ -173,11 +173,11 @@ export default function AvailabilityCalendarPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={handlePrevMonth}>
-              ←
+              
             </Button>
             <CardTitle>{formatMonthYear(currentMonth)}</CardTitle>
             <Button variant="outline" onClick={handleNextMonth}>
-              →
+              
             </Button>
           </div>
         </CardHeader>
@@ -287,7 +287,7 @@ export default function AvailabilityCalendarPage() {
                       {slot.notes && <span className="text-sm text-muted-foreground">({slot.notes})</span>}
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => handleDeleteSlot(slot.id)}>
-                      🗑️
+                      
                     </Button>
                   </div>
                 ))}
@@ -345,14 +345,14 @@ export default function AvailabilityCalendarPage() {
                     size="sm"
                     onClick={() => setNewSlot({ ...newSlot, isAvailable: true })}
                   >
-                    ✓ {t('artisan', 'available') || 'Available'}
+                    {t('artisan', 'available') || 'Available'}
                   </Button>
                   <Button
                     variant={!newSlot.isAvailable ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setNewSlot({ ...newSlot, isAvailable: false })}
                   >
-                    ✗ {t('artisan', 'unavailable') || 'Unavailable'}
+                    {t('artisan', 'unavailable') || 'Unavailable'}
                   </Button>
                 </div>
               </div>

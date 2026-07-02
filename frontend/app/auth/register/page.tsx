@@ -116,7 +116,7 @@ export default function RegisterPage() {
                       : 'border-border hover:border-gray-400'
                   }`}
                 >
-                  <div className="text-2xl mb-1">👤</div>
+                  <div className="text-2xl mb-1"></div>
                   <div className="font-medium">{t('auth', 'client')}</div>
                   <div className="text-xs text-muted-foreground">{t('auth', 'clientDescription')}</div>
                 </button>
@@ -129,7 +129,7 @@ export default function RegisterPage() {
                       : 'border-border hover:border-gray-400'
                   }`}
                 >
-                  <div className="text-2xl mb-1">🔨</div>
+                  <div className="text-2xl mb-1"></div>
                   <div className="font-medium">{t('auth', 'artisan')}</div>
                   <div className="text-xs text-muted-foreground">{t('auth', 'artisanDescription')}</div>
                 </button>

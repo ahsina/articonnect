@@ -62,12 +62,12 @@ export default function CronJobsPage() {
   };
 
   const getJobIcon = (name: string) => {
-    if (name.includes('auto-validate')) return '✅';
-    if (name.includes('cleanup')) return '🧹';
-    if (name.includes('alert') || name.includes('notification')) return '🔔';
-    if (name.includes('statistic') || name.includes('report')) return '📊';
-    if (name.includes('payment')) return '💳';
-    return '⚙️';
+    if (name.includes('auto-validate')) return '';
+    if (name.includes('cleanup')) return '';
+    if (name.includes('alert') || name.includes('notification')) return '';
+    if (name.includes('statistic') || name.includes('report')) return '';
+    if (name.includes('payment')) return '';
+    return '';
   };
 
   if (loading) {
@@ -96,7 +96,7 @@ export default function CronJobsPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {t('adminCron', 'back')}
+              {t('adminCron', 'back')}
             </button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t('adminCron', 'title')}</h1>
@@ -128,7 +128,7 @@ export default function CronJobsPage() {
                 <div
                   className={`px-4 py-2 rounded-lg ${health.status === 'healthy' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
                 >
-                  {health.status === 'healthy' ? `🟢 ${t('adminCron', 'healthy')}` : `🔴 ${t('adminCron', 'unhealthy')}`}
+                  {health.status === 'healthy' ? `${t('adminCron', 'healthy')}` : `${t('adminCron', 'unhealthy')}`}
                 </div>
                 <div>
                   <p className="text-foreground">{health.message}</p>
@@ -280,21 +280,21 @@ export default function CronJobsPage() {
                 disabled={triggering !== null}
                 className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
-                <span>✅</span>
+                <span></span>
                 <span>{t('adminCron', 'runAutoValidation')}</span>
               </button>
               <button
                 disabled
                 className="flex items-center gap-2 px-4 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed"
               >
-                <span>🧹</span>
+                <span></span>
                 <span>{t('adminCron', 'runCleanup')}</span>
               </button>
               <button
                 disabled
                 className="flex items-center gap-2 px-4 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed"
               >
-                <span>📊</span>
+                <span></span>
                 <span>{t('adminCron', 'generateReports')}</span>
               </button>
             </div>

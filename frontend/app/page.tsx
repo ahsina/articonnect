@@ -3,7 +3,7 @@
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Wrench, Zap, Paintbrush, Hammer, Blocks, Snowflake, Sprout, KeyRound } from 'lucide-react';
+import { Wrench, Zap, Paintbrush, Hammer, Blocks, Snowflake, Sprout, KeyRound, Star, Check } from 'lucide-react';
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -96,7 +96,7 @@ export default function HomePage() {
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link href="/auth/register?role=client" className="rounded-xl bg-primary px-6 py-3.5 font-display font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
-              {t('landing', 'ctaFindArtisan')} →
+              {t('landing', 'ctaFindArtisan')} 
             </Link>
             <Link href="/auth/register?role=artisan" className="rounded-xl bg-card px-6 py-3.5 font-display font-bold text-foreground shadow-[inset_0_0_0_1.5px_hsl(var(--foreground))] transition-colors hover:bg-accent">
               {t('landing', 'ctaIamArtisan')}
@@ -121,9 +121,9 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-3 font-display text-[13px] font-bold">
-                <span className="text-warning">★ {c.rating}</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-foreground text-foreground" />{c.rating}</span>
                 <span className="text-muted-foreground">{c.reviews} avis</span>
-                <span className="ml-auto rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700">Vérifié</span>
+                <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-foreground"><Check className="h-3 w-3" />Vérifié</span>
               </div>
             </div>
           ))}
@@ -136,7 +136,7 @@ export default function HomePage() {
           {[
             ['2 400+', t('landing', 'statArtisans')],
             ['18 000+', t('landing', 'statMissions')],
-            ['★ 4,9', t('landing', 'statRating')],
+            ['4,9', t('landing', 'statRating')],
             ['< 15 min', t('landing', 'statCountries')],
           ].map(([n, l]) => (
             <div key={l} className="text-center">
@@ -188,14 +188,14 @@ export default function HomePage() {
             <h2 className="font-display mt-2 text-4xl font-extrabold leading-tight tracking-tight">Développez votre activité.<br />Soyez payé, à coup sûr.</h2>
             <p className="mt-3.5 max-w-md text-background/70">Recevez des demandes qualifiées près de chez vous, envoyez vos devis en un clic, et encaissez sans impayés grâce au paiement sécurisé.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/auth/register?role=artisan" className="rounded-xl bg-background px-6 py-3.5 font-display font-bold text-foreground transition-opacity hover:opacity-90">Devenir artisan →</Link>
+              <Link href="/auth/register?role=artisan" className="rounded-xl bg-background px-6 py-3.5 font-display font-bold text-foreground transition-opacity hover:opacity-90">Devenir artisan </Link>
               <a href="#how" className="rounded-xl border border-background/25 px-6 py-3.5 font-display font-bold text-background transition-colors hover:bg-background/10">Comment ça marche</a>
             </div>
           </div>
           <div className="flex flex-col gap-4">
             {PERKS.map(([b, s]) => (
               <div key={b} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm text-green-700">✓</span>
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm text-green-700"></span>
                 <div>
                   <div className="font-display font-bold">{b}</div>
                   <div className="text-sm text-background/60">{s}</div>
@@ -213,7 +213,7 @@ export default function HomePage() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {TESTIMONIALS.map((tm) => (
             <div key={tm.name} className="rounded-2xl border border-border p-6">
-              <div className="font-display font-extrabold text-warning">★★★★★</div>
+              <div className="font-display font-extrabold text-warning"></div>
               <p className="mt-3 text-[15px]">« {tm.text} »</p>
               <div className="mt-4 flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted font-display font-extrabold">{tm.s}</span>

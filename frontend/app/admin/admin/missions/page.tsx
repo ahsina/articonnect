@@ -60,7 +60,7 @@ export default function MissionsManagementPage() {
               onClick={() => router.push('/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
-              ← {t('adminMissions', 'back')}
+              {t('adminMissions', 'back')}
             </button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">{t('adminMissions', 'title')}</h1>
@@ -93,7 +93,7 @@ export default function MissionsManagementPage() {
                   <p className="text-sm text-muted-foreground">{t('adminMissions', 'totalMissions')}</p>
                   <p className="text-3xl font-bold text-foreground">{metrics.missions.total}</p>
                 </div>
-                <span className="text-4xl">📋</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -117,7 +117,7 @@ export default function MissionsManagementPage() {
                   <p className="text-sm text-muted-foreground">{t('adminMissions', 'inProgress')}</p>
                   <p className="text-3xl font-bold text-primary">{metrics.missions.inProgress}</p>
                 </div>
-                <span className="text-4xl">🔧</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -129,7 +129,7 @@ export default function MissionsManagementPage() {
                   <p className="text-sm text-muted-foreground">{t('adminMissions', 'completed')}</p>
                   <p className="text-3xl font-bold text-green-600">{metrics.missions.completed}</p>
                 </div>
-                <span className="text-4xl">✅</span>
+                <span className="text-4xl"></span>
               </div>
             </CardContent>
           </Card>
@@ -140,7 +140,7 @@ export default function MissionsManagementPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span>📊</span>
+                <span></span>
                 {t('adminMissions', 'missionPerformance')}
               </CardTitle>
             </CardHeader>
@@ -185,7 +185,7 @@ export default function MissionsManagementPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <span>⚠️</span>
+                <span></span>
                 {t('adminMissions', 'disputesIssues')}
               </CardTitle>
             </CardHeader>
@@ -228,7 +228,7 @@ export default function MissionsManagementPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>🚫</span>
+              <span></span>
               {t('adminMissions', 'noShowReports')}
             </CardTitle>
             <CardDescription>
@@ -267,7 +267,7 @@ export default function MissionsManagementPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span>💰</span>
+              <span></span>
               {t('adminMissions', 'revenueOverview')}
             </CardTitle>
           </CardHeader>
@@ -323,28 +323,28 @@ export default function MissionsManagementPage() {
                 onClick={() => router.push('/admin/moderation')}
                 className="flex items-center gap-2 px-4 py-3 bg-amber-100 text-amber-800 rounded-lg hover:bg-yellow-200"
               >
-                <span>⚠️</span>
+                <span></span>
                 <span>{t('adminMissions', 'viewDisputes')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/cron')}
                 className="flex items-center gap-2 px-4 py-3 bg-primary/10 text-primary rounded-lg hover:bg-blue-200"
               >
-                <span>✅</span>
+                <span></span>
                 <span>{t('adminMissions', 'triggerAutoValidation')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/monitoring')}
                 className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
               >
-                <span>📊</span>
+                <span></span>
                 <span>{t('adminMissions', 'viewMonitoring')}</span>
               </button>
               <button
                 onClick={() => router.push('/admin/analytics')}
                 className="flex items-center gap-2 px-4 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
               >
-                <span>📈</span>
+                <span></span>
                 <span>{t('adminMissions', 'analyticsDashboard')}</span>
               </button>
             </div>

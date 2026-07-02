@@ -342,7 +342,7 @@ export default function ArtisanMessagesPage() {
                           <p className="break-words whitespace-pre-wrap">{message.content}</p>
                           <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-muted-foreground'}`}>
                             {formatTime(message.createdAt)}
-                            {isOwn && message.read && ' ✓✓'}
+                            {isOwn && message.read && ' '}
                           </p>
                         </div>
                       </div>
@@ -376,7 +376,7 @@ export default function ArtisanMessagesPage() {
           ) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
-                <div className="text-6xl mb-4">💬</div>
+                <div className="text-6xl mb-4"></div>
                 <p>{t('messages', 'selectConversation') || 'Select a conversation to start messaging'}</p>
               </div>
             </div>

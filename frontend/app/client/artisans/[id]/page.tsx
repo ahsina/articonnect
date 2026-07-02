@@ -68,14 +68,14 @@ interface Review {
 }
 
 const SPECIALTY_ICONS: Record<string, string> = {
-  plomberie: '🔧',
-  electricite: '⚡',
-  peinture: '🎨',
-  menuiserie: '🪚',
-  maconnerie: '🧱',
-  jardinage: '🌿',
-  climatisation: '❄️',
-  serrurerie: '🔐',
+  plomberie: '',
+  electricite: '',
+  peinture: '',
+  menuiserie: '',
+  maconnerie: '',
+  jardinage: '',
+  climatisation: '',
+  serrurerie: '',
 };
 
 export default function ArtisanDetailsPage() {
@@ -227,7 +227,7 @@ export default function ArtisanDetailsPage() {
         {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" onClick={() => router.back()}>
-            ← {t('common', 'back')}
+            {t('common', 'back')}
           </Button>
         </div>
 
@@ -255,7 +255,7 @@ export default function ArtisanDetailsPage() {
                       </div>
                       {artisanProfile.verified && (
                         <Badge variant="default" className="bg-primary">
-                          ✓ {t('artisans', 'verified')}
+                          {t('artisans', 'verified')}
                         </Badge>
                       )}
                     </div>
@@ -264,7 +264,7 @@ export default function ArtisanDetailsPage() {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex items-center">
                         <span className="text-2xl font-bold text-yellow-500">
-                          ★ {artisanProfile.rating.toFixed(1)}
+                          {artisanProfile.rating.toFixed(1)}
                         </span>
                         <span className="text-muted-foreground ml-2">
                           ({artisanProfile.reviewCount} {t('artisans', 'reviews')})
@@ -375,8 +375,8 @@ export default function ArtisanDetailsPage() {
                             </div>
                             <div className="flex items-center">
                               <span className="text-yellow-500 font-semibold">
-                                {'★'.repeat(review.rating)}
-                                {'☆'.repeat(5 - review.rating)}
+                                {''.repeat(review.rating)}
+                                {''.repeat(5 - review.rating)}
                               </span>
                             </div>
                           </div>
@@ -405,7 +405,7 @@ export default function ArtisanDetailsPage() {
                 </Button>
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <Button variant="outline">
-                    💬 {t('artisans', 'sendMessage')}
+                    {t('artisans', 'sendMessage')}
                   </Button>
                   <Button
                     variant="outline"
@@ -413,22 +413,22 @@ export default function ArtisanDetailsPage() {
                     disabled={favoriteLoading}
                     className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-100' : ''}
                   >
-                    {favoriteLoading ? '...' : isFavorite ? '❤️' : '🤍'} {t('favorites', isFavorite ? 'saved' : 'save')}
+                    {favoriteLoading ? '...' : isFavorite ? '' : ''} {t('favorites', isFavorite ? 'saved' : 'save')}
                   </Button>
                 </div>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>📍</span>
+                    <span></span>
                     <span>
                       {artisanProfile.address}, {artisanProfile.postalCode} {artisanProfile.city}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>📞</span>
+                    <span></span>
                     <span>{artisan.phone}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>✉️</span>
+                    <span></span>
                     <span>{artisan.email}</span>
                   </div>
                 </div>
@@ -448,7 +448,7 @@ export default function ArtisanDetailsPage() {
                         {getDayName(day)}
                       </span>
                       <span className={available ? 'text-green-600 font-semibold' : 'text-muted-foreground'}>
-                        {available ? `✓ ${t('artisans', 'availableDay')}` : t('artisans', 'closed')}
+                        {available ? `${t('artisans', 'availableDay')}` : t('artisans', 'closed')}
                       </span>
                     </div>
                   ))}
