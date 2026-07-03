@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -220,7 +221,7 @@ export default function NewMissionPage() {
           </div>
           {category && (
             <p className="mt-2 px-1 text-xs text-muted-foreground">
-              {t('missions', 'detectedTrade') || 'Métier détecté'} : <span className="font-bold text-foreground">{category}</span>
+              {t('missions', 'detectedTrade') || 'Métier détecté'} : <span className="font-bold text-foreground"><CategoryLabel value={category} /></span>
               {' · '}<button onClick={() => setManualCategory(true)} className="underline">{t('common', 'adjust') || 'ajuster'}</button>
             </p>
           )}

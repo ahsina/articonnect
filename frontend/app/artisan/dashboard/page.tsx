@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -263,7 +264,7 @@ export default function ArtisanDashboard() {
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground">{mission.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          <MapPin className="inline h-4 w-4 -mt-0.5" /> {mission.city} • {mission.category}
+                          <MapPin className="inline h-4 w-4 -mt-0.5" /> {mission.city} • <CategoryLabel value={mission.category} />
                         </p>
                         {mission.clientBudget && (
                           <p className="text-sm text-muted-foreground font-medium mt-1">

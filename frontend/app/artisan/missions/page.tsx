@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -199,7 +200,7 @@ export default function ArtisanMissionsPage() {
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div>
                               <span className="text-muted-foreground">{t('artisan', 'category')}:</span>
-                              <p className="font-semibold">{mission.category}</p>
+                              <p className="font-semibold"><CategoryLabel value={mission.category} /></p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">{t('artisan', 'price')}:</span>

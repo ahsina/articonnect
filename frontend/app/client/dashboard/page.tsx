@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -209,7 +210,7 @@ export default function ClientDashboard() {
                         {mission.title}
                       </h3>
                       <p className="text-muted-foreground text-sm mt-1">
-                        {mission.city} • {mission.category}
+                        {mission.city} • <CategoryLabel value={mission.category} />
                       </p>
                       {mission.artisan && (
                         <p className="text-muted-foreground text-sm">

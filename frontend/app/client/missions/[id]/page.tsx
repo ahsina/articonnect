@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { missionsApi } from '@/lib/api/missions';
@@ -618,7 +619,7 @@ export default function MissionDetailsPage() {
                     <p className="text-sm font-medium text-muted-foreground">
                       {t('common', 'category')}
                     </p>
-                    <p className="text-foreground">{mission.category}</p>
+                    <p className="text-foreground"><CategoryLabel value={mission.category} /></p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{t('common', 'type')}</p>

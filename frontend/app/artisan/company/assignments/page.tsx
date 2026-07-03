@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -211,7 +212,7 @@ export default function MissionAssignmentsPage() {
                       <p className="text-sm text-muted-foreground mb-2">{mission.description}</p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>{mission.city}</span>
-                        <span>{mission.category}</span>
+                        <span><CategoryLabel value={mission.category} /></span>
                         {mission.scheduledDate && (
                           <span>{formatDate(mission.scheduledDate)}</span>
                         )}

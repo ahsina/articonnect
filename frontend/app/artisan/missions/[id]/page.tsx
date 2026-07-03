@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -492,7 +493,7 @@ export default function MissionDetailPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{mission.title}</h1>
-            <p className="text-muted-foreground">{mission.category}</p>
+            <p className="text-muted-foreground"><CategoryLabel value={mission.category} /></p>
           </div>
         </div>
         <div className="flex items-center gap-2">

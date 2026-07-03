@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -209,7 +210,7 @@ export default function ClientMissionsPage() {
                       </div>
                       <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{mission.description}</p>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                        <span>{mission.category}</span>
+                        <span><CategoryLabel value={mission.category} /></span>
                         <span>•</span>
                         <span>
                           {mission.city}, {mission.postalCode}
