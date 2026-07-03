@@ -9,28 +9,23 @@ import { userApi } from '@/lib/api/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Wrench, Zap, Hammer, Paintbrush, KeyRound, Snowflake, Flame, Boxes,
+  Wrench, Zap, Hammer, Paintbrush, KeyRound, Snowflake, Flame, Boxes, Blocks, Sprout,
   MapPin, Search, MessageSquare, Zap as Bolt, Calendar, ImagePlus, ChevronLeft,
 } from 'lucide-react';
 
-// test = mots-clés multilingues (FR + EN + racines communes) pour la détection auto du métier.
+// test = mots-clés multilingues (FR + EN) pour filtrer la grille via la recherche.
 const CATEGORIES = [
   { id: 'plomberie', name: 'Plomberie', Icon: Wrench, test: /plomb|plumb|fuite|leak|évier|sink|robinet|faucet|tap|chauffe.?eau|water.?heater|canalisation|drain|pipe|wc|toilet|siphon|tuyau|water/i },
   { id: 'electricite', name: 'Électricité', Icon: Zap, test: /electr|électr|prise|socket|outlet|disjonct|breaker|tableau|court.?circuit|short.?circuit|lumière|light|interrupteur|switch|compteur|wiring|câbl|cabl/i },
   { id: 'menuiserie', name: 'Menuiserie', Icon: Hammer, test: /menuis|carpent|bois|wood|porte|door|fenêtre|window|placard|cabinet|meuble|furnitur|parquet|floor|étagère|shelf/i },
   { id: 'peinture', name: 'Peinture', Icon: Paintbrush, test: /peint|paint|mur|wall|enduit|papier peint|wallpaper|tapisser|plafond|ceiling/i },
+  { id: 'maconnerie', name: 'Maçonnerie', Icon: Blocks, test: /ma[çc]on|mason|brique|brick|béton|concrete|mur|dalle|carrelage|tile/i },
+  { id: 'chauffage', name: 'Chauffage', Icon: Flame, test: /chauff|heat|radiateur|radiator|chaudière|boiler|gaz|gas|thermostat|froid|cold/i },
   { id: 'serrurerie', name: 'Serrurerie', Icon: KeyRound, test: /serrur|lock|clé|key|porte bloqu|locked|verrou|bolt|cadenas|padlock|coffre|safe/i },
   { id: 'climatisation', name: 'Climatisation', Icon: Snowflake, test: /clim|air.?con|cooling|ventil|fan|fraîch|cool/i },
-  { id: 'chauffage', name: 'Chauffage', Icon: Flame, test: /chauff|heat|radiateur|radiator|chaudière|boiler|gaz|gas|thermostat|froid|cold/i },
+  { id: 'jardinage', name: 'Jardinage', Icon: Sprout, test: /jardin|garden|paysag|green|espace vert|pelouse|lawn|haie|hedge|arbre|tree/i },
   { id: 'autre', name: 'Autre', Icon: Boxes, test: /.*/ },
 ];
-
-// Détecte le métier à partir de la description (comme Uber devine la destination).
-function detectCategory(text: string): string {
-  if (!text || text.trim().length < 3) return '';
-  const found = CATEGORIES.find((c) => c.id !== 'autre' && c.test.test(text));
-  return found ? found.name : '';
-}
 
 // key = identifiant UI ; type = MissionType backend valide (EMERGENCY | SCHEDULED uniquement).
 // nameKey/descKey/tagKey = clés i18n (namespace missions), résolues au rendu.
@@ -57,7 +52,7 @@ export default function NewMissionPage() {
 
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [manualCategory, setManualCategory] = useState(false);
+  const [catSearch, setCatSearch] = useState('');
   const [interventionType, setInterventionType] = useState('DEVIS');
   const [scheduledFor, setScheduledFor] = useState('');
   const [budget, setBudget] = useState('');
@@ -78,11 +73,6 @@ export default function NewMissionPage() {
     } catch { /* ignore */ }
     userApi.getClientProfile().then(setClientProfile).catch(() => {});
   }, []);
-
-  // Détection auto du métier tant que l'utilisateur n'a pas choisi manuellement.
-  useEffect(() => {
-    if (!manualCategory) setCategory(detectCategory(description));
-  }, [description, manualCategory]);
 
   const hasAddress = !!addr.address && !!addr.city;
   const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
@@ -113,7 +103,8 @@ export default function NewMissionPage() {
     return { lat: 49.6116, lng: 6.1319 }; // Luxembourg
   };
 
-  const canSubmit = hasAddress && description.trim().length >= 3 && !loading &&
+  // Le métier (grille) est requis ; la description devient facultative.
+  const canSubmit = hasAddress && !!category && !loading &&
     (interventionType !== 'SCHEDULED' || !!scheduledFor);
 
   const handleSubmit = async () => {
@@ -125,7 +116,7 @@ export default function NewMissionPage() {
     try {
       const coords = await geocodeAddress(`${addr.address}, ${addr.city}, ${addr.postalCode}`);
       const cat = category || 'Autre';
-      const title = description.trim().slice(0, 60);
+      const title = description.trim().slice(0, 60) || cat;
       const backendType = INTERVENTIONS.find((i) => i.key === interventionType)?.type || 'SCHEDULED';
       const missionData: Record<string, unknown> = {
         type: backendType,
@@ -212,34 +203,38 @@ export default function NewMissionPage() {
         </div>
 
         <div className="px-4 pt-4">
-          {/* Recherche du besoin -> détection métier */}
-          <div className="flex items-center gap-2.5 rounded-2xl bg-muted px-4 py-3.5">
+          {/* Sélecteur de métier — grille de tuiles (style Uber Eats) */}
+          <div className="flex items-center gap-2.5 rounded-2xl bg-muted px-4 py-3">
             <Search className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-            <input value={description} onChange={(e) => { setDescription(e.target.value); setManualCategory(false); }}
-              placeholder={t('missions', 'describeNeed') || 'Décrivez votre besoin…'}
+            <input value={catSearch} onChange={(e) => setCatSearch(e.target.value)}
+              placeholder={t('missions', 'searchTrade') || 'Rechercher un métier…'}
               className="font-display w-full bg-transparent text-[15px] font-semibold outline-none" />
           </div>
-          {category && (
-            <p className="mt-2 px-1 text-xs text-muted-foreground">
-              {t('missions', 'detectedTrade') || 'Métier détecté'} : <span className="font-bold text-foreground"><CategoryLabel value={category} /></span>
-              {' · '}<button onClick={() => setManualCategory(true)} className="underline">{t('common', 'adjust') || 'ajuster'}</button>
-            </p>
-          )}
-
-          {/* Sélecteur métier manuel (si ajustement ou non détecté) */}
-          {(manualCategory || (!category && description.trim().length >= 3)) && (
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-              {CATEGORIES.map((c) => {
+          <div className="font-display mb-2.5 mt-4 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            {catSearch ? (t('missions', 'trades') || 'Métiers') : (t('missions', 'popularTrades') || 'Métiers les plus demandés')}
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {CATEGORIES
+              .filter((c) => !catSearch || c.name.toLowerCase().includes(catSearch.toLowerCase()) || c.test.test(catSearch) || c.id === 'autre')
+              .map((c) => {
                 const on = category === c.name;
                 return (
-                  <button key={c.id} onClick={() => { setCategory(c.name); setManualCategory(true); }}
-                    className={`flex flex-shrink-0 flex-col items-center gap-1.5 rounded-xl border px-3 py-2.5 ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground'}`}>
-                    <c.Icon className="h-5 w-5" strokeWidth={1.8} />
-                    <span className="font-display text-[11px] font-bold">{c.name}</span>
+                  <button key={c.id} onClick={() => setCategory(c.name)}
+                    className={`flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}>
+                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${on ? 'bg-background' : 'bg-muted'}`}>
+                      <c.Icon className="h-5 w-5 text-foreground" strokeWidth={1.85} />
+                    </span>
+                    <span className="font-display text-sm font-bold"><CategoryLabel value={c.name} /></span>
                   </button>
                 );
               })}
-            </div>
+          </div>
+
+          {/* Détails du besoin (après choix du métier) */}
+          {category && (
+            <input value={description} onChange={(e) => setDescription(e.target.value)}
+              placeholder={t('missions', 'addDetails') || 'Ajoutez des détails (facultatif)…'}
+              className="font-display mt-4 w-full rounded-2xl border border-border bg-muted px-4 py-3.5 text-[15px] font-semibold outline-none" />
           )}
 
           {/* Type d'intervention (cartes horizontales façon Uber) */}

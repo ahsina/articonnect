@@ -2216,6 +2216,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Sélectionnez une conversation pour commencer à discuter"
     },
     "missions": {
+      "searchTrade": "Rechercher un métier…",
+      "popularTrades": "Métiers les plus demandés",
+      "trades": "Métiers",
+      "addDetails": "Ajoutez des détails (facultatif)…",
       "catPlumbing": "Plomberie",
       "catElectricity": "Électricité",
       "catCarpentry": "Menuiserie",
@@ -4773,6 +4777,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Select a conversation to start messaging"
     },
     "missions": {
+      "searchTrade": "Search a trade…",
+      "popularTrades": "Most requested trades",
+      "trades": "Trades",
+      "addDetails": "Add details (optional)…",
       "catPlumbing": "Plumbing",
       "catElectricity": "Electricity",
       "catCarpentry": "Carpentry",
@@ -7330,6 +7338,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Wählen Sie eine Unterhaltung aus, um mit dem Schreiben zu beginnen"
     },
     "missions": {
+      "searchTrade": "Gewerk suchen…",
+      "popularTrades": "Meistgefragte Gewerke",
+      "trades": "Gewerke",
+      "addDetails": "Details hinzufügen (optional)…",
       "catPlumbing": "Klempnerarbeiten",
       "catElectricity": "Elektrik",
       "catCarpentry": "Tischlerei",
@@ -9887,6 +9899,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Selecteer een gesprek om te beginnen met berichten"
     },
     "missions": {
+      "searchTrade": "Zoek een vak…",
+      "popularTrades": "Meest gevraagde vakken",
+      "trades": "Vakken",
+      "addDetails": "Details toevoegen (optioneel)…",
       "catPlumbing": "Loodgieterswerk",
       "catElectricity": "Elektriciteit",
       "catCarpentry": "Timmerwerk",
@@ -12444,6 +12460,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Seleccione una conversación para empezar a chatear"
     },
     "missions": {
+      "searchTrade": "Buscar un oficio…",
+      "popularTrades": "Oficios más solicitados",
+      "trades": "Oficios",
+      "addDetails": "Añada detalles (opcional)…",
       "catPlumbing": "Fontanería",
       "catElectricity": "Electricidad",
       "catCarpentry": "Carpintería",
@@ -15001,6 +15021,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Seleziona una conversazione per iniziare a messaggiare"
     },
     "missions": {
+      "searchTrade": "Cerca un mestiere…",
+      "popularTrades": "Mestieri più richiesti",
+      "trades": "Mestieri",
+      "addDetails": "Aggiungi dettagli (facoltativo)…",
       "catPlumbing": "Idraulica",
       "catElectricity": "Elettricità",
       "catCarpentry": "Falegnameria",
@@ -17558,6 +17582,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Selecione uma conversa para começar a enviar mensagens"
     },
     "missions": {
+      "searchTrade": "Procurar um ofício…",
+      "popularTrades": "Ofícios mais pedidos",
+      "trades": "Ofícios",
+      "addDetails": "Adicione detalhes (opcional)…",
       "catPlumbing": "Canalização",
       "catElectricity": "Eletricidade",
       "catCarpentry": "Carpintaria",
