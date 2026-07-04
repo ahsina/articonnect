@@ -626,7 +626,7 @@ export default function MissionDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">{t('artisan', 'budget') || 'Budget'}</div>
-                  <div className="font-semibold text-lg">EUR {mission.budget.toLocaleString()}</div>
+                  <div className="font-semibold text-lg">EUR {mission.budget != null ? mission.budget.toLocaleString() : "—"}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">
@@ -678,7 +678,7 @@ export default function MissionDetailPage() {
                     <span className="text-2xl"></span>
                     <div>
                       <div className="font-medium text-primary">
-                        {mission.distance.toFixed(1)} km away
+                        {mission.distance != null ? mission.distance.toFixed(1) : "—"} km away
                       </div>
                       <div className="text-sm text-primary">
                         {t('artisan', 'fromYourLocation') || 'from your location'}
@@ -1278,7 +1278,7 @@ export default function MissionDetailPage() {
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {t('artisan', 'clientBudget') || 'Client budget'}: EUR{' '}
-                  {mission.budget.toLocaleString()}
+                  {mission.budget != null ? mission.budget.toLocaleString() : "—"}
                 </p>
               </div>
 
