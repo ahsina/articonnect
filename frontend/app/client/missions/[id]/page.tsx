@@ -436,51 +436,43 @@ export default function MissionDetailsPage() {
           <Button variant="ghost" onClick={() => router.back()} className="mb-4">
             {t('common', 'back')}
           </Button>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-foreground">{mission.title}</h1>
-                {isProfessional && (
-                  <Badge variant="outline" className="text-primary border-blue-300">
-                    Pro
-                  </Badge>
-                )}
-              </div>
-              <p className="text-muted-foreground">Réf: {mission.id.slice(0, 8).toUpperCase()}</p>
-            </div>
-            {getStatusBadge(mission.status)}
-          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {mission.title} · Réf {mission.id.slice(0, 8).toUpperCase()}
+          </p>
         </div>
 
-        {/* Timeline de statut (parcours mission) */}
+        {/* Bandeau de statut « à la Uber » (un seul statut, piloté par l'état) */}
         {(() => {
-          const steps = ['Publié', 'Offres', 'Paiement', 'Réalisation', 'Validation'];
           const s = mission.status;
+          const offers = negotiations.length;
+          const artisanName = mission.artisan?.firstName || t('missions', 'yourArtisan') || 'Votre artisan';
           const active =
-            ['PENDING', 'NEGOTIATING'].includes(s) ? 2 :
+            ['PENDING', 'NEGOTIATING'].includes(s) ? (offers > 0 ? 2 : 1) :
             ['PENDING_DEPOSIT'].includes(s) ? 3 :
             ['ACCEPTED', 'PAID', 'IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s) ? 4 :
-            ['COMPLETED', 'AUTO_VALIDATED', 'VALIDATED'].includes(s) ? 5 : 2;
+            ['COMPLETED', 'AUTO_VALIDATED', 'VALIDATED'].includes(s) ? 5 :
+            s === 'CANCELLED' ? 0 : 1;
+          const stepLabels = ['', 'Recherche', 'Offres', 'Paiement', 'Réalisation', 'Validation'];
+          let headline = '', sub = '';
+          if (s === 'CANCELLED') { headline = t('missions', 'stCancelled') || 'Demande annulée'; sub = t('missions', 'stCancelledSub') || 'Cette demande a été annulée.'; }
+          else if (['PENDING', 'NEGOTIATING'].includes(s) && offers === 0) { headline = t('missions', 'stSearching') || 'Recherche d’artisans…'; sub = t('missions', 'stSearchingSub') || 'Votre demande est diffusée aux artisans vérifiés à proximité.'; }
+          else if (['PENDING', 'NEGOTIATING'].includes(s)) { headline = `${offers} ${offers > 1 ? (t('missions', 'stOffersPlural') || 'artisans ont répondu') : (t('missions', 'stOffersOne') || 'artisan a répondu')}`; sub = t('missions', 'stOffersSub') || 'Comparez et choisissez — vous ne payez qu’après.'; }
+          else if (s === 'PENDING_DEPOSIT') { headline = t('missions', 'stPay') || 'Sécurisez le paiement'; sub = t('missions', 'stPaySub') || 'Votre argent reste sous séquestre jusqu’à la validation des travaux.'; }
+          else if (['ACCEPTED', 'PAID'].includes(s)) { headline = `${artisanName} ${t('missions', 'stConfirmed') || 'est confirmé'}`; sub = t('missions', 'stConfirmedSub') || 'Votre artisan va intervenir. Paiement sécurisé sous séquestre.'; }
+          else if (['IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s)) { headline = `${artisanName} ${t('missions', 'stInProgress') || 'intervient'}`; sub = t('missions', 'stInProgressSub') || 'Intervention en cours à votre adresse.'; }
+          else { headline = t('missions', 'stCompleted') || 'Travaux terminés'; sub = t('missions', 'stCompletedSub') || 'Validez pour libérer le paiement et laisser un avis.'; }
           return (
-            <div className="mb-8 rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-center">
-                {steps.map((label, i) => {
-                  const n = i + 1;
-                  const done = active > n;
-                  const now = active === n;
-                  return (
-                    <div key={label} className="relative flex flex-1 flex-col items-center">
-                      {i < steps.length - 1 && (
-                        <div className={`absolute left-1/2 top-[13px] h-0.5 w-full ${active > n ? 'bg-primary' : 'bg-border'}`} />
-                      )}
-                      <div className={`font-display relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${done ? 'bg-primary text-primary-foreground' : now ? 'bg-primary text-primary-foreground ring-4 ring-muted' : 'bg-muted text-muted-foreground'}`}>
-                        {done ? '' : n}
-                      </div>
-                      <div className={`font-display mt-2 text-[11px] font-bold ${active >= n ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="mb-6 rounded-2xl bg-foreground p-6 text-background">
+              {active > 0 && <div className="font-display text-[11px] font-bold uppercase tracking-wider text-background/60">{t('missions', 'step') || 'Étape'} {active}/5 · {stepLabels[active]}</div>}
+              <h1 className="font-display mt-1.5 text-2xl font-extrabold leading-tight">{headline}</h1>
+              <p className="mt-1.5 text-sm text-background/70">{sub}</p>
+              {active > 0 && (
+                <div className="mt-4 flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <span key={n} className={`h-1 flex-1 rounded-full ${active >= n ? 'bg-background' : 'bg-background/25'}`} />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -488,6 +480,13 @@ export default function MissionDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Détails de la demande — repliés par défaut (façon Uber : le statut prime) */}
+            <details className="group rounded-2xl border border-border bg-card">
+              <summary className="flex cursor-pointer list-none items-center justify-between p-4 font-display text-sm font-bold">
+                {t('missions', 'viewRequestDetails') || 'Voir les détails de ma demande'}
+                <span className="text-muted-foreground transition-transform group-open:rotate-90">›</span>
+              </summary>
+              <div className="space-y-4 p-4 pt-0">
             {/* Description */}
             <Card>
               <CardHeader>
@@ -670,6 +669,8 @@ export default function MissionDetailsPage() {
                 </div>
               </CardContent>
             </Card>
+              </div>
+            </details>
 
             {/* Artisan Info */}
             {mission.artisan && (
