@@ -485,52 +485,42 @@ export default function MissionDetailPage() {
 
   return (
     <div className="p-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => router.push('/artisan/missions')}>
-            {t('common', 'back') || 'Back'}
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{mission.title}</h1>
-            <p className="text-muted-foreground"><CategoryLabel value={mission.category} /></p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className={getPriorityBadge(mission.priority)}>{translatePriority(mission.priority, t)}</Badge>
-          <Badge className={getStatusBadge(mission.status)}>{translateMissionStatus(mission.status, t)}</Badge>
-        </div>
+      {/* Page Header minimal */}
+      <div className="mb-4 flex items-center gap-3">
+        <Button variant="outline" size="sm" onClick={() => router.push('/artisan/missions')}>
+          {t('common', 'back') || 'Back'}
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          {mission.title} · <CategoryLabel value={mission.category} />
+        </p>
       </div>
 
-      {/* Timeline de statut (côté artisan) */}
+      {/* Bandeau de statut « à la Uber » (côté artisan, piloté par l'état) */}
       {(() => {
-        const steps = ['Reçue', 'Acceptée', 'En cours', 'Terminée', 'Payée'];
         const s = mission.status;
+        const stepLabels = ['', t('missions', 'aStReceived') || 'Reçue', t('missions', 'aStAccepted') || 'Acceptée', t('missions', 'aStWorking') || 'En cours', t('missions', 'aStDone') || 'Terminée', t('missions', 'aStPaid') || 'Payée'];
         const active =
           ['OPEN', 'PENDING', 'ASSIGNED', 'NEGOTIATING'].includes(s) ? 1 :
           ['ACCEPTED', 'PAID', 'PENDING_DEPOSIT'].includes(s) ? 2 :
           ['IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s) ? 3 :
           ['COMPLETED'].includes(s) ? 4 :
           ['VALIDATED', 'AUTO_VALIDATED'].includes(s) ? 5 : 1;
+        const clientName = mission.client?.firstName ? `, ${mission.client.firstName}` : '';
+        let headline = '', sub = '';
+        if (active === 1) { headline = t('missions', 'aHeadReceived') || 'Décrochez cette mission'; sub = t('missions', 'aSubReceived') || 'Envoyez votre offre — le client compare et choisit.'; }
+        else if (active === 2) { headline = t('missions', 'aHeadAccepted') || 'Mission acceptée'; sub = `${t('missions', 'aSubAccepted') || 'Vous pouvez démarrer quand vous êtes prêt'}${clientName}.`; }
+        else if (active === 3) { headline = t('missions', 'aHeadWorking') || 'Intervention en cours'; sub = t('missions', 'aSubWorking') || 'Marquez la mission terminée une fois le travail fini.'; }
+        else if (active === 4) { headline = t('missions', 'aHeadDone') || 'En attente de validation'; sub = t('missions', 'aSubDone') || 'Le client valide, puis votre paiement est libéré.'; }
+        else { headline = t('missions', 'aHeadPaid') || 'Mission payée'; sub = t('missions', 'aSubPaid') || 'Paiement libéré. Bravo !'; }
         return (
-          <div className="mb-6 rounded-2xl border border-border bg-card p-5">
-            <div className="flex items-center">
-              {steps.map((label, i) => {
-                const n = i + 1;
-                const done = active > n;
-                const now = active === n;
-                return (
-                  <div key={label} className="relative flex flex-1 flex-col items-center">
-                    {i < steps.length - 1 && (
-                      <div className={`absolute left-1/2 top-[13px] h-0.5 w-full ${active > n ? 'bg-primary' : 'bg-border'}`} />
-                    )}
-                    <div className={`font-display relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold ${done ? 'bg-primary text-primary-foreground' : now ? 'bg-primary text-primary-foreground ring-4 ring-muted' : 'bg-muted text-muted-foreground'}`}>
-                      {done ? '' : n}
-                    </div>
-                    <div className={`font-display mt-2 text-[11px] font-bold ${active >= n ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</div>
-                  </div>
-                );
-              })}
+          <div className="mb-6 rounded-2xl bg-foreground p-6 text-background">
+            <div className="font-display text-[11px] font-bold uppercase tracking-wider text-background/60">{t('missions', 'step') || 'Étape'} {active}/5 · {stepLabels[active]}</div>
+            <h1 className="font-display mt-1.5 text-2xl font-extrabold leading-tight">{headline}</h1>
+            <p className="mt-1.5 text-sm text-background/70">{sub}</p>
+            <div className="mt-4 flex gap-1.5">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <span key={n} className={`h-1 flex-1 rounded-full ${active >= n ? 'bg-background' : 'bg-background/25'}`} />
+              ))}
             </div>
           </div>
         );
