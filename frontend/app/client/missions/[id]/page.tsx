@@ -1,6 +1,8 @@
 'use client';
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
+import { MapPin } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { missionsApi } from '@/lib/api/missions';
@@ -13,6 +15,9 @@ import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translateMissionStatus } from '@/lib/utils/enum-translations';
+
+// Mini-carte de localisation, chargée côté client uniquement (Leaflet ne supporte pas le SSR).
+const MissionMap = dynamic(() => import('@/components/shared/MissionMap').then((m) => m.MissionMap), { ssr: false });
 
 interface Mission {
   id: string;
@@ -476,6 +481,16 @@ export default function MissionDetailsPage() {
             </div>
           );
         })()}
+
+        {/* Mini-carte de localisation (façon Uber) */}
+        {(mission as any).latitude != null && (mission as any).longitude != null && (
+          <div className="mb-6">
+            <MissionMap lat={(mission as any).latitude} lng={(mission as any).longitude} />
+            <p className="mt-2 flex items-center gap-1.5 px-1 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 flex-shrink-0" /> {mission.address}, {mission.postalCode} {mission.city}
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}

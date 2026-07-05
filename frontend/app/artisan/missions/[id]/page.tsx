@@ -1,7 +1,11 @@
 'use client';
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+
+// Mini-carte de localisation, chargée côté client uniquement (Leaflet ne supporte pas le SSR).
+const MissionMap = dynamic(() => import('@/components/shared/MissionMap').then((m) => m.MissionMap), { ssr: false });
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -673,6 +677,9 @@ export default function MissionDetailPage() {
                     {mission.postalCode} {mission.city}
                   </div>
                 </div>
+                {mission.latitude != null && mission.longitude != null && (
+                  <MissionMap lat={mission.latitude} lng={mission.longitude} className="h-44 w-full overflow-hidden rounded-2xl border border-border" />
+                )}
                 {mission.distance && (
                   <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
                     <span className="text-2xl"></span>
