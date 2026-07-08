@@ -23,7 +23,10 @@ export class CalendarController {
 
   @Get('google/callback')
   @ApiOperation({ summary: 'Google Calendar OAuth callback' })
-  async googleCallback(@Query('code') code: string, @Query('state') userId: string) {
+  async googleCallback(@Query('code') code: string, @Query('state') state: string) {
+    // CSRF protection: never trust the raw query param as userId. Derive the
+    // identity from the HMAC-signed state that we issued at auth-url time.
+    const userId = this.googleCalendarService.verifyOAuthState(state);
     await this.googleCalendarService.exchangeCodeForTokens(code, userId);
     return { success: true, message: 'Google Calendar connected' };
   }
@@ -54,7 +57,9 @@ export class CalendarController {
 
   @Get('outlook/callback')
   @ApiOperation({ summary: 'Outlook Calendar OAuth callback' })
-  async outlookCallback(@Query('code') code: string, @Query('state') userId: string) {
+  async outlookCallback(@Query('code') code: string, @Query('state') state: string) {
+    // CSRF protection: derive identity from the HMAC-signed state, not the raw param.
+    const userId = this.outlookCalendarService.verifyOAuthState(state);
     await this.outlookCalendarService.exchangeCodeForTokens(code, userId);
     return { success: true, message: 'Outlook Calendar connected' };
   }

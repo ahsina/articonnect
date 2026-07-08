@@ -7,10 +7,13 @@ import {
   Query,
   UseGuards,
   Request,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { TimeTrackingService } from '../services/time-tracking.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 class ClockInDto {
   location?: { lat: number; lng: number };
@@ -37,7 +40,29 @@ class CorrectTimeDto {
 @Controller('time-tracking')
 @UseGuards(JwtAuthGuard)
 export class TimeTrackingController {
-  constructor(private readonly timeTrackingService: TimeTrackingService) {}
+  constructor(
+    private readonly timeTrackingService: TimeTrackingService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Vérifie que l'utilisateur authentifié (dérivé du JWT) est OWNER/MANAGER
+   * de l'entreprise ciblée. Empêche l'IDOR / falsification de paie.
+   */
+  private async assertCompanyManager(userId: string, companyId: string): Promise<void> {
+    const membership = await this.prisma.companyEmployee.findFirst({
+      where: {
+        userId,
+        companyId,
+        role: { in: ['OWNER', 'MANAGER'] },
+      },
+    });
+    if (!membership) {
+      throw new ForbiddenException(
+        "Accès refusé : vous devez être propriétaire ou gestionnaire de cette entreprise",
+      );
+    }
+  }
 
   // ==================== EMPLOYEE SELF-SERVICE ====================
 
@@ -128,10 +153,12 @@ export class TimeTrackingController {
   @ApiQuery({ name: 'startDate', required: true })
   @ApiQuery({ name: 'endDate', required: true })
   async getCompanyTimeEntries(
+    @Request() req,
     @Param('companyId') companyId: string,
     @Query('startDate') startDateStr: string,
     @Query('endDate') endDateStr: string,
   ) {
+    await this.assertCompanyManager(req.user.userId, companyId);
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
     return this.timeTrackingService.getCompanyTimeEntries(companyId, startDate, endDate);
@@ -141,9 +168,23 @@ export class TimeTrackingController {
   @ApiOperation({ summary: 'Get weekly summary for an employee (manager only)' })
   @ApiQuery({ name: 'weekStart', required: false })
   async getEmployeeWeeklySummary(
+    @Request() req,
     @Param('employeeId') employeeId: string,
     @Query('weekStart') weekStartStr?: string,
   ) {
+    // L'employeeId est un CompanyEmployee.id : on résout son entreprise puis
+    // on autorise soit l'employé lui-même, soit un OWNER/MANAGER de la même entreprise.
+    const target = await this.prisma.companyEmployee.findUnique({
+      where: { id: employeeId },
+      select: { companyId: true, userId: true },
+    });
+    if (!target) {
+      throw new NotFoundException('Employé non trouvé');
+    }
+    if (target.userId !== req.user.userId) {
+      await this.assertCompanyManager(req.user.userId, target.companyId);
+    }
+
     let weekStart: Date;
     if (weekStartStr) {
       weekStart = new Date(weekStartStr);
@@ -166,6 +207,17 @@ export class TimeTrackingController {
     @Param('entryId') entryId: string,
     @Body() dto: CorrectTimeDto,
   ) {
+    // Corriger une entrée de paie est réservé à un OWNER/MANAGER de l'entreprise
+    // à laquelle appartient l'entrée. On dérive l'entreprise de l'entrée elle-même.
+    const entry = await this.prisma.timeEntry.findUnique({
+      where: { id: entryId },
+      select: { companyId: true },
+    });
+    if (!entry) {
+      throw new NotFoundException('Entrée de temps non trouvée');
+    }
+    await this.assertCompanyManager(req.user.userId, entry.companyId);
+
     return this.timeTrackingService.correctTimeEntry(
       entryId,
       req.user.userId,

@@ -207,22 +207,45 @@ export class BankTransferService {
       throw new BadRequestException('Transaction déjà traitée');
     }
 
-    // Store proof of payment (you'd create a ProofOfPayment table in production)
-    // For now, we'll update the transaction with a note
-    this.logger.log(
-      `Proof of payment uploaded: Transaction ${transactionId} | Image: ${proofImageUrl} | User: ${userId}`,
-    );
+    // Persist proof of payment durably.
+    // There is no dedicated ProofOfPayment table in the schema and we must not
+    // alter the schema here, so we store the proof as a typed Notification record
+    // (metadata carries the transactionId + image URL). This makes the proof
+    // retrievable by getBankTransferStatus and surfaces it to the client feed.
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: NotificationType.SYSTEM,
+        title: 'Preuve de virement reçue',
+        message: 'Votre preuve de virement bancaire a bien été enregistrée et est en attente de vérification.',
+        link: transaction.mission ? `/client/missions/${transaction.mission.id}` : undefined,
+        metadata: {
+          kind: 'BANK_TRANSFER_PROOF',
+          transactionId,
+          proofImageUrl,
+          uploadedBy: userId,
+          uploadedAt: new Date().toISOString(),
+        },
+      },
+    });
 
-    // In production, create a dedicated ProofOfPayment record:
-    // await this.prisma.proofOfPayment.create({
-    //   data: {
-    //     transactionId,
-    //     imageUrl: proofImageUrl,
-    //     uploadedBy: userId,
-    //   },
-    // });
+    this.logger.log(`Bank transfer proof persisted for transaction ${transactionId} (user ${userId})`);
+  }
 
-    this.logger.log(`Bank transfer proof uploaded for transaction ${transactionId}`);
+  /**
+   * Whether a proof-of-payment record exists for a transaction.
+   */
+  private async hasProofOfPayment(transactionId: string): Promise<boolean> {
+    const proof = await this.prisma.notification.findFirst({
+      where: {
+        AND: [
+          { metadata: { path: ['kind'], equals: 'BANK_TRANSFER_PROOF' } },
+          { metadata: { path: ['transactionId'], equals: transactionId } },
+        ],
+      },
+      select: { id: true },
+    });
+    return !!proof;
   }
 
   /**
@@ -429,7 +452,7 @@ export class BankTransferService {
       throw new NotFoundException('Transaction introuvable');
     }
 
-    const proofUploaded = false; // In production, check ProofOfPayment table
+    const proofUploaded = await this.hasProofOfPayment(transactionId);
 
     let instructions: BankTransferInstructions | undefined;
     if (transaction.status === 'PENDING') {

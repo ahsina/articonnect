@@ -138,6 +138,16 @@ export class AccountingController {
     const VAT_RATE_REDUCED = 0.10;
     const VAT_RATE_SUPER_REDUCED = 0.055;
 
+    // Deductible VAT requires purchase/expense records with recoverable VAT.
+    // The platform does not track artisan purchases (no expense/purchase model),
+    // so deductible VAT is genuinely 0 here. We compute the balance as the real
+    // net (collected - deductible) and flag explicitly that deductible VAT is not
+    // tracked, so the figure is not blindly trusted as a final declaration.
+    const collectedTva = summary.invoices.totalTVA;
+    const deductibleTva = 0;
+    const tvaDue = collectedTva - deductibleTva;
+    const deductibleTracked = false;
+
     return {
       period: {
         type: month ? 'MONTHLY' : quarter ? 'QUARTERLY' : 'ANNUAL',
@@ -149,18 +159,21 @@ export class AccountingController {
       },
       collected: {
         baseHT: summary.invoices.totalHT,
-        tva: summary.invoices.totalTVA,
+        tva: collectedTva,
       },
       deductible: {
-        // Would need purchase data for accurate deductible VAT
         baseHT: 0,
-        tva: 0,
+        tva: deductibleTva,
+        tracked: deductibleTracked,
       },
       balance: {
-        tvaDue: summary.invoices.totalTVA,
-        message: summary.invoices.totalTVA > 0
-          ? `TVA à reverser: ${summary.invoices.totalTVA.toFixed(2)}€`
+        tvaDue,
+        message: tvaDue > 0
+          ? `TVA à reverser: ${tvaDue.toFixed(2)}€`
           : 'Pas de TVA à déclarer pour cette période',
+        note:
+          'La TVA déductible sur achats n\'est pas suivie par la plateforme (aucune donnée d\'achat). ' +
+          'Ce montant correspond à la TVA collectée ; déduisez vos achats professionnels avant déclaration.',
       },
       rates: {
         normal: `${VAT_RATE_NORMAL * 100}%`,

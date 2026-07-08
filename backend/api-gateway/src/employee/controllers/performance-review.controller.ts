@@ -12,8 +12,10 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PrismaService } from '../../common/prisma/prisma.service';
 import { PerformanceReviewService } from '../services/performance-review.service';
 import {
   CreatePerformanceReviewDto,
@@ -31,22 +33,51 @@ import {
 @Controller('performance-reviews')
 @UseGuards(JwtAuthGuard)
 export class PerformanceReviewController {
-  constructor(private readonly reviewService: PerformanceReviewService) {}
+  constructor(
+    private readonly reviewService: PerformanceReviewService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Le JWT ne pose PAS companyId sur req.user. On dérive donc l'entreprise
+   * à partir du CompanyEmployee actif de l'utilisateur (rôle OWNER/MANAGER),
+   * garantissant l'isolation multi-tenant. Un throw évite le companyId=undefined
+   * qui neutralisait tous les filtres Prisma d'accès.
+   */
+  private async resolveCompanyId(userId: string): Promise<string> {
+    const membership = await this.prisma.companyEmployee.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        role: { in: ['OWNER', 'MANAGER'] },
+      },
+      select: { companyId: true },
+    });
+    if (!membership) {
+      throw new ForbiddenException(
+        "Accès refusé : aucune entreprise gérée trouvée pour cet utilisateur",
+      );
+    }
+    return membership.companyId;
+  }
 
   // Reviews CRUD
   @Post()
   async createReview(@Request() req, @Body() dto: CreatePerformanceReviewDto) {
-    return this.reviewService.createReview(req.user.id, req.user.companyId, dto);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.createReview(req.user.id, companyId, dto);
   }
 
   @Get()
   async findAllReviews(@Request() req, @Query() filters: ReviewFilterDto) {
-    return this.reviewService.findAllReviews(req.user.companyId, req.user.id, filters);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.findAllReviews(companyId, req.user.id, filters);
   }
 
   @Get(':id')
   async findReviewById(@Request() req, @Param('id', ParseUUIDPipe) id: string) {
-    return this.reviewService.findReviewById(id, req.user.id, req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.findReviewById(id, req.user.id, companyId);
   }
 
   @Put(':id')
@@ -81,13 +112,15 @@ export class PerformanceReviewController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   async deleteReview(@Request() req, @Param('id', ParseUUIDPipe) id: string) {
-    return this.reviewService.deleteReview(id, req.user.id, req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.deleteReview(id, req.user.id, companyId);
   }
 
   // Goals
   @Post('goals')
   async createGoal(@Request() req, @Body() dto: CreateGoalDto) {
-    return this.reviewService.createGoal(req.user.id, req.user.companyId, dto);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.createGoal(req.user.id, companyId, dto);
   }
 
   @Get('goals/employee/:employeeId')
@@ -95,7 +128,8 @@ export class PerformanceReviewController {
     @Request() req,
     @Param('employeeId', ParseUUIDPipe) employeeId: string,
   ) {
-    return this.reviewService.getEmployeeGoals(employeeId, req.user.id, req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.getEmployeeGoals(employeeId, req.user.id, companyId);
   }
 
   @Put('goals/:goalId')
@@ -104,19 +138,22 @@ export class PerformanceReviewController {
     @Param('goalId', ParseUUIDPipe) goalId: string,
     @Body() dto: UpdateGoalDto,
   ) {
-    return this.reviewService.updateGoal(goalId, req.user.id, req.user.companyId, dto);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.updateGoal(goalId, req.user.id, companyId, dto);
   }
 
   @Delete('goals/:goalId')
   @HttpCode(HttpStatus.OK)
   async deleteGoal(@Request() req, @Param('goalId', ParseUUIDPipe) goalId: string) {
-    return this.reviewService.deleteGoal(goalId, req.user.id, req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.deleteGoal(goalId, req.user.id, companyId);
   }
 
   // 360 Feedback
   @Post('360-feedback/request')
   async create360FeedbackRequest(@Request() req, @Body() dto: Feedback360RequestDto) {
-    return this.reviewService.create360FeedbackRequest(req.user.id, req.user.companyId, dto);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.create360FeedbackRequest(req.user.id, companyId, dto);
   }
 
   @Post('360-feedback/submit')
@@ -130,18 +167,21 @@ export class PerformanceReviewController {
     @Request() req,
     @Param('employeeId', ParseUUIDPipe) employeeId: string,
   ) {
-    return this.reviewService.get360FeedbackSummary(employeeId, req.user.id, req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.get360FeedbackSummary(employeeId, req.user.id, companyId);
   }
 
   // Templates
   @Post('templates')
   async createTemplate(@Request() req, @Body() dto: ReviewTemplateDto) {
-    return this.reviewService.createReviewTemplate(req.user.id, req.user.companyId, dto);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.createReviewTemplate(req.user.id, companyId, dto);
   }
 
   @Get('templates')
   async getTemplates(@Request() req) {
-    return this.reviewService.getReviewTemplates(req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.getReviewTemplates(companyId);
   }
 
   @Delete('templates/:templateId')
@@ -150,7 +190,8 @@ export class PerformanceReviewController {
     @Request() req,
     @Param('templateId', ParseUUIDPipe) templateId: string,
   ) {
-    return this.reviewService.deleteReviewTemplate(templateId, req.user.id, req.user.companyId);
+    const companyId = await this.resolveCompanyId(req.user.id);
+    return this.reviewService.deleteReviewTemplate(templateId, req.user.id, companyId);
   }
 
   // Analytics
@@ -160,8 +201,9 @@ export class PerformanceReviewController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
+    const companyId = await this.resolveCompanyId(req.user.id);
     return this.reviewService.getReviewAnalytics(
-      req.user.companyId,
+      companyId,
       req.user.id,
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,

@@ -33,6 +33,8 @@ export class MultiAccountDetectorService {
         phone: true,
         deviceFingerprints: true,
         lastIpAddress: true,
+        lastUserAgent: true,
+        createdAt: true,
         clientProfile: {
           select: {
             stripeCustomerId: true,
@@ -115,7 +117,10 @@ export class MultiAccountDetectorService {
     }
 
     // 6. Behavioral pattern analysis
-    const behavioralMatches = await this.findBehavioralPatterns(userId);
+    const behavioralMatches = await this.findBehavioralPatterns(userId, {
+      createdAt: user.createdAt,
+      lastUserAgent: user.lastUserAgent,
+    });
     behavioralMatches.forEach((account) => {
       linkedAccountIds.add(account.id);
       signals.push({
@@ -233,18 +238,41 @@ export class MultiAccountDetectorService {
   }
 
   /**
-   * Find accounts with similar behavioral patterns
-   * (login times, mission patterns, etc.)
+   * Find accounts with similar behavioral patterns.
+   *
+   * Real (if simple) implementation using data already on the User row:
+   * Sybil / multi-account farms typically register several accounts in a
+   * short burst from the same client (same User-Agent). We flag other
+   * accounts created within a 30-minute window of this account AND sharing
+   * the exact same last User-Agent string. This is a conservative,
+   * deterministic signal (no randomness). A future version could add login-
+   * hour histogram correlation and mission/review timing analysis.
    */
-  private async findBehavioralPatterns(userId: string) {
-    // This would use ML or statistical analysis
-    // For now, return empty array
-    // In production, analyze:
-    // - Login times (same hours of day)
-    // - Mission creation patterns
-    // - Review patterns
-    // - Transaction timings
-    return [];
+  private async findBehavioralPatterns(
+    userId: string,
+    ctx: { createdAt: Date; lastUserAgent: string | null },
+  ) {
+    // Need a User-Agent to correlate on; without it the signal is not reliable.
+    if (!ctx.lastUserAgent) {
+      return [];
+    }
+
+    const windowMs = 30 * 60 * 1000; // 30 minutes
+    const from = new Date(ctx.createdAt.getTime() - windowMs);
+    const to = new Date(ctx.createdAt.getTime() + windowMs);
+
+    return this.prisma.user.findMany({
+      where: {
+        id: { not: userId },
+        lastUserAgent: ctx.lastUserAgent,
+        createdAt: { gte: from, lte: to },
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+      take: 10,
+    });
   }
 
   /**

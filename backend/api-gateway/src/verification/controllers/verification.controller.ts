@@ -9,17 +9,22 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { BusinessVerificationService } from '../services/business-verification.service';
 import { VerifyBusinessDto, ManualVerificationRequestDto } from '../dto/verification.dto';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Controller('verification')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VerificationController {
-  constructor(private businessVerificationService: BusinessVerificationService) {}
+  constructor(
+    private businessVerificationService: BusinessVerificationService,
+    private prisma: PrismaService,
+  ) {}
 
   /**
    * POST /verification/business
@@ -121,12 +126,40 @@ export class VerificationController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   async requestManualReview(@Body() dto: ManualVerificationRequestDto) {
-    // This would trigger a manual review workflow
-    // For now, just log and return success
+    // Accept either the artisan profile id or the userId (same convention as
+    // getVerificationStatus).
+    const profile = await this.prisma.artisanProfile.findFirst({
+      where: { OR: [{ id: dto.artisanId }, { userId: dto.artisanId }] },
+      select: { id: true, businessVerificationWarnings: true },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Artisan profile not found');
+    }
+
+    // Real persistence: flag the profile as pending manual review and record
+    // the reason/notes in the warnings array (existing field), so the admin
+    // queue (getVerificationStatus / MANUAL_REVIEW status) actually reflects it.
+    const note = dto.notes ? ` (${dto.notes})` : '';
+    const reviewNote = `MANUAL_REVIEW_REQUESTED: ${dto.reason}${note}`;
+
+    await this.prisma.artisanProfile.update({
+      where: { id: profile.id },
+      data: {
+        businessVerificationStatus: 'MANUAL_REVIEW',
+        businessVerificationWarnings: [
+          ...(profile.businessVerificationWarnings || []),
+          reviewNote,
+        ],
+        businessVerificationLastCheck: new Date(),
+      },
+    });
+
     return {
       message: 'Demande de vérification manuelle créée',
       artisanId: dto.artisanId,
       reason: dto.reason,
+      status: 'MANUAL_REVIEW',
     };
   }
 }

@@ -1,4 +1,12 @@
-import { Injectable, Logger, Inject, forwardRef, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  Inject,
+  forwardRef,
+  Optional,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from '../../payment/services/stripe.service';
 import { StripeIdentityService } from './stripe-identity.service';
@@ -95,7 +103,7 @@ export class KycService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
     this.logger.warn(
@@ -103,11 +111,16 @@ export class KycService {
       'Configure STRIPE_SECRET_KEY for production KYC.',
     );
 
+    const sessionId = `mock_${userId}_${Date.now()}`;
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         kycStatus: 'PENDING',
         kycProvider: 'MOCK',
+        // Persist the mock session id so the webhook can resolve the user
+        // authoritatively (by lookup) instead of parsing an attacker-controllable string.
+        stripeIdentitySessionId: sessionId,
       },
     });
 
@@ -116,7 +129,7 @@ export class KycService {
 
     return {
       verificationUrl,
-      sessionId: `mock_${userId}_${Date.now()}`,
+      sessionId,
     };
   }
 
@@ -131,14 +144,39 @@ export class KycService {
   }
 
   /**
-   * Handle KYC verification webhook from Stripe
+   * Handle KYC verification webhook.
+   *
+   * When Stripe Identity is configured, real webhooks are signature-verified and
+   * dispatched by StripeIdentityService.handleWebhook (using session metadata) — this
+   * mock path must NOT be reachable in production, otherwise anyone POSTing a mock
+   * sessionId could validate an identity with no authentication.
    */
   async handleKycWebhook(sessionId: string, status: 'verified' | 'rejected') {
-    // Extract userId from sessionId (in production, query by sessionId)
-    const userId = sessionId.split('_')[1];
+    // Hard block in production: real KYC must go through the signed Stripe webhook.
+    if (
+      process.env.NODE_ENV === 'production' ||
+      this.stripeIdentityService?.isEnabled()
+    ) {
+      this.logger.error(
+        `Rejected unsigned mock KYC webhook (session ${sessionId}). ` +
+          'Use the Stripe-signed Identity webhook in production.',
+      );
+      throw new ForbiddenException('Mock KYC webhook is disabled in this environment');
+    }
+
+    // Resolve the user authoritatively by the persisted session id rather than
+    // parsing the (attacker-controllable) sessionId string.
+    const user = await this.prisma.user.findFirst({
+      where: { stripeIdentitySessionId: sessionId, kycProvider: 'MOCK' },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('KYC session not found');
+    }
 
     await this.prisma.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: {
         kycVerified: status === 'verified',
         kycVerifiedAt: status === 'verified' ? new Date() : null,
@@ -146,6 +184,6 @@ export class KycService {
       },
     });
 
-    this.logger.log(`KYC ${status} for user ${userId}`);
+    this.logger.warn(`[MOCK] KYC ${status} for user ${user.id} (dev-only mock webhook)`);
   }
 }

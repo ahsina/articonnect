@@ -397,13 +397,78 @@ export class TwilioSmsService {
     totalCost: number;
     deliveryRate: number;
   }> {
-    // This would typically query from database
-    // For now, return mock data
+    // Compute real statistics from the SMS logs persisted in Redis by logSms()
+    // (keys: sms:log:<messageId>). This replaces the previous hardcoded mock zeros.
+    const now = new Date();
+    // Do NOT mutate `now`: build separate boundary dates from a copy.
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let sentToday = 0;
+    let sentThisMonth = 0;
+    let deliveredCount = 0;
+    let statusKnownCount = 0;
+
+    try {
+      const client = this.redis.getClient();
+
+      // Iterate keys with SCAN (non-blocking) instead of KEYS.
+      const logKeys: string[] = [];
+      let cursor = '0';
+      do {
+        const [nextCursor, keys] = await client.scan(
+          cursor,
+          'MATCH',
+          'sms:log:*',
+          'COUNT',
+          200,
+        );
+        cursor = nextCursor;
+        logKeys.push(...keys);
+      } while (cursor !== '0');
+
+      for (const key of logKeys) {
+        const raw = await client.get(key);
+        if (!raw) continue;
+
+        let data: any;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          continue;
+        }
+
+        // Optionally scope to a single user.
+        if (userId && data.userId !== userId) continue;
+
+        const sentAt = data.sentAt ? new Date(data.sentAt) : null;
+        if (sentAt && !isNaN(sentAt.getTime())) {
+          if (sentAt >= startOfToday) sentToday++;
+          if (sentAt >= startOfMonth) sentThisMonth++;
+        }
+
+        if (data.status) {
+          statusKnownCount++;
+          if (data.status === 'delivered' || data.status === 'sent') {
+            deliveredCount++;
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to compute SMS statistics: ${error.message}`);
+    }
+
     return {
-      sentToday: 0,
-      sentThisMonth: 0,
+      sentToday,
+      sentThisMonth,
+      // Per-message cost is not persisted in the SMS logs, so it cannot be summed
+      // reliably here; reported as a real 0 rather than a fabricated figure.
       totalCost: 0,
-      deliveryRate: 0,
+      deliveryRate:
+        statusKnownCount > 0
+          ? Math.round((deliveredCount / statusKnownCount) * 100)
+          : 0,
     };
   }
 

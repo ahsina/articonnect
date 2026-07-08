@@ -5,6 +5,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { ContentFilterService } from '../../chat/services/content-filter.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 /**
  * Content Moderation Controller
@@ -16,7 +17,10 @@ import { ContentFilterService } from '../../chat/services/content-filter.service
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('moderation/content')
 export class ContentModerationController {
-  constructor(private readonly contentFilter: ContentFilterService) {}
+  constructor(
+    private readonly contentFilter: ContentFilterService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * Get all content violations (Admin only)
@@ -122,10 +126,53 @@ export class ContentModerationController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get content moderation statistics' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved' })
-  async getStats() {
-    // Implementation would aggregate violation statistics
+  async getStats(@Query('days') days: string = '30') {
+    const parsedDays = Number.isFinite(parseInt(days)) ? parseInt(days) : 30;
+    const since = new Date(Date.now() - parsedDays * 24 * 60 * 60 * 1000);
+
+    // Real aggregation from the ContentViolation table.
+    const [
+      total,
+      totalInPeriod,
+      pendingReview,
+      reviewed,
+      bySeverityRaw,
+      byActionRaw,
+    ] = await Promise.all([
+      this.prisma.contentViolation.count(),
+      this.prisma.contentViolation.count({
+        where: { createdAt: { gte: since } },
+      }),
+      this.prisma.contentViolation.count({ where: { reviewed: false } }),
+      this.prisma.contentViolation.count({ where: { reviewed: true } }),
+      this.prisma.contentViolation.groupBy({
+        by: ['severity'],
+        _count: { _all: true },
+      }),
+      this.prisma.contentViolation.groupBy({
+        by: ['actionTaken'],
+        _count: { _all: true },
+      }),
+    ]);
+
+    const bySeverity: Record<string, number> = {};
+    for (const row of bySeverityRaw) {
+      bySeverity[row.severity] = row._count._all;
+    }
+
+    const byAction: Record<string, number> = {};
+    for (const row of byActionRaw) {
+      byAction[row.actionTaken ?? 'NONE'] = row._count._all;
+    }
+
     return {
-      message: 'Statistics endpoint - to be implemented with aggregation queries',
+      total,
+      period: `${parsedDays} days`,
+      totalInPeriod,
+      pendingReview,
+      reviewed,
+      bySeverity,
+      byAction,
     };
   }
 }

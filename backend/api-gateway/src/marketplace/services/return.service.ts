@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   BadRequestException,
@@ -21,6 +22,8 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ReturnService {
+  private readonly logger = new Logger(ReturnService.name);
+
   constructor(private prisma: PrismaService) {}
 
   private readonly RETURN_WINDOW_DAYS = 30;
@@ -545,7 +548,12 @@ export class ReturnService {
     orderReturn: any,
     amount: Decimal,
     method?: RefundMethod,
-  ): Promise<{ success: boolean; transactionId?: string; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    transactionId?: string;
+    error?: string;
+    simulated?: boolean;
+  }> {
     // Get the original transaction
     const transaction = await this.prisma.transaction.findUnique({
       where: { orderId: orderReturn.orderId },
@@ -555,32 +563,62 @@ export class ReturnService {
       return { success: false, error: 'Original transaction not found' };
     }
 
-    // In production, this would call Stripe/PayPal refund APIs
-    // For now, we'll simulate the refund
+    // NOTE: monetary arithmetic (amount Decimal) is left untouched on purpose.
     try {
       if (transaction.paymentMethod === 'STRIPE' && transaction.stripePaymentIntentId) {
-        // Stripe refund would be:
-        // const refund = await this.stripe.refunds.create({
-        //   payment_intent: transaction.stripePaymentIntentId,
-        //   amount: Math.round(amount.toNumber() * 100),
-        // });
+        const stripeSecret = process.env.STRIPE_SECRET_KEY;
+        if (stripeSecret) {
+          // Real Stripe refund when configured (works in Stripe TEST mode too).
+          // Lazy-require to avoid adding a hard dependency / cross-module DI.
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const Stripe = require('stripe');
+          const stripe = new Stripe(stripeSecret);
+          const refund = await stripe.refunds.create({
+            payment_intent: transaction.stripePaymentIntentId,
+            amount: Math.round(amount.toNumber() * 100),
+          });
+          return { success: true, transactionId: refund.id };
+        }
+        // No Stripe key: keep demo behaviour but be HONEST about it.
+        this.logger.warn(
+          `[SIMULATION] Stripe refund NOT sent (STRIPE_SECRET_KEY missing). ` +
+            `Return ${orderReturn.id}, intent ${transaction.stripePaymentIntentId}, amount €${amount.toFixed(2)}. ` +
+            `No money moved.`,
+        );
         return {
           success: true,
-          transactionId: `refund_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          simulated: true,
+          transactionId: `sim_refund_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         };
       } else if (transaction.paymentMethod === 'PAYPAL' && transaction.paypalCaptureId) {
-        // PayPal refund would be similar
+        // No PayPal SDK/credentials wired in this environment: do not pretend a
+        // remote success. Flag as simulated so callers/logs know money didn't move.
+        this.logger.warn(
+          `[SIMULATION] PayPal refund NOT sent (no PayPal integration configured). ` +
+            `Return ${orderReturn.id}, capture ${transaction.paypalCaptureId}, amount €${amount.toFixed(2)}. ` +
+            `No money moved.`,
+        );
         return {
           success: true,
-          transactionId: `paypal_refund_${Date.now()}`,
+          simulated: true,
+          transactionId: `sim_paypal_refund_${Date.now()}`,
         };
       }
 
+      // Manual / bank-transfer refund: handled off-platform by admin.
+      this.logger.warn(
+        `[MANUAL] Refund for return ${orderReturn.id} (method ${transaction.paymentMethod}) ` +
+          `must be processed manually. Amount €${amount.toFixed(2)}.`,
+      );
       return {
         success: true,
+        simulated: true,
         transactionId: `manual_refund_${Date.now()}`,
       };
     } catch (error) {
+      this.logger.error(
+        `Refund failed for return ${orderReturn.id}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Refund failed',
@@ -589,10 +627,15 @@ export class ReturnService {
   }
 
   private async generateReturnLabel(returnId: string): Promise<string> {
-    // In production, this would integrate with shipping carriers (EasyPost, ShipStation, etc.)
-    // For now, we generate a mock label URL
+    // No shipping-carrier integration (EasyPost/ShipStation) is configured in this
+    // environment. Instead of returning a fake URL to a non-existent PDF, flag the
+    // label as simulated so the UI/client is not misled into expecting a real file.
     const labelId = `RETURN_${returnId.slice(-8).toUpperCase()}_${Date.now()}`;
-    return `https://storage.krafolt.com/return-labels/${labelId}.pdf`;
+    this.logger.warn(
+      `[SIMULATION] Return label NOT generated by a carrier (no carrier integration). ` +
+        `Placeholder id ${labelId} for return ${returnId}.`,
+    );
+    return `simulated://return-labels/${labelId}`;
   }
 
   // Analytics

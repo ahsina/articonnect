@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { Client } from '@microsoft/microsoft-graph-client';
 import axios from 'axios';
+import * as crypto from 'crypto';
 
 /**
  * Outlook/Microsoft 365 Calendar Synchronization Service
@@ -26,6 +27,11 @@ export class OutlookCalendarService {
   private readonly tenantId: string;
   private readonly scopes = 'Calendars.ReadWrite offline_access';
 
+  // AES-256-GCM at-rest encryption for OAuth tokens.
+  // Encrypted payload layout (base64): "enc:v1:" + salt(16) | iv(12) | authTag(16) | ciphertext
+  private readonly encAlgorithm = 'aes-256-gcm';
+  private readonly encPrefix = 'enc:v1:';
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
@@ -43,6 +49,87 @@ export class OutlookCalendarService {
     }
   }
 
+  private getSecret(): string {
+    return (
+      this.configService.get<string>('ENCRYPTION_KEY') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      'krafolt-dev-outlook-secret'
+    );
+  }
+
+  /**
+   * Encrypt an OAuth token at rest (AES-256-GCM).
+   */
+  private encryptToken(plain: string): string {
+    const salt = crypto.randomBytes(16);
+    const iv = crypto.randomBytes(12);
+    const key = crypto.pbkdf2Sync(this.getSecret(), salt, 100000, 32, 'sha256');
+    const cipher = crypto.createCipheriv(this.encAlgorithm, key, iv);
+    const ciphertext = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+    return this.encPrefix + Buffer.concat([salt, iv, authTag, ciphertext]).toString('base64');
+  }
+
+  /**
+   * Decrypt an OAuth token. Backward-compatible: legacy plaintext tokens
+   * (stored before at-rest encryption) are returned unchanged.
+   */
+  private decryptToken(stored: string | null | undefined): string | null {
+    if (!stored) return null;
+    if (!stored.startsWith(this.encPrefix)) return stored; // legacy plaintext
+    const data = Buffer.from(stored.slice(this.encPrefix.length), 'base64');
+    const salt = data.subarray(0, 16);
+    const iv = data.subarray(16, 28);
+    const authTag = data.subarray(28, 44);
+    const ciphertext = data.subarray(44);
+    const key = crypto.pbkdf2Sync(this.getSecret(), salt, 100000, 32, 'sha256');
+    const decipher = crypto.createDecipheriv(this.encAlgorithm, key, iv);
+    decipher.setAuthTag(authTag);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+  }
+
+  /**
+   * Build a tamper-proof OAuth `state`: userId + random nonce, HMAC-signed.
+   * Prevents CSRF/account-linking: a caller cannot forge a valid state for
+   * another user's id (the callback re-verifies the HMAC via verifyOAuthState).
+   */
+  createOAuthState(userId: string): string {
+    const nonce = crypto.randomBytes(16).toString('hex');
+    const payload = `${userId}.${nonce}`;
+    const sig = crypto.createHmac('sha256', this.getSecret()).update(payload).digest('hex');
+    return Buffer.from(`${payload}.${sig}`).toString('base64url');
+  }
+
+  /**
+   * Verify a returned OAuth `state` and extract the userId it was issued for.
+   */
+  verifyOAuthState(state: string): string {
+    if (!state) {
+      throw new BadRequestException('Missing OAuth state');
+    }
+    let decoded: string;
+    try {
+      decoded = Buffer.from(state, 'base64url').toString('utf8');
+    } catch {
+      throw new BadRequestException('Invalid OAuth state');
+    }
+    const parts = decoded.split('.');
+    if (parts.length !== 3) {
+      throw new BadRequestException('Invalid OAuth state');
+    }
+    const [userId, nonce, sig] = parts;
+    const expected = crypto
+      .createHmac('sha256', this.getSecret())
+      .update(`${userId}.${nonce}`)
+      .digest('hex');
+    const sigBuf = Buffer.from(sig);
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      throw new BadRequestException('OAuth state signature mismatch (possible CSRF)');
+    }
+    return userId;
+  }
+
   /**
    * Generate OAuth 2.0 authorization URL for user consent
    * User will be redirected to Microsoft login to grant calendar access
@@ -58,7 +145,7 @@ export class OutlookCalendarService {
       redirect_uri: this.redirectUri,
       response_mode: 'query',
       scope: this.scopes,
-      state: userId, // Pass userId to identify user after OAuth callback
+      state: this.createOAuthState(userId), // Signed CSRF-protected state (not raw userId)
     });
 
     return `https://login.microsoftonline.com/${this.tenantId}/oauth2/v2.0/authorize?${params.toString()}`;
@@ -91,12 +178,12 @@ export class OutlookCalendarService {
 
       const { access_token, refresh_token, expires_in } = response.data;
 
-      // Store tokens in database
+      // Store tokens in database, encrypted at rest (AES-256-GCM).
       await this.prisma.user.update({
         where: { id: userId },
         data: {
-          outlookAccessToken: access_token,
-          outlookRefreshToken: refresh_token,
+          outlookAccessToken: this.encryptToken(access_token),
+          outlookRefreshToken: this.encryptToken(refresh_token),
           outlookTokenExpiry: new Date(Date.now() + expires_in * 1000),
         },
       });
@@ -122,13 +209,16 @@ export class OutlookCalendarService {
       throw new BadRequestException('No refresh token found for user');
     }
 
+    // Decrypt the stored refresh token before use (legacy plaintext still works).
+    const refreshTokenPlain = this.decryptToken(user.outlookRefreshToken)!;
+
     try {
       const response = await axios.post(
         `https://login.microsoftonline.com/${this.tenantId}/oauth2/v2.0/token`,
         new URLSearchParams({
           client_id: this.clientId,
           client_secret: this.clientSecret,
-          refresh_token: user.outlookRefreshToken,
+          refresh_token: refreshTokenPlain,
           grant_type: 'refresh_token',
           scope: this.scopes,
         }),
@@ -139,12 +229,12 @@ export class OutlookCalendarService {
 
       const { access_token, refresh_token, expires_in } = response.data;
 
-      // Update tokens in database
+      // Update tokens in database, encrypted at rest (AES-256-GCM).
       await this.prisma.user.update({
         where: { id: userId },
         data: {
-          outlookAccessToken: access_token,
-          outlookRefreshToken: refresh_token,
+          outlookAccessToken: this.encryptToken(access_token),
+          outlookRefreshToken: this.encryptToken(refresh_token),
           outlookTokenExpiry: new Date(Date.now() + expires_in * 1000),
         },
       });
@@ -179,7 +269,8 @@ export class OutlookCalendarService {
       return await this.refreshAccessToken(userId);
     }
 
-    return user.outlookAccessToken;
+    // Decrypt the stored access token before returning (legacy plaintext still works).
+    return this.decryptToken(user.outlookAccessToken)!;
   }
 
   /**

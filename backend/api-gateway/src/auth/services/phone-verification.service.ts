@@ -304,16 +304,19 @@ export class PhoneVerificationService {
     }
 
     try {
-      // Twilio integration would go here
-      // Example (requires 'twilio' package):
-      // const client = require('twilio')(twilioAccountSid, twilioAuthToken);
-      // await client.messages.create({
-      //   body: `Votre code de vérification ArticConnect: ${code}`,
-      //   from: twilioPhoneNumber,
-      //   to: phone,
-      // });
+      // Real Twilio send when credentials are configured (works with Twilio trial too).
+      // Lazy-require so the 'twilio' package is only loaded when actually used.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const twilio = require('twilio');
+      const client = twilio(twilioAccountSid, twilioAuthToken);
+      const result = await client.messages.create({
+        body: `Votre code de vérification Krafolt: ${code}. Valide 10 min.`,
+        from: twilioPhoneNumber,
+        to: phone,
+      });
 
-      this.logger.log(`SMS sent to ${phone} (code: ${code})`);
+      // Do NOT log the verification code here (auth secret).
+      this.logger.log(`Verification SMS sent to ${phone} (sid: ${result.sid})`);
     } catch (error) {
       this.logger.error(`Failed to send SMS to ${phone}:`, error);
       throw new BadRequestException('Échec de l\'envoi du SMS');

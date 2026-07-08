@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import * as crypto from 'crypto';
 
 export interface CalendarEvent {
   id?: string;
@@ -57,8 +58,11 @@ export interface GoogleCalendarTokens {
  *
  * Security:
  * - OAuth2 authentication (no password storage)
- * - Tokens encrypted at rest
+ * - CSRF-protected OAuth `state` (HMAC-signed userId + nonce, verified at callback)
  * - Automatic token refresh
+ * - Persistence note: tokens are currently kept in a process-local store because
+ *   the schema has no Google token columns yet; the production TODO is a
+ *   dedicated encrypted-at-rest table (see the tokenStore NOTE below).
  * - Scope limited to calendar access only
  * - User can revoke access anytime via Google settings
  */
@@ -68,6 +72,15 @@ export class GoogleCalendarService {
   private oauth2Client: OAuth2Client;
   private readonly redirectUri: string;
   private readonly enabled: boolean;
+
+  // NOTE (persistence limitation): the User/Prisma schema currently has no
+  // columns/table for Google Calendar tokens (only Outlook fields exist), and
+  // this task must not run migrations. Tokens are therefore held in a process-
+  // local store so the OAuth flow is HONEST (tokens are really saved, retrieved
+  // and usable within the running instance) instead of the previous no-op that
+  // reported "connected" while persisting nothing. Adding googleAccessToken/
+  // googleRefreshToken/googleTokenExpiry to the schema is the production TODO.
+  private readonly tokenStore = new Map<string, GoogleCalendarTokens>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -105,11 +118,65 @@ export class GoogleCalendarService {
     const authUrl = this.oauth2Client.generateAuthUrl({
       access_type: 'offline', // Get refresh token
       scope: scopes,
-      state: userId, // Pass userId to identify user after redirect
+      state: this.createOAuthState(userId), // Signed CSRF-protected state (not raw userId)
       prompt: 'consent', // Force consent screen to get refresh token
     });
 
     return authUrl;
+  }
+
+  /**
+   * Build a tamper-proof OAuth `state`: userId + random nonce, signed with HMAC.
+   * Prevents CSRF / account-linking attacks: a caller cannot forge a valid
+   * state for another user's id (the callback re-verifies the HMAC).
+   */
+  createOAuthState(userId: string): string {
+    const nonce = crypto.randomBytes(16).toString('hex');
+    const payload = `${userId}.${nonce}`;
+    const sig = crypto
+      .createHmac('sha256', this.getStateSecret())
+      .update(payload)
+      .digest('hex');
+    return Buffer.from(`${payload}.${sig}`).toString('base64url');
+  }
+
+  /**
+   * Verify a returned OAuth `state` and extract the userId it was issued for.
+   * Throws BadRequestException if the signature is missing/invalid (CSRF guard).
+   */
+  verifyOAuthState(state: string): string {
+    if (!state) {
+      throw new BadRequestException('Missing OAuth state');
+    }
+    let decoded: string;
+    try {
+      decoded = Buffer.from(state, 'base64url').toString('utf8');
+    } catch {
+      throw new BadRequestException('Invalid OAuth state');
+    }
+    const parts = decoded.split('.');
+    if (parts.length !== 3) {
+      throw new BadRequestException('Invalid OAuth state');
+    }
+    const [userId, nonce, sig] = parts;
+    const expected = crypto
+      .createHmac('sha256', this.getStateSecret())
+      .update(`${userId}.${nonce}`)
+      .digest('hex');
+    const sigBuf = Buffer.from(sig);
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      throw new BadRequestException('OAuth state signature mismatch (possible CSRF)');
+    }
+    return userId;
+  }
+
+  private getStateSecret(): string {
+    return (
+      this.configService.get<string>('ENCRYPTION_KEY') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      'krafolt-dev-oauth-state-secret'
+    );
   }
 
   /**
@@ -311,41 +378,22 @@ export class GoogleCalendarService {
    * Get user's calendar tokens
    */
   private async getTokens(userId: string): Promise<GoogleCalendarTokens | null> {
-    // In production, retrieve from database
-    // const tokens = await this.prisma.googleCalendarTokens.findUnique({
-    //   where: { userId },
-    // });
-    // return tokens ? {
-    //   accessToken: decrypt(tokens.accessToken),
-    //   refreshToken: decrypt(tokens.refreshToken),
-    //   expiryDate: tokens.expiryDate.getTime(),
-    // } : null;
-
-    // For now, return null (not implemented)
-    return null;
+    // Retrieve from the process-local store (see class NOTE on persistence).
+    // Production TODO: read from a dedicated encrypted DB table/columns.
+    return this.tokenStore.get(userId) ?? null;
   }
 
   /**
    * Save user's calendar tokens
    */
   private async saveTokens(userId: string, tokens: GoogleCalendarTokens): Promise<void> {
-    // In production, store in database (encrypted)
-    // await this.prisma.googleCalendarTokens.upsert({
-    //   where: { userId },
-    //   create: {
-    //     userId,
-    //     accessToken: encrypt(tokens.accessToken),
-    //     refreshToken: encrypt(tokens.refreshToken),
-    //     expiryDate: new Date(tokens.expiryDate),
-    //   },
-    //   update: {
-    //     accessToken: encrypt(tokens.accessToken),
-    //     refreshToken: encrypt(tokens.refreshToken),
-    //     expiryDate: new Date(tokens.expiryDate),
-    //   },
-    // });
-
-    this.logger.log(`Tokens saved for user ${userId}`);
+    // Persist to the process-local store (see class NOTE). This makes the OAuth
+    // flow truthful: tokens are actually retrievable afterwards for event sync.
+    // Production TODO: upsert into an encrypted DB table instead.
+    this.tokenStore.set(userId, tokens);
+    this.logger.log(
+      `Tokens saved for user ${userId} (in-memory store; not persisted across restarts)`,
+    );
   }
 
   /**
@@ -378,11 +426,9 @@ export class GoogleCalendarService {
    * Disconnect Google Calendar
    */
   async disconnectCalendar(userId: string): Promise<void> {
-    // In production, delete from database
-    // await this.prisma.googleCalendarTokens.delete({
-    //   where: { userId },
-    // });
-
+    // Remove from the process-local store (see class NOTE).
+    // Production TODO: delete the user's row from the encrypted DB table.
+    this.tokenStore.delete(userId);
     this.logger.log(`Google Calendar disconnected for user ${userId}`);
   }
 

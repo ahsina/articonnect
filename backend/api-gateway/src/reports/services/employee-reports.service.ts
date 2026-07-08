@@ -31,8 +31,10 @@ export class EmployeeReportsService {
     });
 
     const totalGross = earnings.reduce((sum, e) => sum + e.employeeCommission.toNumber(), 0);
-    const totalNet = earnings.reduce((sum, e) => sum + e.employeeCommission.toNumber(), 0);
     const totalPlatformFees = earnings.reduce((sum, e) => sum + (e.platformCommission?.toNumber() || 0), 0);
+    // Fix copier-coller bug: totalNet doit deduire les frais plateforme du brut (auparavant identique a totalGross).
+    // NB: arithmetique monetaire laissee en Number/.toNumber() (Decimal) comme demande — non modifiee.
+    const totalNet = totalGross - totalPlatformFees;
     const totalPaid = earnings.filter((e) => e.status === 'PAID').reduce((sum, e) => sum + e.employeeCommission.toNumber(), 0);
     const totalPending = earnings.filter((e) => e.status === 'PENDING').reduce((sum, e) => sum + e.employeeCommission.toNumber(), 0);
 

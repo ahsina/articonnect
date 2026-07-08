@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -37,19 +38,16 @@ export class CertificationController {
   @ApiQuery({ name: 'artisanUserId', required: false })
   @ApiResponse({ status: 200, description: 'List of certifications' })
   async findAll(@Request() req, @Query('artisanUserId') artisanUserId?: string) {
-    // If user is artisan, return their own certifications
-    if (req.user.role === 'ARTISAN' && !artisanUserId) {
-      return this.certificationService.findAll(req.user.userId);
-    }
-
-    // If artisanUserId provided, return that artisan's certifications
-    if (artisanUserId) {
+    // Seul un ADMIN peut consulter les certifications d'un autre artisan
+    // (ou lister toutes les certifications). Pour tout autre rôle, l'identité
+    // est TOUJOURS dérivée du JWT : impossible d'énumérer les certifs d'autrui
+    // via un artisanUserId manipulable.
+    if (req.user.role === 'ADMIN') {
       return this.certificationService.findAll(artisanUserId);
     }
 
-    // Admin can see all
-    if (req.user.role === 'ADMIN') {
-      return this.certificationService.findAll();
+    if (artisanUserId && artisanUserId !== req.user.userId) {
+      throw new ForbiddenException('Accès refusé aux certifications de cet artisan');
     }
 
     return this.certificationService.findAll(req.user.userId);
@@ -57,10 +55,19 @@ export class CertificationController {
 
   @Get(':id')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get certification by ID' })
+  @ApiOperation({ summary: 'Get certification by ID (owner or admin)' })
   @ApiResponse({ status: 200, description: 'Certification details' })
-  async findOne(@Param('id') id: string) {
-    return this.certificationService.findOne(id);
+  async findOne(@Request() req, @Param('id') id: string) {
+    const certification = await this.certificationService.findOne(id);
+
+    // Contrôle de propriété : seul l'artisan propriétaire (dérivé du JWT) ou un
+    // ADMIN peut lire la certification (dont l'URL du document justificatif).
+    const ownerUserId = (certification as any)?.artisan?.user?.id;
+    if (req.user.role !== 'ADMIN' && ownerUserId !== req.user.userId) {
+      throw new ForbiddenException('Accès refusé à cette certification');
+    }
+
+    return certification;
   }
 
   @Put(':id')

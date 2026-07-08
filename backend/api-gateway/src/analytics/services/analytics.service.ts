@@ -253,7 +253,7 @@ export class AnalyticsService {
     });
 
     if (!artisan || !artisan.artisanProfile) {
-      throw new Error('Artisan not found');
+      throw new NotFoundException('Artisan not found');
     }
 
     const completedMissions = artisan.artisanMissions.filter(

@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../../auth/guards/optional-jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { KnowledgeBaseService } from '../services/knowledge-base.service';
 import {
   CreateArticleDto,
@@ -85,13 +87,15 @@ export class KnowledgeBaseController {
 
   // Admin endpoints
   @Post('articles')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async createArticle(@Request() req, @Body() dto: CreateArticleDto) {
     return this.kbService.createArticle(req.user.id, dto);
   }
 
   @Put('articles/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async updateArticle(
     @Request() req,
     @Param('id') id: string,
@@ -101,35 +105,40 @@ export class KnowledgeBaseController {
   }
 
   @Delete('articles/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async deleteArticle(@Request() req, @Param('id') id: string) {
     return this.kbService.deleteArticle(id, req.user.id);
   }
 
   @Post('articles/:id/publish')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async publishArticle(@Request() req, @Param('id') id: string) {
     return this.kbService.publishArticle(id, req.user.id);
   }
 
   @Post('articles/:id/unpublish')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async unpublishArticle(@Request() req, @Param('id') id: string) {
     return this.kbService.unpublishArticle(id, req.user.id);
   }
 
   @Post('articles/:id/archive')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async archiveArticle(@Request() req, @Param('id') id: string) {
     return this.kbService.archiveArticle(id, req.user.id);
   }
 
   @Post('articles/:id/translations')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async addTranslation(
     @Request() req,
     @Param('id') id: string,
@@ -139,7 +148,8 @@ export class KnowledgeBaseController {
   }
 
   @Delete('articles/:id/translations/:locale')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async removeTranslation(
     @Request() req,
@@ -150,14 +160,16 @@ export class KnowledgeBaseController {
   }
 
   @Post('bulk/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async bulkUpdateStatus(@Request() req, @Body() dto: BulkUpdateStatusDto) {
     return this.kbService.bulkUpdateStatus(req.user.id, dto);
   }
 
   @Get('analytics')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async getAnalytics(
     @Request() req,
     @Query('startDate') startDate?: string,
