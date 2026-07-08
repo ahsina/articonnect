@@ -40,7 +40,8 @@ export class CompanyController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all companies (with pagination and filters)' })
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Get all companies (ADMIN — listing global avec PII owner)' })
   @ApiResponse({ status: 200, description: 'List of companies retrieved successfully' })
   async getAllCompanies(@Query() queryDto: CompanyQueryDto) {
     return this.companyService.getAllCompanies(queryDto);

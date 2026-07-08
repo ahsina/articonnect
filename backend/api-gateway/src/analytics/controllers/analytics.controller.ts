@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { AnalyticsService } from '../services/analytics.service';
 import {
   MatchingQueryDto,
@@ -44,7 +44,11 @@ export class AnalyticsController {
    */
   @Get('artisan/:artisanId')
   @UseGuards(JwtAuthGuard)
-  async getArtisanAnalytics(@Param('artisanId') artisanId: string) {
+  async getArtisanAnalytics(@Request() req, @Param('artisanId') artisanId: string) {
+    // IDOR fix : données business privées -> seul l'artisan concerné ou un ADMIN.
+    if (req.user.userId !== artisanId && req.user.id !== artisanId && req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Accès non autorisé à ces analyses.');
+    }
     return this.analyticsService.getArtisanAnalytics(artisanId);
   }
 

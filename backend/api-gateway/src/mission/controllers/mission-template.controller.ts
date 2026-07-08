@@ -62,10 +62,12 @@ export class MissionTemplateController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a specific template by ID' })
-  @ApiQuery({ name: 'userId', required: false, description: 'User ID for access check' })
-  async getTemplate(@Param('id') id: string, @Query('userId') userId?: string) {
-    const template = await this.templateService.getTemplate(id, userId);
+  async getTemplate(@Request() req, @Param('id') id: string) {
+    // IDOR fix : l'identité de contrôle d'accès vient du JWT, jamais d'un query param.
+    const template = await this.templateService.getTemplate(id, req.user.userId);
     return { template };
   }
 
