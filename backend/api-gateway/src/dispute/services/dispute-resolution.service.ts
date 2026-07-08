@@ -33,6 +33,11 @@ export interface ResolutionOutcome {
 export class DisputeResolutionService {
   private readonly logger = new Logger(DisputeResolutionService.name);
 
+  private safeParseJson(s: string | null | undefined): any {
+    if (!s) return {};
+    try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
@@ -128,7 +133,7 @@ export class DisputeResolutionService {
       uploadedAt: new Date(),
     };
 
-    const currentEvidence = JSON.parse(dispute.description || '{}');
+    const currentEvidence = this.safeParseJson(dispute.description);
     const evidenceList = currentEvidence.evidence || [];
     evidenceList.push(fullEvidence);
 
@@ -165,7 +170,7 @@ export class DisputeResolutionService {
     }
 
     // Store settlement proposal
-    const currentData = JSON.parse(dispute.description || '{}');
+    const currentData = this.safeParseJson(dispute.description);
     const settlements = currentData.settlements || [];
 
     settlements.push({
@@ -216,7 +221,7 @@ export class DisputeResolutionService {
       throw new NotFoundException('Dispute not found');
     }
 
-    const currentData = JSON.parse(dispute.description || '{}');
+    const currentData = this.safeParseJson(dispute.description);
     const settlements = currentData.settlements || [];
 
     if (!settlements[settlementIndex]) {

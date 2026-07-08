@@ -326,7 +326,7 @@ export class CompanyService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = JSON.parse(employeeRecord.permissions as string);
+    const permissions = (Array.isArray(employeeRecord.permissions) ? employeeRecord.permissions : []);
     if (!permissions.includes('canManageCompany')) {
       throw new ForbiddenException("Vous n'avez pas la permission de modifier cette entreprise");
     }
@@ -380,7 +380,7 @@ export class CompanyService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = JSON.parse(employeeRecord.permissions as string);
+    const permissions = (Array.isArray(employeeRecord.permissions) ? employeeRecord.permissions : []);
     if (!permissions.includes('canManageSettings')) {
       throw new ForbiddenException("Vous n'avez pas la permission de modifier les paramètres");
     }

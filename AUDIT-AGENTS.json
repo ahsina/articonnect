@@ -1,0 +1,403 @@
+{
+  "summary": "Audit visuel (agents lisent les captures pour juger le style Uber) + audit backend (stubs/crashes/securite) par domaine",
+  "agentCount": 11,
+  "logs": [
+    "Visuel: 24 ecrans juges. Backend: 48 findings."
+  ],
+  "result": {
+    "visual": {
+      "summary": "Audit visuel charte \"Uber\" monochrome sur 24 ecrans : 12 conformes, 12 non conformes (nonConform=12). Trois familles de defauts recurrents : (1) Emojis a la place d'icones trait/monochromes — avatars personnages, drapeau UK du language switcher, sabliers, poignee de main/medaille (/client/missions, /client/favorites, /artisan/time-tracking, /artisan/profile, /admin/admin/monitoring). (2) Couleurs non monochromes (surtout vert, plus pastels et ambre) au lieu de noir/gris neutre pour boutons, badges de statut, KPI et fonds de cartes (/artisan/quotations, /artisan/time-tracking, /artisan/profile, /admin/admin/analytics, /admin/admin/monitoring). (3) Images produits/avatars cassees ou placeholders gris vides (/client/marketplace, /client/orders, /client/profile, /client/missions, /client/favorites). Enfin des graphiques/charts non rendus (/artisan/analytics). Le language switcher a emoji drapeau et les avatars emoji sont des composants partages a corriger une fois pour tous les ecrans. Mapping route -> fichier : /x/y -> frontend/app/x/y/page.tsx ; les routes admin /admin/admin/z -> frontend/app/admin/admin/z/page.tsx. Chemins verifies sur le disque.",
+      "issues": [
+        {
+          "route": "/client/missions",
+          "likelyFile": "/home/debian/articonnect/frontend/app/client/missions/page.tsx",
+          "problems": [
+            "Emoji person avatar affiche a cote du nom de l'artisan (Pierre Lebon) au lieu d'une vraie photo ou d'un placeholder de trait"
+          ]
+        },
+        {
+          "route": "/client/marketplace",
+          "likelyFile": "/home/debian/articonnect/frontend/app/client/marketplace/page.tsx",
+          "problems": [
+            "Cartes produits avec placeholders d'image gris vides (images produits manquantes/cassees)"
+          ]
+        },
+        {
+          "route": "/client/favorites",
+          "likelyFile": "/home/debian/articonnect/frontend/app/client/favorites/page.tsx",
+          "problems": [
+            "Emoji avatar (personnage avec couronne de fleurs) au lieu d'une photo/icone de trait",
+            "Carte artisan avec donnees vides: nom generique 'Artisan', note (0.0), tarif '—€/h'"
+          ]
+        },
+        {
+          "route": "/client/orders",
+          "likelyFile": "/home/debian/articonnect/frontend/app/client/orders/page.tsx",
+          "problems": [
+            "Vignettes produits vides (placeholders gris) sur les lignes de commande, images manquantes"
+          ]
+        },
+        {
+          "route": "/client/profile",
+          "likelyFile": "/home/debian/articonnect/frontend/app/client/profile/page.tsx",
+          "problems": [
+            "Image d'avatar cassee (icone d'image brisee avec texte alt 'Avatar') en haut a droite du bloc Profile"
+          ]
+        },
+        {
+          "route": "/artisan/analytics",
+          "likelyFile": "/home/debian/articonnect/frontend/app/artisan/analytics/page.tsx",
+          "problems": [
+            "Les 4 zones de graphiques (Earnings Over Time, Missions by Category, Peak Request Hours, Requests by Day of Week) sont vides / non rendues (grands blocs blancs anormaux)"
+          ]
+        },
+        {
+          "route": "/artisan/quotations",
+          "likelyFile": "/home/debian/articonnect/frontend/app/artisan/quotations/page.tsx",
+          "problems": [
+            "Les pastilles de statut 'Accepted' sont en VERT (texte + fond) au lieu du gris neutre attendu pour la charte monochrome"
+          ]
+        },
+        {
+          "route": "/artisan/time-tracking",
+          "likelyFile": "/home/debian/articonnect/frontend/app/artisan/time-tracking/page.tsx",
+          "problems": [
+            "Le bouton 'Start' est VERT au lieu de noir",
+            "Les valeurs KPI sont colorees en vert (Today '0h 0m', This Week '0h 0m', Week Earnings '0.00 €', Avg Hourly Rate '0 €/h') alors qu'elles devraient etre en noir",
+            "Le switcher de langue affiche un EMOJI drapeau (UK)"
+          ]
+        },
+        {
+          "route": "/artisan/profile",
+          "likelyFile": "/home/debian/articonnect/frontend/app/artisan/profile/page.tsx",
+          "problems": [
+            "Le bouton/badge 'Available' en haut a droite est VERT au lieu d'une pastille de statut neutre ou d'un bouton noir",
+            "Les cartes 'Verification Status' utilisent des icones EMOJI (poignee de main / medaille) et la carte 'Certifications' est mise en avant avec un aplat vert",
+            "Le switcher de langue affiche un EMOJI drapeau (UK)"
+          ]
+        },
+        {
+          "route": "/admin/admin/analytics",
+          "likelyFile": "/home/debian/articonnect/frontend/app/admin/admin/analytics/page.tsx",
+          "problems": [
+            "Les 4 cartes KPI (Total Revenue, This Month, This Week, Today) utilisent de gros aplats de couleur pastel comme fond : vert, gris, violet/lavande et ambre/jaune. Ce sont de grandes surfaces colorees, pas de simples pastilles de statut, donc contraire a la charte monochrome Uber"
+          ]
+        },
+        {
+          "route": "/admin/admin/monitoring",
+          "likelyFile": "/home/debian/articonnect/frontend/app/admin/admin/monitoring/page.tsx",
+          "problems": [
+            "Chiffre KPI colore : le score de sante systeme '70' est affiche en ambre/jaune (badge colore) au lieu de noir",
+            "Le compteur '1 Warnings' est colore en ambre au lieu de monochrome",
+            "Emoji visible : sablier a cote de 'Pending Validations' (carte KPI)",
+            "Emoji visible : sablier dans l'en-tete System Health"
+          ]
+        }
+      ],
+      "nonConform": 12
+    },
+    "backend": {
+      "summary": "Synthèse de l'audit BACKEND (Krafolt/ArtiConnect) : 47 findings sur les batchs argent, mission-litige, securite-user, entreprise, comms et admin-data. Deux thèmes dominent. (1) Contrôle d'accès brisé (IDOR / broken access control) : plusieurs endpoints sensibles (capture/refund de paiement, payouts automatisés d'entreprise, time-tracking/paie, analytics artisan, géolocalisation, templates de mission, certifications) sont protégés seulement par JwtAuthGuard sans @Roles ni vérification de propriété, ou dérivent l'identité d'un query/body param manipulable — permettant détournement d'argent, falsification de paie et fuite de PII/données financières d'autrui. Le module performance-review est cross-tenant à cause d'un companyId=undefined jamais posé par la JWT strategy. (2) Fragilité JSON.parse : appels JSON.parse sans try/catch sur des champs Prisma Json déjà désérialisés (permissions) ou sur du texte libre utilisateur (dispute.description) et sur du cache Redis, provoquant des crashs 500 systématiques ou opportunistes sur des chemins critiques (contrôle d'accès financier, litiges, sessions, anti-spoofing GPS, disponibilités). S'ajoutent de nombreux stubs/faux (remboursements Stripe/PayPal simulés, taux de change en dur, TVA déductible=0, SMS Twilio jamais envoyé, KYC mock validable par n'importe qui, Google Calendar factice, aperçus de conversation chiffrés non déchiffrés, détecteurs de fraude à variance aléatoire) et de l'arithmétique flottante sur des montants monétaires. P0 : 5, P1 : 20, P2 : 22.",
+      "counts": {
+        "P0": 5,
+        "P1": 20,
+        "P2": 22,
+        "total": 47
+      },
+      "findings": [
+        {
+          "file": "payment/controllers/payment.controller.ts",
+          "severity": "P0",
+          "category": "SECURITE-IDOR",
+          "problem": "POST payments/capture/:missionId et POST payments/refund/:missionId ne sont protegees que par @UseGuards(JwtAuthGuard) (aucun @Roles, aucun controle de propriete). Le controleur ignore volontairement le user (@Request() _req) et appelle captureMissionPayment(missionId) / refundMissionPayment(missionId, reason). Cf. payment.service.ts L173 (captureMissionPayment) et L298 (refundMissionPayment) : aucune verification que l'appelant est le client/artisan/admin de la mission. => N'IMPORTE QUEL utilisateur authentifie peut capturer un paiement (declenche le transfert Stripe vers l'artisan) OU rembourser+annuler la mission de n'importe qui, en devinant/connaissant un missionId. Le docstring pretend 'apres verification de la propriete' mais ce controle est absent. Argent detourne / annulations frauduleuses."
+        },
+        {
+          "file": "payment/services/employee-earnings.service.ts",
+          "severity": "P0",
+          "category": "CRASH",
+          "problem": "JSON.parse(emp.permissions as string) aux lignes 173, 296, 332, 387, 450. Le champ Prisma 'permissions' est de type Json (@default(\"[]\") dans schema.prisma L502) : Prisma renvoie DEJA une valeur JS (un tableau), pas une chaine. Appeler JSON.parse() sur un tableau le coerce en string ('' pour [] => SyntaxError, ou 'a,b' => parse error). => throw systematique. Pire : ce parse est dans le calcul du controle d'acces financier (isManager via .some(...) L172, hasFinancialAccess L296/332/387/450) et n'est pas dans un try/catch : les endpoints /earnings (liste, detail, update status, process-payouts, company summary) crashent en 500 pour les managers/employes, cassant tout le flux de gains employes."
+        },
+        {
+          "file": "dispute/services/dispute-resolution.service.ts",
+          "severity": "P0",
+          "category": "CRASH",
+          "problem": "JSON.parse(dispute.description || '{}') aux lignes 131 (addEvidence), 168 (proposeSettlement) et 219 (acceptSettlement) sans try/catch. Or `description` est un champ texte LIBRE saisi par l'utilisateur a la creation (dispute.service.ts:109 stocke createDto.description tel quel ; DTO dispute.dto.ts:16 = string libre). Des qu'un litige a une description texte normale (cas standard), JSON.parse lance une SyntaxError -> les 3 fonctions (ajout de preuve, proposition et acceptation de reglement) crashent. Le meme champ est surcharge pour deux usages incompatibles (texte libre vs stockage JSON)."
+        },
+        {
+          "file": "quote/services/signature.service.ts",
+          "severity": "P0",
+          "category": "CRASH",
+          "problem": "getQuoteBySignatureToken (lignes 369-372) : la relation `artisan` contient a la fois `select` ET `include` au meme niveau. Prisma leve PrismaClientValidationError ('Please either use include or select, but not both at the same time'). Cela fait planter systematiquement la page publique de signature de devis (route @Get(':token') du signature.controller)."
+        },
+        {
+          "file": "geo/services/gps-anti-spoofing.service.ts",
+          "severity": "P0",
+          "category": "CRASH",
+          "problem": "getLastLocation (ligne 438) fait JSON.parse(locations[0]) et getLocationHistory (ligne 453) locations.map((loc)=>JSON.parse(loc)) sans try/catch, sur des donnees Redis. Une seule entree corrompue/non-JSON fait throw et casse toute la validation anti-spoofing (validateLocation appelle getLastLocation). Le map sans garde casse tout l'historique si un element est invalide."
+        },
+        {
+          "file": "payment/controllers/automated-payout.controller.ts",
+          "severity": "P1",
+          "category": "SECURITE-IDOR",
+          "problem": "POST payouts/automated/company/:companyId/process et GET company/:companyId/schedule sont proteges seulement par @Roles('ARTISAN'). Le controleur ne transmet pas le userId de l'appelant et le service (automated-payout.service.ts L168 processCompanyPayoutsManually(companyId), L190 getPayoutSchedule(companyId)) ne verifie jamais que l'appelant possede/gere cette entreprise. Le docstring dit 'Owner/Manager only' mais rien ne le fait respecter. => N'importe quel ARTISAN peut declencher le traitement des payouts (versements d'argent) de N'IMPORTE QUELLE entreprise via un companyId arbitraire."
+        },
+        {
+          "file": "marketplace/services/return.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "executeRefund() (L544-589) SIMULE le remboursement : pour STRIPE (L561) et PAYPAL (L571) les appels reels aux APIs de refund sont commentes (L563-566) et la methode retourne { success:true, transactionId:`refund_${Date.now()}_...` } factice. Or refundReturn marque le OrderReturn en status REFUNDED + refundedAmount et notifie le client 'Your refund of Xe has been processed' (L510-518). => AUCUN argent n'est reellement rembourse au client alors que le systeme (et le client) croient que si. Faux positif comptable + litiges."
+        },
+        {
+          "file": "payment/services/currency.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "DEFAULT_RATES (L22-38) : taux de change EUR/USD/GBP CODES EN DUR (USD 1.10, GBP 0.85, etc.). getExchangeRates() ne recupere jamais de vrais taux (commentaire L69 'In production, fetch from external API') et met simplement ces valeurs en cache Redis 1h. convert() et convertWithFees() (utilises pour de vraies conversions de montants + calcul de frais plateforme) reposent sur ces taux fictifs, jamais mis a jour => montants convertis errones."
+        },
+        {
+          "file": "accounting/controllers/accounting.controller.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "getVATDeclaration() (L154-158) : la TVA deductible est codee en dur a { baseHT:0, tva:0 } avec le commentaire 'Would need purchase data for accurate deductible VAT'. Le solde tvaDue = summary.invoices.totalTVA (L160) ignore donc totalement la TVA deductible. => La declaration de TVA presentee a l'artisan surestime systematiquement la TVA a reverser (toujours = TVA collectee, jamais nette). Donnee fiscale fausse."
+        },
+        {
+          "file": "payment/services/bank-transfer.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "uploadProofOfPayment() (L210-225) : la preuve de paiement (proofImageUrl) est seulement loggee, jamais persistee (creation ProofOfPayment commentee L216-223). Consequence directe : getBankTransferStatus() (L432) renvoie proofUploaded=false EN DUR. => Toute la fonctionnalite 'preuve de virement bancaire' est non fonctionnelle : le client televerse une preuve qui disparait, et le statut indique toujours 'aucune preuve'."
+        },
+        {
+          "file": "mission/controllers/mission-template.controller.ts",
+          "severity": "P1",
+          "category": "SECURITE",
+          "problem": "@Get(':id') (ligne 64) n'a AUCUN guard d'authentification et recupere l'identite de controle d'acces depuis un query param `@Query('userId')` (ligne 67), passe tel quel a getTemplate. Le controle d'ownership (mission-template.service.ts:118 : !isPublic && createdBy !== userId) est trivialement contournable : un attaquant met ?userId=<id_du_proprietaire> pour lire n'importe quel template prive (IDOR / broken access control). L'identite doit venir du JWT, pas d'un parametre client."
+        },
+        {
+          "file": "mission/services/mission-assignment.service.ts",
+          "severity": "P1",
+          "category": "CRASH",
+          "problem": "checkAssignmentPermission ligne 31 : JSON.parse(employee.permissions as string) sans try/catch. Si `permissions` est null, vide ou non-JSON en base, JSON.parse throw et casse le controle de permission (donc toutes les routes d'assignation/reassignation/desassignation qui l'appellent : lignes 130, 221, 315, 382). Un throw ici n'est pas un simple refus mais une erreur 500."
+        },
+        {
+          "file": "auth/services/phone-verification.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "sendSMS() (lignes 294-321) N'ENVOIE JAMAIS de SMS : même avec TWILIO_ACCOUNT_SID/AUTH_TOKEN/PHONE_NUMBER configurés en prod, tout le code Twilio est commenté (l.307-314) et la méthode se contente de logger 'SMS sent' (l.316). Résultat : en production les utilisateurs ne recevront jamais leur code, mais sendVerificationCode() croit l'avoir envoyé et renvoie 'Code envoyé par SMS'. Vérification téléphone (anti-fraude/anti-multi-compte) totalement non fonctionnelle. De plus le code à 6 chiffres est écrit en clair dans les logs (l.301 et l.316) y compris dans la branche 'prod'."
+        },
+        {
+          "file": "auth/services/two-factor.service.ts",
+          "severity": "P1",
+          "category": "SECURITE",
+          "problem": "enable2FA() (l.38-46) stocke twoFactorSecret EN CLAIR dans la table user. Le commentaire l.39 'In production, encrypt the secret' n'est jamais implémenté. Un accès en lecture à la base (dump, backup, IDOR sur autre endpoint) permet de régénérer les codes TOTP de n'importe quel compte et contourner le 2FA. Le secret est le facteur d'authentification lui-même : il doit être chiffré au repos."
+        },
+        {
+          "file": "auth/services/session.service.ts",
+          "severity": "P1",
+          "category": "CRASH POTENTIEL",
+          "problem": "getUserSessions() l.90 fait JSON.parse(sessionData) SANS try/catch, à l'intérieur d'une boucle for sur toutes les sessions de l'utilisateur. Une seule valeur Redis corrompue/tronquée fait throw JSON.parse et casse TOUT l'endpoint 'lister mes sessions' (l'utilisateur ne peut plus voir NI révoquer aucune session). Même absence de garde à l.124 (getSession) et l.240 (getUserSessionIds). new Date(session.expiresAt) suppose aussi une forme précise sans validation."
+        },
+        {
+          "file": "moderation/controllers/content-moderation.controller.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "getStats() (l.121-130, endpoint admin GET /moderation/content/stats) est un stub : renvoie {message: 'Statistics endpoint - to be implemented with aggregation queries'} au lieu de vraies statistiques de modération. Le front/admin reçoit une forme totalement différente de ce qu'il attend."
+        },
+        {
+          "file": "fraud/services/bot-detector.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "calculateRequestVariance() (l.87-92) renvoie Math.random()*0.3 ('Mock variance for now', l.91) au lieu d'analyser les timestamps réels. Cette variance factice alimente directement le signal REGULAR_PATTERN (confidence 80) qui contribue au botScore : la détection de bot déclenche/ne déclenche pas de façon ALÉATOIRE et non reproductible, pouvant challenger CAPTCHA / bloquer des utilisateurs légitimes au hasard."
+        },
+        {
+          "file": "employee/controllers/time-tracking.controller.ts",
+          "severity": "P1",
+          "category": "SECURITE-IDOR",
+          "problem": "Les endpoints 'MANAGER/ADMIN' n'ont AUCUN contrôle d'autorisation (ni @Roles, ni vérification d'appartenance company/rôle). GET /time-tracking/company/:companyId (l.126) et GET /time-tracking/employee/:employeeId/weekly (l.140) exposent à tout utilisateur authentifié les données de pointage (noms employés, GPS, heures) de N'IMPORTE quelle entreprise/employé. Pire : POST /time-tracking/entry/:entryId/correct (l.161) laisse tout utilisateur authentifié MODIFIER n'importe quelle entrée de pointage (donnée de paie) de n'importe quelle entreprise, avec seulement req.user.userId comme 'adminId' non vérifié. Le service correctTimeEntry (time-tracking.service.ts l.570) ne fait aucune vérif de propriété non plus. Falsification de paie possible."
+        },
+        {
+          "file": "employee/controllers/performance-review.controller.ts",
+          "severity": "P1",
+          "category": "SECURITE-CROSS-TENANT",
+          "problem": "TOUT le contrôleur passe req.user.companyId au service (ex l.44 findAllReviews, l.39 createReview, etc.), mais le JWT strategy (auth/strategies/jwt.strategy.ts validate()) ne met PAS companyId sur req.user (seulement userId, id, email, role, firstName, lastName). companyId vaut donc undefined. Côté service, les contrôles d'accès font prisma.companyEmployee.findFirst({where:{userId, companyId:undefined, role:{in:['OWNER','MANAGER',...]}}}) : avec companyId=undefined Prisma IGNORE ce filtre. Résultat : un utilisateur MANAGER/OWNER dans une entreprise A peut créer/lire/modifier/supprimer des évaluations et objectifs d'employés d'une entreprise B (le check employee 'belongs to company' est aussi neutralisé). Bypass d'isolation multi-tenant sur tout le module performance-review."
+        },
+        {
+          "file": "calendar/services/google-calendar.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "Service Google Calendar entièrement factice. getTokens() renvoie toujours null ('For now, return null (not implemented)', l.324-325), saveTokens()/disconnectCalendar() ne font que logger (tout le code Prisma est commenté). Conséquences : exchangeCodeForTokens (l.118, appelé par le callback OAuth) renvoie succès mais ne persiste RIEN → le controller répond 'Google Calendar connected' alors que rien n'est stocké ; getUpcomingEvents renvoie toujours [] ; createMissionEvent/isCalendarConnected sont des no-op silencieux. Fonctionnalité annoncée à l'utilisateur mais non implémentée (contraste avec Outlook qui, lui, est réel)."
+        },
+        {
+          "file": "chat/services/chat.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "getConversations() (lignes 121-166) renvoie lastMessage.content = r.last_message, qui provient du $queryRaw SELECT \"content\" as last_message depuis la table Message. Or le contenu des messages est chiffré AES-256-GCM en base (createMessage encrypte, getConversation() décrypte). Ici le dernier message n'est JAMAIS déchiffré : le front reçoit du base64 chiffré comme aperçu de conversation. La clé de conversation est pourtant dérivable côté serveur (generateConversationKey(userId, r.other_user_id)). Aperçu de conversation = charabia pour tous les utilisateurs. À déchiffrer (avec try/catch tolérant comme dans getConversation)."
+        },
+        {
+          "file": "notification/services/twilio-sms.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "getStatistics() (lignes 394-408) retourne des données FICTIVES codées en dur : { sentToday: 0, sentThisMonth: 0, totalCost: 0, deliveryRate: 0 } avec commentaire '// For now, return mock data' / '// This would typically query from database'. Toute UI/dashboard appelant cette méthode affichera des zéros trompeurs au lieu des vraies stats SMS (qui sont pourtant loguées dans Redis via logSms). Non branché sur un controller dans ce module, donc dormant, mais reste un faux implémenté."
+        },
+        {
+          "file": "analytics/controllers/analytics.controller.ts",
+          "severity": "P1",
+          "category": "SECURITE-IDOR",
+          "problem": "GET /analytics/artisan/:artisanId (ligne 45-49) n'a QUE @UseGuards(JwtAuthGuard) : aucun @Roles, aucun controle de propriete. N'importe quel utilisateur authentifie (client, ou artisan concurrent) peut lire les donnees business privees de n'importe quel artisan retournees par getArtisanAnalytics(): chiffre d'affaires total (revenue.total), valeur moyenne des missions, taux de completion, reputationScore, noShowCount, disputeCount. Fuite de donnees financieres/reputation d'autrui. A restreindre au proprietaire (req.user.id === artisanId) ou @Roles(ADMIN)."
+        },
+        {
+          "file": "geo/controllers/geo.controller.ts",
+          "severity": "P1",
+          "category": "SECURITE-IDOR",
+          "problem": "POST /geo/location (ligne 11-15) prend artisanId depuis le BODY et appelle geoService.updateArtisanLocation(body.artisanId,...). Seul JwtAuthGuard, aucune verification que l'utilisateur authentifie possede cet artisanId. N'importe quel utilisateur connecte peut ecraser/usurper la geolocalisation de n'importe quel artisan dans Redis (impacte findNearbyArtisans/matching). Devrait deriver l'artisanId depuis req.user, pas du body."
+        },
+        {
+          "file": "compliance/services/kyc.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "initiateKycVerification (ligne 89-121) : si Stripe Identity non configure, chemin MOCK qui pose kycProvider='MOCK' et renvoie une verificationUrl fictive (?kyc=mock&userId=...) + sessionId 'mock_<userId>_<ts>'. handleKycWebhook (ligne 136-150) extrait le userId via sessionId.split('_')[1] (ne marche que pour les sessions MOCK) et met kycVerified sans aucune authentification/verification de signature Stripe. En prod sans cle Stripe, la KYC est factice : n'importe qui declenchant le webhook mock valide une identite."
+        },
+        {
+          "file": "geo/services/gps-anti-spoofing.service.ts",
+          "severity": "P1",
+          "category": "STUB-FAUX",
+          "problem": "getStatistics (ligne 481-497) est un stub : commentaire 'For now, return mock data structure' et renvoie totalValidations:0, rejectedCount:0, suspiciousCount:0, averageScore:0, topReasons:[] en dur. Aucune vraie agregation. (Attenuation : la methode n'est exposee par aucun controller/route trouve, donc impact limite tant qu'elle reste non cablee — mais elle donne un faux dashboard si branchee.)"
+        },
+        {
+          "file": "marketplace/services/return.service.ts",
+          "severity": "P2",
+          "category": "MONTANTS-FLOTTANTS",
+          "problem": "generateReturnLabel() (L591-596) renvoie une URL d'etiquette de retour FICTIVE (mock label vers storage.krafolt.com/return-labels/... jamais generee) au lieu d'integrer un transporteur (commentaire L592). Le client recoit un lien d'etiquette qui n'existe pas."
+        },
+        {
+          "file": "payment/services/currency.service.ts",
+          "severity": "P2",
+          "category": "CRASH",
+          "problem": "getExchangeRates() L66 : return JSON.parse(cached) sur la valeur brute lue de Redis sans try/catch. Si l'entree Redis est corrompue/tronquee, JSON.parse throw et casse convert()/convertWithFees() (chemin argent). Idem chemin non gere si la cle est ecrite par une autre version du modele."
+        },
+        {
+          "file": "dispute/services/dispute-resolution.service.ts",
+          "severity": "P2",
+          "category": "DONNEES",
+          "problem": "proposeSettlement/acceptSettlement/executeSettlement manipulent refundAmount et compensationAmount en Number JS (flottant) pour des montants monetaires (lignes 152-176, 244, 399-414), et executeSettlement recoit `terms: any` sans validation du montant avant d'appeler refundForCancellation. Risque d'imprecision et d'absence de garde sur des remboursements reels."
+        },
+        {
+          "file": "mission/services/mission-template.service.ts",
+          "severity": "P2",
+          "category": "CRASH",
+          "problem": "JSON.parse sans try/catch sur defaultBudgetRange/requiredSkills/checklistItems (lignes 180, 291, 294, 297 dans updateTemplate et formatTemplate). Moins critique que le litige car ces champs sont normalement ecrits en JSON.stringify par le service, mais toute donnee corrompue en base fait crasher formatTemplate et donc toute liste de templates (getPopular/getUserTemplates via .map(this.formatTemplate)), pas seulement l'item fautif."
+        },
+        {
+          "file": "auth/services/two-factor.service.ts",
+          "severity": "P2",
+          "category": "SECURITE",
+          "problem": "generateBackupCodes() (l.65-71) génère les codes de secours 2FA avec Math.random() (non cryptographiquement sûr, PRNG prédictible). Ces codes sont des bypass d'authentification : ils doivent être générés via crypto.randomBytes/randomInt (déjà importé ailleurs dans le module, ex phone-verification)."
+        },
+        {
+          "file": "user/services/availability.service.ts",
+          "severity": "P2",
+          "category": "CRASH POTENTIEL",
+          "problem": "JSON.parse du cache Redis sans try/catch aux l.67 (getDailyAvailability), l.156 (releaseSlot, dans une boucle sur toutes les dates) et l.192 (getRecurringAvailability). Une entrée cache corrompue casse l'affichage/la libération de créneaux ; à l.156 une seule clé corrompue interrompt la libération des autres créneaux lors d'une annulation de mission."
+        },
+        {
+          "file": "auth/services/login-security.service.ts",
+          "severity": "P2",
+          "category": "CRASH POTENTIEL",
+          "problem": "getRecentAttempts() l.97 JSON.parse(data) du cache Redis sans try/catch. Une valeur corrompue fait throw et, cette méthode étant appelée sur le chemin critique de login (comptage des tentatives échouées / lockout), peut bloquer les connexions."
+        },
+        {
+          "file": "fraud/services/review-fraud-detector.service.ts",
+          "severity": "P2",
+          "category": "STUB-FAUX",
+          "problem": "findSimilarReviews() (l.115-118) renvoie toujours [] ('Simple similarity check - in production use Levenshtein...'). Le signal TEXT_DUPLICATE (severity HIGH) de detectFakeReview ne se déclenche donc JAMAIS : la détection de doublons d'avis est non fonctionnelle alors que le résultat prétend l'évaluer."
+        },
+        {
+          "file": "fraud/services/multi-account-detector.service.ts",
+          "severity": "P2",
+          "category": "STUB-FAUX",
+          "problem": "findBehavioralPatterns() (l.239-248) renvoie toujours [] ('For now, return empty array'). L'analyse comportementale (horaires de login, patterns de missions/avis) annoncée comme signal de détection multi-comptes n'est pas implémentée ; ce volet du score de fraude est mort."
+        },
+        {
+          "file": "verification/controllers/verification.controller.ts",
+          "severity": "P2",
+          "category": "STUB-FAUX",
+          "problem": "requestManualReview() (l.120-131, POST /verification/admin/manual-review) ne crée aucun workflow de revue manuelle : il se contente de renvoyer un message de succès ('This would trigger a manual review workflow / For now, just log and return success'). L'admin croit avoir déclenché une revue qui n'existe pas (aucune persistance)."
+        },
+        {
+          "file": "calendar/services/outlook-calendar.service.ts",
+          "severity": "P2",
+          "category": "SECURITE",
+          "problem": "Les tokens OAuth Outlook (outlookAccessToken, outlookRefreshToken) sont stockés en CLAIR dans la table user (exchangeCodeForTokens l.~99, refreshAccessToken l.143-150), alors que la doc du service Google prétend 'Tokens encrypted at rest'. Fuite de tokens d'accès calendrier en cas de dump DB."
+        },
+        {
+          "file": "calendar/controllers/calendar.controller.ts",
+          "severity": "P2",
+          "category": "SECURITE-CSRF",
+          "problem": "Les callbacks OAuth (googleCallback l.24, outlookCallback l.55) prennent l'identité de l'utilisateur depuis le query param 'state' (traité comme userId) au lieu de req.user, et le 'state' n'est ni signé ni un nonce aléatoire (state=userId brut, cf google-calendar.service getAuthorizationUrl l.108). Un utilisateur authentifié peut connecter un calendrier au compte d'un autre en passant son userId dans state ; absence de protection CSRF sur le flux OAuth."
+        },
+        {
+          "file": "certification/controllers/certification.controller.ts",
+          "severity": "P2",
+          "category": "IDOR",
+          "problem": "GET /certifications/:id (findOne, l.62) n'effectue AUCUN contrôle de propriété : tout utilisateur authentifié peut lire la certification de n'importe quel artisan, y compris l'URL du document justificatif (potentiellement privé). De plus findAll accepte un artisanUserId arbitraire en query (l.46-48) permettant d'énumérer les certifications d'autrui. Le service certification.service.ts findOne/findAll ne filtre pas non plus sur le demandeur."
+        },
+        {
+          "file": "company/company.service.ts",
+          "severity": "P2",
+          "category": "CRASH",
+          "problem": "JSON.parse(employeeRecord.permissions as string) sans try/catch (l.329 updateCompany, l.383 updateCompanySettings). Même schéma dans employee.service.ts (l.78,416,509,561,642). Les permissions sont posées à la création, mais toute donnée corrompue/legacy/nulle fait throw une erreur 500 non gérée bloquant l'action. Idem performance-review.service.ts qui JSON.parse le champ documentUrl (l.522,548,693,747) et platformConfig.value (l.833) sans garde : un enregistrement malformé casse getEmployeeGoals / get360FeedbackSummary / getReviewTemplates (dans un .map, un seul item invalide fait échouer toute la liste)."
+        },
+        {
+          "file": "company/company.controller.ts",
+          "severity": "P2",
+          "category": "SECURITE-PII",
+          "problem": "GET /companies (getAllCompanies, l.42-47) n'a pas de @Roles : tout utilisateur authentifié (CLIENT compris) peut lister toutes les entreprises avec les infos owner (id, prénom, nom, email) et compteurs. Pas de restriction admin sur un endpoint de listing global exposant des emails."
+        },
+        {
+          "file": "knowledge-base/controllers/knowledge-base.controller.ts",
+          "severity": "P2",
+          "category": "SECURITE",
+          "problem": "Les routes 'Admin endpoints' (POST/PUT/DELETE articles, publish/unpublish/archive, translations, POST bulk/status, GET analytics — lignes 87-171) sont protégées uniquement par @UseGuards(JwtAuthGuard), SANS RolesGuard ni @Roles('ADMIN'). Le contrôle ADMIN existe bien mais uniquement dans le service (knowledge-base.service.ts fait user.role !== 'ADMIN' → ForbiddenException dans createArticle/updateArticle/deleteArticle/bulkUpdateStatus/getAnalytics/removeTranslation). L'accès est donc bloqué en pratique, mais la garde manquante au niveau route est incohérente avec le module support (qui met @Roles('ADMIN')) et coûte une requête DB supplémentaire par appel. À aligner : ajouter RolesGuard + @Roles('ADMIN')."
+        },
+        {
+          "file": "notification/services/email-template.service.ts",
+          "severity": "P2",
+          "category": "CRASH POTENTIEL",
+          "problem": "weeklyDigest (ligne 438) : '☆'.repeat(5 - Math.round(averageRating)) lève une RangeError si averageRating > 5 (repeat d'un nombre négatif). Idem performanceReview ligne 852 avec overallRating. Paramètres typés number mais non bornés/clampés ; une note hors [0,5] (données corrompues) casserait la génération de l'email. Clamper la note avant repeat."
+        },
+        {
+          "file": "admin/services/analytics.service.ts",
+          "severity": "P2",
+          "category": "BUG_DATE",
+          "problem": "getBusinessMetrics (ligne 76-81) : const todayStart = new Date(now.setHours(0,0,0,0)) MUTE l'objet now. Les lignes suivantes weekStart/monthStart/lastMonthStart/lastMonthEnd utilisent ce now deja ramene a minuit-aujourd'hui, faussant les bornes de periodes (week/month calcules a partir de minuit du jour au lieu de l'instant courant). Metriques revenue/growth potentiellement erronees. Utiliser une copie (new Date(now)) avant setHours."
+        },
+        {
+          "file": "analytics/services/analytics.service.ts",
+          "severity": "P2",
+          "category": "ERREUR_NON_GEREE",
+          "problem": "getArtisanAnalytics (ligne 257) fait throw new Error('Artisan not found') au lieu d'une NotFoundException NestJS : retourne un HTTP 500 au client au lieu d'un 404 propre. Montants calcules en flottant via parseFloat(m.finalPrice?.toString()||'0') (ligne ~263) et totalRevenue/avgMissionValue en Number flottant sur de l'argent (imprecision possible)."
+        },
+        {
+          "file": "export/services/export.service.ts",
+          "severity": "P2",
+          "category": "MONTANTS_FLOTTANTS",
+          "problem": "Tous les montants d'export comptable/factures/TVA (lignes 106-108, 163-165, 218-221, 259, 272-273) sont convertis en float via parseFloat(decimal.toString()) puis additionnes/reduces en Number. Sur des exports comptables (factures, TVA nette due, commissions) l'arithmetique flottante peut introduire des ecarts d'arrondi. Preferer Prisma.Decimal / calcul en centimes."
+        },
+        {
+          "file": "reports/services/employee-reports.service.ts",
+          "severity": "P2",
+          "category": "MONTANTS_FLOTTANTS",
+          "problem": "Agregations financieres (ligne 33-37, 115, 273-274, 296-298) additionnent des .toNumber() de Decimals (employeeCommission, platformCommission, finalPrice) en Number flottant. totalGross et totalNet (ligne 33-34) sont d'ailleurs identiques (les deux somment employeeCommission) — probable bug de copier-coller : totalNet ne deduit pas les frais plateforme."
+        },
+        {
+          "file": "admin/controllers/fraud-settings.controller.ts",
+          "severity": "P2",
+          "category": "CODE_SUSPECT",
+          "problem": "Double decorateur @Roles empile lignes 13-14 : @Roles(UserRole.ADMIN) puis @Roles('ADMIN'). Le second ecrase le premier (metadata SetMetadata). Sans effet nefaste ici (memes roles) mais indique une redondance/confusion ; a nettoyer."
+        }
+      ]
+    },
+    "rawCounts": {
+      "screens": 24,
+      "backendFindings": 48
+    }
+  }
+}

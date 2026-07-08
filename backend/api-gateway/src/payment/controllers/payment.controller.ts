@@ -52,34 +52,36 @@ export class PaymentController {
     return this.paymentService.createPaymentIntent(body.missionId, req.user.userId);
   }
 
+  // ⚠️ Opérations d'argent sensibles : réservées ADMIN (capture/remboursement direct).
+  // Les flux légitimes passent par la validation de mission (capture) et l'annulation/litige (refund).
   @Post('capture/:missionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Capturer le paiement d\'une mission',
-    description: 'Capture le paiement après vérification de la propriété de la mission',
+    summary: 'Capturer le paiement d\'une mission (ADMIN)',
+    description: 'Capture directe réservée aux administrateurs.',
   })
   async captureMissionPayment(
     @Param('missionId') missionId: string,
     @Request() _req,
   ) {
-    // Capture payment for the mission
     return this.paymentService.captureMissionPayment(missionId);
   }
 
   @Post('refund/:missionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Rembourser le paiement d\'une mission',
-    description: 'Rembourse le paiement après vérification de la propriété',
+    summary: 'Rembourser le paiement d\'une mission (ADMIN)',
+    description: 'Remboursement direct réservé aux administrateurs.',
   })
   async refundMissionPayment(
     @Param('missionId') missionId: string,
     @Body() body: { reason: string },
     @Request() _req,
   ) {
-    // Refund payment for the mission
     return this.paymentService.refundMissionPayment(missionId, body.reason);
   }
 

@@ -435,9 +435,10 @@ export class GpsAntiSpoofingService {
       return null;
     }
 
-    const parsed = JSON.parse(locations[0]);
+    let parsed: any;
+    try { parsed = JSON.parse(locations[0]); } catch { return null; }
     // Convert timestamp string back to Date object (JSON.parse converts Date to string)
-    if (parsed.timestamp && typeof parsed.timestamp === 'string') {
+    if (parsed?.timestamp && typeof parsed.timestamp === 'string') {
       parsed.timestamp = new Date(parsed.timestamp);
     }
     return parsed;
@@ -450,7 +451,9 @@ export class GpsAntiSpoofingService {
     const key = `gps:history:${userId}`;
     const locations = await this.redis.lrange(key, 0, limit - 1);
 
-    return locations.map((loc) => JSON.parse(loc));
+    return locations
+      .map((loc) => { try { return JSON.parse(loc); } catch { return null; } })
+      .filter(Boolean);
   }
 
   /**

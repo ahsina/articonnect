@@ -28,7 +28,7 @@ export class MissionAssignmentService {
       return false;
     }
 
-    const permissions = JSON.parse(employee.permissions as string);
+    const permissions = (Array.isArray(employee.permissions) ? employee.permissions : []);
     return permissions.includes('canAssignMissions');
   }
 

@@ -367,8 +367,10 @@ export class SignatureService {
           include: {
             lineItems: { orderBy: { position: 'asc' } },
             artisan: {
-              select: { firstName: true, lastName: true, email: true, phone: true },
-              include: { artisanProfile: { select: { companyName: true, siret: true } } },
+              select: {
+                firstName: true, lastName: true, email: true, phone: true,
+                artisanProfile: { select: { companyName: true, siret: true } },
+              },
             },
             client: {
               select: { firstName: true, lastName: true, email: true },

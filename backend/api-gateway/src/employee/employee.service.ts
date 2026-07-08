@@ -75,7 +75,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = JSON.parse(inviterEmployee.permissions as string);
+    const permissions = (Array.isArray(inviterEmployee.permissions) ? inviterEmployee.permissions : []);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission d'inviter des employés");
     }
@@ -413,7 +413,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = JSON.parse(requesterEmployee.permissions as string);
+    const permissions = (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission de modifier les employés");
     }
@@ -506,7 +506,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = JSON.parse(requesterEmployee.permissions as string);
+    const permissions = (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission de supprimer des employés");
     }
@@ -558,7 +558,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = JSON.parse(requesterEmployee.permissions as string);
+    const permissions = (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission de renvoyer des invitations");
     }
@@ -639,7 +639,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'avez pas accès aux statistiques de cet employé");
     }
 
-    const requesterPermissions = requesterEmployee ? JSON.parse(requesterEmployee.permissions as string) : [];
+    const requesterPermissions = requesterEmployee ? (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []) : [];
     const canViewFinancials = isOwner || requesterPermissions.includes('canViewFinancials');
 
     if (!canViewFinancials && employee.userId !== requesterId) {

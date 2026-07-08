@@ -170,7 +170,7 @@ export class EmployeeEarningsService {
 
       const isOwner = employee.company.ownerId === requesterId;
       const isManager = employee.company.employees.some((emp) => {
-        const permissions = JSON.parse(emp.permissions as string);
+        const permissions = (Array.isArray(emp.permissions) ? emp.permissions : []);
         return permissions.includes('canViewFinancials');
       });
       const isSelf = employee.userId === requesterId;
@@ -293,7 +293,7 @@ export class EmployeeEarningsService {
     });
 
     const hasFinancialAccess = requesterEmployee
-      ? JSON.parse(requesterEmployee.permissions as string).includes('canViewFinancials')
+      ? (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []).includes('canViewFinancials')
       : false;
 
     if (!isOwner && !hasFinancialAccess && !isSelf) {
@@ -329,7 +329,7 @@ export class EmployeeEarningsService {
 
     const isOwner = earnings.employee.company.ownerId === requesterId;
     const hasFinancialAccess = requesterEmployee
-      ? JSON.parse(requesterEmployee.permissions as string).includes('canViewFinancials')
+      ? (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []).includes('canViewFinancials')
       : false;
 
     if (!isOwner && !hasFinancialAccess) {
@@ -384,7 +384,7 @@ export class EmployeeEarningsService {
 
     const isOwner = company.ownerId === requesterId;
     const hasFinancialAccess = company.employees.some((emp) => {
-      const permissions = JSON.parse(emp.permissions as string);
+      const permissions = (Array.isArray(emp.permissions) ? emp.permissions : []);
       return permissions.includes('canViewFinancials');
     });
 
@@ -447,7 +447,7 @@ export class EmployeeEarningsService {
 
     const isOwner = company.ownerId === requesterId;
     const hasFinancialAccess = company.employees.some((emp) => {
-      const permissions = JSON.parse(emp.permissions as string);
+      const permissions = (Array.isArray(emp.permissions) ? emp.permissions : []);
       return permissions.includes('canViewFinancials');
     });
 
