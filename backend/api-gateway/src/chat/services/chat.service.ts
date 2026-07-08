@@ -157,12 +157,20 @@ export class ChatService {
     // Forme attendue par le front : { userId, user, lastMessage, unreadCount }.
     return rows
       .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
-      .map((r) => ({
-        userId: r.other_user_id,
-        user: userMap.get(r.other_user_id) || { id: r.other_user_id, firstName: '', lastName: '' },
-        lastMessage: { content: r.last_message, createdAt: r.last_message_at },
-        unreadCount: unreadMap.get(r.other_user_id) || 0,
-      }));
+      .map((r) => {
+        // Déchiffre l'aperçu du dernier message (sinon le front affiche du base64 chiffré).
+        let preview = '';
+        try {
+          const key = this.encryptionService.generateConversationKey(userId, r.other_user_id);
+          preview = this.encryptionService.decryptMessage(r.last_message, key);
+        } catch { preview = ''; }
+        return {
+          userId: r.other_user_id,
+          user: userMap.get(r.other_user_id) || { id: r.other_user_id, firstName: '', lastName: '' },
+          lastMessage: { content: preview, createdAt: r.last_message_at },
+          unreadCount: unreadMap.get(r.other_user_id) || 0,
+        };
+      });
   }
 
   async markAsRead(messageId: string, userId: string) {
