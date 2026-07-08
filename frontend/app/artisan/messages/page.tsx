@@ -1,5 +1,6 @@
 'use client';
 
+import { Send } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -171,7 +172,7 @@ export default function ArtisanMessagesPage() {
 
   const filteredConversations = conversations.filter(conv => {
     if (!searchQuery) return true;
-    const fullName = `${conv.user.firstName} ${conv.user.lastName}`.toLowerCase();
+    const fullName = `${conv.user?.firstName} ${conv.user?.lastName}`.toLowerCase();
     return fullName.includes(searchQuery.toLowerCase()) ||
            conv.missionTitle?.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -248,8 +249,8 @@ export default function ArtisanMessagesPage() {
                 >
                   <div className="relative">
                     <img
-                      src={conv.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.user.id}`}
-                      alt={conv.user.firstName}
+                      src={conv.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.user?.id}`}
+                      alt={conv.user?.firstName}
                       className="w-12 h-12 rounded-full flex-shrink-0"
                     />
                     {conv.unreadCount > 0 && (
@@ -261,7 +262,7 @@ export default function ArtisanMessagesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-foreground truncate">
-                        {conv.user.firstName} {conv.user.lastName}
+                        {conv.user?.firstName || ""} {conv.user?.lastName || ""}
                       </span>
                       {conv.lastMessage && (
                         <span className="text-xs text-muted-foreground flex-shrink-0">
@@ -295,13 +296,13 @@ export default function ArtisanMessagesPage() {
               <div className="bg-card border-b border-border p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
-                    src={selectedConv.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConv.user.id}`}
-                    alt={selectedConv.user.firstName}
+                    src={selectedConv.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConv.user?.id}`}
+                    alt={selectedConv.user?.firstName}
                     className="w-10 h-10 rounded-full"
                   />
                   <div>
                     <h2 className="font-semibold text-foreground">
-                      {selectedConv.user.firstName} {selectedConv.user.lastName}
+                      {selectedConv.user?.firstName || ""} {selectedConv.user?.lastName || ""}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {t('auth', 'client') || 'Client'}
@@ -321,8 +322,8 @@ export default function ArtisanMessagesPage() {
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Messages (bulles façon WhatsApp/Uber) */}
+              <div className="flex-1 overflow-y-auto bg-muted/30 p-4 space-y-2">
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     {t('messages', 'startConversation') || 'Start the conversation by sending a message'}
@@ -333,16 +334,15 @@ export default function ArtisanMessagesPage() {
                     return (
                       <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                         <div
-                          className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                          className={`max-w-[75%] px-3.5 py-2 text-[14.5px] leading-snug shadow-sm ${
                             isOwn
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-card text-foreground border border-border shadow-sm'
+                              ? 'rounded-2xl rounded-br-md bg-foreground text-background'
+                              : 'rounded-2xl rounded-bl-md bg-card text-foreground'
                           }`}
                         >
                           <p className="break-words whitespace-pre-wrap">{message.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-muted-foreground'}`}>
+                          <p className={`mt-1 text-[10.5px] ${isOwn ? 'text-background/55' : 'text-muted-foreground'}`}>
                             {formatTime(message.createdAt)}
-                            {isOwn && message.read && ' '}
                           </p>
                         </div>
                       </div>
@@ -352,22 +352,27 @@ export default function ArtisanMessagesPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input */}
-              <div className="bg-card border-t border-border p-4">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Input
+              {/* Composer (pilule + bouton rond) */}
+              <div className="border-t border-border bg-card p-3">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                  <input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder={t('messages', 'typeMessage') || 'Type your message...'}
-                    className="flex-1"
+                    className="flex-1 rounded-full bg-muted px-4 py-3 text-[14.5px] outline-none focus:ring-2 focus:ring-foreground/10"
                   />
-                  <Button type="submit" disabled={!newMessage.trim() || !connected}>
-                    {t('common', 'send') || 'Send'}
-                  </Button>
+                  <button
+                    type="submit"
+                    disabled={!newMessage.trim() || !connected}
+                    aria-label={t('common', 'send') || 'Send'}
+                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity disabled:opacity-30"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
                 </form>
                 {!connected && (
-                  <p className="text-xs text-yellow-600 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     {t('messages', 'reconnecting') || 'Reconnecting...'}
                   </p>
                 )}

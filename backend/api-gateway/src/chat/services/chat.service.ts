@@ -104,42 +104,65 @@ export class ChatService {
       },
     });
 
-    // Decrypt messages
+    // Decrypt messages — tolérant : un message illisible ne doit pas faire échouer toute la conversation.
     const conversationKey = this.encryptionService.generateConversationKey(userId, otherUserId);
 
-    return messages.map(message => ({
-      ...message,
-      content: this.encryptionService.decryptMessage(message.content, conversationKey),
-    }));
+    return messages.map(message => {
+      let content: string;
+      try {
+        content = this.encryptionService.decryptMessage(message.content, conversationKey);
+      } catch {
+        content = '[message illisible]';
+      }
+      return { ...message, content };
+    });
   }
 
   async getConversations(userId: string) {
-    // Get unique users the current user has chatted with
-    // NB : Prisma nomme la table "Message" et les colonnes en camelCase (identifiants Postgres
-    // sensibles à la casse → guillemets obligatoires).
-    const conversations = await this.prisma.$queryRaw`
+    // Dernière conversation par interlocuteur (Postgres : identifiants camelCase entre guillemets).
+    const rows: Array<{ other_user_id: string; last_message: string; last_message_at: Date }> =
+      await this.prisma.$queryRaw`
       SELECT DISTINCT ON (other_user_id)
-        other_user_id,
-        last_message,
-        last_message_at,
-        unread_count
+        other_user_id, last_message, last_message_at
       FROM (
         SELECT
-          CASE
-            WHEN "senderId" = ${userId} THEN "receiverId"
-            ELSE "senderId"
-          END as other_user_id,
+          CASE WHEN "senderId" = ${userId} THEN "receiverId" ELSE "senderId" END as other_user_id,
           "content" as last_message,
-          "createdAt" as last_message_at,
-          CASE WHEN "receiverId" = ${userId} AND "read" = false THEN 1 ELSE 0 END as unread_count
+          "createdAt" as last_message_at
         FROM "Message"
         WHERE "senderId" = ${userId} OR "receiverId" = ${userId}
         ORDER BY "createdAt" DESC
-      ) as conversations
+      ) as c
       ORDER BY other_user_id, last_message_at DESC
     `;
 
-    return conversations;
+    const otherIds = rows.map((r) => r.other_user_id);
+    if (otherIds.length === 0) return [];
+
+    // Détails des interlocuteurs + compteur de non-lus.
+    const [users, unread] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { id: { in: otherIds } },
+        select: { id: true, firstName: true, lastName: true, avatar: true, role: true },
+      }),
+      this.prisma.message.groupBy({
+        by: ['senderId'],
+        where: { receiverId: userId, read: false, senderId: { in: otherIds } },
+        _count: { _all: true },
+      }),
+    ]);
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const unreadMap = new Map(unread.map((u) => [u.senderId, u._count._all]));
+
+    // Forme attendue par le front : { userId, user, lastMessage, unreadCount }.
+    return rows
+      .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+      .map((r) => ({
+        userId: r.other_user_id,
+        user: userMap.get(r.other_user_id) || { id: r.other_user_id, firstName: '', lastName: '' },
+        lastMessage: { content: r.last_message, createdAt: r.last_message_at },
+        unreadCount: unreadMap.get(r.other_user_id) || 0,
+      }));
   }
 
   async markAsRead(messageId: string, userId: string) {
