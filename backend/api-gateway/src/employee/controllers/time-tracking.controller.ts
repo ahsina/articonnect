@@ -46,6 +46,12 @@ class ClockOutDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // Symétrie avec ClockInDto : le clock-out peut aussi référencer la mission travaillée.
+  @ApiPropertyOptional({ description: 'Mission associée au pointage' })
+  @IsOptional()
+  @IsString()
+  missionId?: string;
 }
 
 class BreakNotesDto {
