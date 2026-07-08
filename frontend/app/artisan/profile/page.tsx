@@ -484,7 +484,7 @@ function ArtisanProfileContent() {
           <Button
             variant={profile.available ? 'default' : 'outline'}
             onClick={handleToggleAvailability}
-            className={profile.available ? 'bg-green-600 hover:bg-green-700' : ''}
+            className={profile.available ? 'bg-foreground hover:bg-foreground/90' : ''}
           >
             {profile.available ? `${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
           </Button>
@@ -652,7 +652,7 @@ function ArtisanProfileContent() {
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
                 <div
-                  className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-green-100 border-green-500/30' : 'bg-amber-100'}`}
+                  className={`p-4 rounded-lg border ${profile.businessVerified ? 'bg-muted border-border' : 'bg-muted'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.businessVerified ? '' : '⏳'}</span>
@@ -669,7 +669,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-green-100 border-green-500/30' : 'bg-amber-100'}`}
+                  className={`p-4 rounded-lg border ${profile.stripeOnboarded ? 'bg-muted border-border' : 'bg-muted'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{profile.stripeOnboarded ? '' : '⏳'}</span>
@@ -686,7 +686,7 @@ function ArtisanProfileContent() {
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border ${profile.certifications && profile.certifications.length > 0 ? 'bg-green-100 border-green-500/30' : 'bg-background border-border'}`}
+                  className={`p-4 rounded-lg border ${profile.certifications && profile.certifications.length > 0 ? 'bg-muted border-border' : 'bg-background border-border'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
