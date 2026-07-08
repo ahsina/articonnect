@@ -2,7 +2,9 @@ import { IsString, IsNumber, IsOptional, IsBoolean, Min } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateNegotiationDto {
-  @ApiProperty({ example: 'mission-id-123' })
+  // Optionnel dans le body : le contrôleur le renseigne depuis le param d'URL (:id).
+  @ApiProperty({ example: 'mission-id-123', required: false })
+  @IsOptional()
   @IsString()
   missionId: string;
 

@@ -274,35 +274,32 @@ export class MissionService {
     longitude: number,
     radiusKm: number = 20,
   ) {
-    // Simple distance calculation (for production, use PostGIS or specialized geo queries)
+    // Missions OUVERTES (non assignées) découvrables : PENDING **et** NEGOTIATING (une mission avec
+    // déjà une offre reste ouverte à d'autres offres — cf. offres comparables).
     const missions = await this.prisma.mission.findMany({
       where: {
-        status: MissionStatus.PENDING,
+        status: { in: [MissionStatus.PENDING, MissionStatus.NEGOTIATING] },
         artisanId: null,
       },
       include: {
-        client: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
+        client: { select: { firstName: true, lastName: true } },
       },
+      orderBy: { createdAt: 'desc' },
       take: 50,
     });
 
-    // Filter by distance (simplified Haversine formula)
+    // Si l'artisan n'a pas de géoloc utilisable, on renvoie les missions ouvertes récentes
+    // (mieux vaut voir les missions que d'avoir une liste vide → l'artisan ne peut plus offrir).
+    const hasLocation = !!latitude && !!longitude && !(latitude === 0 && longitude === 0);
+    if (!hasLocation) return missions;
+
     const filtered = missions.filter((mission) => {
-      const distance = this.calculateDistance(
-        latitude,
-        longitude,
-        mission.latitude,
-        mission.longitude,
-      );
-      return distance <= radiusKm;
+      if (mission.latitude == null || mission.longitude == null) return true; // mission sans géo -> visible
+      return this.calculateDistance(latitude, longitude, mission.latitude, mission.longitude) <= radiusKm;
     });
 
-    return filtered;
+    // Fallback : si le rayon exclut tout, on renvoie quand même les missions ouvertes récentes.
+    return filtered.length > 0 ? filtered : missions;
   }
 
   async findAndNotifyNearbyArtisans(mission: { id: string; category: string; latitude: number; longitude: number; title: string }) {
@@ -704,10 +701,19 @@ export class MissionService {
       'Travail validé par le client',
     );
 
-    // Trigger payment to artisan
-    await this.paymentService.triggerArtisanPayment(missionId);
+    // Paiement artisan : NE DOIT PAS faire échouer la validation si le payout n'est pas encore
+    // possible (ex: Stripe Connect pas onboardé). La validation reste effective ; le payout sera retenté.
+    let payoutStatus: 'done' | 'deferred' = 'done';
+    try {
+      await this.paymentService.triggerArtisanPayment(missionId);
+    } catch (payoutError) {
+      payoutStatus = 'deferred';
+      console.warn(
+        `[validateCompletion] Payout artisan différé pour la mission ${missionId} : ${(payoutError as any)?.message}`,
+      );
+    }
 
-    return { mission: updated, retractionExpired };
+    return { mission: updated, retractionExpired, payoutStatus };
   }
 
   /**
