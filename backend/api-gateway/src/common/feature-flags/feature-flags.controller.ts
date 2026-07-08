@@ -35,6 +35,36 @@ export class FeatureFlagsController {
   }
 
   /**
+   * Check multiple flags at once (admin)
+   * Declared before @Get(':key')/@Post(':key/...') so 'check' is not shadowed.
+   */
+  @Post('check')
+  async checkFlags(
+    @Body() body: { keys: string[]; context?: FeatureFlagContext },
+  ): Promise<Record<string, boolean>> {
+    return this.featureFlagsService.evaluateMultiple(
+      body?.keys ?? [],
+      body?.context,
+    );
+  }
+
+  /**
+   * Check a single flag (admin). Two path segments, so not shadowed by :key.
+   */
+  @Get('check/:key')
+  async checkFlag(
+    @Param('key') key: string,
+    @Req() req: any,
+  ): Promise<{ enabled: boolean }> {
+    const context: FeatureFlagContext = {
+      userId: req.user?.sub,
+      userRole: req.user?.role,
+    };
+    const enabled = await this.featureFlagsService.isEnabled(key, context);
+    return { enabled };
+  }
+
+  /**
    * Get a specific feature flag
    */
   @Get(':key')

@@ -1,0 +1,3596 @@
+{
+ "auth": [
+  {
+   "m": "GET",
+   "path": "/auth/google",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/apple",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/apple/callback",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/facebook",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/facebook/callback",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/google/callback",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/sessions",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/sessions/current",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/sessions/:sessionId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/sessions/all/except-current",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/sessions/all",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/register",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/login",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/2fa/complete",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/refresh",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/logout",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/me",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/change-password",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/forgot-password",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/reset-password",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/2fa/enable",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/2fa/verify",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/2fa/disable",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/verify-email",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/resend-verification",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/phone/send-code",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/phone/verify-code",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/phone/send-code-authenticated",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/phone/verify-code-authenticated",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/phone/status",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/auth/2fa/backup-codes/regenerate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/auth/2fa/backup-codes/count",
+   "roles": null
+  }
+ ],
+ "config": [
+  {
+   "m": "GET",
+   "path": "/config/public",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/config",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/config/:key",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/config/category/:category",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/config",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/config/:key",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/config/:key",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/config/cache/clear",
+   "roles": "ADMIN"
+  }
+ ],
+ "calendar": [
+  {
+   "m": "GET",
+   "path": "/calendar/google/auth-url",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/calendar/google/callback",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/calendar/google/disconnect",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/calendar/google/events",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/calendar/outlook/auth-url",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/calendar/outlook/callback",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/calendar/outlook/disconnect",
+   "roles": null
+  }
+ ],
+ "documents": [
+  {
+   "m": "POST",
+   "path": "/documents/templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/documents/templates",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/templates/global",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/templates/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/documents/templates/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/documents/templates/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/documents",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/documents/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/documents/:id/sign",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/documents/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/documents/pdf/quote/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/pdf/invoice/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/pdf/contract/:missionId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/pdf/receipt/:paymentId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/documents/pdf/work-report/:missionId",
+   "roles": "ARTISAN, CLIENT"
+  }
+ ],
+ "badges": [
+  {
+   "m": "GET",
+   "path": "/badges",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/badges/my-badges",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/badges/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/badges/user/:userId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/badges/admin/statistics",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/badges",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/badges/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/badges/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/badges/admin/award-all",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/badges/:badgeId/award/:userId",
+   "roles": "ADMIN"
+  }
+ ],
+ "artisan": [
+  {
+   "m": "GET",
+   "path": "/artisan/profile",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/artisan/profile",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/artisan/availability/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/artisan/location",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/stripe/status",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/artisan/stripe/onboarding",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/artisan/stripe/refresh",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/certifications",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/artisan/certifications",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/artisan/certifications/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/artisan/certifications/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/working-hours",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/artisan/working-hours",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/availability",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/artisan/availability",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/artisan/availability/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/time-off",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/artisan/time-off",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/artisan/time-off/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/reviews",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/quotations",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/earnings",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/earnings/summary",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/dashboard",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/analytics",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/artisan/notification-preferences",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/artisan/notification-preferences",
+   "roles": null
+  }
+ ],
+ "export": [
+  {
+   "m": "POST",
+   "path": "/export/accounting",
+   "roles": null
+  }
+ ],
+ "specialty": [
+  {
+   "m": "GET",
+   "path": "/specialties",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/specialties/categories",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/specialties/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/specialties",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/specialties/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/specialties/:id",
+   "roles": "ADMIN"
+  }
+ ],
+ "moderation": [
+  {
+   "m": "GET",
+   "path": "/moderation/content/violations",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/content/violations/user/:userId",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/content/violations/me",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/content/patterns",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/moderation/content/patterns/:patternName/toggle",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/moderation/content/test",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/content/stats",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/moderation/reports",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/reports",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/stats",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/my-reports",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/moderation/reports/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/moderation/reports/:id/resolve",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/moderation/reports/:id/status",
+   "roles": "ADMIN"
+  }
+ ],
+ "i18n": [
+  {
+   "m": "GET",
+   "path": "/i18n/locales",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/locales/:locale/config",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/translations/:locale/:namespace",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/translations/:locale",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/detect",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/user/locale",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/i18n/user/locale",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/admin/locales",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/locales",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/i18n/admin/locales/:locale",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/i18n/admin/locales/:locale/toggle",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/admin/translations",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/i18n/admin/translations/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/i18n/admin/translations/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/bulk",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/i18n/admin/translations/bulk",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/import",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/export",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/compare",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/validate",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/approve",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/reject",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/publish",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/admin/translations/history",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/admin/translations/plural",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/i18n/test/interpolation",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/i18n/admin/analytics",
+   "roles": null
+  }
+ ],
+ "reports": [
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/dashboard",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/kpis",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/revenue",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/employee-performance",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/mission-statistics",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/financial-summary",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/performance-overview",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/employee/:employeeId/earnings-history",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/employee/:employeeId/performance",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/employee/:employeeId/productivity-trends",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/employee/:employeeId/dashboard",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reports/company/:companyId/employee-comparison",
+   "roles": "ARTISAN"
+  }
+ ],
+ "recurring": [
+  {
+   "m": "POST",
+   "path": "/recurring-services",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/recurring-services",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/recurring-services/stats",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/recurring-services/upcoming",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/recurring-services/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/recurring-services/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/recurring-services/:id/pause",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/recurring-services/:id/resume",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/recurring-services/:id/cancel",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/recurring-services/:id/generate-mission",
+   "roles": null
+  }
+ ],
+ "dispute": [
+  {
+   "m": "POST",
+   "path": "/disputes",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/disputes",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/disputes/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/disputes/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/disputes/:id/resolve",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/disputes/:id/cancel",
+   "roles": "ADMIN"
+  }
+ ],
+ "country": [
+  {
+   "m": "GET",
+   "path": "/countries",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/countries/:code",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/countries/:code/compliance",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/countries/:code",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/countries/:code/compliance",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/countries/compliance/requirements/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/countries/compliance/requirements/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/countries/compliance/requirements/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/countries/compliance/expiring",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/countries/compliance/records/:id/verify",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/countries",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/countries/status/:countryCode",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/countries",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/countries/:id",
+   "roles": null
+  }
+ ],
+ "checklist": [
+  {
+   "m": "POST",
+   "path": "/checklists/templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/templates/global",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/templates/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/checklists/templates/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/checklists/templates/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/checklists/templates/:id/clone",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/checklists/instances",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/instances",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/instances/mission/:missionId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/instances/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/checklists/instances/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/checklists/instances/:id/complete",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/checklists/instances/:id/photos",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/checklists/instances/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/checklists/analytics",
+   "roles": null
+  }
+ ],
+ "marketplace": [
+  {
+   "m": "GET",
+   "path": "/marketplace/categories",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/products",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/products/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/products",
+   "roles": null
+  },
+  {
+   "m": "PATCH",
+   "path": "/marketplace/products/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/marketplace/products/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/products/:productId/variants",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/products/:productId/variants",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/variants/:variantId",
+   "roles": null
+  },
+  {
+   "m": "PATCH",
+   "path": "/marketplace/variants/:variantId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/marketplace/variants/:variantId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/orders",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/orders",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/orders/:id",
+   "roles": null
+  },
+  {
+   "m": "PATCH",
+   "path": "/marketplace/orders/:id/status",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/returns",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/returns",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/returns/analytics",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/returns/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/returns/:id/approve",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/returns/:id/reject",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/marketplace/returns/:id/tracking",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/returns/:id/receive",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/returns/:id/refund",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/returns/:id/complete",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/requests",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/requests",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/requests/my",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/requests/stats",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/requests/:id",
+   "roles": null
+  },
+  {
+   "m": "PATCH",
+   "path": "/marketplace/requests/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/marketplace/requests/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/requests/:id/assign/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/favorites",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/favorites/products",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/favorites/artisans",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/favorites/stats",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/favorites/products/:productId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/marketplace/favorites/artisans/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/marketplace/favorites/:favoriteId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/favorites/check/product/:productId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/marketplace/favorites/check/artisan/:artisanId",
+   "roles": null
+  }
+ ],
+ "invoice": [
+  {
+   "m": "POST",
+   "path": "/invoices",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/invoices/:id/issue",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/invoices/:id/paid",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/invoices/:id/cancel",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/invoices/mission/:missionId",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/invoices/order/:orderId",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/invoices",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/invoices/number/:invoiceNumber",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/invoices/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PATCH",
+   "path": "/invoices/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/invoices/:id",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/invoices/:id/pdf",
+   "roles": "ARTISAN, ADMIN"
+  }
+ ],
+ "upload": [
+  {
+   "m": "POST",
+   "path": "/upload/file",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/upload/presigned-url",
+   "roles": null
+  }
+ ],
+ "vat": [
+  {
+   "m": "GET",
+   "path": "/vat/countries",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/vat/countries/:code",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/vat/rate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/vat/calculate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/vat/artisan/:artisanId/exemption",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/vat/artisan/:artisanId/declaration",
+   "roles": "ARTISAN, ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/vat/artisan/:artisanId/declarations",
+   "roles": "ARTISAN, ADMIN"
+  }
+ ],
+ "admin": [
+  {
+   "m": "GET",
+   "path": "/admin/cron/status",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/admin/cron/trigger/auto-validate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/cron/health",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/fees",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/fees",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/payments",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/payments",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/rate-limits",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/rate-limits",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/reputation-rules",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/reputation-rules",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/no-show",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/no-show",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/tax",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/tax",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/notifications",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/notifications",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/integrations",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/integrations",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/content-moderation",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/content-moderation",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/compliance",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/compliance",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/missions",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/missions",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/users",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/users",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/platform-config/performance",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/platform-config/performance",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/fraud-settings",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/multi-account/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/review-fraud/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/payout-fraud/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/price-anomaly/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/refund-abuse/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/session-anomaly/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/kyc/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/bot-detection/toggle",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/fraud-settings/business-verification/toggle",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/fraud-settings/status",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/dashboard",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/admin/stats/revenue",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/stats/growth",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/users",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/users/:id/suspend",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/users/:id/activate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/audit-logs",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/audit-logs/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/dashboard",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/auto-validation/chart",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/alerts",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/health",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/metrics/overview",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/metrics/auto-validation",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/monitoring/metrics/trends",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/analytics/metrics",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/admin/analytics/time-series",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/analytics/top-artisans",
+   "roles": null
+  }
+ ],
+ "favorite": [
+  {
+   "m": "POST",
+   "path": "/favorites/artisans/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/favorites/artisans/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/favorites/artisans",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/favorites/artisans/:artisanId/check",
+   "roles": null
+  }
+ ],
+ "review": [
+  {
+   "m": "POST",
+   "path": "/reviews",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/reviews/artisan/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/reviews/mission/:missionId",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/reviews/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/reviews/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/review-responses/:reviewId",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/review-responses/:responseId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/review-responses/:responseId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/review-responses/review/:reviewId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/review-responses/my-responses",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/review-responses/pending",
+   "roles": null
+  }
+ ],
+ "mission": [
+  {
+   "m": "POST",
+   "path": "/mission-templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/mission-templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/mission-templates/popular",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/mission-templates/my-templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/mission-templates/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/mission-templates/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/mission-templates/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/mission-templates/:id/use",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/mission-templates/:id/duplicate",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/auto-assignment/:missionId/assign",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/auto-assignment/company/:companyId/assign-all",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/auto-assignment/:missionId/suggestions",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/search",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/search/recommendations",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/search/similar/:missionId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/search/nearby",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/search/urgent",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/nearby",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/:id/tracking",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/missions/:id/status",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/accept",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/negotiations",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/missions/:id/negotiations",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/missions/negotiations/:negotiationId/accept",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/decline",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/cancel",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/:id/cancellation-fees",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/photos",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/setup-deposit",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/start-travel",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/arrive",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/complete",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/missions/:id/validate",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/:id/deposit-status",
+   "roles": "CLIENT"
+  },
+  {
+   "m": "POST",
+   "path": "/missions/auto-validate",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/assignment/:missionId/assign-to-company",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/missions/assignment/:missionId/assign-to-employee",
+   "roles": "ARTISAN, CLIENT"
+  },
+  {
+   "m": "PUT",
+   "path": "/missions/assignment/:missionId/reassign",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/missions/assignment/bulk-assign",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/missions/assignment/:missionId/unassign",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/missions/assignment/:missionId/complete",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/assignment/employee/:employeeId/assigned",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/missions/assignment/company/:companyId/unassigned",
+   "roles": "ARTISAN"
+  }
+ ],
+ "company": [
+  {
+   "m": "POST",
+   "path": "/companies",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/companies",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/companies/my-company",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/companies/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/companies/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/companies/:id/settings",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/companies/:id/logo",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/companies/:id/stats",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/companies/:id",
+   "roles": null
+  }
+ ],
+ "quote": [
+  {
+   "m": "POST",
+   "path": "/quotes",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/quotes",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/stats",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/quotes/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/:id/send",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/:id/view",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/:id/respond",
+   "roles": "CLIENT"
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/:id/new-version",
+   "roles": "CLIENT"
+  },
+  {
+   "m": "DELETE",
+   "path": "/quotes/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/:id/sign",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/:id/signatures",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/:id/signatures/:signatureId/verify",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/:id/request-signature",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/templates",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/templates",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/templates/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/quotes/templates/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/quotes/templates/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/quotes/catalog",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/catalog",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/quotes/catalog/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/quotes/catalog/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/quotes/catalog/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/sign/:token",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/sign/:token",
+   "roles": null
+  }
+ ],
+ "accounting": [
+  {
+   "m": "GET",
+   "path": "/accounting/fec/export",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/accounting/summary",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/accounting/vat-declaration",
+   "roles": "ARTISAN"
+  }
+ ],
+ "fraud": [
+  {
+   "m": "GET",
+   "path": "/fraud/multi-account/flagged",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/fraud/multi-account/detect/:userId",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/fraud/review/detect/:reviewId",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/fraud/payout/screen",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/fraud/price/detect/:missionId",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/fraud/refund/detect",
+   "roles": "ADMIN"
+  }
+ ],
+ "analytics": [
+  {
+   "m": "POST",
+   "path": "/analytics/match",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/analytics/platform",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/analytics/artisan/:artisanId",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/analytics/dashboard",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/analytics/profitability",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/analytics/trends",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/analytics/forecast",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/analytics/goals",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/analytics/goals",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/analytics/goals/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/analytics/goals/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/analytics/snapshot",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/analytics/snapshots",
+   "roles": "ARTISAN"
+  }
+ ],
+ "knowledge-base": [
+  {
+   "m": "GET",
+   "path": "/knowledge-base/articles",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/articles/:idOrSlug",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/search",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/categories",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/tags",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/featured",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/recent",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/articles/:id/feedback",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/articles",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/knowledge-base/articles/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/knowledge-base/articles/:id",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/articles/:id/publish",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/articles/:id/unpublish",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/articles/:id/archive",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/articles/:id/translations",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/knowledge-base/articles/:id/translations/:locale",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/knowledge-base/bulk/status",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/knowledge-base/analytics",
+   "roles": "ADMIN"
+  }
+ ],
+ "health": [
+  {
+   "m": "GET",
+   "path": "/metrics",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/metrics/json",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/health",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/health/ready",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/health/live",
+   "roles": null
+  }
+ ],
+ "support": [
+  {
+   "m": "POST",
+   "path": "/support/tickets",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/support/tickets",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/support/tickets/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/support/tickets/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/support/tickets/:id/messages",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/support/tickets/:id/rate",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/support/tickets/:id/reopen",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/support/articles",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/support/articles/:slug",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/support/articles/:slug/helpful",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/support/articles",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/support/articles/:id",
+   "roles": "ADMIN"
+  }
+ ],
+ "notification": [
+  {
+   "m": "GET",
+   "path": "/notifications",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/notifications/unread-count",
+   "roles": null
+  },
+  {
+   "m": "PATCH",
+   "path": "/notifications/:id/read",
+   "roles": null
+  },
+  {
+   "m": "PATCH",
+   "path": "/notifications/mark-all-read",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/notifications/:id",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/notifications/preferences",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/notifications/preferences",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/notifications/preferences/reset",
+   "roles": null
+  }
+ ],
+ "common": [
+  {
+   "m": "GET",
+   "path": "/admin/feature-flags",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/admin/feature-flags/:key",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/admin/feature-flags",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/admin/feature-flags/:key",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/admin/feature-flags/:key",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/admin/feature-flags/:key/enable",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/admin/feature-flags/:key/disable",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/admin/feature-flags/:key/evaluate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/feature-flags/:key/status",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/admin/feature-flags/check",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/admin/feature-flags/check/:key",
+   "roles": null
+  }
+ ],
+ "compliance": [
+  {
+   "m": "GET",
+   "path": "/compliance/kyc/status",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/compliance/kyc/initiate",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/compliance/kyc/status/:userId",
+   "roles": null
+  }
+ ],
+ "crm": [
+  {
+   "m": "POST",
+   "path": "/crm/clients",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/crm/clients",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/crm/clients/stats",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/crm/clients/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/crm/clients/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/crm/clients/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/crm/follow-ups",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/crm/follow-ups",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/crm/follow-ups/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/crm/follow-ups/:id",
+   "roles": null
+  }
+ ],
+ "currency": [
+  {
+   "m": "GET",
+   "path": "/currencies",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/currencies/rate",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/currencies/convert",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/currencies/format",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/currencies/:code",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/currencies/:code/history",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/currencies",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/currencies/:code",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/currencies/:code",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/currencies/exchange-rate",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/currencies/seed",
+   "roles": "ADMIN"
+  }
+ ],
+ "employee": [
+  {
+   "m": "POST",
+   "path": "/employees/:companyId/invite",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/employees/accept-invitation",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/employees/company/:companyId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/employees/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/employees/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/employees/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/employees/:id/resend-invitation",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/employees/:id/stats",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/time-tracking/clock-in",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/time-tracking/clock-out",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/time-tracking/break/start",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/time-tracking/break/end",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/time-tracking/status",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/time-tracking/today",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/time-tracking/daily/:date",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/time-tracking/weekly",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/time-tracking/company/:companyId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/time-tracking/employee/:employeeId/weekly",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/time-tracking/entry/:entryId/correct",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/employee-features/shifts",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/employee-features/shifts/:shiftId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/employee-features/shifts/:shiftId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/employee-features/company/:companyId/schedule",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/employee-features/employee/:employeeId/schedule",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/employee-features/shifts/bulk",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/employee-features/company/:companyId/available-employees",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/performance-reviews",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/performance-reviews/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/performance-reviews/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews/:id/submit",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews/:id/acknowledge",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/performance-reviews/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews/goals",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/performance-reviews/goals/employee/:employeeId",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/performance-reviews/goals/:goalId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/performance-reviews/goals/:goalId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews/360-feedback/request",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews/360-feedback/submit",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/performance-reviews/360-feedback/summary/:employeeId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/performance-reviews/templates",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/performance-reviews/templates",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/performance-reviews/templates/:templateId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/performance-reviews/analytics",
+   "roles": null
+  }
+ ],
+ "payment": [
+  {
+   "m": "POST",
+   "path": "/earnings/create",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/earnings",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/earnings/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/earnings/:id/status",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/earnings/company/:companyId/process-payouts",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/earnings/company/:companyId/summary",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/payouts/automated/company/:companyId/process",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/payouts/automated/company/:companyId/schedule",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/payouts/automated/statistics",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/reputation/user/:userId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/reputation/user/:userId/history",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/reputation/adjust",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/reputation/me",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/reputation/me/history",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/payments/create-intent",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/payments/capture/:missionId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/payments/refund/:missionId",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/payments/webhook",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/payments/deposit",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/payments/refund",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/payments/no-show/report",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/payments/no-show/pending",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/payments/no-show/validate",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/payments/no-show/reject",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/payments/no-show/mission/:missionId",
+   "roles": "ADMIN"
+  }
+ ],
+ "fcm": [
+  {
+   "m": "POST",
+   "path": "/fcm/register",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/fcm/unregister",
+   "roles": null
+  }
+ ],
+ "chat": [
+  {
+   "m": "GET",
+   "path": "/chat/conversations",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/chat/conversation/:userId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/chat/conversation/:userId/read",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/chat/message/:messageId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/internal-chat/rooms",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/internal-chat/rooms/company/:companyId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/internal-chat/rooms/:roomId",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/internal-chat/rooms/:roomId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms/:roomId/archive",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms/:roomId/pin",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms/:roomId/mute",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms/:roomId/leave",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms/:roomId/members",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/internal-chat/rooms/:roomId/members/:memberId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/internal-chat/company/:companyId/members",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/internal-chat/rooms/:roomId/messages",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/rooms/:roomId/messages",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/internal-chat/messages/:messageId",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/internal-chat/messages/:messageId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/internal-chat/messages/:messageId/reactions",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/internal-chat/messages/:messageId/reactions/:emoji",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/internal-chat/rooms/:roomId/search",
+   "roles": null
+  }
+ ],
+ "verification": [
+  {
+   "m": "POST",
+   "path": "/verification/business",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/verification/artisan/verify",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/verification/artisan/status",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/verification/artisan/:artisanId/status",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/verification/artisan/:artisanId/reverify",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/verification/admin/unverified",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/verification/admin/reverification-needed",
+   "roles": "ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/verification/admin/manual-review",
+   "roles": "ADMIN"
+  }
+ ],
+ "address": [
+  {
+   "m": "POST",
+   "path": "/addresses",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/addresses",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/addresses/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/addresses/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/addresses/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/addresses/:id/set-default",
+   "roles": null
+  }
+ ],
+ "portfolio": [
+  {
+   "m": "GET",
+   "path": "/portfolio",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/portfolio",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/portfolio/public/:artisanId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/portfolio/projects",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/portfolio/projects",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/portfolio/projects/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/portfolio/projects/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/portfolio/projects/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/portfolio/projects/:projectId/photos",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/portfolio/photos/:photoId",
+   "roles": "ARTISAN"
+  }
+ ],
+ "geo": [
+  {
+   "m": "POST",
+   "path": "/geo/location",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/geo/nearby",
+   "roles": null
+  }
+ ],
+ "user": [
+  {
+   "m": "POST",
+   "path": "/availability/daily",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/availability/daily/:artisanId/:date",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/availability/range/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/availability/book",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/availability/release/:missionId",
+   "roles": "CLIENT, ADMIN"
+  },
+  {
+   "m": "POST",
+   "path": "/availability/recurring",
+   "roles": "ARTISAN, CLIENT, ADMIN"
+  },
+  {
+   "m": "GET",
+   "path": "/availability/recurring/:artisanId",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/availability/check/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/availability/next/:artisanId",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/availability/status",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/availability/clear",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/users/profile",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/users/profile",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/users/client-profile",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/users/client-profile",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/users/artisan-profile",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/users/artisans",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/users/artisans/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/users/avatar",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/users/gdpr/export",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/users/gdpr/request-deletion",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/users/gdpr/cancel-deletion",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/users/gdpr/consents",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/users/gdpr/consents",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/stripe/onboard",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/stripe/status",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/stripe/refresh-link",
+   "roles": "ARTISAN"
+  }
+ ],
+ "certification": [
+  {
+   "m": "POST",
+   "path": "/certifications",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/certifications",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/certifications/:id",
+   "roles": null
+  },
+  {
+   "m": "PUT",
+   "path": "/certifications/:id",
+   "roles": null
+  },
+  {
+   "m": "DELETE",
+   "path": "/certifications/:id",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/certifications/:id/document",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/certifications/:id/verify",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/certifications/:id/unverify",
+   "roles": "ADMIN"
+  }
+ ],
+ "subcontractor": [
+  {
+   "m": "GET",
+   "path": "/subcontractor-portal/dashboard",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/subcontractor-portal/offers",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractor-portal/offers/:id/accept",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractor-portal/offers/:id/decline",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/subcontractor-portal/assignments",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractor-portal/assignments/:id/progress",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractor-portal/assignments/:id/complete",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/subcontractor-portal/earnings",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractors",
+   "roles": null
+  },
+  {
+   "m": "GET",
+   "path": "/subcontractors",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/subcontractors/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/subcontractors/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractors/accept-invitation/:token",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractors/:id/terminate",
+   "roles": null
+  },
+  {
+   "m": "POST",
+   "path": "/subcontractors/assignments",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "GET",
+   "path": "/subcontractors/assignments",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "PUT",
+   "path": "/subcontractors/assignments/:id",
+   "roles": "ARTISAN"
+  },
+  {
+   "m": "DELETE",
+   "path": "/subcontractors/assignments/:id",
+   "roles": "ARTISAN"
+  }
+ ]
+}

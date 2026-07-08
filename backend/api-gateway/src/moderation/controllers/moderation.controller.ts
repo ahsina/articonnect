@@ -12,11 +12,12 @@ import {
 import { ModerationService } from '../services/moderation.service';
 import { CreateReportDto } from '../dto/create-report.dto';
 import { ResolveReportDto } from '../dto/resolve-report.dto';
+import { UpdateReportStatusDto } from '../dto/update-report-status.dto';
 import { QueryReportDto } from '../dto/query-report.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
-import { UserRole, ReportStatus } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 @Controller('moderation')
 @UseGuards(JwtAuthGuard)
@@ -101,8 +102,8 @@ export class ModerationController {
   @Roles(UserRole.ADMIN)
   async updateReportStatus(
     @Param('id') reportId: string,
-    @Body('status') status: ReportStatus,
+    @Body() dto: UpdateReportStatusDto,
   ) {
-    return this.moderationService.updateReportStatus(reportId, status);
+    return this.moderationService.updateReportStatus(reportId, dto.status);
   }
 }

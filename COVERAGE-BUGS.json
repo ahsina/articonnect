@@ -1,0 +1,200 @@
+[
+ {
+  "path": "/admin/users/:id/suspend",
+  "severity": "low",
+  "desc": "Returns 500 Internal Server Error (unhandled Prisma P2025 'record not found') when :id is a non-existent user instead of a clean 404. Happy path works (200, sets status SUSPENDED). Admin-only, so impact limited, but missing existence check / error handling on prisma.user.update().",
+  "group": "admin"
+ },
+ {
+  "path": "/admin/users/:id/activate",
+  "severity": "low",
+  "desc": "Same as suspend: 500 (unhandled Prisma P2025) on nonexistent :id instead of 404. Happy path works (200, restores status ACTIVE).",
+  "group": "admin"
+ },
+ {
+  "path": "GET /missions/search",
+  "severity": "medium",
+  "desc": "Bare search endpoint is unreachable (dead route). In MissionModule, MissionController is registered before MissionSearchController, so @Get(':id') on 'missions' matches 'missions/search' first and treats 'search' as a mission id, returning 404 'Mission introuvable' (RESOURCE_NOT_FOUND). The primary mission full-text search (MissionSearchController @Controller('missions/search') @Get()) can never be hit. Sub-paths /missions/search/urgent, /recommendations, /similar/:id, /nearby work because :id only matches a single path segment. Fix: register MissionSearchController before MissionController, or make :id a UUID-constrained param, or move search under a non-colliding prefix.",
+  "group": "mission"
+ },
+ {
+  "path": "GET /time-tracking/company/:companyId",
+  "severity": "medium",
+  "desc": "500 Internal Server Error when called without startDate/endDate query params. Code does new Date(undefined) -> 'Invalid Date' and passes it to prisma.timeEntry.findMany({where:{timestamp:{gte,lte}}}), crashing. Should validate/require the params (400) or default the range. Works (200) only when ?startDate=&endDate= supplied.",
+  "group": "employee/company"
+ },
+ {
+  "path": "GET /employee-features/company/:companyId/available-employees",
+  "severity": "medium",
+  "desc": "500 even WITH the documented ?date=YYYY-MM-DD param. The nested shifts filter builds new Date('Invalid Date') for startTime/endTime because the 'date' query param is not converted into the range the query expects. Endpoint is effectively unusable; needs correct date parsing/validation.",
+  "group": "employee/company"
+ },
+ {
+  "path": "POST /employee-features/shifts",
+  "severity": "low",
+  "desc": "500 on empty body: no DTO validation, employeeId undefined flows into prisma.companyEmployee.findUnique({where:{id:undefined}}) and crashes. With valid fields returns proper 404. Add class-validator DTO so invalid input returns 400 instead of 500.",
+  "group": "employee/company"
+ },
+ {
+  "path": "POST /employee-features/shifts/bulk",
+  "severity": "low",
+  "desc": "500 on empty body, same missing-validation pattern as single shift create (should be 400).",
+  "group": "employee/company"
+ },
+ {
+  "path": "GET /employee-features/company/:companyId/schedule",
+  "severity": "low",
+  "desc": "500 when called without startDate/endDate query params (Invalid Date passed to Prisma). Returns 200 with a valid date range. Missing query-param validation.",
+  "group": "employee/company"
+ },
+ {
+  "path": "POST /marketplace/requests",
+  "severity": "medium",
+  "desc": "Empty/partial body returns 500 (Internal Server Error) from a raw Prisma validation failure instead of a clean 400. Root cause: CreateRequestDto is a plain TypeScript interface exported from request.service.ts, not a validated DTO class with class-validator decorators, so the global ValidationPipe does not enforce required fields (title, description, category, address, city, postalCode). Fix: make CreateRequestDto a class with @IsString/@IsNotEmpty etc. File: /home/debian/articonnect/backend/api-gateway/src/marketplace/services/request.service.ts (CreateRequestDto) and controller /home/debian/articonnect/backend/api-gateway/src/marketplace/controllers/request.controller.ts:69",
+  "group": "marketplace/favorite"
+ },
+ {
+  "path": "POST /marketplace/products",
+  "severity": "low",
+  "desc": "DTO field named 'category' (product.dto.ts:27, @IsString) is assigned directly as the FK: product.service.ts:19 does 'categoryId: data.category'. Sending a human category NAME (e.g. 'Bois', which the field name suggests) causes a 500 Foreign key constraint violation instead of a 400 with a clear message. No existence check on the category before insert. Only a raw categoryId UUID works. Same pattern in update (product.service.ts:184-186). File: /home/debian/articonnect/backend/api-gateway/src/marketplace/services/product.service.ts:19",
+  "group": "marketplace/favorite"
+ },
+ {
+  "path": "DELETE /i18n/admin/translations/:id",
+  "severity": "high",
+  "desc": "Returns 500. In i18n.service.ts deleteTranslation (lines 243-262) the Translation row is deleted first, then recordTranslationHistory(id,...) inserts a TranslationHistory row whose required translationId FK (onDelete: Cascade) points at the just-deleted row, causing a foreign-key constraint violation. Endpoint is completely non-functional; admins cannot delete translations. Fix: record history BEFORE deleting, or drop the post-delete history write.",
+  "group": "i18n/country/config/address"
+ },
+ {
+  "path": "GET /config/category/:category",
+  "severity": "medium",
+  "desc": "Returns 500 for any category value not matching the ConfigCategory enum (e.g. lowercase 'general'). config.controller.ts getByCategory (l.59-63) passes the raw path param straight into prisma.platformConfig.findMany({where:{category}}) with no enum validation, so Prisma raises an unhandled validation error instead of a clean 400. Valid uppercase enums (GENERAL, FEES) work. Fix: add a ParseEnumPipe / @IsEnum validation on the category param.",
+  "group": "i18n/country/config/address"
+ },
+ {
+  "path": "GET /availability/check/:artisanId",
+  "severity": "high",
+  "desc": "Route always returns 500 'Cannot read properties of undefined (reading split)' for every input tried (no query, ?date=YYYY-MM-DD, ISO datetime+duration). Handler calls .split() on an undefined/required query param that is never validated. Endpoint is effectively broken for all callers.",
+  "group": "user/review"
+ },
+ {
+  "path": "POST /users/gdpr/request-deletion",
+  "severity": "high",
+  "desc": "Named/paired as a cancellable deletion request (there is a cancel-deletion endpoint), but it performs an IMMEDIATE irreversible hard-delete of the account and personal data with no grace period. cancel-deletion is therefore meaningless after the fact. During audit it permanently destroyed the shared test account jean.dupont@example.com (subsequent login returns 401 AUTH_INVALID_CREDENTIALS). Data-loss / spec-mismatch risk.",
+  "group": "user/review"
+ },
+ {
+  "path": "POST /availability/book",
+  "severity": "low",
+  "desc": "Empty body {} returns 500 'Cannot read properties of undefined' instead of a 400 validation error. The whitelist validator rejects unknown props (400) but has no required-field validation, so an empty object slips through and the handler dereferences undefined.",
+  "group": "user/review"
+ },
+ {
+  "path": "POST /availability/daily",
+  "severity": "low",
+  "desc": "Empty body {} returns 500 'Cannot read properties of undefined (reading length)' instead of 400. Same missing required-field validation pattern as /availability/book — DTO whitelists unknown props but never asserts required fields.",
+  "group": "user/review"
+ },
+ {
+  "path": "GET /quotes/templates",
+  "severity": "high",
+  "desc": "Route shadowing: @Get(':id') is declared (line 72 of quote.controller.ts) before @Get('templates') (line 162), so GET /quotes/templates is captured by the :id handler and returns 404 'Quote not found'. The quote-templates LIST endpoint is completely unreachable. Fix: move templates/catalog GET routes above @Get(':id').",
+  "group": "quote/documents"
+ },
+ {
+  "path": "GET /quotes/catalog",
+  "severity": "high",
+  "desc": "Same route-shadowing bug: @Get('catalog') (line 194) is shadowed by earlier @Get(':id') (line 72). GET /quotes/catalog returns 404 'Quote not found'; the material-catalog LIST endpoint is unreachable. Reorder route declarations in quote.controller.ts.",
+  "group": "quote/documents"
+ },
+ {
+  "path": "POST /sign/:token",
+  "severity": "medium",
+  "desc": "Public quote-signing endpoint has no input validation: signature.controller.ts uses a plain TS interface PublicSignDto instead of a class-validator DTO, and global ValidationPipe cannot validate interfaces. A partial/empty body (missing required signatureType enum) is passed straight to prisma.quoteSignature.create() and throws, returning HTTP 500 with a raw Prisma error message leaked to the unauthenticated caller. Fix: convert PublicSignDto to a validated class.",
+  "group": "quote/documents"
+ },
+ {
+  "path": "POST /payments/refund/:missionId",
+  "severity": "medium",
+  "desc": "Unhandled Stripe error surfaced as HTTP 500 with raw internal message ('This PaymentIntent does not have a successful charge to refund'). Refunding a mission whose PaymentIntent has no captured charge throws instead of returning a 400/422. Leaks Stripe internals and is a server error. Wrap Stripe calls in try/catch and map to a domain 4xx.",
+  "group": "payment/vat/invoice/currency/accounting"
+ },
+ {
+  "path": "POST /payments/capture/:missionId",
+  "severity": "medium",
+  "desc": "Same pattern: capturing a mission whose PaymentIntent is in status requires_payment_method throws a raw Stripe error as HTTP 500 ('Only a PaymentIntent with status requires_capture may be captured'). State-guard + error mapping needed before calling Stripe.",
+  "group": "payment/vat/invoice/currency/accounting"
+ },
+ {
+  "path": "GET /invoices/number/:invoiceNumber",
+  "severity": "medium",
+  "desc": "Sensitive data over-exposure: response includes full issuer and client User relations, serializing the bcrypt password hash plus risk/PII fields (multiAccountRiskScore, botFlagged, ipAddress, kyc*). ADMIN-only so blast radius limited, but bcrypt hashes and internal risk scores should never be returned by an invoice endpoint. Use a select/DTO. Note other invoice GET paths correctly omit relations.",
+  "group": "payment/vat/invoice/currency/accounting"
+ },
+ {
+  "path": "GET /vat/rate",
+  "severity": "low",
+  "desc": "No query-param validation: passing category not in ServiceCategory enum (EMERGENCY/RENOVATION/INSTALLATION/MAINTENANCE/PRODUCT/OTHER) triggers an uncaught Prisma validation error -> HTTP 500 leaking the query. Also missing 'country' query crashes with 'Cannot read properties of undefined (reading toUpperCase)' -> 500. Add DTO/enum validation. Same crash affects /vat/calculate.",
+  "group": "payment/vat/invoice/currency/accounting"
+ },
+ {
+  "path": "GET /vat/artisan/:artisanId/exemption",
+  "severity": "low",
+  "desc": "Missing required 'country' query param is not validated: service calls .toUpperCase() on undefined -> HTTP 500. With ?country=LU it works (200). Add validation to return 400 instead of 500.",
+  "group": "payment/vat/invoice/currency/accounting"
+ },
+ {
+  "path": "POST /internal-chat/rooms",
+  "severity": "medium",
+  "desc": "500 Internal Server Error when 'memberIds' is omitted from the body: 'Cannot read properties of undefined (reading map)'. Root cause: CreateRoomDto is a plain TypeScript interface (backend/api-gateway/src/chat/controllers/internal-chat.controller.ts:16-23), not a class with class-validator decorators, so ValidationPipe performs no validation. InternalChatService.createRoom destructures memberIds and calls memberIds.map() (services/internal-chat.service.ts:90) without a null guard. Missing required input yields a 500 instead of a 400. Fix: convert CreateRoomDto to a class with @IsArray()/@IsNotEmpty()/@ArrayMinSize decorators (or guard memberIds ?? [] and validate type/name). Route works correctly when a valid body is supplied.",
+  "group": "chat/notification/fcm/support"
+ },
+ {
+  "path": "PUT /moderation/reports/:id/status",
+  "severity": "medium",
+  "desc": "Status update DTO does not validate the enum: sending status \"REVIEWING\" (not a valid enum) bypasses validation and reaches prisma.report.update, causing an unhandled 500 leaking the raw Prisma error. Additionally a valid enum on a nonexistent report id returns 500 ('record to update not found') instead of 404. Add enum validation to the DTO and map Prisma P2025 to NotFound.",
+  "group": "knowledge-base/moderation/fraud"
+ },
+ {
+  "path": "POST /fraud/price/detect/:missionId",
+  "severity": "low",
+  "desc": "For a nonexistent missionId the handler throws 'Mission or price not found' as a generic 500 INTERNAL_ERROR instead of a 404 NotFound. Missing-resource case should return 404 (as sibling /fraud/review/detect correctly does).",
+  "group": "knowledge-base/moderation/fraud"
+ },
+ {
+  "path": "PUT /analytics/goals/:id",
+  "severity": "medium",
+  "desc": "Updating a revenue goal with the documented create-DTO field 'targetAmount' returns 500. The service forwards targetAmount directly to prisma.revenueGoal.update({data:{targetAmount}}), but the Prisma model field is 'targetRevenue' -> 'Unknown argument targetAmount' Prisma validation error surfaced as 500 Internal Server Error. Empty-body PUT works (200), proving the mapping bug is only on the target-value field. Should map targetAmount->targetRevenue (or validate) and return 400, not 500.",
+  "group": "export/reports/upload/analytics"
+ },
+ {
+  "path": "POST /analytics/snapshot",
+  "severity": "low",
+  "desc": "Creating a snapshot when one already exists for the current (artisanId,periodType,periodStart) throws unhandled Prisma P2002 unique-constraint error -> 500 Internal Server Error. Should be caught and returned as 409 Conflict (or be idempotent/upsert). Leaks raw Prisma invocation text in the response message.",
+  "group": "export/reports/upload/analytics"
+ },
+ {
+  "path": "/geo/nearby",
+  "severity": "medium",
+  "desc": "GET /geo/nearby with missing or non-numeric lat/lng query params returns 500 Internal Server Error ('ERR value is not a valid float' from Redis GEOSEARCH) instead of a 400 validation error. No DTO/pipe validation on the query params; malformed input reaches the Redis GEO command and throws. An unauthenticated/authenticated caller can trigger a 500 with a trivial bad request. Fix: validate lat/lng/radius as required floats before the Redis call.",
+  "group": "geo/calendar/dispute/health/common/specialty"
+ },
+ {
+  "path": "/admin/feature-flags/check",
+  "severity": "low",
+  "desc": "POST /admin/feature-flags/check is listed in ROUTES-MANIFEST but returns 404 'Cannot POST /admin/feature-flags/check' - the handler is not registered/mounted (dead route). Consumers of this endpoint would break.",
+  "group": "geo/calendar/dispute/health/common/specialty"
+ },
+ {
+  "path": "/admin/feature-flags/check/:key",
+  "severity": "low",
+  "desc": "GET /admin/feature-flags/check/:key is listed in ROUTES-MANIFEST but returns 404 'Cannot GET ...' - handler not registered/mounted (dead route), likely shadowed by GET /admin/feature-flags/:key ordering or never wired.",
+  "group": "geo/calendar/dispute/health/common/specialty"
+ },
+ {
+  "path": "/admin/feature-flags/:key/enable",
+  "severity": "low",
+  "desc": "POST enable/disable return value.enabled correctly but the top-level 'enabled' field in the response reflects the pre-existing DB column and does not update in sync with value.enabled, giving an inconsistent/misleading response shape (e.g. enable returns value.enabled:true but top-level enabled:false). Cosmetic/response-consistency issue, not a functional authz problem.",
+  "group": "geo/calendar/dispute/health/common/specialty"
+ }
+]

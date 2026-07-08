@@ -3,7 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateReportDto } from '../dto/create-report.dto';
 import { ResolveReportDto } from '../dto/resolve-report.dto';
 import { QueryReportDto } from '../dto/query-report.dto';
-import { ReportType, ReportStatus, UserRole } from '@prisma/client';
+import { ReportType, ReportStatus, UserRole, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ModerationService {
@@ -269,10 +269,20 @@ export class ModerationService {
    * Update report status (admin only)
    */
   async updateReportStatus(reportId: string, status: ReportStatus) {
-    return this.prisma.report.update({
-      where: { id: reportId },
-      data: { status },
-    });
+    try {
+      return await this.prisma.report.update({
+        where: { id: reportId },
+        data: { status },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Report not found');
+      }
+      throw error;
+    }
   }
 
   /**

@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Body, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Query,
+  UseGuards,
+  Request,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { GeoService } from '../services/geo.service';
@@ -20,10 +29,25 @@ export class GeoController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async findNearby(
-    @Query('lat') lat: number,
-    @Query('lng') lng: number,
-    @Query('radius') radius?: number,
+    @Query('lat') lat: string,
+    @Query('lng') lng: string,
+    @Query('radius') radius?: string,
   ) {
-    return this.geoService.findNearbyArtisans(Number(lat), Number(lng), radius ? Number(radius) : 20);
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    if (lat === undefined || lat === '' || !Number.isFinite(latNum) || latNum < -90 || latNum > 90) {
+      throw new BadRequestException('lat must be a valid number between -90 and 90');
+    }
+    if (lng === undefined || lng === '' || !Number.isFinite(lngNum) || lngNum < -180 || lngNum > 180) {
+      throw new BadRequestException('lng must be a valid number between -180 and 180');
+    }
+    let radiusNum = 20;
+    if (radius !== undefined && radius !== '') {
+      radiusNum = Number(radius);
+      if (!Number.isFinite(radiusNum) || radiusNum <= 0) {
+        throw new BadRequestException('radius must be a positive number');
+      }
+    }
+    return this.geoService.findNearbyArtisans(latNum, lngNum, radiusNum);
   }
 }

@@ -69,6 +69,33 @@ export class QuoteController {
     return this.quoteService.getStats(req.user.id);
   }
 
+  // Fixed-path GET routes must be declared before @Get(':id') to avoid
+  // the dynamic :id handler shadowing them (route-shadowing fix).
+
+  @Get('templates')
+  @Roles('ARTISAN')
+  async getTemplates(@Request() req) {
+    return this.templateService.findAll(req.user.id);
+  }
+
+  @Get('templates/:id')
+  @Roles('ARTISAN')
+  async getTemplate(@Request() req, @Param('id') id: string) {
+    return this.templateService.findOne(id, req.user.id);
+  }
+
+  @Get('catalog')
+  @Roles('ARTISAN')
+  async getCatalogItems(@Request() req, @Query('category') category?: string, @Query('trade') trade?: string) {
+    return this.catalogService.findAll(req.user.id, category, trade);
+  }
+
+  @Get('catalog/:id')
+  @Roles('ARTISAN')
+  async getCatalogItem(@Request() req, @Param('id') id: string) {
+    return this.catalogService.findOne(id, req.user.id);
+  }
+
   @Get(':id')
   async findOne(@Request() req, @Param('id') id: string) {
     return this.quoteService.findOne(id, req.user.id);
@@ -159,18 +186,6 @@ export class QuoteController {
     return this.templateService.create(req.user.id, dto);
   }
 
-  @Get('templates')
-  @Roles('ARTISAN')
-  async getTemplates(@Request() req) {
-    return this.templateService.findAll(req.user.id);
-  }
-
-  @Get('templates/:id')
-  @Roles('ARTISAN')
-  async getTemplate(@Request() req, @Param('id') id: string) {
-    return this.templateService.findOne(id, req.user.id);
-  }
-
   @Put('templates/:id')
   @Roles('ARTISAN')
   async updateTemplate(@Request() req, @Param('id') id: string, @Body() dto: CreateQuoteTemplateDto) {
@@ -189,18 +204,6 @@ export class QuoteController {
   @Roles('ARTISAN')
   async createCatalogItem(@Request() req, @Body() dto: CreateMaterialCatalogItemDto) {
     return this.catalogService.create(req.user.id, dto);
-  }
-
-  @Get('catalog')
-  @Roles('ARTISAN')
-  async getCatalogItems(@Request() req, @Query('category') category?: string, @Query('trade') trade?: string) {
-    return this.catalogService.findAll(req.user.id, category, trade);
-  }
-
-  @Get('catalog/:id')
-  @Roles('ARTISAN')
-  async getCatalogItem(@Request() req, @Param('id') id: string) {
-    return this.catalogService.findOne(id, req.user.id);
   }
 
   @Put('catalog/:id')

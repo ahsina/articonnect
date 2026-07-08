@@ -10,15 +10,39 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import {
+  IsString,
+  IsOptional,
+  IsIn,
+  IsArray,
+  ArrayNotEmpty,
+} from 'class-validator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { InternalChatService } from '../services/internal-chat.service';
 
-interface CreateRoomDto {
+class CreateRoomDto {
+  @IsOptional()
+  @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsIn(['DIRECT', 'GROUP', 'TEAM', 'MISSION', 'ANNOUNCEMENT'])
   type: 'DIRECT' | 'GROUP' | 'TEAM' | 'MISSION' | 'ANNOUNCEMENT';
+
+  @IsOptional()
+  @IsString()
   companyId?: string;
+
+  @IsOptional()
+  @IsString()
   missionId?: string;
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   memberIds: string[];
 }
 

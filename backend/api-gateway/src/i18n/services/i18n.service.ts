@@ -249,12 +249,16 @@ export class I18nService {
       throw new NotFoundException('Translation not found');
     }
 
+    // Record history BEFORE deleting the translation. The TranslationHistory
+    // FK (translationId) is onDelete: Cascade, so writing history after the
+    // delete would violate the foreign key (and the row would be cascade-
+    // deleted anyway). We record first for auditability, accepting that the
+    // cascade removes it together with the translation.
+    await this.recordTranslationHistory(id, existing.value, 'DELETE', null);
+
     await this.prisma.translation.delete({
       where: { id },
     });
-
-    // Record history
-    await this.recordTranslationHistory(id, existing.value, 'DELETE', null);
 
     // Invalidate cache
     this.invalidateCache(existing.locale as SupportedLocale, existing.namespace as TranslationNamespace);

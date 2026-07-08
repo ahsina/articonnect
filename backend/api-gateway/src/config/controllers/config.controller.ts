@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Query,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { ConfigService } from '../services/config.service';
 import { UpdateConfigDto, CreateConfigDto } from '../dto/update-config.dto';
@@ -59,7 +60,9 @@ export class ConfigController {
   @Get('category/:category')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async getByCategory(@Param('category') category: ConfigCategory) {
+  async getByCategory(
+    @Param('category', new ParseEnumPipe(ConfigCategory)) category: ConfigCategory,
+  ) {
     return this.configService.getByCategory(category);
   }
 

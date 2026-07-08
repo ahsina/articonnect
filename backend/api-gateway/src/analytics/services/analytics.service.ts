@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
   MatchingQueryDto,
@@ -605,9 +611,15 @@ export class AnalyticsService {
       throw new NotFoundException('Revenue goal not found');
     }
 
+    const { targetAmount, ...rest } = dto;
+    const data: Record<string, unknown> = { ...rest };
+    if (targetAmount !== undefined) {
+      data.targetRevenue = targetAmount;
+    }
+
     return this.prisma.revenueGoal.update({
       where: { id },
-      data: dto,
+      data: data as any,
     });
   }
 
@@ -1015,17 +1027,29 @@ export class AnalyticsService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    return this.prisma.analyticsSnapshot.create({
-      data: {
-        artisanId,
-        periodType: 'MONTHLY',
-        periodStart: startOfMonth,
-        periodEnd: endOfMonth,
-        totalMissions: analytics.missions.total,
-        completedMissions: analytics.missions.completed,
-        grossRevenue: analytics.revenue.total,
-      },
-    });
+    try {
+      return await this.prisma.analyticsSnapshot.create({
+        data: {
+          artisanId,
+          periodType: 'MONTHLY',
+          periodStart: startOfMonth,
+          periodEnd: endOfMonth,
+          totalMissions: analytics.missions.total,
+          completedMissions: analytics.missions.completed,
+          grossRevenue: analytics.revenue.total,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A snapshot already exists for this period',
+        );
+      }
+      throw error;
+    }
   }
 
   /**

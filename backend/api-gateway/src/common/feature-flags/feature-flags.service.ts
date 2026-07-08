@@ -387,8 +387,9 @@ export class FeatureFlagsService implements OnModuleInit {
     }
 
     return this.updateFlag(key, {
+      enabled: true,
       value: { ...flag.value, enabled: true } as any,
-    }, updatedBy);
+    } as any, updatedBy);
   }
 
   /**
@@ -401,8 +402,9 @@ export class FeatureFlagsService implements OnModuleInit {
     }
 
     return this.updateFlag(key, {
+      enabled: false,
       value: { ...flag.value, enabled: false } as any,
-    }, updatedBy);
+    } as any, updatedBy);
   }
 
   /**

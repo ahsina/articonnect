@@ -1,23 +1,96 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsBoolean,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AvailabilityService, TimeSlot, RecurringAvailability } from '../services/availability.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
+class TimeSlotDto implements TimeSlot {
+  @IsString()
+  @IsNotEmpty()
+  start: string;
+
+  @IsString()
+  @IsNotEmpty()
+  end: string;
+
+  @IsBoolean()
+  available: boolean;
+
+  @IsOptional()
+  @IsString()
+  bookingId?: string;
+}
+
+class RecurringAvailabilityDto implements RecurringAvailability {
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  dayOfWeek: number;
+
+  @IsString()
+  @IsNotEmpty()
+  startTime: string;
+
+  @IsString()
+  @IsNotEmpty()
+  endTime: string;
+}
+
 class SetAvailabilityDto {
+  @IsString()
+  @IsNotEmpty()
   date: string;
-  slots: TimeSlot[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TimeSlotDto)
+  slots: TimeSlotDto[];
 }
 
 class BookSlotDto {
+  @IsString()
+  @IsNotEmpty()
   date: string;
+
+  @IsString()
+  @IsNotEmpty()
   slotStart: string;
+
+  @IsString()
+  @IsNotEmpty()
   missionId: string;
 }
 
 class SetRecurringDto {
-  schedule: RecurringAvailability[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RecurringAvailabilityDto)
+  schedule: RecurringAvailabilityDto[];
 }
 
 @ApiTags('Availability')
@@ -115,6 +188,14 @@ export class AvailabilityController {
     @Param('artisanId') artisanId: string,
     @Query('dateTime') dateTime: string,
   ) {
+    if (!dateTime || typeof dateTime !== 'string') {
+      throw new BadRequestException(
+        'Query param "dateTime" is required (ISO 8601, e.g. 2026-06-23T10:00:00).',
+      );
+    }
+    if (Number.isNaN(new Date(dateTime).getTime())) {
+      throw new BadRequestException('Query param "dateTime" must be a valid ISO 8601 datetime.');
+    }
     const available = await this.availabilityService.isAvailableAt(artisanId, dateTime);
     return { artisanId, dateTime, available };
   }

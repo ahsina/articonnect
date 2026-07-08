@@ -1,9 +1,37 @@
-import { Controller, Post, Get, Put, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { ShiftSchedulingService } from '../services/shift-scheduling.service';
+import { CreateShiftDto, BulkScheduleDto } from '../dto/shift.dto';
+
+/**
+ * Parse un paramètre de date requis. Renvoie une BadRequestException (400)
+ * plutôt que de laisser un `Invalid Date` atteindre Prisma (500).
+ */
+function parseRequiredDate(value: string, field: string): Date {
+  if (!value) {
+    throw new BadRequestException(`Le paramètre '${field}' est requis`);
+  }
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    throw new BadRequestException(`Le paramètre '${field}' est une date invalide`);
+  }
+  return date;
+}
 
 @ApiTags('Employee Features (Shifts, Time, Reviews, Skills)')
 @Controller('employee-features')
@@ -17,8 +45,18 @@ export class EmployeeFeaturesController {
   @Post('shifts')
   @Roles('ARTISAN')
   @ApiOperation({ summary: 'Create new shift for employee' })
-  async createShift(@Query('companyId') companyId: string, @Body() createDto: any, @Req() req: any) {
-    return this.shiftSchedulingService.createShift(companyId, req.user.userId, createDto);
+  async createShift(
+    @Query('companyId') companyId: string,
+    @Body() createDto: CreateShiftDto,
+    @Req() req: any,
+  ) {
+    return this.shiftSchedulingService.createShift(companyId, req.user.userId, {
+      employeeId: createDto.employeeId,
+      startTime: new Date(createDto.startTime),
+      endTime: new Date(createDto.endTime),
+      shiftType: createDto.shiftType,
+      notes: createDto.notes,
+    });
   }
 
   @Put('shifts/:shiftId')
@@ -52,8 +90,8 @@ export class EmployeeFeaturesController {
     return this.shiftSchedulingService.getCompanySchedule(
       companyId,
       req.user.userId,
-      new Date(startDate),
-      new Date(endDate),
+      parseRequiredDate(startDate, 'startDate'),
+      parseRequiredDate(endDate, 'endDate'),
     );
   }
 
@@ -72,8 +110,8 @@ export class EmployeeFeaturesController {
     return this.shiftSchedulingService.getEmployeeSchedule(
       employeeId,
       req.user.userId,
-      new Date(startDate),
-      new Date(endDate),
+      parseRequiredDate(startDate, 'startDate'),
+      parseRequiredDate(endDate, 'endDate'),
     );
   }
 
@@ -81,8 +119,19 @@ export class EmployeeFeaturesController {
   @Roles('ARTISAN')
   @ApiOperation({ summary: 'Bulk schedule shifts for multiple employees' })
   @ApiQuery({ name: 'companyId', description: 'Company ID' })
-  async bulkScheduleShifts(@Query('companyId') companyId: string, @Body() bulkDto: any, @Req() req: any) {
-    return this.shiftSchedulingService.bulkScheduleShifts(companyId, req.user.userId, bulkDto);
+  async bulkScheduleShifts(
+    @Query('companyId') companyId: string,
+    @Body() bulkDto: BulkScheduleDto,
+    @Req() req: any,
+  ) {
+    return this.shiftSchedulingService.bulkScheduleShifts(companyId, req.user.userId, {
+      employeeIds: bulkDto.employeeIds,
+      startTime: new Date(bulkDto.startTime),
+      endTime: new Date(bulkDto.endTime),
+      shiftType: bulkDto.shiftType,
+      repeatPattern: bulkDto.repeatPattern,
+      repeatCount: bulkDto.repeatCount,
+    });
   }
 
   @Get('company/:companyId/available-employees')
@@ -100,8 +149,8 @@ export class EmployeeFeaturesController {
     return this.shiftSchedulingService.getAvailableEmployees(
       companyId,
       req.user.userId,
-      new Date(startTime),
-      new Date(endTime),
+      parseRequiredDate(startTime, 'startTime'),
+      parseRequiredDate(endTime, 'endTime'),
     );
   }
 }

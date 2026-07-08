@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateProductDto, UpdateProductDto, ProductFilters } from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
@@ -8,7 +13,20 @@ import { Prisma } from '@prisma/client';
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
+  private async assertCategoryExists(categoryId: string) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      throw new BadRequestException(
+        'Invalid category: provide an existing category id',
+      );
+    }
+  }
+
   async create(artisanId: string, data: CreateProductDto) {
+    await this.assertCategoryExists(data.category);
+
     return this.prisma.product.create({
       data: {
         artisanId,
@@ -182,6 +200,7 @@ export class ProductService {
     // Transform category to categoryId if present
     const updateData: any = { ...data };
     if (updateData.category) {
+      await this.assertCategoryExists(updateData.category);
       updateData.categoryId = updateData.category;
       delete updateData.category;
     }

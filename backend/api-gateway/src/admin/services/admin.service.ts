@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
@@ -165,16 +166,36 @@ export class AdminService {
   }
 
   async suspendUser(userId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { status: 'SUSPENDED' },
-    });
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: { status: 'SUSPENDED' },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
+    }
   }
 
   async activateUser(userId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { status: 'ACTIVE' },
-    });
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: { status: 'ACTIVE' },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
+    }
   }
 }

@@ -388,8 +388,22 @@ export class InvoiceService {
     const invoice = await this.prisma.invoice.findUnique({
       where: { invoiceNumber },
       include: {
-        issuer: true,
-        client: true,
+        issuer: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
 

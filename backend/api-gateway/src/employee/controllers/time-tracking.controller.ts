@@ -9,6 +9,7 @@ import {
   Request,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -159,8 +160,18 @@ export class TimeTrackingController {
     @Query('endDate') endDateStr: string,
   ) {
     await this.assertCompanyManager(req.user.userId, companyId);
+    if (!startDateStr || !endDateStr) {
+      throw new BadRequestException(
+        "Les paramètres 'startDate' et 'endDate' sont requis",
+      );
+    }
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new BadRequestException(
+        "Les paramètres 'startDate' et 'endDate' doivent être des dates valides",
+      );
+    }
     return this.timeTrackingService.getCompanyTimeEntries(companyId, startDate, endDate);
   }
 

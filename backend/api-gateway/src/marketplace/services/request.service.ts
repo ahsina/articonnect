@@ -4,25 +4,73 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  IsDateString,
+} from 'class-validator';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
-export interface CreateRequestDto {
+export class CreateRequestDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
   artisanId?: string;
+
+  @IsString()
+  @IsNotEmpty()
   title: string;
+
+  @IsString()
+  @IsNotEmpty()
   description: string;
+
+  @IsString()
+  @IsNotEmpty()
   category: string;
+
+  @IsString()
+  @IsNotEmpty()
   address: string;
+
+  @IsString()
+  @IsNotEmpty()
   city: string;
+
+  @IsString()
+  @IsNotEmpty()
   postalCode: string;
+
+  @IsOptional()
+  @IsNumber()
   latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
   longitude?: number;
+
+  @IsOptional()
+  @IsNumber()
   estimatedBudget?: number;
+
+  @IsOptional()
+  @IsDateString()
   expiresAt?: Date;
 }
 
-export interface UpdateRequestDto {
+export class UpdateRequestDto {
+  @IsOptional()
+  @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsString()
   artisanId?: string;
+
+  @IsOptional()
+  @IsNumber()
   estimatedBudget?: number;
 }
 

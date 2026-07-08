@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, UnprocessableEntityException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
@@ -200,7 +200,16 @@ export class PaymentService {
     }
 
     // Capture payment
-    await this.stripeService.capturePayment(transaction.stripePaymentIntentId);
+    try {
+      await this.stripeService.capturePayment(transaction.stripePaymentIntentId);
+    } catch (error) {
+      this.logger.error(
+        `Stripe capture failed for mission ${missionId}: ${error?.message}`,
+      );
+      throw new UnprocessableEntityException(
+        'Le paiement ne peut pas être capturé dans son état actuel.',
+      );
+    }
 
     // Update transaction status
     await this.prisma.transaction.update({
@@ -309,7 +318,16 @@ export class PaymentService {
     }
 
     // Create refund
-    await this.stripeService.refundPayment(transaction.stripePaymentIntentId);
+    try {
+      await this.stripeService.refundPayment(transaction.stripePaymentIntentId);
+    } catch (error) {
+      this.logger.error(
+        `Stripe refund failed for mission ${missionId}: ${error?.message}`,
+      );
+      throw new UnprocessableEntityException(
+        'Le paiement ne peut pas être remboursé dans son état actuel.',
+      );
+    }
 
     // Update transaction
     await this.prisma.transaction.update({

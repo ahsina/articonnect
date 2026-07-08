@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
@@ -75,8 +74,17 @@ export class GdprService {
     };
   }
 
+  // Délai de grâce (en jours) avant l'effacement définitif d'un compte.
+  private readonly DELETION_GRACE_PERIOD_DAYS = 30;
+
   /**
-   * Request account deletion (GDPR right to erasure)
+   * Request account deletion (GDPR right to erasure).
+   *
+   * IMPORTANT : cette opération est RÉVERSIBLE. On ne détruit ni n'anonymise aucune PII ici ;
+   * on marque simplement le compte comme suspendu (en attente de suppression) et on horodate la
+   * demande via `deletedAt`. Le client dispose d'un délai de grâce pour annuler la demande
+   * (cancelDeletionRequest). L'effacement/anonymisation définitif est un job différé / une action
+   * admin (hors scope de ce endpoint).
    */
   async requestDeletion(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -91,53 +99,69 @@ export class GdprService {
       return { message: 'Ce compte a déjà été supprimé.' };
     }
 
-    // ERASURE RGPD réelle : on anonymise les données personnelles (le record est conservé pour les
-    // obligations légales — factures, comptabilité — mais ne contient plus de PII identifiante).
+    if (user.deletedAt) {
+      // Une demande de suppression est déjà en attente : opération idempotente.
+      const scheduledFor = new Date(
+        user.deletedAt.getTime() + this.DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+      );
+      return {
+        message:
+          'Une demande de suppression est déjà en cours. Vous pouvez l\'annuler à tout moment avant la date prévue.',
+        requestedAt: user.deletedAt.toISOString(),
+        scheduledFor: scheduledFor.toISOString(),
+      };
+    }
+
+    const requestedAt = new Date();
+    const scheduledFor = new Date(
+      requestedAt.getTime() + this.DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    // Marque la demande de façon réversible : le compte est suspendu et la date de demande
+    // enregistrée. Aucune PII n'est détruite ici — le compte peut être restauré via cancel-deletion.
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        email: `deleted-${userId}@krafolt.invalid`,
-        firstName: 'Compte',
-        lastName: 'supprimé',
-        phone: null,
-        avatar: null,
-        password: randomBytes(32).toString('hex'), // verrouille toute connexion
-        twoFactorSecret: null,
-        twoFactorEnabled: false,
-        outlookAccessToken: null,
-        outlookRefreshToken: null,
-        outlookTokenExpiry: null,
-        fcmTokens: [],
-        deviceFingerprints: [],
-        lastUserAgent: null,
-        lastIpAddress: null,
-        lastSessionId: null,
-        lastSessionLocation: null,
-        status: 'DELETED',
-        deletedAt: new Date(),
+        status: 'SUSPENDED',
+        deletedAt: requestedAt,
       },
     });
 
-    // Anonymise aussi le profil artisan (adresse, coordonnées, SIRET) si présent.
-    await this.prisma.artisanProfile.updateMany({
-      where: { userId },
-      data: { baseAddress: 'Adresse supprimée', latitude: 0, longitude: 0, description: null, website: null },
-    });
-
     return {
-      message: 'Votre compte et vos données personnelles ont été supprimés. Les pièces à conservation légale (factures) sont anonymisées et conservées selon la réglementation.',
-      deletedAt: new Date().toISOString(),
+      message:
+        'Votre demande de suppression a bien été enregistrée. Votre compte sera supprimé après un délai de grâce ; vous pouvez annuler cette demande avant cette date.',
+      requestedAt: requestedAt.toISOString(),
+      scheduledFor: scheduledFor.toISOString(),
     };
   }
 
   /**
-   * Cancel account deletion request
+   * Cancel account deletion request.
+   *
+   * Réactive un compte dont la suppression avait été demandée : on efface l'horodatage de demande
+   * (`deletedAt`) et on repasse le statut à ACTIVE. Comme requestDeletion ne détruit plus aucune
+   * PII, l'annulation restaure intégralement le compte.
    */
   async cancelDeletionRequest(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    if (user.status === 'DELETED') {
+      throw new NotFoundException(
+        'Ce compte a déjà été supprimé définitivement et ne peut plus être restauré.',
+      );
+    }
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         status: 'ACTIVE',
+        deletedAt: null,
       },
     });
 

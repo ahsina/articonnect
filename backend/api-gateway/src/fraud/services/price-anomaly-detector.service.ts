@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PriceAnomalyResult, PriceAnomalySignal } from '../dto/fraud.dto';
 
@@ -20,7 +20,7 @@ export class PriceAnomalyDetectorService {
     });
 
     if (!mission || !mission.agreedPrice) {
-      throw new Error('Mission or price not found');
+      throw new NotFoundException('Mission or price not found');
     }
 
     const actualPrice = Number(mission.agreedPrice);

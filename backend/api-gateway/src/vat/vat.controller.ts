@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Query, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Param,
+  UseGuards,
+  ParseEnumPipe,
+  BadRequestException,
+} from '@nestjs/common';
 import { VatService } from './vat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -31,8 +40,12 @@ export class VatController {
   @ApiQuery({ name: 'category', required: true, enum: ServiceCategory })
   async getTaxRate(
     @Query('country') country: string,
-    @Query('category') category: ServiceCategory,
+    @Query('category', new ParseEnumPipe(ServiceCategory))
+    category: ServiceCategory,
   ) {
+    if (!country || typeof country !== 'string' || !country.trim()) {
+      throw new BadRequestException('Le paramètre "country" est requis.');
+    }
     const rate = await this.vatService.getTaxRate(country, category);
     return { country, category, rate };
   }
@@ -44,9 +57,13 @@ export class VatController {
   @ApiQuery({ name: 'subtotal', required: true, type: Number })
   calculateVat(
     @Query('country') country: string,
-    @Query('category') category: ServiceCategory,
+    @Query('category', new ParseEnumPipe(ServiceCategory))
+    category: ServiceCategory,
     @Query('subtotal') subtotal: number,
   ) {
+    if (!country || typeof country !== 'string' || !country.trim()) {
+      throw new BadRequestException('Le paramètre "country" est requis.');
+    }
     return this.vatService.calculateVat(country, category, Number(subtotal));
   }
 
@@ -58,6 +75,9 @@ export class VatController {
     @Param('artisanId') artisanId: string,
     @Query('country') country: string,
   ) {
+    if (!country || typeof country !== 'string' || !country.trim()) {
+      throw new BadRequestException('Le paramètre "country" est requis.');
+    }
     return this.vatService.checkVatExemption(artisanId, country);
   }
 

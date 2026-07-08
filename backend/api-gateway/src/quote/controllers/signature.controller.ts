@@ -7,12 +7,22 @@ import {
   Ip,
   Headers,
 } from '@nestjs/common';
+import { IsEnum, IsOptional, IsString, IsNotEmpty, IsEmail } from 'class-validator';
 import { SignatureService } from '../services/signature.service';
 
-interface PublicSignDto {
+class PublicSignDto {
+  @IsOptional()
+  @IsString()
   signatureImage?: string;
+
+  @IsEnum(['DRAWN', 'TYPED', 'CHECKBOX'])
   signatureType: 'DRAWN' | 'TYPED' | 'CHECKBOX';
+
+  @IsString()
+  @IsNotEmpty()
   signerName: string;
+
+  @IsEmail()
   signerEmail: string;
 }
 
