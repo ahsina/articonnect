@@ -639,13 +639,19 @@ export class InvoiceService {
       }.`,
     });
 
+    // Lien structurel devis -> facture (colonne Invoice.quoteId) : traçabilité + anti-doublon.
+    await this.prisma.invoice.update({
+      where: { id: invoice.id },
+      data: { quoteId: quote.id },
+    });
+
     // Matérialise la conversion : le devis passe en CONVERTED (évite les factures multiples).
     await this.prisma.quote.update({
       where: { id: quote.id },
       data: { status: 'CONVERTED' as any },
     });
 
-    return invoice;
+    return { ...invoice, quoteId: quote.id };
   }
 
   /**

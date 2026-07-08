@@ -557,22 +557,14 @@ export class ReturnService {
 
     if (totalRefunded.lte(0)) return;
 
-    // NB : l'enum OrderStatus ne contient pas PARTIALLY_REFUNDED dans ce schéma
-    // (l'ajouter exigerait une migration DB). On applique donc :
-    //  - REFUNDED dès qu'un remboursement de retour a eu lieu et couvre le sous-total,
-    //  - pour un remboursement partiel, on marque quand même la commande REFUNDED
-    //    UNIQUEMENT si le total remboursé atteint le sous-total ; sinon on n'écrit pas
-    //    un statut inexistant (évite une erreur Prisma P2009).
-    if (totalRefunded.gte(order.subtotal)) {
-      if (order.status !== 'REFUNDED') {
-        await this.prisma.order.update({
-          where: { id: orderId },
-          data: { status: 'REFUNDED' as any },
-        });
-      }
+    // L'enum OrderStatus contient désormais PARTIALLY_REFUNDED : on propage l'état réel à la commande.
+    const newStatus = totalRefunded.gte(order.subtotal) ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
+    if (order.status !== newStatus && order.status !== 'REFUNDED') {
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { status: newStatus as any },
+      });
     }
-    // Remboursement partiel : l'état "REFUNDED" partiel est déjà porté par l'entité
-    // OrderReturn (status=REFUNDED + refundedAmount) et lisible via GET /returns.
   }
 
   async completeReturn(returnId: string, userId: string) {

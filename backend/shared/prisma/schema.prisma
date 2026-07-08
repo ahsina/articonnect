@@ -1236,6 +1236,7 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  PARTIALLY_REFUNDED
   REFUNDED
 }
 
@@ -1505,6 +1506,10 @@ model Invoice {
 
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Lien structurel devis -> facture (conversion d'un devis signé en facture).
+  quoteId String?
+  quote   Quote?  @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   noShowEventId String?      @unique
   noShowEvent   NoShowEvent? @relation(fields: [noShowEventId], references: [id])
@@ -2616,6 +2621,7 @@ model Quote {
   // Electronic Signatures
   signatures        QuoteSignature[]
   signatureRequests QuoteSignatureRequest[]
+  invoices          Invoice[]
   acceptedAt        DateTime?
 
   // Timestamps

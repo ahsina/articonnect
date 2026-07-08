@@ -38,10 +38,11 @@ export class StripeService {
         allow_redirects: 'never',
       },
 
-      // Explicitly request 3D Secure for card payments (SCA compliance)
+      // 3DS : 'automatic' = Stripe applique le SCA quand la banque/réglementation l'exige (conforme
+      // SCA EU) sans imposer une friction 3DS systématique qui dégrade la conversion (vs 'any').
       payment_method_options: {
         card: {
-          request_three_d_secure: 'any', // Always request 3DS when available
+          request_three_d_secure: 'automatic',
         },
         // Apple Pay and Google Pay are automatically enabled via automatic_payment_methods
         // They appear when available on compatible devices/browsers
