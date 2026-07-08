@@ -9,7 +9,8 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { MissionStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { PhoneVerifiedGuard } from '../../auth/guards/phone-verified.guard';
@@ -52,8 +53,12 @@ export class MissionController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all missions for current user' })
-  async findAll(@Request() req) {
-    return this.missionService.findAll(req.user.userId, req.user.role);
+  @ApiQuery({ name: 'status', required: false, enum: MissionStatus })
+  async findAll(@Request() req, @Query('status') status?: string) {
+    // On ne transmet le filtre que si c'est une valeur d'enum valide (évite une injection de where).
+    const validStatus =
+      status && (Object.values(MissionStatus) as string[]).includes(status) ? status : undefined;
+    return this.missionService.findAll(req.user.userId, req.user.role, validStatus);
   }
 
   @Get('nearby')

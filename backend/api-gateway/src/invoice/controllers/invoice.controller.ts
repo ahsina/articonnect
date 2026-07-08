@@ -62,6 +62,16 @@ export class InvoiceController {
     return this.invoiceService.createFromMission(missionId);
   }
 
+  @Post('quote/:quoteId')
+  @Roles('ARTISAN', 'ADMIN')
+  @ApiOperation({ summary: 'Convert an accepted (signed) quote into an invoice' })
+  createFromQuote(@Request() req: any, @Param('quoteId') quoteId: string) {
+    return this.invoiceService.createFromQuote(quoteId, {
+      userId: req.user.id,
+      isAdmin: req.user.role === 'ADMIN',
+    });
+  }
+
   @Post('order/:orderId')
   @Roles('ARTISAN', 'ADMIN')
   @ApiOperation({ summary: 'Auto-generate invoice from order' })

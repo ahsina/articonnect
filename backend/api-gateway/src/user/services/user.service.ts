@@ -318,18 +318,19 @@ export class UserService {
 
   async uploadAvatar(userId: string, file: Express.Multer.File) {
     if (!file) {
-      throw new NotFoundException('Fichier non fourni');
+      // Un fichier manquant est une requête invalide (400), pas une 404.
+      throw new BadRequestException('Aucun fichier fourni');
     }
 
     // Validate file type
     const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedMimes.includes(file.mimetype)) {
-      throw new NotFoundException('Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP');
+      throw new BadRequestException('Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP');
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      throw new NotFoundException('Fichier trop volumineux. Maximum 5MB');
+      throw new BadRequestException('Fichier trop volumineux. Maximum 5MB');
     }
 
     const user = await this.prisma.user.findUnique({

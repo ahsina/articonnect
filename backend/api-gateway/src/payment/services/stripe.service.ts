@@ -30,10 +30,12 @@ export class StripeService {
       metadata: params.metadata,
       capture_method: 'manual', // For escrow
 
-      // Enable automatic payment methods (includes Card, Apple Pay, Google Pay, 3D Secure)
+      // Escrow carte : on autorise les cartes + wallets (Apple/Google Pay) mais PAS les méthodes à
+      // redirection externe (Klarna/Link/Satispay), sinon la confirmation carte part en redirect et
+      // ne peut aboutir sans navigateur. Le 3DS reste géré in-page par le Payment Element.
       automatic_payment_methods: {
         enabled: true,
-        allow_redirects: 'always', // Allow 3D Secure redirects
+        allow_redirects: 'never',
       },
 
       // Explicitly request 3D Secure for card payments (SCA compliance)

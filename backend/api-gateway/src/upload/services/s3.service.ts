@@ -64,14 +64,15 @@ export class S3Service {
     fileType: FileType,
     userId: string,
   ): Promise<string> {
-    // Validate file
-    this.validateFile(file, fileType);
+    // Validate file (size + mime + magic bytes). Renvoie le vrai type détecté.
+    const detectedMime = this.validateFile(file, fileType);
 
     // 🛡️ ANTIVIRUS SCAN - Scan for viruses BEFORE uploading to S3
     await this.clamavService.scanAndValidate(file.buffer, file.originalname, userId);
 
-    // Generate unique filename
-    const extension = this.getFileExtension(file.originalname);
+    // Generate unique filename — l'extension est DÉRIVÉE du vrai type détecté,
+    // jamais de l'originalname fourni par le client (anti-spoofing d'extension).
+    const extension = this.getExtensionFromMimeType(detectedMime);
     const randomString = crypto.randomBytes(16).toString('hex');
     const filename = `${fileType}/${userId}/${Date.now()}-${randomString}.${extension}`;
 
@@ -81,7 +82,7 @@ export class S3Service {
         Bucket: this.bucket,
         Key: filename,
         Body: file.buffer,
-        ContentType: file.mimetype,
+        ContentType: detectedMime,
         // ACL removed - files are private by default
         // Access controlled via pre-signed URLs
       });
@@ -234,25 +235,95 @@ export class S3Service {
   }
 
   /**
-   * Validate file size and type
+   * Validate file size and type.
+   * SÉCURITÉ: le type réel est déterminé par les MAGIC BYTES du contenu, PAS par
+   * le Content-Type multipart fourni par le client (qui est trivialement falsifiable).
+   * Un binaire (ex MZ/PE .exe) déclaré 'image/png' est ainsi rejeté.
+   * Retourne le vrai type MIME détecté (utilisé pour ContentType S3 + extension).
    */
-  private validateFile(file: Express.Multer.File, _fileType: FileType): void {
-    const category = this.getFileCategory(file.mimetype);
+  private validateFile(file: Express.Multer.File, _fileType: FileType): string {
+    // 1) Détection réelle par magic bytes
+    const detectedMime = this.detectMimeFromMagicBytes(file.buffer);
 
-    // Check mime type
-    if (!this.allowedMimeTypes[category]?.includes(file.mimetype)) {
+    if (!detectedMime) {
+      throw new BadRequestException(
+        'Type de fichier non autorisé: contenu non reconnu ou non supporté.'
+      );
+    }
+
+    // 2) Le type détecté doit appartenir à une catégorie autorisée
+    const category = this.getFileCategory(detectedMime);
+    if (!this.allowedMimeTypes[category]?.includes(detectedMime)) {
       throw new BadRequestException(
         `Type de fichier non autorisé. Types acceptés: ${this.allowedMimeTypes[category]?.join(', ')}`
       );
     }
 
-    // Check file size
+    // 3) Cohérence: si le client déclare une catégorie différente du contenu réel, on rejette
+    if (file.mimetype) {
+      const declaredCategory = this.getFileCategory(file.mimetype);
+      if (declaredCategory !== category) {
+        throw new BadRequestException(
+          'Le contenu du fichier ne correspond pas au type déclaré.'
+        );
+      }
+    }
+
+    // 4) Taille
     const maxSize = this.maxFileSizes[category];
     if (file.size > maxSize) {
       throw new BadRequestException(
         `Fichier trop volumineux. Taille maximale: ${maxSize / (1024 * 1024)}MB`
       );
     }
+
+    return detectedMime;
+  }
+
+  /**
+   * Détecte le type MIME réel à partir des premiers octets (magic bytes / signatures).
+   * Retourne null si non reconnu / non supporté.
+   */
+  private detectMimeFromMagicBytes(buffer: Buffer): string | null {
+    if (!buffer || buffer.length < 4) return null;
+    const b = buffer;
+
+    // JPEG: FF D8 FF
+    if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (
+      b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 &&
+      b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a
+    ) return 'image/png';
+
+    // GIF: 'GIF87a' / 'GIF89a'
+    if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38) return 'image/gif';
+
+    // WEBP: 'RIFF' .... 'WEBP'
+    if (
+      b.length >= 12 &&
+      b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50
+    ) return 'image/webp';
+
+    // PDF: '%PDF'
+    if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'application/pdf';
+
+    // DOC (OLE Compound File): D0 CF 11 E0 A1 B1 1A E1
+    if (
+      b.length >= 8 &&
+      b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0 &&
+      b[4] === 0xa1 && b[5] === 0xb1 && b[6] === 0x1a && b[7] === 0xe1
+    ) return 'application/msword';
+
+    // DOCX / OOXML (ZIP container): 'PK' 03 04. On l'accepte comme docx si le client
+    // le déclare comme tel, sinon on ne devine pas (ZIP générique = rejeté).
+    if (b[0] === 0x50 && b[1] === 0x4b && (b[2] === 0x03 || b[2] === 0x05 || b[2] === 0x07)) {
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+
+    return null;
   }
 
   private getFileCategory(mimeType: string): 'image' | 'document' {

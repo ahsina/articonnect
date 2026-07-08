@@ -12,7 +12,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { MissionType, MissionStatus } from '@prisma/client';
 
 export class CreateMissionDto {
-  @ApiProperty({ enum: MissionType })
+  @ApiProperty({
+    enum: MissionType,
+    enumName: 'MissionType',
+    example: MissionType.SCHEDULED,
+    description:
+      "Type de mission. Valeurs valides : EMERGENCY (intervention urgente), SCHEDULED (planifiée) " +
+      "ou QUOTE (sur devis). Toute autre valeur (ex 'STANDARD') est rejetée par 400.",
+  })
   @IsEnum(MissionType)
   type: MissionType;
 

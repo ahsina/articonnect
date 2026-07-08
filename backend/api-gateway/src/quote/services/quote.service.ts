@@ -391,6 +391,17 @@ export class QuoteService {
       },
     });
 
+    // Devis accepté et lié à une mission : fixer le prix convenu (sinon /payments/create-intent
+    // échoue « Prix non défini » — le client ne peut pas payer après avoir accepté un devis).
+    if (dto.accepted && quote.missionId) {
+      await this.prisma.mission
+        .update({
+          where: { id: quote.missionId },
+          data: { agreedPrice: quote.totalAmount, artisanId: quote.artisanId },
+        })
+        .catch(() => undefined);
+    }
+
     await this.notifyQuoteEvent(
       quote.artisanId,
       dto.accepted ? 'Devis accepté' : 'Devis refusé',

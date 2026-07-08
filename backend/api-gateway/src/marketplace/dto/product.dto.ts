@@ -22,7 +22,10 @@ export class CreateProductDto {
   @Min(0)
   vatRate?: number;
 
-  @ApiProperty({ example: 'lighting' })
+  @ApiProperty({
+    example: 'lighting',
+    description: 'ID de catégorie OU slug (ex "lighting"). Les deux sont acceptés.',
+  })
   @IsString()
   category: string;
 
@@ -71,7 +74,7 @@ export class UpdateProductDto {
   @Min(0)
   vatRate?: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, description: 'ID de catégorie OU slug (les deux acceptés)' })
   @IsOptional()
   @IsString()
   category?: string;

@@ -202,7 +202,7 @@ export class DisputeService {
     });
   }
 
-  async findOne(disputeId: string, userId: string) {
+  async findOne(disputeId: string, userId: string, userRole?: string) {
     const dispute = await this.prisma.dispute.findUnique({
       where: { id: disputeId },
       include: {
@@ -245,6 +245,11 @@ export class DisputeService {
 
     if (!dispute) {
       throw new NotFoundException('Litige introuvable');
+    }
+
+    // L'ADMIN peut ouvrir n'importe quel litige (il peut déjà les lister et les résoudre).
+    if (userRole === 'ADMIN') {
+      return dispute;
     }
 
     // Check if user is involved in the dispute
@@ -314,7 +319,7 @@ export class DisputeService {
 
     // Déclenche un VRAI remboursement escrow si l'issue est en faveur du client.
     // (Avant : la résolution n'écrivait qu'un texte, aucun argent ne bougeait.)
-    let refund: { refunded: number } | null = null;
+    let refund: { refunded: number; note?: string } | null = null;
     if (
       resolveDto.outcome === DisputeOutcome.REFUND_CLIENT ||
       resolveDto.outcome === DisputeOutcome.PARTIAL_REFUND
@@ -330,9 +335,17 @@ export class DisputeService {
           : Number(resolveDto.refundAmount ?? fullPrice);
       try {
         refund = await this.paymentService.refundForCancellation(dispute.missionId, amount);
-        this.logger.log(
-          `Litige ${disputeId} résolu (${resolveDto.outcome}) : ${refund.refunded}€ remboursés au client.`,
-        );
+        if (refund.refunded === 0) {
+          // Remboursement fantôme : l'issue est en faveur du client mais aucun euro n'a bougé.
+          // On remonte un signal clair au lieu d'un 0 silencieux.
+          this.logger.warn(
+            `Litige ${disputeId} résolu (${resolveDto.outcome}) mais AUCUN remboursement effectué : ${refund.note ?? 'aucun paiement capturé à rembourser'}.`,
+          );
+        } else {
+          this.logger.log(
+            `Litige ${disputeId} résolu (${resolveDto.outcome}) : ${refund.refunded}€ remboursés au client.`,
+          );
+        }
       } catch (e) {
         this.logger.error(`Échec du remboursement pour le litige ${disputeId}: ${(e as any)?.message}`);
         throw new BadRequestException(

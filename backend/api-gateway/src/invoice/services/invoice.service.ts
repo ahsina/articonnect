@@ -555,6 +555,100 @@ export class InvoiceService {
   }
 
   /**
+   * Convertir un devis signé/accepté en facture.
+   *
+   * Implémente l'étape « convertir devis -> facture » du cycle :
+   *  - reprend les lignes, montants, taux de TVA et adresses du devis (cohérence garantie,
+   *    plus de re-saisie manuelle) ;
+   *  - lie la facture à la même mission que le devis (missionId) quand elle existe ;
+   *  - référence le numéro de devis dans les notes (traçabilité) ;
+   *  - bascule le devis en CONVERTED pour matérialiser la conversion.
+   *
+   * Le devis doit être ACCEPTED (donc signé) : on ne facture pas un devis non accepté.
+   */
+  async createFromQuote(quoteId: string, requester?: { userId: string; isAdmin: boolean }) {
+    const quote = await this.prisma.quote.findUnique({
+      where: { id: quoteId },
+      include: {
+        lineItems: { orderBy: { position: 'asc' } },
+        client: true,
+        artisan: { include: { artisanProfile: true } },
+      },
+    });
+
+    if (!quote) {
+      throw new NotFoundException('Quote not found');
+    }
+
+    // SÉCURITÉ : seul l'artisan émetteur du devis (ou un admin) peut le convertir.
+    if (requester && !requester.isAdmin && quote.artisanId !== requester.userId) {
+      throw new ForbiddenException('Non autorisé');
+    }
+
+    if (quote.status !== 'ACCEPTED') {
+      throw new BadRequestException(
+        `Seul un devis accepté (signé) peut être converti en facture (statut actuel : ${quote.status}).`,
+      );
+    }
+
+    if (!quote.artisan) {
+      throw new BadRequestException('Quote has no artisan');
+    }
+
+    // Reprise fidèle des lignes du devis.
+    const lineItems = quote.lineItems.map((item) => ({
+      description: item.description,
+      quantity: parseFloat(item.quantity.toString()),
+      unitPrice: parseFloat(item.unitPrice.toString()),
+      total: parseFloat(item.totalPrice.toString()),
+    }));
+
+    const subtotal = parseFloat(quote.subtotal.toString());
+
+    const issuerAddress = {
+      name: `${quote.artisan.firstName} ${quote.artisan.lastName}`,
+      address: quote.artisan.artisanProfile?.baseAddress || quote.address || 'N/A',
+      city: quote.city || 'N/A',
+      postalCode: quote.postalCode || 'N/A',
+      country: quote.country || 'Luxembourg',
+      siret: quote.artisan.artisanProfile?.siret || undefined,
+      vat: quote.artisan.artisanProfile?.vatNumber || undefined,
+    };
+
+    const clientAddress = {
+      name: `${quote.client.firstName} ${quote.client.lastName}`,
+      address: quote.address || 'N/A',
+      city: quote.city || 'N/A',
+      postalCode: quote.postalCode || 'N/A',
+      country: quote.country || 'Luxembourg',
+    };
+
+    const invoice = await this.create({
+      type: InvoiceType.MISSION,
+      missionId: quote.missionId || undefined,
+      issuerId: quote.artisanId,
+      clientId: quote.clientId,
+      subtotal,
+      taxRate: parseFloat(quote.taxRate.toString()),
+      lineItems,
+      issuerAddress: issuerAddress as any,
+      clientAddress: clientAddress as any,
+      paymentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      notes: `Facture émise à partir du devis ${quote.quoteNumber} accepté le ${
+        quote.acceptedAt ? new Date(quote.acceptedAt).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR')
+      }.`,
+    });
+
+    // Matérialise la conversion : le devis passe en CONVERTED (évite les factures multiples).
+    await this.prisma.quote.update({
+      where: { id: quote.id },
+      data: { status: 'CONVERTED' as any },
+    });
+
+    return invoice;
+  }
+
+  /**
    * Auto-generate invoice from Order
    */
   async createFromOrder(orderId: string) {

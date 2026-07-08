@@ -12,6 +12,24 @@ export class CompanyService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Lit les permissions d'un employé de façon robuste. La colonne Prisma est de type Json et doit
+   * stocker un vrai tableau. On accepte aussi une string JSON (lignes historiques doublement
+   * encodées) pour ne pas perdre les permissions à la relecture.
+   */
+  private normalizePermissions(raw: unknown): string[] {
+    if (Array.isArray(raw)) return raw as string[];
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? (parsed as string[]) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+
   async createCompany(ownerId: string, createCompanyDto: CreateCompanyDto) {
     const existingCompany = await this.prisma.company.findUnique({
       where: { ownerId },
@@ -88,14 +106,16 @@ export class CompanyService {
           status: EmployeeStatus.ACTIVE,
           paymentModel: PaymentModel.COMMISSION,
           commissionRate: 100,
-          permissions: JSON.stringify([
+          // Colonne Prisma Json : stocker le TABLEAU directement (pas de JSON.stringify -> sinon
+          // double-encodage relu comme string, Array.isArray()=false, toutes les permissions perdues).
+          permissions: [
             'canManageCompany',
             'canManageEmployees',
             'canViewAllMissions',
             'canAssignMissions',
             'canViewFinancials',
             'canManageSettings',
-          ]),
+          ],
         },
       });
 
@@ -326,7 +346,7 @@ export class CompanyService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = (Array.isArray(employeeRecord.permissions) ? employeeRecord.permissions : []);
+    const permissions = this.normalizePermissions(employeeRecord.permissions);
     if (!permissions.includes('canManageCompany')) {
       throw new ForbiddenException("Vous n'avez pas la permission de modifier cette entreprise");
     }
@@ -380,7 +400,7 @@ export class CompanyService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = (Array.isArray(employeeRecord.permissions) ? employeeRecord.permissions : []);
+    const permissions = this.normalizePermissions(employeeRecord.permissions);
     if (!permissions.includes('canManageSettings')) {
       throw new ForbiddenException("Vous n'avez pas la permission de modifier les paramètres");
     }

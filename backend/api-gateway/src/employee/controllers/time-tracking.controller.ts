@@ -11,28 +11,59 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiBody, ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsObject, IsNotEmpty } from 'class-validator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { TimeTrackingService } from '../services/time-tracking.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
+// Les champs documentés (notes, missionId, location) doivent porter des décorateurs class-validator,
+// sinon la ValidationPipe (whitelist:true) les strippe/rejette avec "property X should not exist".
 class ClockInDto {
+  @ApiPropertyOptional({ description: 'Coordonnées GPS du pointage', example: { lat: 49.6, lng: 6.1 } })
+  @IsOptional()
+  @IsObject()
   location?: { lat: number; lng: number };
+
+  @ApiPropertyOptional({ description: 'Notes libres' })
+  @IsOptional()
+  @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Mission liée au pointage' })
+  @IsOptional()
+  @IsString()
   missionId?: string;
 }
 
 class ClockOutDto {
+  @ApiPropertyOptional({ description: 'Coordonnées GPS du pointage', example: { lat: 49.6, lng: 6.1 } })
+  @IsOptional()
+  @IsObject()
   location?: { lat: number; lng: number };
+
+  @ApiPropertyOptional({ description: 'Notes libres' })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
 class BreakNotesDto {
+  @ApiPropertyOptional({ description: 'Notes libres' })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
 class CorrectTimeDto {
+  @ApiProperty({ description: 'Nouvel horodatage ISO' })
+  @IsString()
+  @IsNotEmpty()
   newTimestamp: string;
+
+  @ApiProperty({ description: 'Motif de la correction' })
+  @IsString()
+  @IsNotEmpty()
   reason: string;
 }
 

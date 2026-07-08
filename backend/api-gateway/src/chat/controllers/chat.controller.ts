@@ -1,7 +1,21 @@
-import { Controller, Get, Post, Delete, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ChatService } from '../services/chat.service';
+
+class SendMessageHttpDto {
+  @ApiProperty({ description: 'Contenu du message' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000)
+  content: string;
+
+  @ApiProperty({ required: false, description: 'Mission liée éventuelle' })
+  @IsOptional()
+  @IsString()
+  missionId?: string;
+}
 
 @ApiTags('Chat')
 @Controller('chat')
@@ -30,6 +44,35 @@ export class ChatController {
       userId,
       limit ? Number(limit) : 50,
     );
+  }
+
+  @Post('conversation/:userId/message')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Envoyer un message (fallback HTTP quand le WebSocket est indisponible)' })
+  async sendMessage(
+    @Request() req,
+    @Param('userId') userId: string,
+    @Body() body: SendMessageHttpDto,
+  ) {
+    if (!userId || userId === req.user.userId) {
+      throw new BadRequestException('Destinataire invalide');
+    }
+    // Même logique que l'event WS `send_message` : création du message chiffré via chatService.
+    const message = await this.chatService.createMessage({
+      senderId: req.user.userId,
+      receiverId: userId,
+      content: body.content,
+      missionId: body.missionId,
+    });
+    return {
+      id: message.id,
+      senderId: req.user.userId,
+      receiverId: userId,
+      missionId: body.missionId,
+      createdAt: message.createdAt,
+      read: false,
+    };
   }
 
   @Post('conversation/:userId/read')

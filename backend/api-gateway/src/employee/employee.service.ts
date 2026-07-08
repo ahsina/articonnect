@@ -27,6 +27,25 @@ export class EmployeeService {
     return crypto.randomBytes(32).toString('hex');
   }
 
+  /**
+   * Lit les permissions d'un employé de façon robuste. La colonne Prisma est de type Json et
+   * doit stocker un vrai tableau. Certaines lignes historiques ont pu être doublement encodées
+   * (JSON.stringify -> string). On accepte donc aussi une string JSON pour ne pas perdre les
+   * permissions à la relecture.
+   */
+  private normalizePermissions(raw: unknown): string[] {
+    if (Array.isArray(raw)) return raw as string[];
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? (parsed as string[]) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+
   private getDefaultPermissions(role: EmployeeRole): string[] {
     const permissionsMap = {
       [EmployeeRole.OWNER]: [
@@ -75,7 +94,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = (Array.isArray(inviterEmployee.permissions) ? inviterEmployee.permissions : []);
+    const permissions = this.normalizePermissions(inviterEmployee.permissions);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission d'inviter des employés");
     }
@@ -142,7 +161,7 @@ export class EmployeeService {
         commissionRate: inviteDto.commissionRate,
         baseSalary: inviteDto.baseSalary,
         hourlyRate: inviteDto.hourlyRate,
-        permissions: JSON.stringify(finalPermissions),
+        permissions: finalPermissions, // colonne Json : tableau direct (pas de double-encodage)
         specialties: inviteDto.specialtyIds
           ? {
               connect: inviteDto.specialtyIds.map((id) => ({ id })),
@@ -413,7 +432,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []);
+    const permissions = this.normalizePermissions(requesterEmployee.permissions);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission de modifier les employés");
     }
@@ -441,7 +460,7 @@ export class EmployeeService {
     };
 
     if (updateDto.permissions) {
-      updateData.permissions = JSON.stringify(updateDto.permissions);
+      updateData.permissions = updateDto.permissions; // colonne Json : tableau direct
     }
 
     if (updateDto.specialtyIds) {
@@ -506,7 +525,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []);
+    const permissions = this.normalizePermissions(requesterEmployee.permissions);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission de supprimer des employés");
     }
@@ -558,7 +577,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'êtes pas membre de cette entreprise");
     }
 
-    const permissions = (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []);
+    const permissions = this.normalizePermissions(requesterEmployee.permissions);
     if (!permissions.includes('canManageEmployees')) {
       throw new ForbiddenException("Vous n'avez pas la permission de renvoyer des invitations");
     }
@@ -639,7 +658,7 @@ export class EmployeeService {
       throw new ForbiddenException("Vous n'avez pas accès aux statistiques de cet employé");
     }
 
-    const requesterPermissions = requesterEmployee ? (Array.isArray(requesterEmployee.permissions) ? requesterEmployee.permissions : []) : [];
+    const requesterPermissions = requesterEmployee ? this.normalizePermissions(requesterEmployee.permissions) : [];
     const canViewFinancials = isOwner || requesterPermissions.includes('canViewFinancials');
 
     if (!canViewFinancials && employee.userId !== requesterId) {

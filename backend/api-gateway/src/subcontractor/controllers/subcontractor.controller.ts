@@ -30,36 +30,36 @@ export class SubcontractorController {
   @Post()
   @Roles('ARTISAN')
   async create(@Request() req, @Body() dto: CreateSubcontractorDto) {
-    return this.subcontractorService.create(req.user.id, dto);
+    return this.subcontractorService.create(req.user.userId, dto);
   }
 
   @Get()
   @Roles('ARTISAN')
   async findAll(@Request() req, @Query('status') status?: SubcontractorStatus) {
-    return this.subcontractorService.findAll(req.user.id, status);
+    return this.subcontractorService.findAll(req.user.userId, status);
   }
 
-  @Get(':id')
+  @Get(':id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})')
   @Roles('ARTISAN')
   async findOne(@Request() req, @Param('id') id: string) {
-    return this.subcontractorService.findOne(id, req.user.id);
+    return this.subcontractorService.findOne(id, req.user.userId);
   }
 
   @Put(':id')
   @Roles('ARTISAN')
   async update(@Request() req, @Param('id') id: string, @Body() dto: UpdateSubcontractorDto) {
-    return this.subcontractorService.update(id, req.user.id, dto);
+    return this.subcontractorService.update(id, req.user.userId, dto);
   }
 
   @Post('accept-invitation/:token')
   async acceptInvitation(@Request() req, @Param('token') token: string) {
-    return this.subcontractorService.acceptInvitation(token, req.user.id);
+    return this.subcontractorService.acceptInvitation(token, req.user.userId);
   }
 
   @Post(':id/terminate')
   @Roles('ARTISAN')
   async terminate(@Request() req, @Param('id') id: string) {
-    return this.subcontractorService.terminate(id, req.user.id);
+    return this.subcontractorService.terminate(id, req.user.userId);
   }
 
   // Assignments
@@ -67,7 +67,7 @@ export class SubcontractorController {
   @Post('assignments')
   @Roles('ARTISAN')
   async createAssignment(@Request() req, @Body() dto: CreateSubcontractorAssignmentDto) {
-    return this.subcontractorService.createAssignment(req.user.id, dto);
+    return this.subcontractorService.createAssignment(req.user.userId, dto);
   }
 
   @Get('assignments')
@@ -77,18 +77,18 @@ export class SubcontractorController {
     @Query('subcontractorId') subcontractorId?: string,
     @Query('missionId') missionId?: string,
   ) {
-    return this.subcontractorService.getAssignments(req.user.id, subcontractorId, missionId);
+    return this.subcontractorService.getAssignments(req.user.userId, subcontractorId, missionId);
   }
 
   @Put('assignments/:id')
   @Roles('ARTISAN')
   async updateAssignment(@Request() req, @Param('id') id: string, @Body() dto: UpdateAssignmentDto) {
-    return this.subcontractorService.updateAssignment(id, req.user.id, dto);
+    return this.subcontractorService.updateAssignment(id, req.user.userId, dto);
   }
 
   @Delete('assignments/:id')
   @Roles('ARTISAN')
   async deleteAssignment(@Request() req, @Param('id') id: string) {
-    return this.subcontractorService.deleteAssignment(id, req.user.id);
+    return this.subcontractorService.deleteAssignment(id, req.user.userId);
   }
 }

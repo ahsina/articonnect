@@ -19,7 +19,9 @@ export class ChatService {
 
   async validateToken(token: string) {
     try {
-      return this.jwtService.verify(token);
+      const payload = this.jwtService.verify(token);
+      // Le payload JWT porte l'id dans `sub` ; on expose aussi `userId` (le gateway l'utilise).
+      return { ...payload, userId: payload.sub || payload.userId };
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
     }

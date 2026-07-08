@@ -68,16 +68,23 @@ export class MissionService {
     return mission;
   }
 
-  async findAll(userId: string, role: string) {
+  async findAll(userId: string, role: string, status?: string) {
     const where: {
       clientId?: string;
       artisanId?: string;
+      status?: any;
     } = {};
 
     if (role === 'CLIENT') {
       where.clientId = userId;
     } else if (role === 'ARTISAN') {
       where.artisanId = userId;
+    }
+
+    // Filtre optionnel par statut : sans ce garde, le paramètre ?status= était ignoré et l'endpoint
+    // renvoyait des missions dans n'importe quel statut (ex NEGOTIATING pour ?status=COMPLETED).
+    if (status) {
+      where.status = status;
     }
 
     const missions = await this.prisma.mission.findMany({
@@ -975,6 +982,21 @@ export class MissionService {
     type?: 'before' | 'after' | 'general',
   ) {
     const mission = await this.findOne(missionId, userId);
+
+    // Anti XSS stocké : chaque photo DOIT être une URL http(s) valide.
+    // On rejette javascript:, data:, chemins relatifs et chaînes non-URL.
+    if (!Array.isArray(photos)) {
+      throw new BadRequestException('Le champ "photos" doit être un tableau d\'URLs.');
+    }
+    const sanitized = photos.map((p) => {
+      if (typeof p !== 'string' || !this.isSafeHttpUrl(p)) {
+        throw new BadRequestException(
+          `URL de photo invalide ou non sécurisée: ${typeof p === 'string' ? p : typeof p}. Seules les URLs http(s) sont acceptées.`,
+        );
+      }
+      return p.trim();
+    });
+
     const field =
       type === 'before'
         ? 'beforePhotos'
@@ -984,8 +1006,21 @@ export class MissionService {
     const existing: string[] = (mission as any)[field] || [];
     const updated = await this.prisma.mission.update({
       where: { id: missionId },
-      data: { [field]: [...existing, ...photos] } as any,
+      data: { [field]: [...existing, ...sanitized] } as any,
     });
     return { missionId, [field]: (updated as any)[field] };
+  }
+
+  /** Valide qu'une chaîne est une URL absolue en http(s) (rejette javascript:, data:, etc.). */
+  private isSafeHttpUrl(value: string): boolean {
+    const raw = value.trim();
+    if (!raw) return false;
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      return false;
+    }
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   }
 }

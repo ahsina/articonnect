@@ -385,9 +385,63 @@ export class SignatureService {
     }
 
     return {
+      requestId: request.id,
       quote: request.quote,
       expiresAt: request.expiresAt,
       message: request.message,
     };
+  }
+
+  /**
+   * Sign a quote via a public signature-request token.
+   *
+   * Sécurité :
+   *  - vérifie que le signerEmail fourni correspond bien au client du devis
+   *    (valeur probante eIDAS : on ne signe pas au nom d'un tiers) ;
+   *  - marque la QuoteSignatureRequest `usedAt` après signature (anti-rejeu) :
+   *    le token devient inutilisable même si le devis est repassé en PENDING.
+   */
+  async signQuoteByToken(
+    token: string,
+    data: {
+      signatureImage?: string;
+      signatureType: 'DRAWN' | 'TYPED' | 'CHECKBOX';
+      signerName: string;
+      signerEmail: string;
+      ipAddress: string;
+      userAgent: string;
+    },
+  ): Promise<{ signatureId: string; signedAt: Date; documentHash: string }> {
+    const { requestId, quote } = await this.getQuoteBySignatureToken(token);
+
+    // Le signataire doit être le client du devis (email vérifié, insensible à la casse).
+    const clientEmail: string | undefined = quote?.client?.email;
+    if (
+      !clientEmail ||
+      !data.signerEmail ||
+      clientEmail.trim().toLowerCase() !== data.signerEmail.trim().toLowerCase()
+    ) {
+      throw new ForbiddenException(
+        "L'email fourni ne correspond pas au destinataire du devis. La signature doit être effectuée par le client.",
+      );
+    }
+
+    const result = await this.signQuote({
+      quoteId: quote.id,
+      signerId: quote.clientId,
+      signerRole: 'CLIENT',
+      signatureImage: data.signatureImage,
+      signatureType: data.signatureType,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    });
+
+    // Anti-rejeu : consommer le token de signature.
+    await this.prisma.quoteSignatureRequest.update({
+      where: { id: requestId },
+      data: { usedAt: new Date() },
+    });
+
+    return result;
   }
 }

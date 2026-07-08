@@ -52,16 +52,12 @@ export class SignatureController {
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
   ) {
-    // Get the quote and client info from the token
-    const { quote } = await this.signatureService.getQuoteBySignatureToken(token);
-
-    // Sign the quote on behalf of the client
-    return this.signatureService.signQuote({
-      quoteId: quote.id,
-      signerId: quote.clientId,
-      signerRole: 'CLIENT',
+    // Signature par token : vérifie l'email signataire vs client + consomme le token (anti-rejeu).
+    return this.signatureService.signQuoteByToken(token, {
       signatureImage: dto.signatureImage,
       signatureType: dto.signatureType,
+      signerName: dto.signerName,
+      signerEmail: dto.signerEmail,
       ipAddress: ip,
       userAgent: userAgent || 'Unknown',
     });

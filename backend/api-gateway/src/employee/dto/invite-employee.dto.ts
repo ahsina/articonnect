@@ -18,9 +18,13 @@ export class InviteEmployeeDto {
   role: EmployeeRole;
 
   @ApiProperty({
-    description: 'Payment model',
+    description:
+      "Modèle de paie de l'employé. Valeurs acceptées : SALARY (salaire fixe), COMMISSION (% du CA) " +
+      "ou HYBRID (salaire + commission). Il n'existe PAS de modèle 'HOURLY' : le taux horaire " +
+      '(hourlyRate) est une donnée de coût liée au pointage (time-tracking), pas un modèle de paie.',
     enum: PaymentModel,
-    example: PaymentModel.COMMISSION
+    enumName: 'PaymentModel',
+    example: PaymentModel.COMMISSION,
   })
   @IsEnum(PaymentModel)
   paymentModel: PaymentModel;
@@ -49,8 +53,10 @@ export class InviteEmployeeDto {
   baseSalary?: number;
 
   @ApiPropertyOptional({
-    description: 'Hourly rate for time tracking',
-    example: 35
+    description:
+      'Taux horaire de référence pour le pointage/time-tracking (coût interne). Ne remplace pas ' +
+      'paymentModel : sert au calcul des heures, pas au versement de la paie.',
+    example: 35,
   })
   @IsOptional()
   @IsNumber()

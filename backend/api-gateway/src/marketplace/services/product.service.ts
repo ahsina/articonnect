@@ -13,19 +13,29 @@ import { Prisma } from '@prisma/client';
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
-  private async assertCategoryExists(categoryId: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
+  /**
+   * Résout une catégorie fournie soit par ID, soit par SLUG (ex 'lighting').
+   * Le champ DTO `category` est documenté avec un slug ; on accepte donc les deux
+   * pour éviter le 400 trompeur "Invalid category" quand un slug est passé.
+   * Retourne toujours l'ID de catégorie à persister.
+   */
+  private async resolveCategoryId(categoryIdOrSlug: string): Promise<string> {
+    const category = await this.prisma.category.findFirst({
+      where: {
+        OR: [{ id: categoryIdOrSlug }, { slug: categoryIdOrSlug }],
+      },
+      select: { id: true },
     });
     if (!category) {
       throw new BadRequestException(
-        'Invalid category: provide an existing category id',
+        'Invalid category: provide an existing category id or slug',
       );
     }
+    return category.id;
   }
 
   async create(artisanId: string, data: CreateProductDto) {
-    await this.assertCategoryExists(data.category);
+    const categoryId = await this.resolveCategoryId(data.category);
 
     return this.prisma.product.create({
       data: {
@@ -34,7 +44,7 @@ export class ProductService {
         description: data.description,
         price: data.price,
         vatRate: data.vatRate || 17, // Luxembourg standard VAT rate
-        categoryId: data.category,
+        categoryId,
         stock: data.stock,
         sku: data.sku,
         status: data.status || 'DRAFT',
@@ -197,11 +207,10 @@ export class ProductService {
       throw new ForbiddenException('Vous n\'avez pas accès à ce produit');
     }
 
-    // Transform category to categoryId if present
+    // Transform category to categoryId if present (accepte id OU slug)
     const updateData: any = { ...data };
     if (updateData.category) {
-      await this.assertCategoryExists(updateData.category);
-      updateData.categoryId = updateData.category;
+      updateData.categoryId = await this.resolveCategoryId(updateData.category);
       delete updateData.category;
     }
 

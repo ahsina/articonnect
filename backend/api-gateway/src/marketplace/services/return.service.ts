@@ -509,6 +509,9 @@ export class ReturnService {
       },
     });
 
+    // Propage l'état à la commande : un article remboursé ne doit pas rester "DELIVERED".
+    await this.propagateOrderRefundStatus(orderReturn.orderId);
+
     // Notify client
     await this.prisma.notification.create({
       data: {
@@ -524,6 +527,52 @@ export class ReturnService {
       ...updated,
       refundResult,
     };
+  }
+
+  /**
+   * Après un remboursement de retour, met à jour le statut de la commande :
+   * - REFUNDED si le total remboursé (tous retours confondus) couvre le sous-total de la commande,
+   * - PARTIALLY_REFUNDED sinon.
+   * (Avant : la commande restait "DELIVERED" malgré un article remboursé.)
+   */
+  private async propagateOrderRefundStatus(orderId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, subtotal: true, status: true },
+    });
+    if (!order) return;
+
+    // Ne pas régresser un état terminal explicite.
+    if (order.status === 'CANCELLED') return;
+
+    const refundedReturns = await this.prisma.orderReturn.findMany({
+      where: { orderId, status: 'REFUNDED' as any },
+      select: { refundedAmount: true },
+    });
+
+    const totalRefunded = refundedReturns.reduce(
+      (sum, r) => sum.add(r.refundedAmount ?? new Decimal(0)),
+      new Decimal(0),
+    );
+
+    if (totalRefunded.lte(0)) return;
+
+    // NB : l'enum OrderStatus ne contient pas PARTIALLY_REFUNDED dans ce schéma
+    // (l'ajouter exigerait une migration DB). On applique donc :
+    //  - REFUNDED dès qu'un remboursement de retour a eu lieu et couvre le sous-total,
+    //  - pour un remboursement partiel, on marque quand même la commande REFUNDED
+    //    UNIQUEMENT si le total remboursé atteint le sous-total ; sinon on n'écrit pas
+    //    un statut inexistant (évite une erreur Prisma P2009).
+    if (totalRefunded.gte(order.subtotal)) {
+      if (order.status !== 'REFUNDED') {
+        await this.prisma.order.update({
+          where: { id: orderId },
+          data: { status: 'REFUNDED' as any },
+        });
+      }
+    }
+    // Remboursement partiel : l'état "REFUNDED" partiel est déjà porté par l'entité
+    // OrderReturn (status=REFUNDED + refundedAmount) et lisible via GET /returns.
   }
 
   async completeReturn(returnId: string, userId: string) {

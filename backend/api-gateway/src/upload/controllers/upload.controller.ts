@@ -7,16 +7,19 @@ import {
   UploadedFile,
   Body,
   BadRequestException,
+  UseFilters,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { S3Service, FileType } from '../services/s3.service';
 import { GetPresignedUrlDto } from '../dto/upload.dto';
+import { MulterExceptionFilter } from '../filters/multer-exception.filter';
 
 @ApiTags('Uploads')
 @Controller('upload')
 @UseGuards(JwtAuthGuard)
+@UseFilters(MulterExceptionFilter)
 export class UploadController {
   constructor(private readonly s3Service: S3Service) {}
 

@@ -53,9 +53,17 @@ export class PaymentService {
       }
       if (existingTx.stripePaymentIntentId) {
         const pi = await this.stripeService.retrievePaymentIntent(existingTx.stripePaymentIntentId);
-        if (pi?.client_secret) {
+        // Ne réutiliser que si le PaymentIntent est encore PAYABLE. Un PI canceled/failed/succeeded
+        // ne doit PAS être re-servi (sinon le client reçoit le client_secret d'un intent mort).
+        const reusable =
+          pi &&
+          ['requires_payment_method', 'requires_confirmation', 'requires_action', 'processing'].includes(
+            pi.status,
+          );
+        if (reusable && pi.client_secret) {
           return { clientSecret: pi.client_secret };
         }
+        // Sinon on repart sur un nouveau PaymentIntent (la Transaction sera mise à jour plus bas).
       }
     }
 
@@ -155,16 +163,20 @@ export class PaymentService {
     const commissionRate = feeSettings.platformCommissionRate / 100; // Convert percentage to decimal
     const artisanRate = feeSettings.artisanPayoutPercentage / 100;
 
-    await this.prisma.transaction.create({
-      data: {
-        type: 'MISSION',
-        missionId: mission.id,
-        amount: mission.agreedPrice,
-        commission: Number(mission.agreedPrice) * commissionRate,
-        artisanAmount: Number(mission.agreedPrice) * artisanRate,
-        stripePaymentIntentId: paymentIntent.id,
-        status: 'PENDING',
-      },
+    // Upsert : si une Transaction existait déjà (PI mort régénéré), on la met à jour au lieu de
+    // violer la contrainte unique sur missionId.
+    const txData = {
+      type: 'MISSION' as const,
+      amount: mission.agreedPrice,
+      commission: Number(mission.agreedPrice) * commissionRate,
+      artisanAmount: Number(mission.agreedPrice) * artisanRate,
+      stripePaymentIntentId: paymentIntent.id,
+      status: 'PENDING' as const,
+    };
+    await this.prisma.transaction.upsert({
+      where: { missionId: mission.id },
+      create: { missionId: mission.id, ...txData },
+      update: txData,
     });
 
     return { clientSecret: paymentIntent.client_secret };
@@ -1019,7 +1031,32 @@ export class PaymentService {
       }
     }
 
-    // Transférer à l'artisan
+    // CAPTURE de l'escrow AVANT tout transfert : le PaymentIntent est en capture manuelle, l'argent
+    // du client n'est qu'AUTORISÉ. On l'ENCAISSE ici, indépendamment du compte Connect de l'artisan
+    // (sinon, sans Connect, l'argent n'est jamais capturé alors que le travail est validé).
+    if (mission.transaction.stripePaymentIntentId) {
+      try {
+        const pi = await this.stripeService.retrievePaymentIntent(
+          mission.transaction.stripePaymentIntentId,
+        );
+        if (pi && pi.status === 'requires_capture') {
+          await this.stripeService.capturePayment(mission.transaction.stripePaymentIntentId);
+          await this.prisma.transaction.update({
+            where: { id: mission.transaction.id },
+            data: { status: 'HELD' },
+          });
+          this.logger.log(`Escrow capturé pour la mission ${missionId} (fonds détenus par la plateforme).`);
+        }
+      } catch (captureError) {
+        this.logger.error(
+          `Échec de capture escrow pour la mission ${missionId}: ${(captureError as any)?.message}`,
+        );
+        throw new BadRequestException('La capture du paiement a échoué.');
+      }
+    }
+
+    // Transférer à l'artisan (le versement Connect est SÉPARÉ de la capture : son échec ne doit pas
+    // annuler la capture déjà effectuée).
     if (mission.artisan.artisanProfile?.stripeAccountId) {
       const transferAmount = Math.floor(Number(mission.transaction.artisanAmount) * 100);
 
@@ -1345,8 +1382,10 @@ export class PaymentService {
    * sur le paiement escrow s'il existe. Retourne { refunded } (0 si aucun paiement à rembourser).
    * Idempotent-safe : si aucun paiement capturé, ne fait rien (pas d'erreur).
    */
-  async refundForCancellation(missionId: string, refundableAmount: number): Promise<{ refunded: number }> {
-    if (!refundableAmount || refundableAmount <= 0) return { refunded: 0 };
+  async refundForCancellation(missionId: string, refundableAmount: number): Promise<{ refunded: number; note?: string }> {
+    if (!refundableAmount || refundableAmount <= 0) {
+      return { refunded: 0, note: 'aucun montant à rembourser (montant demandé nul ou négatif)' };
+    }
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: { payments: true },
@@ -1356,7 +1395,8 @@ export class PaymentService {
       mission?.payments.find((p) => p.type === 'DEPOSIT');
     if (!payment || !payment.stripePaymentIntentId) {
       // Aucun paiement encaissé : rien à rembourser (annulation avant paiement).
-      return { refunded: 0 };
+      // Signalé explicitement pour ne pas masquer un remboursement fantôme (0€ silencieux).
+      return { refunded: 0, note: 'aucun paiement capturé à rembourser' };
     }
     const capped = Math.min(refundableAmount, Number(payment.amount));
     try {

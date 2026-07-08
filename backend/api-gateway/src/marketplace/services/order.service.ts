@@ -106,9 +106,18 @@ export class OrderService {
     return order;
   }
 
-  async findAll(clientId: string) {
+  async findAll(userId: string) {
+    // L'utilisateur voit :
+    //  - les commandes qu'il a passées (acheteur / clientId), ET
+    //  - les commandes contenant au moins un de ses produits (vendeur / artisan),
+    //    afin de pouvoir gérer la fulfillment de ses ventes via l'API.
     return this.prisma.order.findMany({
-      where: { clientId },
+      where: {
+        OR: [
+          { clientId: userId },
+          { items: { some: { product: { artisanId: userId } } } },
+        ],
+      },
       include: {
         items: {
           include: {
@@ -122,11 +131,15 @@ export class OrderService {
     });
   }
 
-  async findOne(orderId: string, clientId: string) {
+  async findOne(orderId: string, userId: string) {
+    // Autorise l'acheteur (clientId) OU l'artisan vendeur d'un item de la commande.
     const order = await this.prisma.order.findFirst({
       where: {
         id: orderId,
-        clientId,
+        OR: [
+          { clientId: userId },
+          { items: { some: { product: { artisanId: userId } } } },
+        ],
       },
       include: {
         items: {

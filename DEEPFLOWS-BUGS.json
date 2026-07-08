@@ -1,0 +1,182 @@
+[
+ {
+  "severity": "critical",
+  "endpoint": "POST /employees/:companyId/invite (et PUT /companies/:id/settings, /companies/:id, /companies/:id/logo)",
+  "desc": "Le OWNER ne peut PAS inviter d'employe ni modifier les parametres: 403 'permission'. Cause racine: les permissions sont ecrites via JSON.stringify([...]) dans une colonne Prisma de type Json (double-encodage), donc relues comme une CHAINE et non un tableau. Toutes les verifications font 'Array.isArray(permissions) ? permissions : []' -> toujours [] -> .includes('canManageEmployees'/'canManageSettings') faux. company.service.ts:91 (ecriture) + employee.service.ts:78-81, company.service.ts:329-330 et 383-384 (lecture). Bloque tout le cycle entreprise->employe->paie des l'etape 2. Fix: soit stocker un vrai tableau JSON (retirer JSON.stringify), soit parser a la lecture (JSON.parse si string).",
+  "scenario": "entreprise-employe-paie"
+ },
+ {
+  "severity": "high",
+  "endpoint": "POST /earnings/create",
+  "desc": "Le flux paie est inatteignable. La verification utilise mission.completedById (null sur toutes les 81 missions status=COMPLETED) au lieu du status, donc renvoie 400 'La mission doit etre marquee comme terminee' meme pour des missions completees. De plus les missions completees ont companyId=null, ce qui ferait echouer le controle employee.companyId===mission.companyId. Aucun gain ne peut etre genere -> paie et payouts vides.",
+  "scenario": "entreprise-employe-paie"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "POST /time-tracking/clock-in, POST /time-tracking/clock-out, POST /time-tracking/break/start",
+  "desc": "Les champs de body documentes (notes, missionId, location) sont rejetes par la ValidationPipe (whitelist:true) avec 'property X should not exist'. Les DTO (ClockInDto, ClockOutDto, BreakNotesDto) n'ont aucun decorateur class-validator, donc whitelist les strippe/rejette. Impossible d'attacher un pointage a une mission ou d'ajouter des notes -> lien pointage<->mission non fonctionnel.",
+  "scenario": "entreprise-employe-paie"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /employees/:companyId/invite",
+  "desc": "Message d'erreur trompeur: le champ swagger InviteEmployeeDto documente PaymentModel.COMMISSION et un hourlyRate, mais l'enum accepte SALARY/COMMISSION/HYBRID (pas HOURLY). Un modele de paie 'horaire' n'existe pas alors que hourlyRate et le time-tracking existent -> incoherence conceptuelle heures vs paie.",
+  "scenario": "entreprise-employe-paie"
+ },
+ {
+  "severity": "low",
+  "endpoint": "GET /missions?status=COMPLETED",
+  "desc": "Le filtre status semble ignore: la 1re mission renvoyee avec status=COMPLETED avait status=NEGOTIATING. Filtrage par status non applique sur cet endpoint.",
+  "scenario": "entreprise-employe-paie"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "POST /invoices (+ modele Invoice)",
+  "desc": "Pas de conversion devis->facture. Le modele Invoice n'a AUCUN champ quoteId (uniquement missionId/orderId), donc aucun lien structurel entre un devis signe et sa facture. Apres signature le devis reste ACCEPTED avec missionId=null, jamais CONVERTED. L'artisan doit re-saisir manuellement tous les montants/lignes/adresses dans POST /invoices, sans garantie de coherence avec le devis signe. Le step 'convertir devis en facture' du cycle n'est pas implemente.",
+  "scenario": "devis-signature-facture"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /sign/:token",
+  "desc": "Le token de signature (QuoteSignatureRequest.usedAt) n'est JAMAIS marque consomme: 'usedAt' n'est ecrit nulle part (seulement lu dans le filtre WHERE de getQuoteBySignatureToken). Apres signature GET /sign/:token renvoie toujours HTTP 200 avec le devis complet. Le token n'est protege que parce que le statut du devis bascule en ACCEPTED; si un admin repasse le devis en PENDING (invalidateSignature le fait), le meme token redevient reutilisable indefiniment jusqu'a expiration.",
+  "scenario": "devis-signature-facture"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /sign/:token",
+  "desc": "signerName et signerEmail sont requis par le DTO mais ne sont pas verifies contre le client du devis: la signature est toujours enregistree au nom de quote.clientId quel que soit le nom/email fourni. Un signerEmail different (ex tiers) est accepte sans controle, ce qui affaiblit la valeur probante de la signature electronique annoncee comme conforme eIDAS.",
+  "scenario": "devis-signature-facture"
+ },
+ {
+  "severity": "high",
+  "endpoint": "GET /subcontractors/assignments (et ?missionId, ?subcontractorId)",
+  "desc": "Route cassee: renvoie toujours 404 'Subcontractor not found'. Cause: dans subcontractor.controller.ts, @Get(':id') (ligne 42) est declare AVANT @Get('assignments') (ligne 73). NestJS matche le segment 'assignments' comme parametre :id et route vers findOne('assignments') -> NotFound. Impact: le donneur d ordre (Pierre) n a AUCUN moyen documente de lister ses assignments de sous-traitance (filtrer par mission/sous-traitant). Contournement partiel: GET /subcontractors/:id retourne les assignments (limite a 10, sans filtre). Correctif: declarer les routes 'assignments' avant la route parametree ':id', ou contraindre le param :id par un regex UUID comme fait dans mission.controller.ts.",
+  "scenario": "sous-traitance"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /missions",
+  "desc": "Incoherence mineure de contrat/doc: CreateMissionDto.type = MissionType (@prisma) dont les valeurs reelles sont EMERGENCY/SCHEDULED/QUOTE, mais rien ne documente ces valeurs cote client; un 'STANDARD' plausible renvoie 400. Non bloquant (le message 400 liste les valeurs).",
+  "scenario": "sous-traitance"
+ },
+ {
+  "severity": "info",
+  "endpoint": "req.user.id vs req.user.userId",
+  "desc": "Incoherence de convention entre modules: subcontractor.controller utilise req.user.id, mission.controller utilise req.user.userId. Les deux fonctionnent en prod (le payload JWT expose visiblement les deux/alias), mais c est un piege de maintenance a surveiller.",
+  "scenario": "sous-traitance"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "GET /marketplace/orders et GET /marketplace/orders/:id",
+  "desc": "INCOHERENCE VENDEUR/ACHETEUR: le vendeur (Pierre) ne peut PAS lire une commande contenant SES produits. getOrders filtre uniquement par clientId, et findOne fait un findFirst {id, clientId}. Resultat: Pierre recoit 404 sur la commande 0f537dd1... qu'il doit pourtant honorer. Or PATCH /orders/:id/status l'autorise (verifie product.artisanId). Le vendeur peut donc faire avancer le statut mais ne peut jamais consulter/lister les commandes de ses produits -> impossible de gerer la fulfillment via l'API. Il faut que getOrders/findOne acceptent aussi l'artisan proprietaire d'un item.",
+  "scenario": "marketplace-commande-retour"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /marketplace/returns/:id/refund (impact commande)",
+  "desc": "INCOHERENCE ETAT: apres un remboursement complet de l'item retourne (refundedAmount 129.9), le statut de la commande reste DELIVERED. Il n'est ni passe a REFUNDED/PARTIALLY_REFUNDED ni marque comme partiellement retourne. L'acheteur voit une commande 'livree' alors qu'un article a ete rembourse -> etat non propage a l'entite Order.",
+  "scenario": "marketplace-commande-retour"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /marketplace/products (DTO product.dto.ts)",
+  "desc": "PIEGE API/DOC: le champ 'category' est documente (ApiProperty example) et nomme comme un slug ('lighting') mais le service exige un ID de categorie (assertCategoryExists by id). Passer le slug renvoie 400 'Invalid category'. Le champ devrait s'appeler categoryId ou accepter le slug. Faible severite (fonctionne avec un id) mais tres trompeur.",
+  "scenario": "marketplace-commande-retour"
+ },
+ {
+  "severity": "critical",
+  "endpoint": "POST /missions/:id/validate (paymentService.triggerArtisanPayment)",
+  "desc": "La validation client NE CAPTURE PAS l'escrow. triggerArtisanPayment ne fait aucun stripe.capturePayment: il tente directement un createTransfer vers le compte Connect de l'artisan. Résultat prouvé: après validate, PI Stripe = requires_capture, amount_received=0, payoutStatus=deferred, Transaction PENDING. Si l'artisan n'a pas de compte Connect (cas de Pierre) -> throw avalé -> l'argent du client n'est JAMAIS encaissé alors que le travail est validé. Même avec un Connect valide, on transférerait depuis le solde plateforme sans jamais capturer l'autorisation du client (perte d'argent). L'escrow reste structurellement non capturé dans le flux normal.",
+  "scenario": "paiement-capture-reelle"
+ },
+ {
+  "severity": "high",
+  "endpoint": "POST /payments/capture/:missionId (ADMIN)",
+  "desc": "Le capture encaisse bien l'argent (PI succeeded, 14040) mais l'endpoint renvoie ensuite HTTP 500 car il enchaîne un createTransfer vers un compte Connect non habilité (transfers capability manquante). État incohérent: argent capturé côté Stripe, réponse=500, Transaction DB laissée en HELD (jamais COMPLETED), artisan non payé. Capture et transfert devraient être découplés / le transfert géré en asynchrone avec retry, et l'échec de transfert ne doit pas masquer/annuler la capture réussie.",
+  "scenario": "paiement-capture-reelle"
+ },
+ {
+  "severity": "high",
+  "endpoint": "POST /payments/create-intent",
+  "desc": "Le PaymentIntent d'escrow est créé avec des moyens de paiement à redirection activés (link/klarna/amazon_pay/satispay). La confirmation par carte test (pm_card_visa) part en redirect 3DS (requires_action) et ne peut aboutir sans navigateur, bloquant le paiement. Pour un escrow carte il faut payment_method_types=['card'] (ou automatic_payment_methods.allow_redirects=never) pour permettre une confirmation directe -> requires_capture.",
+  "scenario": "paiement-capture-reelle"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "POST /quotes/:id/respond (acceptation devis)",
+  "desc": "Accepter un devis met la mission en NEGOTIATING et assigne l'artisan mais NE FIXE PAS agreedPrice -> /payments/create-intent échoue 'Prix non défini'. Le prix payable n'est fixé que par l'acceptation d'une négociation (/negotiations/:id/accept). Incohérence de flux: le client qui accepte simplement un devis ne peut pas payer.",
+  "scenario": "paiement-capture-reelle"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "create-intent idempotence sur PI annulé/échoué",
+  "desc": "Quand une Transaction existante non-succeeded a un PI annulé/FAILED, create-intent réutilise le client_secret du PI mort (retrievePaymentIntent renvoie encore un client_secret) au lieu d'en générer un nouveau. Il a fallu supprimer la ligne Transaction en base pour obtenir un intent frais utilisable. Statut Transaction observé FAILED après annulation du PI (webhook).",
+  "scenario": "paiement-capture-reelle"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "Mission.photos (stored payload non assaini)",
+  "desc": "Le champ photos de la mission contient des valeurs non validées/assainies persistées: 'javascript:alert(1)', 'https://evil.example.com/x.png', 'not-a-url'. Vecteur XSS/URL malveillante stockée renvoyée telle quelle par GET /missions/:id (pas de validation d'URL ni de schéma http(s)).",
+  "scenario": "paiement-capture-reelle"
+ },
+ {
+  "severity": "critical",
+  "endpoint": "WebSocket /socket.io/ (ChatGateway.handleConnection)",
+  "desc": "Chat temps reel TOTALEMENT casse: toute connexion WS est deconnectee avec 'Invalid token'. Cause racine: ChatModule importe un JwtModule NU (imports: [JwtModule]) sans secret, alors que le JwtModule d'AuthModule (avec JWT_SECRET) n'est PAS global (pas de global:true). Donc chatService.validateToken -> jwtService.verify() n'a aucun secret et echoue systematiquement. Preuve: le meme token frais donne HTTP 200 mais WS 'io server disconnect'. Aucun message/typing/read-receipt temps reel ne fonctionne. Fix: registerAsync({secret: JWT_SECRET}) dans ChatModule (ou rendre le JwtModule d'AuthModule global).",
+  "scenario": "chat-temps-reel-websocket"
+ },
+ {
+  "severity": "high",
+  "endpoint": "POST (manquant) /chat/... send message",
+  "desc": "Aucun endpoint HTTP pour envoyer un message client<->artisan; le seul writer du modele Message est l'event WS send_message. Avec le WS casse, les utilisateurs ne peuvent envoyer AUCUN message. Aucun fallback HTTP possible. Recommandation: exposer un POST /chat/conversation/:userId/message pour degrader proprement quand le WS est indisponible.",
+  "scenario": "chat-temps-reel-websocket"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "WebSocket ChatGateway.handleConnection",
+  "desc": "Bug latent: handleConnection fait client.data.userId = user.userId, mais validateToken renvoie le payload JWT dont le champ est 'sub' (pas 'userId'). Donc meme apres correction du secret, client.data.userId serait undefined et les rooms deviendraient 'user:undefined' (aucune livraison). Incoherence avec WsJwtGuard qui utilise correctement payload.sub. Fix: user.sub au lieu de user.userId.",
+  "scenario": "chat-temps-reel-websocket"
+ },
+ {
+  "severity": "high",
+  "endpoint": "POST /upload/file (et POST /users/avatar)",
+  "desc": "Validation de type basée uniquement sur le Content-Type multipart fourni par le client (s3.service validateFile => getFileCategory sur file.mimetype). Un exécutable .exe (magic MZ) déclaré 'image/png' est accepté (HTTP 201), stocké avec extension .exe (tirée de originalname) et servi publiquement via /files/. Aucune vérif des magic bytes ni sanitisation d'extension. Permet de héberger/diffuser du binaire arbitraire sous couvert d'image; l'avatar d'un CLIENT peut pointer vers un .exe.",
+  "scenario": "upload-fichiers"
+ },
+ {
+  "severity": "high",
+  "endpoint": "POST /missions/:id/photos",
+  "desc": "addPhotos (mission.service) concatène les strings 'photos' sans aucune validation (pas de contrôle domaine/format/scheme). 'javascript:alert(1)', URL externe 'https://evil.example.com/x.png' et 'not-a-url' sont stockés puis renvoyés tels quels au client (Jean) dans photos[]. Vecteur d'injection d'URL arbitraire / XSS stocké si rendu sans échappement côté front.",
+  "scenario": "upload-fichiers"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /users/avatar vs POST /upload/file",
+  "desc": "Incohérence de gestion 'no file': /users/avatar renvoie 404 RESOURCE_NOT_FOUND 'Fichier non fourni' alors que /upload/file renvoie 400 'Aucun fichier fourni'. Un fichier manquant devrait être 400, pas 404.",
+  "scenario": "upload-fichiers"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /upload/file",
+  "desc": "Mauvais nom de champ multipart (ex 'avatar' au lieu de 'file') renvoie 400 avec le message brut de multer 'Unexpected field' (fuite de wording interne, pas de message métier).",
+  "scenario": "upload-fichiers"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "POST /disputes/:id/resolve",
+  "desc": "Remboursement fantome: admin resout avec outcome=REFUND_CLIENT refundAmount=240, reponse 201 + status RESOLVED + champ refund present, MAIS refund.refunded=0. Cause (payment.service.ts refundForCancellation L1357-1360): la mission n'a aucun payment avec stripePaymentIntentId, donc retour silencieux {refunded:0}. Le litige est cloture 'REFUND_CLIENT' alors que 0EUR a reellement bouge, sans aucun signal a l'admin que le remboursement est un no-op. Incoherence montant demande (240) vs rembourse (0).",
+  "scenario": "litige-settlement-negociation"
+ },
+ {
+  "severity": "medium",
+  "endpoint": "GET /disputes/:id (ADMIN)",
+  "desc": "Incoherence RBAC/ownership: l'admin peut LISTER tous les litiges (GET /disputes -> 74) et les RESOUDRE, mais GET /disputes/:id retourne 403 'Acces refuse a ce litige'. dispute.service.findOne() verifie l'appartenance (createdById/clientId/artisanId) sans bypass ADMIN. Un admin ne peut donc pas ouvrir le detail d'un litige auquel il n'est pas partie.",
+  "scenario": "litige-settlement-negociation"
+ },
+ {
+  "severity": "low",
+  "endpoint": "POST /disputes/:id/resolve, POST /disputes/:id/cancel",
+  "desc": "Fonctionnalites de litige NON EXPOSEES (code mort): proposeSettlement, acceptSettlement, escalateDispute, addEvidence, getDisputeTimeline existent dans dispute-resolution.service.ts mais ne sont cablees a AUCUNE route (toutes les probes HTTP -> 404) et n'ont 0 appelant. Le parcours de negociation/settlement/escalade/preuves/timeline annonce est inaccessible aux utilisateurs; seul resolve/cancel binaire admin existe.",
+  "scenario": "litige-settlement-negociation"
+ }
+]

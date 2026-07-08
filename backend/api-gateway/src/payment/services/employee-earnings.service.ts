@@ -37,12 +37,19 @@ export class EmployeeEarningsService {
       throw new NotFoundException('Mission non trouvée');
     }
 
-    if (!mission.completedById) {
+    // Une mission est "terminée" quand son STATUT est COMPLETED (ou AUTO_VALIDATED après timeout).
+    // On ne s'appuie PAS sur completedById : ce champ reste null sur les missions terminées via le
+    // flux de validation client, ce qui rendait le flux paie inatteignable.
+    const completedStatuses = ['COMPLETED', 'AUTO_VALIDATED'];
+    if (!completedStatuses.includes(mission.status as string)) {
       throw new BadRequestException('La mission doit être marquée comme terminée');
     }
 
-    if (!mission.finalPrice) {
-      throw new BadRequestException('Le prix final de la mission doit être défini');
+    // Le montant de référence est finalPrice ; à défaut on retombe sur agreedPrice (prix convenu),
+    // car de nombreuses missions terminées n'ont pas de finalPrice distinct.
+    const missionPrice = mission.finalPrice ?? mission.agreedPrice;
+    if (!missionPrice) {
+      throw new BadRequestException('Le prix de la mission doit être défini');
     }
 
     const employee = await this.prisma.companyEmployee.findUnique({
@@ -53,7 +60,10 @@ export class EmployeeEarningsService {
       throw new NotFoundException('Employé non trouvé');
     }
 
-    if (employee.companyId !== mission.companyId) {
+    // La mission peut avoir companyId=null (assignation solo/artisan). Dans ce cas on ne peut pas
+    // exiger l'égalité stricte : on rattache les gains à l'entreprise de l'employé. On ne rejette
+    // que lorsque la mission EST rattachée à une entreprise DIFFÉRENTE de celle de l'employé.
+    if (mission.companyId && employee.companyId !== mission.companyId) {
       throw new BadRequestException("L'employé n'appartient pas à l'entreprise de la mission");
     }
 
@@ -72,7 +82,7 @@ export class EmployeeEarningsService {
     const feeSettings = await this.platformConfig.getFeeSettings();
     const platformCommissionRate = feeSettings.platformCommissionRate / 100;
 
-    const missionRevenue = new Prisma.Decimal(mission.finalPrice.toString());
+    const missionRevenue = new Prisma.Decimal(missionPrice.toString());
     const platformCommission = missionRevenue.mul(platformCommissionRate);
     const companyRevenue = missionRevenue.sub(platformCommission);
 

@@ -111,14 +111,14 @@ export class ArtisanToCompanyMigrationService {
             startDate: new Date(),
             paymentModel: PaymentModel.COMMISSION,
             commissionRate: 100,
-            permissions: JSON.stringify([
+            permissions: [
               'canManageCompany',
               'canManageEmployees',
               'canViewAllMissions',
               'canAssignMissions',
               'canViewFinancials',
               'canManageSettings',
-            ]),
+            ],
             totalMissions: artisanProfile.missionCount,
             totalEarnings: 0,
             averageRating: artisanProfile.rating,
