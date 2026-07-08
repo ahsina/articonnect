@@ -2496,6 +2496,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Laisser un avis"
     },
     "settings": {
+      "privacyTitle": "Confidentialité (RGPD)",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
       "codeSent": "Code envoyé",
       "codeSentDesc": "Code de vérification envoyé sur votre téléphone",
@@ -5090,6 +5091,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Leave a review"
     },
     "settings": {
+      "privacyTitle": "Privacy (GDPR)",
       "invalidPhone": "Please enter a valid phone number",
       "codeSent": "Code Sent",
       "codeSentDesc": "Verification code sent to your phone",
@@ -7684,6 +7686,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Bewertung abgeben"
     },
     "settings": {
+      "privacyTitle": "Datenschutz (DSGVO)",
       "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein",
       "codeSent": "Code gesendet",
       "codeSentDesc": "Bestätigungscode an Ihr Telefon gesendet",
@@ -10278,6 +10281,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Beoordeling achterlaten"
     },
     "settings": {
+      "privacyTitle": "Privacy (AVG)",
       "invalidPhone": "Voer een geldig telefoonnummer in",
       "codeSent": "Code verzonden",
       "codeSentDesc": "Verificatiecode naar uw telefoon verzonden",
@@ -12872,6 +12876,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Dejar una reseña"
     },
     "settings": {
+      "privacyTitle": "Privacidad (RGPD)",
       "invalidPhone": "Introduzca un número de teléfono válido",
       "codeSent": "Código enviado",
       "codeSentDesc": "Código de verificación enviado a su teléfono",
@@ -15466,6 +15471,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Lascia una recensione"
     },
     "settings": {
+      "privacyTitle": "Privacy (GDPR)",
       "invalidPhone": "Inserisci un numero di telefono valido",
       "codeSent": "Codice inviato",
       "codeSentDesc": "Codice di verifica inviato al tuo telefono",
@@ -18060,6 +18066,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "leaveReview": "Deixar uma avaliação"
     },
     "settings": {
+      "privacyTitle": "Privacidade (RGPD)",
       "invalidPhone": "Introduza um número de telefone válido",
       "codeSent": "Código enviado",
       "codeSentDesc": "Código de verificação enviado para o seu telefone",

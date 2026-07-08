@@ -1,5 +1,6 @@
 'use client';
 
+import { TradeIcon } from '@/components/shared/TradeIcon';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, Specialty, CreateSpecialtyDto, UpdateSpecialtyDto } from '@/lib/api/admin';
@@ -298,7 +299,7 @@ export default function SpecialtiesPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{specialty.icon || ''}</span>
+                        <TradeIcon name={specialty.name} className="h-6 w-6 text-foreground" />
                         <div>
                           <h4 className="font-medium text-foreground">{specialty.name}</h4>
                           {specialty.description && (

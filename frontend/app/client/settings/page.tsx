@@ -453,7 +453,7 @@ export default function ClientSettingsPage() {
           {/* Confidentialité / RGPD */}
           <Card>
             <CardHeader>
-              <CardTitle>{t('privacy', 'title') || 'Confidentialité (RGPD)'}</CardTitle>
+              <CardTitle>{t('settings', 'privacyTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-1">

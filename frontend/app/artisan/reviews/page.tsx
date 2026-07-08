@@ -1,5 +1,6 @@
 'use client';
 
+import { Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,7 @@ export default function ReviewsPage() {
 
       // Calculate stats
       const total = response.data.length;
-      const sum = response.data.reduce((acc: number, r: Review) => acc + r.rating, 0);
+      const sum = response.data.reduce((acc: number, r: Review) => acc + (Number(r.rating) || 0), 0);
       const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
       response.data.forEach((r: Review) => {
         distribution[r.rating as keyof typeof distribution]++;
@@ -93,7 +94,14 @@ export default function ReviewsPage() {
   };
 
   const renderStars = (rating: number) => {
-    return ''.repeat(rating) + ''.repeat(5 - rating);
+    const n = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+    return (
+      <span className="inline-flex items-center gap-0.5 align-middle">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Star key={i} className={`h-4 w-4 ${i <= n ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} strokeWidth={1.75} />
+        ))}
+      </span>
+    );
   };
 
   if (loading) {
@@ -120,8 +128,8 @@ export default function ReviewsPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-5xl font-bold text-yellow-500">{stats.average.toFixed(1)}</div>
-                <div className="text-2xl text-yellow-500">
+                <div className="text-5xl font-bold text-foreground">{(stats.average || 0).toFixed(1)}</div>
+                <div className="text-2xl text-foreground">
                   {renderStars(Math.round(stats.average))}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -132,10 +140,10 @@ export default function ReviewsPage() {
                 {[5, 4, 3, 2, 1].map((star) => (
                   <div key={star} className="flex items-center gap-2">
                     <span className="text-sm w-4">{star}</span>
-                    <span className="text-yellow-500"></span>
+                    <Star className="h-3 w-3 fill-foreground text-foreground" />
                     <div className="flex-1 bg-muted rounded-full h-2">
                       <div
-                        className="bg-yellow-500 rounded-full h-2"
+                        className="bg-foreground rounded-full h-2"
                         style={{
                           width: `${stats.total > 0 ? (stats.distribution[star as keyof typeof stats.distribution] / stats.total) * 100 : 0}%`,
                         }}
@@ -167,7 +175,7 @@ export default function ReviewsPage() {
                 <span className="text-muted-foreground">
                   {t('artisan', 'fiveStarReviews') || '5-Star Reviews'}
                 </span>
-                <span className="font-bold text-green-600">{stats.distribution[5]}</span>
+                <span className="font-bold text-foreground">{stats.distribution[5]}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
@@ -222,7 +230,7 @@ export default function ReviewsPage() {
                         <div className="text-sm text-muted-foreground">{formatDate(review.createdAt)}</div>
                       </div>
                     </div>
-                    <div className="text-yellow-500 text-lg">{renderStars(review.rating)}</div>
+                    <div className="text-foreground text-lg">{renderStars(review.rating)}</div>
                   </div>
 
                   {review.comment && <p className="text-foreground mb-3">{review.comment}</p>}
