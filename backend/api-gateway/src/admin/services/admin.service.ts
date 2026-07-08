@@ -198,4 +198,32 @@ export class AdminService {
       throw error;
     }
   }
+
+  /**
+   * Déblocage sécurité (multi-comptes / bot / remboursements) par un admin.
+   * Réinitialise les flags et scores de fraude sur l'utilisateur cible afin
+   * de rétablir un login/usage normal après revue manuelle.
+   */
+  async unblockSecurity(userId: string) {
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          multiAccountFlagged: false,
+          multiAccountRiskScore: 0,
+          multiAccountReviewedAt: new Date(),
+          botFlagged: false,
+          refundBlocked: false,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
+    }
+  }
 }

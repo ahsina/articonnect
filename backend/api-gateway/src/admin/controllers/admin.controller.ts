@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Post, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -51,6 +51,15 @@ export class AdminController {
   @Put('users/:id/activate')
   async activateUser(@Param('id') id: string) {
     return this.adminService.activateUser(id);
+  }
+
+  @Post('users/:id/unblock-security')
+  @ApiOperation({
+    summary:
+      'Débloque un compte (multi-comptes / bot / remboursements) après revue (Admin only)',
+  })
+  async unblockSecurity(@Param('id') id: string) {
+    return this.adminService.unblockSecurity(id);
   }
 
   @Get('audit-logs')

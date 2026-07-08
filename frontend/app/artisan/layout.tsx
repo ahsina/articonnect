@@ -11,6 +11,7 @@ import {
   LayoutDashboard, ClipboardList, Wallet, TrendingUp, CalendarDays, CalendarRange,
   Clock, Plane, User, FileText, Award, Star, FileSignature, Store, Building2,
   Users, ClipboardCheck, BarChart3, Settings, CreditCard, LogOut,
+  Network,
   ChevronLeft, ChevronRight, ChevronDown, type LucideIcon,
 } from 'lucide-react';
 
@@ -108,6 +109,8 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
             icon: Building2,
           } as NavItemLink,
         ]),
+    { href: '/artisan/subcontractors', label: t('navigation', 'subcontractors') || 'Subcontractors', icon: Network },
+    { href: '/subcontractor/portal', label: t('navigation', 'subcontractorPortal') || 'Subcontractor Portal', icon: Network },
     { href: '/artisan/stripe', label: t('navigation', 'payments') || 'Payment Setup', icon: CreditCard },
     { href: '/artisan/settings', label: t('navigation', 'settings') || 'Settings', icon: Settings, highlight: true },
   ];

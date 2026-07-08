@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   ConflictException,
   BadRequestException,
@@ -20,6 +21,8 @@ import { User, UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -177,6 +180,20 @@ export class AuthService {
         ? [...existingFingerprints, deviceId]
         : existingFingerprints;
 
+      // Un compte ÉTABLI / de confiance ne doit jamais être bloqué durement :
+      // email/téléphone vérifié, ou compte ACTIF ayant déjà des missions à son actif.
+      // Le détecteur peut le confondre avec un multi-compte (NAT d'entreprise,
+      // IP/UA partagés entre collègues). On flague pour revue admin sans bloquer.
+      const isEstablishedAccount =
+        user.emailVerified === true ||
+        user.phoneVerified === true ||
+        ((user as any).status === 'ACTIVE' && (user.completedMissions || 0) > 0);
+
+      const threshold = await this.featureToggle.getMultiAccountRiskThreshold();
+      const isHardBlock =
+        multiAccountResult.riskScore >= threshold &&
+        multiAccountResult.recommendation === 'BLOCK';
+
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -185,15 +202,33 @@ export class AuthService {
           deviceFingerprints: updatedFingerprints,
           lastUserAgent: deviceFingerprint.userAgent,
           lastIpAddress: deviceFingerprint.ipAddress,
+          // Marque une demande de revue admin si un compte établi déclenche le BLOCK :
+          // on laisse passer le login mais on trace le cas pour investigation manuelle.
+          ...(isHardBlock && isEstablishedAccount
+            ? { multiAccountReviewedAt: null }
+            : {}),
         },
       });
 
-      // Block login if high risk
-      const threshold = await this.featureToggle.getMultiAccountRiskThreshold();
-      if (multiAccountResult.riskScore >= threshold && multiAccountResult.recommendation === 'BLOCK') {
-        throw new ForbiddenException(
-          'Connexion bloquée pour raisons de sécurité. Contactez le support.'
-        );
+      if (isHardBlock) {
+        if (isEstablishedAccount) {
+          // Compte de confiance : on NE bloque PAS (déblocage self-service implicite),
+          // on flague pour revue admin et on logue un warning.
+          this.logger.warn(
+            `Multi-account BLOCK contourné pour compte établi user=${user.id} ` +
+              `email=${user.email} riskScore=${multiAccountResult.riskScore} ` +
+              `threshold=${threshold} : login autorisé, flaggé pour revue admin.`,
+          );
+        } else {
+          // Compte NON vérifié / tout neuf : blocage dur maintenu (protection anti-fraude).
+          this.logger.warn(
+            `Login bloqué (multi-account) pour compte non vérifié user=${user.id} ` +
+              `riskScore=${multiAccountResult.riskScore} threshold=${threshold}.`,
+          );
+          throw new ForbiddenException(
+            'Connexion bloquée pour raisons de sécurité. Contactez le support.'
+          );
+        }
       }
     }
 
