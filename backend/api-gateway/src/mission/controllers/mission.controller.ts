@@ -79,7 +79,7 @@ export class MissionController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get mission details' })
   async findOne(@Request() req, @Param('id') id: string) {
-    return this.missionService.findOne(id, req.user.userId);
+    return this.missionService.findOne(id, req.user.userId, req.user.role);
   }
 
   @Get(':id/tracking')

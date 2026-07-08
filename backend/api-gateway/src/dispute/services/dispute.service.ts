@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateDisputeDto, UpdateDisputeDto, ResolveDisputeDto } from '../dto/dispute.dto';
+import { CreateDisputeDto, UpdateDisputeDto, ResolveDisputeDto, DisputeOutcome } from '../dto/dispute.dto';
 import { DisputeStatus } from '@prisma/client';
 import { RefundAbuseDetectorService } from '../../fraud/services/refund-abuse-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
+import { PaymentService } from '../../payment/services/payment.service';
 
 @Injectable()
 export class DisputeService {
@@ -13,6 +14,7 @@ export class DisputeService {
     private readonly prisma: PrismaService,
     private readonly refundAbuseDetector: RefundAbuseDetectorService,
     private readonly featureToggle: FeatureToggleService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   async create(userId: string, createDto: CreateDisputeDto) {
@@ -310,7 +312,36 @@ export class DisputeService {
       throw new BadRequestException('Ce litige est déjà résolu ou fermé');
     }
 
-    return this.prisma.dispute.update({
+    // Déclenche un VRAI remboursement escrow si l'issue est en faveur du client.
+    // (Avant : la résolution n'écrivait qu'un texte, aucun argent ne bougeait.)
+    let refund: { refunded: number } | null = null;
+    if (
+      resolveDto.outcome === DisputeOutcome.REFUND_CLIENT ||
+      resolveDto.outcome === DisputeOutcome.PARTIAL_REFUND
+    ) {
+      const missionForRefund = await this.prisma.mission.findUnique({
+        where: { id: dispute.missionId },
+        select: { agreedPrice: true, clientBudget: true },
+      });
+      const fullPrice = Number(missionForRefund?.agreedPrice ?? missionForRefund?.clientBudget ?? 0);
+      const amount =
+        resolveDto.outcome === DisputeOutcome.PARTIAL_REFUND
+          ? Number(resolveDto.refundAmount ?? 0)
+          : Number(resolveDto.refundAmount ?? fullPrice);
+      try {
+        refund = await this.paymentService.refundForCancellation(dispute.missionId, amount);
+        this.logger.log(
+          `Litige ${disputeId} résolu (${resolveDto.outcome}) : ${refund.refunded}€ remboursés au client.`,
+        );
+      } catch (e) {
+        this.logger.error(`Échec du remboursement pour le litige ${disputeId}: ${(e as any)?.message}`);
+        throw new BadRequestException(
+          'Résolution enregistrée impossible : le remboursement escrow a échoué (' + (e as any)?.message + ').',
+        );
+      }
+    }
+
+    const resolved = await this.prisma.dispute.update({
       where: { id: disputeId },
       data: {
         status: DisputeStatus.RESOLVED,
@@ -339,6 +370,8 @@ export class DisputeService {
         },
       },
     });
+
+    return { ...resolved, refund };
   }
 
   async cancel(disputeId: string, userId: string) {

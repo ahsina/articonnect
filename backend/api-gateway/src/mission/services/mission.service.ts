@@ -112,7 +112,7 @@ export class MissionService {
     return missions;
   }
 
-  async findOne(missionId: string, userId: string) {
+  async findOne(missionId: string, userId: string, role?: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: {
@@ -160,6 +160,7 @@ export class MissionService {
       (n: any) => n.senderId === userId || n.receiverId === userId,
     );
     if (
+      role !== 'ADMIN' &&
       mission.clientId !== userId &&
       mission.artisanId !== userId &&
       !isOpen &&
