@@ -57,13 +57,13 @@ export default function MonitoringPage() {
   const getHealthColor = (status: string) => {
     switch (status) {
       case 'EXCELLENT':
-        return 'text-green-600 bg-green-100';
+        return 'text-foreground bg-muted';
       case 'GOOD':
         return 'text-primary bg-primary/10';
       case 'FAIR':
-        return 'text-yellow-600 bg-amber-100';
+        return 'text-foreground bg-muted';
       case 'POOR':
-        return 'text-red-600 bg-red-100';
+        return 'text-foreground bg-muted';
       default:
         return 'text-muted-foreground bg-muted';
     }
@@ -155,13 +155,13 @@ export default function MonitoringPage() {
                     {alerts.critical > 0 && (
                       <div className="text-center px-4 py-2 bg-red-100 rounded-lg">
                         <div className="text-2xl font-bold text-foreground">{alerts.critical}</div>
-                        <div className="text-xs text-red-600">{t('adminMonitoring', 'critical')}</div>
+                        <div className="text-xs text-muted-foreground">{t('adminMonitoring', 'critical')}</div>
                       </div>
                     )}
                     {alerts.warnings > 0 && (
                       <div className="text-center px-4 py-2 bg-amber-100 rounded-lg">
                         <div className="text-2xl font-bold text-foreground">{alerts.warnings}</div>
-                        <div className="text-xs text-yellow-600">{t('adminMonitoring', 'warnings')}</div>
+                        <div className="text-xs text-muted-foreground">{t('adminMonitoring', 'warnings')}</div>
                       </div>
                     )}
                     <div className="text-center px-4 py-2 bg-primary/10 rounded-lg">

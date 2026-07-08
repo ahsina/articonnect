@@ -6,14 +6,15 @@ import { Language } from '@/lib/i18n/translations';
 export default function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();
 
-  const languages: { code: Language; label: string; flag: string }[] = [
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-    { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'it', label: 'Italiano', flag: '🇮🇹' },
-    { code: 'pt', label: 'Português', flag: '🇵🇹' },
+  // Code langue (FR/EN…) plutôt qu'un drapeau emoji — charte Uber monochrome, sans emoji.
+  const languages: { code: Language; label: string }[] = [
+    { code: 'fr', label: 'Français' },
+    { code: 'en', label: 'English' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'nl', label: 'Nederlands' },
+    { code: 'es', label: 'Español' },
+    { code: 'it', label: 'Italiano' },
+    { code: 'pt', label: 'Português' },
   ];
 
   return (
@@ -25,7 +26,7 @@ export default function LanguageSwitcher() {
       >
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>
-            {lang.flag} {lang.label}
+            {lang.code.toUpperCase()} · {lang.label}
           </option>
         ))}
       </select>

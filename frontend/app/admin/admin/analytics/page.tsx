@@ -489,16 +489,13 @@ function MetricCard({
   color?: string;
 }) {
   const { t } = useLanguage();
+  // Charte Uber : cartes KPI monochromes (plus d'aplats pastel).
   const colorClasses: Record<string, string> = {
-    blue: 'bg-primary/10 border-primary/20',
-    green: 'bg-green-100 border-green-500/30',
-    yellow: 'bg-amber-100',
-    purple: 'bg-purple-100',
-    red: 'bg-red-100',
+    blue: 'bg-card', green: 'bg-card', yellow: 'bg-card', purple: 'bg-card', red: 'bg-card',
   };
 
   return (
-    <Card className={`${colorClasses[color]} border-2`}>
+    <Card className={`${colorClasses[color]} border`}>
       <CardContent className="p-6">
         <p className="text-sm font-medium text-muted-foreground mb-2">{title}</p>
         <p className="text-3xl font-bold text-foreground">{value}</p>
