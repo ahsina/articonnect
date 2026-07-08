@@ -63,7 +63,11 @@ export class CurrencyService {
     const cached = await this.redis.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      try {
+        return JSON.parse(cached);
+      } catch {
+        // Corrupted cache; fall through to regenerate rates
+      }
     }
 
     // In production, fetch from external API (e.g., exchangeratesapi.io)

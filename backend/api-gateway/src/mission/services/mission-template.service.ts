@@ -176,9 +176,16 @@ export class MissionTemplateService {
     if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic;
 
     if (updates.defaultBudgetMin !== undefined || updates.defaultBudgetMax !== undefined) {
-      const currentRange = template.defaultBudgetRange
-        ? JSON.parse(template.defaultBudgetRange as string)
-        : {};
+      let currentRange: any;
+      if (template.defaultBudgetRange) {
+        try {
+          currentRange = JSON.parse(template.defaultBudgetRange as string);
+        } catch {
+          currentRange = {};
+        }
+      } else {
+        currentRange = {};
+      }
       updateData.defaultBudgetRange = JSON.stringify({
         min: updates.defaultBudgetMin ?? currentRange.min,
         max: updates.defaultBudgetMax ?? currentRange.max,
@@ -288,13 +295,31 @@ export class MissionTemplateService {
       description: template.description,
       estimatedDuration: template.estimatedDuration,
       defaultBudgetRange: template.defaultBudgetRange
-        ? JSON.parse(template.defaultBudgetRange)
+        ? (() => {
+            try {
+              return JSON.parse(template.defaultBudgetRange);
+            } catch {
+              return undefined;
+            }
+          })()
         : undefined,
       requiredSkills: template.requiredSkills
-        ? JSON.parse(template.requiredSkills)
+        ? (() => {
+            try {
+              return JSON.parse(template.requiredSkills);
+            } catch {
+              return undefined;
+            }
+          })()
         : undefined,
       checklistItems: template.checklistItems
-        ? JSON.parse(template.checklistItems)
+        ? (() => {
+            try {
+              return JSON.parse(template.checklistItems);
+            } catch {
+              return undefined;
+            }
+          })()
         : undefined,
       isPublic: template.isPublic,
       createdBy: template.createdBy,

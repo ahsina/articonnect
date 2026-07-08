@@ -435,7 +435,8 @@ export class EmailTemplateService {
     averageRating: number,
     newReviews: number,
   ): EmailTemplate {
-    const stars = '★'.repeat(Math.round(averageRating)) + '☆'.repeat(5 - Math.round(averageRating));
+    const clampedRating = Math.max(0, Math.min(5, Math.round(averageRating)));
+    const stars = '★'.repeat(clampedRating) + '☆'.repeat(5 - clampedRating);
 
     const body = `
       <h2>Votre résumé hebdomadaire</h2>
@@ -849,7 +850,8 @@ export class EmailTemplateService {
     overallRating: number,
     reviewPeriod: string,
   ): EmailTemplate {
-    const stars = '★'.repeat(Math.round(overallRating)) + '☆'.repeat(5 - Math.round(overallRating));
+    const clampedRating = Math.max(0, Math.min(5, Math.round(overallRating)));
+    const stars = '★'.repeat(clampedRating) + '☆'.repeat(5 - clampedRating);
 
     const body = `
       <h2>Évaluation de performance disponible</h2>

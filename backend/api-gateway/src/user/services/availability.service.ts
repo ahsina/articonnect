@@ -64,7 +64,12 @@ export class AvailabilityService {
     const cached = await this.redis.get(key);
 
     if (cached) {
-      return JSON.parse(cached);
+      try {
+        const parsed = JSON.parse(cached);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
 
     // Check if artisan has recurring schedule for this day
@@ -153,7 +158,13 @@ export class AvailabilityService {
       const cached = await this.redis.get(key);
       if (!cached) continue;
 
-      const slots: TimeSlot[] = JSON.parse(cached);
+      let slots: TimeSlot[];
+      try {
+        const parsed = JSON.parse(cached);
+        slots = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        continue;
+      }
       let modified = false;
 
       slots.forEach(slot => {
@@ -189,7 +200,12 @@ export class AvailabilityService {
     const cached = await this.redis.get(key);
 
     if (cached) {
-      return JSON.parse(cached);
+      try {
+        const parsed = JSON.parse(cached);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
 
     return [];

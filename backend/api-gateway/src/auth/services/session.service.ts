@@ -87,7 +87,14 @@ export class SessionService {
       const sessionData = await this.redis.get(sessionKey);
 
       if (sessionData) {
-        const session: SessionInfo = JSON.parse(sessionData);
+        let session: SessionInfo;
+        try {
+          session = JSON.parse(sessionData);
+        } catch {
+          // Corrupted session data; remove and skip
+          await this.revokeSession(sessionId);
+          continue;
+        }
 
         // Check if session is expired
         if (new Date(session.expiresAt) > new Date()) {
@@ -121,7 +128,14 @@ export class SessionService {
       return null;
     }
 
-    const session: SessionInfo = JSON.parse(sessionData);
+    let session: SessionInfo;
+    try {
+      session = JSON.parse(sessionData);
+    } catch {
+      // Corrupted session data; treat as missing
+      await this.revokeSession(sessionId);
+      return null;
+    }
 
     // Check if expired
     if (new Date(session.expiresAt) < new Date()) {
@@ -237,7 +251,15 @@ export class SessionService {
   private async getUserSessionIds(userId: string): Promise<string[]> {
     const userSessionsKey = `${this.USER_SESSIONS_PREFIX}${userId}`;
     const data = await this.redis.get(userSessionsKey);
-    return data ? JSON.parse(data) : [];
+    if (!data) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   }
 
   /**

@@ -94,7 +94,13 @@ export class LoginSecurityService {
       return [];
     }
 
-    const attempts: LoginAttempt[] = JSON.parse(data);
+    let attempts: LoginAttempt[];
+    try {
+      const parsed = JSON.parse(data);
+      attempts = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      attempts = [];
+    }
     const cutoffTime = new Date(Date.now() - this.ATTEMPT_WINDOW * 1000);
 
     // Filter out old attempts

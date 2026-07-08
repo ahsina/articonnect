@@ -519,7 +519,12 @@ export class PerformanceReviewService {
     const goals = employee.skills
       .filter((skill) => skill.skillName.startsWith('GOAL:'))
       .map((skill) => {
-        const goalData = skill.documentUrl ? JSON.parse(skill.documentUrl) : {};
+        let goalData: any;
+        try {
+          goalData = skill.documentUrl ? JSON.parse(skill.documentUrl) : {};
+        } catch {
+          goalData = {};
+        }
         return {
           id: skill.id,
           title: skill.skillName.replace('GOAL: ', ''),
@@ -545,7 +550,12 @@ export class PerformanceReviewService {
       throw new ForbiddenException('Not authorized');
     }
 
-    const goalData = skill.documentUrl ? JSON.parse(skill.documentUrl) : {};
+    let goalData: any;
+    try {
+      goalData = skill.documentUrl ? JSON.parse(skill.documentUrl) : {};
+    } catch {
+      goalData = {};
+    }
 
     const updatedGoalData = {
       ...goalData,
@@ -690,7 +700,12 @@ export class PerformanceReviewService {
       throw new NotFoundException('Feedback request not found');
     }
 
-    const requestData = JSON.parse(request.documentUrl || '{}');
+    let requestData: any;
+    try {
+      requestData = JSON.parse(request.documentUrl || '{}');
+    } catch {
+      requestData = {};
+    }
 
     if (requestData.reviewerId !== reviewerUserId) {
       throw new ForbiddenException('Not authorized to submit this feedback');
@@ -744,8 +759,14 @@ export class PerformanceReviewService {
     });
 
     const completedFeedback = feedbackRecords
-      .map((record) => JSON.parse(record.documentUrl || '{}'))
-      .filter((data) => data.status === 'COMPLETED');
+      .map((record) => {
+        try {
+          return JSON.parse(record.documentUrl || '{}');
+        } catch {
+          return null;
+        }
+      })
+      .filter((data) => data && data.status === 'COMPLETED');
 
     if (completedFeedback.length === 0) {
       return {
@@ -828,10 +849,18 @@ export class PerformanceReviewService {
       },
     });
 
-    return templates.map((t) => ({
-      id: t.id,
-      ...JSON.parse(t.value),
-    }));
+    return templates.map((t) => {
+      let value: any;
+      try {
+        value = JSON.parse(t.value);
+      } catch {
+        value = {};
+      }
+      return {
+        id: t.id,
+        ...value,
+      };
+    });
   }
 
   async deleteReviewTemplate(templateId: string, userId: string, companyId: string) {
