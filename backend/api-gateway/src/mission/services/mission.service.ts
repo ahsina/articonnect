@@ -153,8 +153,18 @@ export class MissionService {
       throw new NotFoundException('Mission introuvable');
     }
 
-    // Check if user has access to this mission
-    if (mission.clientId !== userId && mission.artisanId !== userId) {
+    // Contrôle d'accès : client, artisan assigné, OU (mission ouverte -> tout artisan peut la voir
+    // pour offrir) OU participant à une négociation (ex: artisan dont l'offre a été rejetée).
+    const isOpen = !mission.artisanId && ['PENDING', 'NEGOTIATING'].includes(String(mission.status));
+    const isNegotiationParticipant = (mission.negotiations || []).some(
+      (n: any) => n.senderId === userId || n.receiverId === userId,
+    );
+    if (
+      mission.clientId !== userId &&
+      mission.artisanId !== userId &&
+      !isOpen &&
+      !isNegotiationParticipant
+    ) {
       throw new ForbiddenException('Accès non autorisé');
     }
 
