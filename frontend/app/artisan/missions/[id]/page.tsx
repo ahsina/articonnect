@@ -991,7 +991,7 @@ export default function MissionDetailPage() {
                 )}
 
                 {negotiations.length >= 5 && (
-                  <p className="text-sm text-yellow-600 text-center">
+                  <p className="text-sm text-foreground text-center">
                     {t('negotiations', 'limitReached') ||
                       'Limite de 5 négociations atteinte.'}
                   </p>
@@ -1235,7 +1235,7 @@ export default function MissionDetailPage() {
               <div className="flex items-center justify-between py-3 border-b">
                 <span className="text-muted-foreground">{t('artisan', 'amount') || 'Amount'}</span>
                 <span className="text-2xl font-bold text-foreground">
-                  EUR {mission.quotation.amount.toLocaleString()}
+                  EUR {(Number(mission.quotation.amount) || 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3 border-b">

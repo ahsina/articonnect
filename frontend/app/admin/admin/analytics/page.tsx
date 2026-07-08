@@ -157,23 +157,23 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
             title={t('admin', 'revenueTotal')}
-            value={`${metrics.revenue.total.toLocaleString('fr-FR')}€`}
+            value={`${(Number(metrics.revenue.total) || 0).toLocaleString('fr-FR')}€`}
             trend={metrics.revenue.growth}
             color="green"
           />
           <MetricCard
             title={t('admin', 'thisMonth')}
-            value={`${metrics.revenue.thisMonth.toLocaleString('fr-FR')}€`}
+            value={`${(Number(metrics.revenue.thisMonth) || 0).toLocaleString('fr-FR')}€`}
             color="blue"
           />
           <MetricCard
             title={t('admin', 'thisWeek')}
-            value={`${metrics.revenue.thisWeek.toLocaleString('fr-FR')}€`}
+            value={`${(Number(metrics.revenue.thisWeek) || 0).toLocaleString('fr-FR')}€`}
             color="purple"
           />
           <MetricCard
             title={t('admin', 'today')}
-            value={`${metrics.revenue.today.toLocaleString('fr-FR')}€`}
+            value={`${(Number(metrics.revenue.today) || 0).toLocaleString('fr-FR')}€`}
             color="yellow"
           />
         </div>
@@ -258,7 +258,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm text-muted-foreground">
                   {t('adminAnalytics', 'averageValue')}:{' '}
                   <span className="font-bold">
-                    {metrics.missions.averageValue.toLocaleString('fr-FR')}€
+                    {(Number(metrics.missions.averageValue) || 0).toLocaleString('fr-FR')}€
                   </span>
                 </p>
               </div>
@@ -303,7 +303,7 @@ export default function AnalyticsPage() {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t('adminAnalytics', 'activeUsers')}:{' '}
-                  <span className="font-bold text-purple-600">
+                  <span className="font-bold text-foreground">
                     {metrics.users.activeUsers}
                   </span>
                 </p>
@@ -341,7 +341,7 @@ export default function AnalyticsPage() {
                     {t('adminAnalytics', 'avgResolutionTime')}
                   </p>
                   <p className="text-2xl font-bold text-primary">
-                    {metrics.disputes.averageResolutionTime.toFixed(1)}h
+                    {(Number(metrics.disputes.averageResolutionTime) || 0).toFixed(1)}h
                   </p>
                 </div>
               </div>
@@ -402,7 +402,7 @@ export default function AnalyticsPage() {
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-2">{t('adminAnalytics', 'averageTransaction')}</p>
                 <p className="text-3xl font-bold text-foreground">
-                  {metrics.payments.averageTransaction.toLocaleString('fr-FR')}€
+                  {(Number(metrics.payments.averageTransaction) || 0).toLocaleString('fr-FR')}€
                 </p>
               </div>
               <div className="text-center">
@@ -459,9 +459,9 @@ export default function AnalyticsPage() {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span className="inline-flex items-center gap-1">
-                          <span className="text-yellow-500"></span>
+                          <span className="text-foreground"></span>
                           <span className="font-semibold">
-                            {artisan.rating.toFixed(1)}
+                            {(Number(artisan.rating) || 0).toFixed(1)}
                           </span>
                         </span>
                       </td>
@@ -510,7 +510,7 @@ function MetricCard({
           >
             <span>{trend >= 0 ? '' : ''}</span>
             <span>
-              {Math.abs(trend).toFixed(1)}% {t('adminAnalytics', 'vsLastMonth')}
+              {(Number(Math.abs(trend)) || 0).toFixed(1)}% {t('adminAnalytics', 'vsLastMonth')}
             </span>
           </p>
         )}

@@ -91,8 +91,8 @@ export default function ReputationPage() {
   const getReputationColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-primary';
-    if (score >= 40) return 'text-yellow-600';
-    if (score >= 20) return 'text-yellow-600';
+    if (score >= 40) return 'text-foreground';
+    if (score >= 20) return 'text-foreground';
     return 'text-red-600';
   };
 
@@ -245,7 +245,7 @@ export default function ReputationPage() {
                     <div className="p-4 bg-amber-100 rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('adminReputation', 'avgRating')}</p>
                       <p className="text-xl font-bold text-foreground">
-                        {reputation.averageRating.toFixed(1)} / 5
+                        {(Number(reputation.averageRating) || 0).toFixed(1)} / 5
                       </p>
                     </div>
                     <div className="p-4 bg-primary/10 rounded-lg">

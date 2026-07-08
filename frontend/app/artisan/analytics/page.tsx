@@ -230,7 +230,7 @@ export default function ArtisanAnalyticsPage() {
               {t('analytics', 'totalEarnings') || 'Total Earnings'}
             </div>
             <div className="text-3xl font-bold text-foreground">
-              {data.earnings.total.toLocaleString()}€
+              {(Number(data.earnings.total) || 0).toLocaleString()}€
             </div>
             <div className="flex items-center gap-1 mt-2">
               <Badge className={data.earnings.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
@@ -255,7 +255,7 @@ export default function ArtisanAnalyticsPage() {
 
         <Card className="bg-muted">
           <CardContent className="p-4">
-            <div className="text-sm text-yellow-600 mb-1">
+            <div className="text-sm text-foreground mb-1">
               {t('analytics', 'averageRating') || 'Average Rating'}
             </div>
             <div className="text-3xl font-bold text-foreground">
@@ -321,7 +321,7 @@ export default function ArtisanAnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ category, percent }) => `${category} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ category, percent }) => `${category} (${(Number(percent * 100) || 0).toFixed(0)}%)`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="count"
@@ -411,7 +411,7 @@ export default function ArtisanAnalyticsPage() {
                     </td>
                     <td className="text-right py-3 px-4">{city.count}</td>
                     <td className="text-right py-3 px-4 font-medium text-foreground">
-                      {city.revenue.toLocaleString()}€
+                      {(Number(city.revenue) || 0).toLocaleString()}€
                     </td>
                     <td className="text-right py-3 px-4 text-muted-foreground">
                       {Math.round(city.revenue / city.count)}€

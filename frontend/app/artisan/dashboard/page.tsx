@@ -194,7 +194,7 @@ export default function ArtisanDashboard() {
                   {t('artisan', 'totalEarnings') || 'Total Earnings'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">
-                  {earnings.totalEarnings.toFixed(2)}€
+                  {(Number(earnings.totalEarnings) || 0).toFixed(2)}€
                 </div>
               </div>
               <div>
@@ -202,7 +202,7 @@ export default function ArtisanDashboard() {
                   {t('artisan', 'pendingEarnings') || 'Pending'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">
-                  {earnings.pendingEarnings.toFixed(2)}€
+                  {(Number(earnings.pendingEarnings) || 0).toFixed(2)}€
                 </div>
               </div>
               <div>
@@ -210,7 +210,7 @@ export default function ArtisanDashboard() {
                   {t('artisan', 'thisMonth') || 'This Month'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">
-                  {earnings.thisMonthEarnings.toFixed(2)}€
+                  {(Number(earnings.thisMonthEarnings) || 0).toFixed(2)}€
                 </div>
               </div>
               <div>
@@ -218,7 +218,7 @@ export default function ArtisanDashboard() {
                   {t('artisan', 'avgPerMission') || 'Avg per Mission'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">
-                  {earnings.averagePerMission.toFixed(2)}€
+                  {(Number(earnings.averagePerMission) || 0).toFixed(2)}€
                 </div>
               </div>
             </div>

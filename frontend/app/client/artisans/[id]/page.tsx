@@ -264,7 +264,7 @@ export default function ArtisanDetailsPage() {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="flex items-center">
                         <span className="text-2xl font-bold text-foreground">
-                          {artisanProfile.rating.toFixed(1)}
+                          {(Number(artisanProfile.rating) || 0).toFixed(1)}
                         </span>
                         <span className="text-muted-foreground ml-2">
                           ({artisanProfile.reviewCount} {t('artisans', 'reviews')})
@@ -374,7 +374,7 @@ export default function ArtisanDetailsPage() {
                               </p>
                             </div>
                             <div className="flex items-center">
-                              <span className="text-yellow-500 font-semibold">
+                              <span className="text-foreground font-semibold">
                                 {''.repeat(review.rating)}
                                 {''.repeat(5 - review.rating)}
                               </span>

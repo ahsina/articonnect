@@ -69,7 +69,7 @@ export default function FeesSettingsPage() {
   };
 
   const formatCurrency = (cents: number) => {
-    return `${(cents / 100).toFixed(2)} EUR`;
+    return `${(Number(cents / 100) || 0).toFixed(2)} EUR`;
   };
 
   if (loading) {

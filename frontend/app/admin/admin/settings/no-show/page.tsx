@@ -84,7 +84,7 @@ export default function NoShowConfigPage() {
     }));
   };
 
-  const formatCurrency = (cents: number) => `${(cents / 100).toFixed(2)} EUR`;
+  const formatCurrency = (cents: number) => `${(Number(cents / 100) || 0).toFixed(2)} EUR`;
 
   if (loading) {
     return (

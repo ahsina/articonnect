@@ -123,7 +123,7 @@ export default function ArtisanTimeTrackingPage() {
       setActiveEntry(null);
       toast({
         title: t('timeTracking', 'timerStopped') || 'Timer Stopped',
-        description: `${completedEntry.totalHours.toFixed(2)} ${t('timeTracking', 'hoursRecorded') || 'hours recorded'}`,
+        description: `${(Number(completedEntry.totalHours) || 0).toFixed(2)} ${t('timeTracking', 'hoursRecorded') || 'hours recorded'}`,
       });
     } catch (error) {
       console.error('Error stopping timer:', error);
@@ -248,7 +248,7 @@ export default function ArtisanTimeTrackingPage() {
         <Card className="bg-muted">
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
-            <div className="text-2xl font-bold text-foreground">{totalWeekEarnings.toFixed(2)} €</div>
+            <div className="text-2xl font-bold text-foreground">{(Number(totalWeekEarnings) || 0).toFixed(2)} €</div>
           </CardContent>
         </Card>
         <Card className="bg-muted">

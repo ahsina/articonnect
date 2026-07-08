@@ -330,19 +330,19 @@ export default function ProductDetailsPage() {
             {/* Rating */}
             <div className="flex items-center gap-2 mb-6">
               <div className="flex items-center">
-                <span className="text-yellow-500 text-xl">
+                <span className="text-foreground text-xl">
                   {''.repeat(Math.round(averageRating))}
                   {''.repeat(5 - Math.round(averageRating))}
                 </span>
                 <span className="text-muted-foreground ml-2">
-                  {averageRating.toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
+                  {(Number(averageRating) || 0).toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
                 </span>
               </div>
             </div>
 
             {/* Price */}
             <div className="mb-6">
-              <span className="text-4xl font-bold text-primary">{getCurrentPrice().toFixed(2)}€</span>
+              <span className="text-4xl font-bold text-primary">{(Number(getCurrentPrice()) || 0).toFixed(2)}€</span>
               <p className="text-sm text-muted-foreground mt-1">{t('marketplace', 'taxIncludedDeliveryAvailable')}</p>
             </div>
 
@@ -370,7 +370,7 @@ export default function ProductDetailsPage() {
                             ({variant.stock} {variant.stock > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')})
                           </span>
                         </div>
-                        <span className="font-semibold">{variant.price.toFixed(2)}€</span>
+                        <span className="font-semibold">{(Number(variant.price) || 0).toFixed(2)}€</span>
                       </div>
                     </button>
                   ))}
@@ -418,7 +418,7 @@ export default function ProductDetailsPage() {
             {/* Actions */}
             <div className="space-y-3 mb-6">
               <Button className="w-full" size="lg" onClick={handleAddToCart}>
-                {t('marketplace', 'addToCart')} - {(getCurrentPrice() * quantity).toFixed(2)}€
+                {t('marketplace', 'addToCart')} - {(Number(getCurrentPrice() * quantity) || 0).toFixed(2)}€
               </Button>
               <Button variant="outline" className="w-full" size="lg">
                 {t('marketplace', 'contactForCustomization')}
@@ -494,7 +494,7 @@ export default function ProductDetailsPage() {
                               </p>
                             </div>
                             <div className="flex items-center">
-                              <span className="text-yellow-500 font-semibold">
+                              <span className="text-foreground font-semibold">
                                 {''.repeat(review.rating)}
                                 {''.repeat(5 - review.rating)}
                               </span>

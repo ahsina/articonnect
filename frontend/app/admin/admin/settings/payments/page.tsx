@@ -70,7 +70,7 @@ export default function PaymentSettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const formatCurrency = (cents: number) => `${(cents / 100).toFixed(2)} EUR`;
+  const formatCurrency = (cents: number) => `${(Number(cents / 100) || 0).toFixed(2)} EUR`;
 
   if (loading) {
     return (

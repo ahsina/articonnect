@@ -127,7 +127,7 @@ export default function ArtisanProductsPage() {
             <CardContent className="p-4">
               <div className="text-sm text-muted-foreground">{t('artisan', 'stockValue')}</div>
               <div className="text-2xl font-bold text-primary">
-                {products.reduce((sum, p) => sum + p.price * p.stock, 0).toFixed(0)}€
+                {(Number(products.reduce((sum, p) => sum + p.price * p.stock, 0)) || 0).toFixed(0)}€
               </div>
             </CardContent>
           </Card>
@@ -204,7 +204,7 @@ export default function ArtisanProductsPage() {
                         <div>
                           <span className="text-muted-foreground">{t('artisan', 'value')}:</span>
                           <p className="font-semibold text-lg">
-                            {(product.price * product.stock).toFixed(0)}€
+                            {(Number(product.price * product.stock) || 0).toFixed(0)}€
                           </p>
                         </div>
                       </div>

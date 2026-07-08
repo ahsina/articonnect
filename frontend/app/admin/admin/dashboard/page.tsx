@@ -172,8 +172,8 @@ export default function AdminDashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard title={t('admin', 'completedMissions')} value={stats.completedMissions} subtitle={`${stats.totalMissions > 0 ? Math.round((stats.completedMissions / stats.totalMissions) * 100) : 0}% ${t('admin', 'ofTotal')}`} icon={CheckCircle2} color="green" />
-          <StatCard title={t('admin', 'totalRevenue')} value={`${stats.totalRevenue.toLocaleString('fr-FR')}€`} subtitle={t('admin', 'businessVolume')} icon={Wallet} color="green" />
-          <StatCard title={t('admin', 'platformCommission')} value={`${stats.platformRevenue.toLocaleString('fr-FR')}€`} subtitle={`${stats.totalRevenue > 0 ? Math.round((stats.platformRevenue / stats.totalRevenue) * 100) : 0}% ${t('admin', 'commission')}`} icon={CreditCard} color="blue" />
+          <StatCard title={t('admin', 'totalRevenue')} value={`${(Number(stats.totalRevenue) || 0).toLocaleString('fr-FR')}€`} subtitle={t('admin', 'businessVolume')} icon={Wallet} color="green" />
+          <StatCard title={t('admin', 'platformCommission')} value={`${(Number(stats.platformRevenue) || 0).toLocaleString('fr-FR')}€`} subtitle={`${stats.totalRevenue > 0 ? Math.round((stats.platformRevenue / stats.totalRevenue) * 100) : 0}% ${t('admin', 'commission')}`} icon={CreditCard} color="blue" />
           <StatCard title={t('admin', 'activeUsers')} value={stats.activeUsers30d} subtitle={t('admin', 'last30Days')} icon={TrendingUp} color="purple" />
         </div>
 

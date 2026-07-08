@@ -245,7 +245,7 @@ export default function MarketplacePage() {
                       {t('clientMarketplace', 'price')}
                     </label>
                     <span className="text-sm text-muted-foreground">
-                      {priceRange[0].toFixed(0)}€ - {priceRange[1].toFixed(0)}€
+                      {(Number(priceRange[0]) || 0).toFixed(0)}€ - {(Number(priceRange[1]) || 0).toFixed(0)}€
                     </span>
                   </div>
                   <Slider
@@ -389,7 +389,7 @@ export default function MarketplacePage() {
                     {/* Price & Stock */}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-2xl font-bold text-primary">
-                        {product.price.toFixed(2)}€
+                        {(Number(product.price) || 0).toFixed(2)}€
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {product.stock} {t('clientMarketplace', 'inStock')}

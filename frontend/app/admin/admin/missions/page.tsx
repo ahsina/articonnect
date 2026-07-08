@@ -156,14 +156,14 @@ export default function MissionsManagementPage() {
                       />
                     </div>
                     <span className="font-semibold text-foreground">
-                      {metrics.missions.completionRate.toFixed(1)}%
+                      {(Number(metrics.missions.completionRate) || 0).toFixed(1)}%
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">{t('adminMissions', 'averageMissionValue')}</span>
                   <span className="font-semibold text-foreground">
-                    {metrics.missions.averageValue.toLocaleString('fr-FR')}€
+                    {(Number(metrics.missions.averageValue) || 0).toLocaleString('fr-FR')}€
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
@@ -175,7 +175,7 @@ export default function MissionsManagementPage() {
                 <div className="flex items-center justify-between py-2">
                   <span className="text-muted-foreground">{t('adminMissions', 'paymentSuccessRate')}</span>
                   <span className="font-semibold text-green-600">
-                    {metrics.payments.successRate.toFixed(1)}%
+                    {(Number(metrics.payments.successRate) || 0).toFixed(1)}%
                   </span>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export default function MissionsManagementPage() {
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">{t('adminMissions', 'pendingDisputes')}</span>
                   <span
-                    className={`font-semibold ${metrics.disputes.pending > 0 ? 'text-yellow-600' : 'text-foreground'}`}
+                    className={`font-semibold ${metrics.disputes.pending > 0 ? 'text-foreground' : 'text-foreground'}`}
                   >
                     {metrics.disputes.pending}
                   </span>
@@ -210,13 +210,13 @@ export default function MissionsManagementPage() {
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">{t('adminMissions', 'resolutionRate')}</span>
                   <span className="font-semibold text-foreground">
-                    {metrics.disputes.resolutionRate.toFixed(1)}%
+                    {(Number(metrics.disputes.resolutionRate) || 0).toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-muted-foreground">{t('adminMissions', 'avgResolutionTime')}</span>
                   <span className="font-semibold text-foreground">
-                    {metrics.disputes.averageResolutionTime.toFixed(1)}h
+                    {(Number(metrics.disputes.averageResolutionTime) || 0).toFixed(1)}h
                   </span>
                 </div>
               </div>
@@ -255,7 +255,7 @@ export default function MissionsManagementPage() {
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
-                  {metrics.noShows.validationRate.toFixed(0)}%
+                  {(Number(metrics.noShows.validationRate) || 0).toFixed(0)}%
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'validationRate')}</div>
               </div>
@@ -275,25 +275,25 @@ export default function MissionsManagementPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center p-4 bg-green-100 rounded-lg">
                 <div className="text-3xl font-bold text-foreground">
-                  {metrics.revenue.total.toLocaleString('fr-FR')}€
+                  {(Number(metrics.revenue.total) || 0).toLocaleString('fr-FR')}€
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'totalRevenue')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
-                  {metrics.revenue.today.toLocaleString('fr-FR')}€
+                  {(Number(metrics.revenue.today) || 0).toLocaleString('fr-FR')}€
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'today')}</div>
               </div>
               <div className="text-center p-4 bg-purple-100 rounded-lg">
                 <div className="text-2xl font-bold text-foreground">
-                  {metrics.revenue.thisWeek.toLocaleString('fr-FR')}€
+                  {(Number(metrics.revenue.thisWeek) || 0).toLocaleString('fr-FR')}€
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'thisWeek')}</div>
               </div>
               <div className="text-center p-4 bg-primary/10 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
-                  {metrics.revenue.thisMonth.toLocaleString('fr-FR')}€
+                  {(Number(metrics.revenue.thisMonth) || 0).toLocaleString('fr-FR')}€
                 </div>
                 <div className="text-sm text-muted-foreground">{t('adminMissions', 'thisMonth')}</div>
               </div>
@@ -305,7 +305,7 @@ export default function MissionsManagementPage() {
                   className={`text-xl font-bold ${metrics.revenue.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
                   {metrics.revenue.growth >= 0 ? '+' : ''}
-                  {metrics.revenue.growth.toFixed(1)}%
+                  {(Number(metrics.revenue.growth) || 0).toFixed(1)}%
                 </span>
               </div>
             </div>

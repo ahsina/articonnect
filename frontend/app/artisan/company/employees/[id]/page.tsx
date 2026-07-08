@@ -315,7 +315,7 @@ export default function EmployeeDetailPage() {
                     <span className="text-muted-foreground">
                       {t('company', 'baseSalary') || 'Base Salary'}
                     </span>
-                    <span>€{employee.baseSalary.toLocaleString()}{t('companyEmployeeDetail', 'perMonth')}</span>
+                    <span>€{(Number(employee.baseSalary) || 0).toLocaleString()}{t('companyEmployeeDetail', 'perMonth')}</span>
                   </div>
                 )}
               </div>
@@ -547,10 +547,10 @@ export default function EmployeeDetailPage() {
                         </td>
                         <td className="py-3 px-4">{earning.missionTitle}</td>
                         <td className="py-3 px-4 text-right">
-                          €{earning.grossAmount.toLocaleString()}
+                          €{(Number(earning.grossAmount) || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          €{earning.netAmount.toLocaleString()}
+                          €{(Number(earning.netAmount) || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-center">
                           <Badge

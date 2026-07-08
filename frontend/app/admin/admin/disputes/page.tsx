@@ -394,7 +394,7 @@ export default function DisputesPage() {
                       <p className="font-medium">{selectedDispute.mission.title}</p>
                       {selectedDispute.mission.agreedPrice && (
                         <p className="text-sm text-muted-foreground">
-                          {selectedDispute.mission.agreedPrice.toLocaleString('fr-FR')}€
+                          {(Number(selectedDispute.mission.agreedPrice) || 0).toLocaleString('fr-FR')}€
                         </p>
                       )}
                     </div>

@@ -418,7 +418,7 @@ export default function TaxSettingsPage() {
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                {(settings.taxReportingThreshold / 100).toFixed(2)} EUR
+                {(Number(settings.taxReportingThreshold / 100) || 0).toFixed(2)} EUR
               </p>
             </div>
             {settings.witholdingTaxEnabled && (

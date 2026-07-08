@@ -496,7 +496,7 @@ function ArtisanProfileContent() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">{profile.rating.toFixed(1)}</div>
+              <div className="text-3xl font-bold text-primary">{(Number(profile.rating) || 0).toFixed(1)}</div>
               <div className="text-sm text-muted-foreground">{t('artisan', 'rating') || 'Rating'}</div>
               <div className="text-xs text-muted-foreground">{profile.reviewCount} {t('artisanProfile', 'reviews')}</div>
             </div>

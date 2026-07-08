@@ -375,7 +375,7 @@ export default function MonitoringPage() {
                       <span className="text-foreground">{mission.title}</span>
                       <div className="flex items-center gap-4">
                         <span className="text-green-600 font-medium">
-                          {mission.amount.toLocaleString('fr-FR')}€
+                          {(Number(mission.amount) || 0).toLocaleString('fr-FR')}€
                         </span>
                         <span className="text-sm text-muted-foreground">
                           {new Date(mission.validatedAt).toLocaleDateString('fr-FR')}
