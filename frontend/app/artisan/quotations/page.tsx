@@ -385,7 +385,7 @@ export default function QuotationsPage() {
                         {formatCurrency(quotation.amount)}
                       </div>
                       <div className="flex flex-col gap-2 mt-2">
-                        {quotation.mission && (
+                        {quotation.missionId && (
                           <Link href={`/artisan/missions/${quotation.missionId}`}>
                             <Button variant="outline" size="sm" className="w-full">
                               {t('artisan', 'viewMission') || 'View Mission'}
