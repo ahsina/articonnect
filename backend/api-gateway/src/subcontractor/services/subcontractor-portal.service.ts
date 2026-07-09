@@ -88,7 +88,7 @@ export class SubcontractorPortalService {
 
   async getPendingOffers(userId: string) {
     const subcontractor = await this.getSubcontractorByUserId(userId);
-    if (!subcontractor) throw new ForbiddenException('Not a subcontractor');
+    if (!subcontractor) return []; // artisan pas encore sous-traitant -> portail vide (pas d'erreur)
 
     return this.prisma.subcontractorAssignment.findMany({
       where: {
@@ -179,7 +179,7 @@ export class SubcontractorPortalService {
 
   async getMyAssignments(userId: string, status?: string) {
     const subcontractor = await this.getSubcontractorByUserId(userId);
-    if (!subcontractor) throw new ForbiddenException('Not a subcontractor');
+    if (!subcontractor) return []; // portail vide
 
     const where: any = { subcontractorId: subcontractor.id };
     if (status) where.status = status;
@@ -266,7 +266,7 @@ export class SubcontractorPortalService {
 
   async getEarnings(userId: string, fromDate?: string, toDate?: string) {
     const subcontractor = await this.getSubcontractorByUserId(userId);
-    if (!subcontractor) throw new ForbiddenException('Not a subcontractor');
+    if (!subcontractor) return { totalEarnings: 0, assignments: [] }; // portail vide
 
     const where: any = {
       subcontractorId: subcontractor.id,
