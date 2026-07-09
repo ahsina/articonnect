@@ -44,9 +44,33 @@ export class NotificationPreferencesService {
     // Ensure preferences exist
     await this.getPreferences(userId);
 
+    // Mappe les alias UI vers les VRAIES colonnes Prisma + ignore tout champ inconnu
+    // (sinon Prisma lève une 500 sur une colonne inexistante : missionUpdates/paymentNotifications/…).
+    const COLS: Record<string, string> = {
+      emailNotifications: 'emailNotifications',
+      pushNotifications: 'pushNotifications',
+      smsNotifications: 'smsNotifications',
+      newMission: 'newMission',
+      missionUpdate: 'missionUpdate',
+      missionUpdates: 'missionUpdate',
+      newMessage: 'newMessage',
+      paymentReceived: 'paymentReceived',
+      paymentSent: 'paymentSent',
+      paymentNotifications: 'paymentReceived',
+      reviewReceived: 'reviewReceived',
+      reviewNotifications: 'reviewReceived',
+      marketingEmails: 'marketingEmails',
+      weeklyDigest: 'weeklyDigest',
+    };
+    const data: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries((updates as Record<string, unknown>) || {})) {
+      const col = COLS[k];
+      if (col && typeof v === 'boolean') data[col] = v;
+    }
+
     return this.prisma.notificationPreferences.update({
       where: { userId },
-      data: updates,
+      data,
     });
   }
 

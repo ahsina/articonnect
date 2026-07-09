@@ -56,4 +56,15 @@ export class UpdateNotificationPreferencesDto {
   @IsOptional()
   @IsBoolean()
   weeklyDigest?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  missionUpdates?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  paymentNotifications?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  reviewNotifications?: boolean;
 }

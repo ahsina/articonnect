@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, Min, Max, IsUrl, MaxLength, Matches } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, Max, IsUrl, MaxLength, Matches, ValidateIf } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -11,6 +11,7 @@ export class UpdateCompanyDto {
 
   @ApiPropertyOptional({ description: 'SIRET number (France)', example: '12345678901234' })
   @IsOptional()
+  @ValidateIf((o) => o.siret !== '' && o.siret != null)
   @IsString()
   @Matches(/^[0-9]{14}$/, { message: 'SIRET must be 14 digits' })
   siret?: string;
@@ -28,6 +29,7 @@ export class UpdateCompanyDto {
 
   @ApiPropertyOptional({ description: 'Company website URL', example: 'https://example.com' })
   @IsOptional()
+  @ValidateIf((o) => o.website !== '' && o.website != null)
   @IsUrl()
   website?: string;
 
@@ -68,6 +70,7 @@ export class UpdateCompanyDto {
 
   @ApiPropertyOptional({ description: 'Logo URL (S3)' })
   @IsOptional()
+  @ValidateIf((o) => o.logo !== '' && o.logo != null)
   @IsString()
   @IsUrl()
   logo?: string;
