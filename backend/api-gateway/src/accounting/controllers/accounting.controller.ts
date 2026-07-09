@@ -34,14 +34,21 @@ export class AccountingController {
     @Res() res: Response,
     @Query('startDate') startDateStr: string,
     @Query('endDate') endDateStr: string,
+    @Query('fiscalYear') fiscalYear: string,
     @Query('format') format: 'txt' | 'csv' = 'txt',
   ) {
+    // Le front peut fournir soit startDate/endDate, soit un simple fiscalYear (année) -> exercice 1er janv → 31 déc.
+    if ((!startDateStr || !endDateStr) && fiscalYear && /^\d{4}$/.test(String(fiscalYear))) {
+      startDateStr = `${fiscalYear}-01-01`;
+      endDateStr = `${fiscalYear}-12-31`;
+    }
+
     // Validate dates
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new BadRequestException('Dates invalides. Format attendu: YYYY-MM-DD');
+      throw new BadRequestException('Dates invalides. Fournir fiscalYear=AAAA, ou startDate/endDate au format YYYY-MM-DD.');
     }
 
     if (startDate > endDate) {

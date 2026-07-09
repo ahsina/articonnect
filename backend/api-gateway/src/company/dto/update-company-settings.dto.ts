@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsNumber, Min, IsEnum, IsString, Matches } from 'class-validator';
+import { IsBoolean, IsOptional, IsNumber, Min, Max, IsEnum, IsString, Matches } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -7,7 +7,7 @@ export class UpdateCompanySettingsDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Min(100)
+  @Max(100)
   @Type(() => Number)
   defaultCommissionRate?: number;
 
@@ -15,7 +15,7 @@ export class UpdateCompanySettingsDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Min(100)
+  @Max(100)
   @Type(() => Number)
   ownerCommissionRate?: number;
 

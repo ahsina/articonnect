@@ -87,7 +87,8 @@ export class FavoriteService {
     });
 
     if (!saved) {
-      throw new NotFoundException('Artisan non trouvé dans vos favoris');
+      // DELETE idempotent : déjà absent (ex: favori orphelin) -> succès, pas d'erreur 404.
+      return { success: true, alreadyRemoved: true };
     }
 
     await this.prisma.savedArtisan.delete({
