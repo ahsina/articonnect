@@ -126,4 +126,37 @@ export class FraudController {
   ) {
     return this.disintermediationDetector.flagUser(userId, body.penalty, body.reason);
   }
+
+  /**
+   * POST /fraud/disintermediation/enforce/:userId
+   * Recalcule le risque ET applique automatiquement la pénalité graduée recommandée
+   * (WARNING → REQUIRE_DEPOSIT → FREEZE_MATCHING → DEACTIVATE). Idempotent.
+   * Admin only.
+   */
+  @Post('disintermediation/enforce/:userId')
+  @Roles(UserRole.ADMIN)
+  async enforceDisintermediation(
+    @Param('userId') userId: string,
+    @Body() body?: { reason?: string },
+  ) {
+    return this.disintermediationDetector.enforce(userId, {
+      source: 'admin',
+      reason: body?.reason,
+    });
+  }
+
+  /**
+   * POST /fraud/disintermediation/enforce-batch
+   * Réévalue et ré-enforce en masse tous les comptes flaggés leakage (endpoint de secours
+   * en plus du cron 6h). Idempotent.
+   * Admin only.
+   */
+  @Post('disintermediation/enforce-batch')
+  @Roles(UserRole.ADMIN)
+  async enforceDisintermediationBatch(@Body() body?: { limit?: number }) {
+    return this.disintermediationDetector.enforceBatch({
+      source: 'admin-batch',
+      limit: body?.limit,
+    });
+  }
 }

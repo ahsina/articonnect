@@ -10,15 +10,22 @@ import { MissionStatus } from '@prisma/client';
 import { ReputationService } from '../../payment/services/reputation.service';
 import { PaymentService } from '../../payment/services/payment.service';
 import { NotificationService } from '../../notification/services/notification.service';
+import { ContactRevealService } from './contact-reveal.service';
 
 @Injectable()
 export class MissionService {
+  // Révélation de contact time-boxée + auditée + révocable (anti-désintermédiation).
+  // Instanciée manuellement (pas de provider dédié) : partage la même connexion Prisma.
+  private readonly contactReveal: ContactRevealService;
+
   constructor(
     private prisma: PrismaService,
     private reputationService: ReputationService,
     private paymentService: PaymentService,
     private notificationService: NotificationService,
-  ) {}
+  ) {
+    this.contactReveal = new ContactRevealService(this.prisma);
+  }
 
   async create(userId: string, createDto: CreateMissionDto) {
     // Calculate VAT rate based on country
@@ -182,19 +189,26 @@ export class MissionService {
       throw new ForbiddenException('Accès non autorisé');
     }
 
-    // ── RÉVÉLATION DES COORDONNÉES (façon Uber) ────────────────────────────────
-    // Les COORDONNÉES réelles (phone/email) ne sont JAMAIS exposées tant que la mission n'est pas
-    // PAYÉE en escrow, et uniquement au CLIENT et à l'ARTISAN ASSIGNÉ. Un simple participant à la
-    // négociation (offre bidon à 1€) ne voit que prénom + initiale + note — jamais tel/email.
+    // ── RÉVÉLATION DES COORDONNÉES (façon Uber) : TIME-BOXÉE + AUDITÉE + RÉVOCABLE ──────────────
+    // Le téléphone réel n'est révélé que pendant la FENÊTRE ACTIVE de la mission (escrow sécurisé,
+    // et PAS au-delà de COMPLETED/AUTO_VALIDATED + 72h de grâce → re-masquage), uniquement au CLIENT
+    // et à l'ARTISAN ASSIGNÉ. Chaque révélation croisée est journalisée (ContactRevealLog) et refusée
+    // à un viewer déjà `leakageFlagged` qui n'avait pas déjà déverrouillé ce contact. Un simple
+    // participant à la négociation (offre bidon à 1€) ne voit que prénom + initiale + note.
     const isAdmin = role === 'ADMIN';
     const isClientViewer = mission.clientId === userId;
     const isAssignedArtisanViewer = !!mission.artisanId && mission.artisanId === userId;
     const escrowSecured = this.isMissionPaidInEscrow(mission);
 
-    const revealClientContact =
-      isAdmin || isClientViewer || (isAssignedArtisanViewer && escrowSecured);
-    const revealArtisanContact =
-      isAdmin || isAssignedArtisanViewer || (isClientViewer && escrowSecured);
+    const { revealClientContact, revealArtisanContact } =
+      await this.contactReveal.resolveContactReveal({
+        mission,
+        userId,
+        isAdmin,
+        isClientViewer,
+        isAssignedArtisanViewer,
+        escrowSecured,
+      });
 
     const sanitized: any = { ...mission };
     sanitized.client = this.maskUserContact(mission.client, revealClientContact);
@@ -209,10 +223,18 @@ export class MissionService {
   /**
    * Masque les coordonnées réelles d'un utilisateur (phone/email) et son nom de famille tant que la
    * révélation n'est pas autorisée. Avant révélation : prénom + initiale du nom + note (via profil).
+   *
+   * CHOIX MESSAGING-FIRST : l'EMAIL n'est JAMAIS exposé, même après paiement / fenêtre active. Seul
+   * le TÉLÉPHONE (canal d'appel façon Uber) est révélé pendant la fenêtre ; tout le reste des échanges
+   * passe par le chat in-app filtré (anti-désintermédiation). On force donc `email: null` dans les deux
+   * branches.
    */
   private maskUserContact(user: any, reveal: boolean) {
     if (!user) return user;
-    if (reveal) return user;
+    if (reveal) {
+      // Fenêtre active : téléphone révélé, mais email toujours masqué (pousser vers le chat in-app).
+      return { ...user, email: null };
+    }
     const { phone: _phone, email: _email, lastName, ...rest } = user;
     return {
       ...rest,

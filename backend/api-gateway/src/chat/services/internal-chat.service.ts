@@ -27,6 +27,9 @@ interface SendMessageDto {
   type?: ChatMessageType;
   replyToId?: string;
   mentions?: string[];
+  // Nom de fichier de la pièce jointe (IMAGE/FILE) : filtré comme la légende — canal de
+  // contournement du filtre texte (« appelle-moi-0612345678.jpg »).
+  fileName?: string;
 }
 
 interface UpdateRoomDto {
@@ -59,22 +62,58 @@ export class InternalChatService {
     content: string,
     userId: string,
     type: ChatMessageType,
+    opts?: { fileName?: string; missionId?: string | null },
   ): Promise<string> {
     // Les messages système ne transitent pas par les utilisateurs : on n'y touche pas.
     if (type === 'SYSTEM') return content;
-    if (!content || content.trim().length === 0) return content;
 
-    const result = await this.contentFilter.filterContent(content, userId, 'chat_interne');
-    if (result.isBlocked) {
-      throw new BadRequestException({
-        message:
-          'Votre message contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
-        detectedPatterns: result.detectedPatterns,
-        violationType: result.violationType,
-        code: 'CONTACT_INFO_BLOCKED',
-      });
+    // 1) Filtre la LÉGENDE (content) — quel que soit le type (TEXT / IMAGE / FILE / VOICE_NOTE).
+    let filtered = content;
+    if (content && content.trim().length > 0) {
+      const result = await this.contentFilter.filterContent(content, userId, 'chat_interne');
+      if (result.isBlocked) {
+        throw new BadRequestException({
+          message:
+            'Votre message contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
+          detectedPatterns: result.detectedPatterns,
+          violationType: result.violationType,
+          code: 'CONTACT_INFO_BLOCKED',
+        });
+      }
+      filtered = result.filteredContent;
     }
-    return result.filteredContent;
+
+    // 2) Filtre le NOM DE FICHIER (canal de contournement des pièces jointes).
+    if (opts?.fileName && opts.fileName.trim().length > 0) {
+      const fn = await this.contentFilter.filterFileName(opts.fileName, userId, 'chat_interne');
+      if (fn.isBlocked) {
+        throw new BadRequestException({
+          message:
+            'Le nom du fichier contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
+          detectedPatterns: fn.detectedPatterns,
+          violationType: fn.violationType,
+          code: 'CONTACT_INFO_BLOCKED',
+        });
+      }
+    }
+
+    // 3) Signal anti-fishing : IMAGE/FILE dans une room liée à une mission NON payée → on TRACE.
+    // Restreint aux rooms « mission » : les rooms d'équipe internes (sans missionId) ne sont pas
+    // un vecteur de désintermédiation client↔artisan. Ne bloque jamais.
+    const isMedia = type === 'IMAGE' || type === 'FILE';
+    if (isMedia && opts?.missionId) {
+      const paid = await this.contentFilter.isMissionPaid(opts.missionId);
+      if (!paid) {
+        await this.contentFilter.flagPrePaymentMedia(userId, {
+          fileName: opts.fileName,
+          mediaType: type,
+          missionId: opts.missionId,
+          context: 'chat_interne',
+        });
+      }
+    }
+
+    return filtered;
   }
 
   /**
@@ -302,7 +341,7 @@ export class InternalChatService {
     userId: string,
     dto: SendMessageDto,
   ): Promise<any> {
-    const { content, type = 'TEXT', replyToId, mentions = [] } = dto;
+    const { content, type = 'TEXT', replyToId, mentions = [], fileName } = dto;
 
     // Verify membership and role
     const member = await this.verifyMembership(roomId, userId);
@@ -311,8 +350,18 @@ export class InternalChatService {
       throw new ForbiddenException('Vous ne pouvez pas envoyer de messages dans cette conversation');
     }
 
-    // 🛡️ Anti-désintermédiation : filtre les coordonnées (bloque HIGH, masque MEDIUM).
-    const filteredContent = await this.enforceContentFilter(content, userId, type);
+    // Mission liée à la room (pour le signal anti-fishing média pré-paiement).
+    const room = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      select: { missionId: true },
+    });
+
+    // 🛡️ Anti-désintermédiation : filtre la légende + le nom de fichier (bloque HIGH, masque
+    // MEDIUM) et trace les médias envoyés avant paiement de la mission liée.
+    const filteredContent = await this.enforceContentFilter(content, userId, type, {
+      fileName,
+      missionId: room?.missionId,
+    });
 
     // Create message
     const message = await this.prisma.chatMessage.create({

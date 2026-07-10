@@ -1029,6 +1029,24 @@ model MissionHistory {
   @@index([createdAt])
 }
 
+// Journal d'AUDIT des révélations de contact réel (façon Uber) — anti-désintermédiation.
+// Écrit une ligne à chaque fois qu'un contact CROISÉ (téléphone) est effectivement déverrouillé à un
+// viewer dans findOne. Dédupliqué par (viewer, target, mission) pour ne pas spammer. Alimente le
+// détecteur de leakage (un artisan qui déverrouille 50 contacts pour ~0 mission payée = suspect).
+// Modèle minimal volontairement SANS relations FK (autonome) pour rester léger.
+model ContactRevealLog {
+  id           String   @id @default(uuid())
+  viewerId     String // utilisateur à qui le contact réel a été révélé
+  targetUserId String // utilisateur dont le contact a été révélé
+  missionId    String
+  createdAt    DateTime @default(now())
+
+  @@unique([viewerId, targetUserId, missionId])
+  @@index([viewerId])
+  @@index([targetUserId])
+  @@index([missionId])
+}
+
 model Negotiation {
   id            String  @id @default(uuid())
   missionId     String

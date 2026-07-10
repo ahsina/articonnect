@@ -4,11 +4,30 @@ import { CreateReportDto } from '../dto/create-report.dto';
 import { ResolveReportDto } from '../dto/resolve-report.dto';
 import { QueryReportDto } from '../dto/query-report.dto';
 import { ReportType, ReportStatus, ReportReason, UserRole, Prisma } from '@prisma/client';
+import { DisintermediationDetectorService } from '../../fraud/services/disintermediation-detector.service';
 
 @Injectable()
 export class ModerationService {
   private readonly logger = new Logger(ModerationService.name);
   constructor(private prisma: PrismaService) {}
+
+  /**
+   * Anti-désintermédiation : déclenche l'enforcement AUTOMATIQUE gradué sur l'utilisateur
+   * signalé (pas seulement l'incrément d'un compteur). Instancié inline car le seul dépendance
+   * du détecteur est PrismaService (évite de recâbler le module de modération). Ne casse jamais
+   * le flux de modération : toute erreur est isolée.
+   */
+  private async enforceLeakage(userId: string, source: string): Promise<void> {
+    try {
+      const detector = new DisintermediationDetectorService(this.prisma);
+      await detector.enforce(userId, {
+        source,
+        reason: 'Signalement OFF_PLATFORM_SOLICITATION',
+      });
+    } catch (error) {
+      this.logger.error(`enforceLeakage a échoué pour ${userId}`, error as Error);
+    }
+  }
 
   /**
    * Create a new report
@@ -52,6 +71,9 @@ export class ModerationService {
       this.logger.warn(
         `Signalement OFF_PLATFORM_SOLICITATION contre ${dto.reportedUserId} (reporter ${reporterId}).`,
       );
+      // Enforcement AUTOMATIQUE : le détecteur recalcule le risque et applique la pénalité graduée
+      // (WARNING → REQUIRE_DEPOSIT → FREEZE_MATCHING → DEACTIVATE), pas seulement un compteur.
+      await this.enforceLeakage(dto.reportedUserId, 'report-created');
     }
 
     return this.prisma.report.create({
@@ -272,6 +294,12 @@ export class ModerationService {
     // Apply actions based on actionTaken
     if (dto.actionTaken) {
       await this.applyModerationAction(report, dto.actionTaken);
+    }
+
+    // Anti-désintermédiation : à la RÉSOLUTION d'un signalement « sollicitation hors-plateforme »,
+    // on relance l'enforcement automatique gradué sur l'utilisateur signalé (idempotent).
+    if (report.reason === ReportReason.OFF_PLATFORM_SOLICITATION && report.reportedUserId) {
+      await this.enforceLeakage(report.reportedUserId, 'report-resolved');
     }
 
     return updatedReport;

@@ -32,8 +32,12 @@ export class ChatService {
     receiverId: string;
     content: string;
     missionId?: string;
+    // Type + nom de fichier optionnels : quand la pièce jointe est une IMAGE/FILE, on filtre
+    // aussi la LÉGENDE (content) ET le NOM DE FICHIER, et on trace le média pré-paiement.
+    type?: 'TEXT' | 'IMAGE' | 'FILE' | 'VOICE_NOTE';
+    fileName?: string;
   }) {
-    // 🛡️ CONTENT MODERATION - Filter for contact information
+    // 🛡️ CONTENT MODERATION - Filter for contact information (légende, quel que soit le type)
     const filterResult = await this.contentFilter.filterContent(data.content, data.senderId);
 
     // Block message if HIGH severity violations detected
@@ -44,6 +48,34 @@ export class ChatService {
         violationType: filterResult.violationType,
         code: 'CONTACT_INFO_BLOCKED'
       });
+    }
+
+    // 🛡️ Le NOM DE FICHIER est un canal de contournement : « appelle-moi-0612345678.jpg ».
+    if (data.fileName) {
+      const fnResult = await this.contentFilter.filterFileName(data.fileName, data.senderId);
+      if (fnResult.isBlocked) {
+        throw new BadRequestException({
+          message: 'Le nom du fichier contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
+          detectedPatterns: fnResult.detectedPatterns,
+          violationType: fnResult.violationType,
+          code: 'CONTACT_INFO_BLOCKED',
+        });
+      }
+    }
+
+    // 🛡️ Signal anti-fishing : IMAGE/FILE envoyé AVANT paiement de la mission (ou chat direct
+    // sans mission payée) → on TRACE (ne bloque pas). L'OCR réel de l'image est hors périmètre.
+    const isMedia = data.type === 'IMAGE' || data.type === 'FILE';
+    if (isMedia) {
+      const paid = await this.contentFilter.isMissionPaid(data.missionId);
+      if (!paid) {
+        await this.contentFilter.flagPrePaymentMedia(data.senderId, {
+          fileName: data.fileName,
+          mediaType: data.type,
+          missionId: data.missionId,
+          context: 'chat_direct',
+        });
+      }
     }
 
     // Use filtered content (for MEDIUM severity, we allow but filter)

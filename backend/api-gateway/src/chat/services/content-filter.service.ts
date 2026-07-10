@@ -52,9 +52,47 @@ export class ContentFilterService {
   private static readonly INVISIBLE = /[​-‏‪-‮⁠⁦-⁩﻿᠎­]/g;
   // Sélecteurs de variation + « combining enclosing keycap » (emojis chiffres 6️⃣).
   private static readonly KEYCAP = /[︀-️⃣]/g;
+  // Emojis / pictogrammes / drapeaux / ZWJ : sur la version compacte ils jouent le rôle
+  // de séparateurs entre chiffres (« 06📞12345678 » → « 0612345678 ») et doivent disparaître.
+  private static readonly EMOJI =
+    /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu;
   // Séparateurs à retirer pour la version compacte (on GARDE les lettres : elles
   // servent de frontières et empêchent la fusion de numéros distincts).
-  private static readonly SEPARATORS = /[\s.\-_/\\()\[\]{}|·•*'"~,;:]+/g;
+  // Inclut les variantes exotiques : espaces unicode, tirets typographiques, puces,
+  // points médians (·・･), minus mathématique, etc. — sinon « 06‑12‧34 » passerait.
+  private static readonly SEPARATORS =
+    /[\s.\-_/\\()\[\]{}|·•*'"~,;:…  -​  　‐-―−⁃•‧∙・･·．－～]+/gu;
+
+  // Statuts de mission « argent engagé » : au-delà, le contact est légitimement révélé
+  // (happy-path) et le message média n'est plus un signal de risque pré-paiement.
+  private static readonly PAID_MISSION_STATUSES = new Set<string>([
+    'DEPOSIT_PAID',
+    'IN_TRANSIT',
+    'PAID',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'AUTO_VALIDATED',
+  ]);
+
+  // Motifs sûrs à appliquer à un NOM DE FICHIER : très faible taux de faux positifs.
+  // On EXCLUT volontairement les heuristiques « suite de chiffres » (PHONE_LONG_DIGITS,
+  // nationaux nus 6XXXXXXXX / 2XXXXXXX / 04XXXXXXXX) car les noms de fichiers d'appareils
+  // photo (« IMG_20240612_123456.jpg ») déclencheraient des blocages abusifs.
+  private static readonly FILENAME_SAFE_PATTERNS = new Set<string>([
+    'PHONE_FR',
+    'PHONE_LU_CC',
+    'PHONE_BE_CC',
+    'PHONE_INTL_GENERIC',
+    'PHONE_INTL_00_GENERIC',
+    'EMAIL',
+    'EMAIL_OBFUSCATED',
+    'URL_SCHEME',
+    'URL_DOMAIN',
+    'MESSAGING_APP_LINK',
+    'MESSAGING_APP_MENTION',
+    'SOCIAL_LINK',
+    'SOCIAL_MENTION',
+  ]);
 
   // Bibliothèque de motifs.
   private patterns: FilterPattern[] = [
@@ -118,6 +156,16 @@ export class ContentFilterService {
     {
       name: 'PHONE_INTL_GENERIC',
       regex: /(?<!\d)\+\d{2,3}\d{6,12}(?!\d)/g,
+      replacement: '[NUMÉRO BLOQUÉ]',
+      severity: 'HIGH',
+      enabled: true,
+      detectOn: 'compact',
+    },
+    // Filet générique : préfixe international « 00 » + indicatif pays + 6+ chiffres
+    // (ex « 0033… », « 00352… », « 0032… » collés, non couverts par un préfixe pays précis).
+    {
+      name: 'PHONE_INTL_00_GENERIC',
+      regex: /(?<!\d)00\d{8,13}(?!\d)/g,
       replacement: '[NUMÉRO BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -285,7 +333,9 @@ export class ContentFilterService {
    * qui servent de frontières et évitent de fusionner deux numéros distincts.
    */
   private toCompact(normalized: string): string {
-    return normalized.replace(ContentFilterService.SEPARATORS, '');
+    return normalized
+      .replace(ContentFilterService.EMOJI, '')
+      .replace(ContentFilterService.SEPARATORS, '');
   }
 
   /** Compile une regex globale fraîche (évite le bug de lastIndex partagé). */
@@ -363,6 +413,156 @@ export class ContentFilterService {
       detectedPatterns,
       violationType: highestSeverity || undefined,
     };
+  }
+
+  /**
+   * Filtre un NOM DE FICHIER (canal de contournement : une pièce jointe nommée
+   * « appelle-moi-0612345678.jpg » ou « jean.dupont@gmail.com.pdf » fait fuiter un contact
+   * sans passer par le champ texte). N'applique QUE les motifs à faible taux de faux positifs
+   * (voir FILENAME_SAFE_PATTERNS) pour ne pas bloquer les noms d'appareils photo bourrés de
+   * chiffres (horodatages). Bloque (HIGH) et loggue la violation, comme filterContent.
+   */
+  async filterFileName(
+    fileName: string,
+    userId: string,
+    context = 'chat',
+  ): Promise<FilterResult> {
+    if (!fileName || typeof fileName !== 'string' || fileName.trim().length === 0) {
+      return { isBlocked: false, filteredContent: fileName ?? '', detectedPatterns: [] };
+    }
+
+    const normalized = this.normalize(fileName);
+    const compact = this.toCompact(normalized);
+
+    const detectedPatterns: string[] = [];
+    let highestSeverity: Severity | null = null;
+
+    for (const pattern of this.patterns) {
+      if (!pattern.enabled) continue;
+      if (!ContentFilterService.FILENAME_SAFE_PATTERNS.has(pattern.name)) continue;
+
+      const haystack = pattern.detectOn === 'compact' ? compact : normalized;
+      const detectRegex = this.freshGlobal(pattern.regex);
+      if (![...haystack.matchAll(detectRegex)].length) continue;
+
+      detectedPatterns.push(pattern.name);
+      if (
+        !highestSeverity ||
+        this.severityLevel(pattern.severity) > this.severityLevel(highestSeverity)
+      ) {
+        highestSeverity = pattern.severity;
+      }
+      this.logger.warn(
+        `Contact info in filename | User: ${userId} | Context: ${context} | Pattern: ${pattern.name}`,
+      );
+    }
+
+    const isBlocked = highestSeverity === 'HIGH';
+    if (detectedPatterns.length > 0 && highestSeverity) {
+      await this.logViolation(
+        userId,
+        `[NOM DE FICHIER] ${fileName}`,
+        detectedPatterns,
+        highestSeverity,
+        `${context}_filename`,
+      );
+    }
+
+    return {
+      isBlocked,
+      filteredContent: fileName,
+      detectedPatterns,
+      violationType: highestSeverity || undefined,
+    };
+  }
+
+  /**
+   * Vrai si la mission liée a « l'argent engagé » (acompte payé ou statut avancé).
+   * Sert au signal anti-fishing média : une pièce jointe envoyée AVANT ce stade est
+   * suspecte (contournement du filtre par photo d'une carte de visite, capture d'écran…).
+   * Sans missionId → considérée NON payée (chat direct hors mission payée).
+   * En cas d'erreur DB, renvoie `false` (privilégie la traçabilité ; ne bloque jamais).
+   */
+  async isMissionPaid(missionId?: string | null): Promise<boolean> {
+    if (!missionId) return false;
+    try {
+      const mission = await this.prisma.mission.findUnique({
+        where: { id: missionId },
+        select: { status: true, depositPaidAt: true },
+      });
+      if (!mission) return false;
+      if (mission.depositPaidAt) return true;
+      return ContentFilterService.PAID_MISSION_STATUSES.has(mission.status as string);
+    } catch (error) {
+      this.logger.error('isMissionPaid a échoué', error as Error);
+      return false;
+    }
+  }
+
+  /**
+   * Signal anti-fishing : TRACE un message IMAGE/FILE envoyé avant paiement de la mission
+   * (ou en chat direct sans mission payée). L'OCR réel du contenu de l'image (lire un « 06 »
+   * sur une photo de carte de visite) nécessite un service OCR dédié, hors périmètre du
+   * conteneur ; à défaut on flagge/trace le média pré-paiement.
+   *
+   * Effet : (a) ContentViolation type IMAGE_PRE_PAYMENT (LOW) pour l'audit admin ;
+   * (b) incrément de offPlatformSolicitationCount (→ leakageRiskScore), DÉDOUBLONNÉ par
+   * (utilisateur, mission) sur 24h afin qu'un client honnête envoyant plusieurs photos du
+   * chantier ne soit pas gelé. Ne bloque JAMAIS le message, ne lève jamais.
+   */
+  async flagPrePaymentMedia(
+    userId: string,
+    opts?: {
+      fileName?: string;
+      mediaType?: string;
+      missionId?: string | null;
+      context?: string;
+    },
+  ): Promise<void> {
+    if (!userId) return;
+    const context = opts?.context ?? 'chat';
+    const missionKey = opts?.missionId ?? 'DIRECT';
+    try {
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const already = await this.prisma.contentViolation.findFirst({
+        where: {
+          userId,
+          createdAt: { gte: since24h },
+          detectedPatterns: { has: 'IMAGE_PRE_PAYMENT' },
+          content: { contains: `mission=${missionKey}` },
+        },
+        select: { id: true },
+      });
+
+      const label =
+        `[MEDIA ${opts?.mediaType ?? 'FILE'} PRE-PAIEMENT mission=${missionKey}]` +
+        (opts?.fileName ? ` ${opts.fileName}` : '');
+      await this.prisma.contentViolation.create({
+        data: {
+          userId,
+          content: label.substring(0, 500),
+          detectedPatterns: ['IMAGE_PRE_PAYMENT'],
+          severity: 'LOW',
+          createdAt: new Date(),
+        },
+      });
+
+      // On alimente le score UNE fois par (utilisateur, mission)/24h (anti faux positif).
+      // Volontairement PAS de passage par logViolation() : un média pré-paiement est souvent
+      // légitime (photo du chantier) → on TRACE et on score sans auto-suspendre.
+      if (!already) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { offPlatformSolicitationCount: { increment: 1 } },
+        });
+      }
+
+      this.logger.warn(
+        `Média pré-paiement tracé | User: ${userId} | Context: ${context} | Type: ${opts?.mediaType ?? 'FILE'} | Mission: ${missionKey} | Scored: ${!already}`,
+      );
+    } catch (error) {
+      this.logger.error('flagPrePaymentMedia a échoué', error as Error);
+    }
   }
 
   /** Vrai si le contenu ne contient aucune violation HIGH (sans état partagé). */

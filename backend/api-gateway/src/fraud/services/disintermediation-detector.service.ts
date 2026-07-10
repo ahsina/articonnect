@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 /**
@@ -143,8 +144,12 @@ export class DisintermediationDetectorService {
           `Off-platform solicitation par ${userId} | mots-clés: ${solicitation.matched.join(', ')}`,
         );
       }
-      // Recalcule le score à chaque message bloqué → enforcement automatique (pas seulement admin).
-      await this.computeLeakageRisk(userId);
+      // Recalcule le score À CHAQUE message bloqué ET applique automatiquement la pénalité
+      // graduée correspondante → enforcement automatique (plus seulement admin manuel).
+      await this.enforce(userId, {
+        source: 'blocked-message',
+        reason: 'Message bloqué par le content-filter',
+      });
     } catch (error) {
       this.logger.error(`recordBlockedMessage a échoué pour ${userId}`, error as Error);
     }
@@ -314,6 +319,160 @@ export class DisintermediationDetectorService {
     }
 
     return { ...result, recommendedPenalty: penalty };
+  }
+
+  /**
+   * ENFORCEMENT AUTOMATIQUE — cœur du détecteur automatique (plus seulement admin manuel).
+   *
+   * Recalcule le risque (computeLeakageRisk) PUIS applique la pénalité graduée recommandée
+   * (recommendPenalty) : WARNING → REQUIRE_DEPOSIT → FREEZE_MATCHING → DEACTIVATE.
+   * Écrit l'état sur User (leakageFlagged ; status SUSPENDED pour DEACTIVATE) et trace
+   * l'escalade dans AuditLog. Ne lève jamais pour un happy-path : la révélation de contact
+   * légitime post-escrow (client + artisan assigné) n'est jamais touchée ici.
+   *
+   * IDEMPOTENT :
+   *  - L'état final (leakageFlagged / status) est ré-appliqué à l'identique ; ré-exécuter ne
+   *    change rien de plus.
+   *  - Une trace AuditLog n'est créée QUE lors d'une réelle transition d'état (flag OFF→ON,
+   *    ou compte ACTIVE→SUSPENDED) ; les appels répétés ne spamment pas le journal.
+   */
+  async enforce(
+    userId: string,
+    opts?: { source?: string; reason?: string },
+  ): Promise<LeakageRiskResult & { appliedPenalty: LeakagePenalty; enforced: boolean }> {
+    if (!userId) throw new Error('userId is required');
+
+    // État AVANT recalcul (computeLeakageRisk réécrit leakageFlagged) → sert à détecter la transition.
+    const prior = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true, leakageFlagged: true },
+    });
+    if (!prior) throw new Error('User not found');
+
+    const result = await this.computeLeakageRisk(userId);
+    const penalty = result.recommendedPenalty;
+
+    const data: Record<string, unknown> = {};
+    let transition = false;
+
+    switch (penalty) {
+      case 'DEACTIVATE':
+        // Gel + désactivation. On ne suspend QUE depuis ACTIVE (ne clobber pas DELETED) et on
+        // ne casse pas un login légitime : seul un score >= 90 (fuite avérée) atteint ce niveau.
+        data.leakageFlagged = true;
+        if (prior.status === 'ACTIVE') {
+          data.status = 'SUSPENDED';
+          transition = true;
+        }
+        break;
+      case 'FREEZE_MATCHING':
+      case 'REQUIRE_DEPOSIT':
+        // Gel des mises en relation (réversible). On force leakageFlagged=true de façon idempotente
+        // (REQUIRE_DEPOSIT est sous le seuil 75 que computeLeakageRisk utilise, donc on le rétablit).
+        data.leakageFlagged = true;
+        transition = !prior.leakageFlagged;
+        break;
+      case 'WARNING':
+      case 'NONE':
+      default:
+        // Avertissement : aucune écriture bloquante, simple log (idempotent par nature).
+        break;
+    }
+
+    if (Object.keys(data).length > 0) {
+      await this.prisma.user.update({ where: { id: userId }, data: data as any });
+    }
+
+    if (penalty === 'WARNING') {
+      this.logger.warn(
+        `Leakage WARNING → ${userId} (score ${result.leakageRiskScore})${opts?.reason ? ` [${opts.reason}]` : ''}`,
+      );
+    }
+
+    // Trace persistante UNIQUEMENT sur transition réelle → idempotent (pas de spam AuditLog).
+    if (transition) {
+      await this.writeEnforcementTrace(userId, penalty, result, opts);
+    }
+
+    return { ...result, appliedPenalty: penalty, enforced: transition };
+  }
+
+  /**
+   * Évaluation BATCH : ré-enforce en masse tous les comptes déjà flaggés leakage.
+   * Utilisé par le cron et par l'endpoint admin. Chaque erreur unitaire est isolée
+   * (un compte KO n'interrompt pas le lot).
+   */
+  async enforceBatch(
+    opts?: { limit?: number; source?: string },
+  ): Promise<{ evaluated: number; enforced: number; penalties: Record<string, number> }> {
+    const users = await this.getFlaggedUsers(opts?.limit ?? 200);
+    const penalties: Record<string, number> = {};
+    let enforced = 0;
+
+    for (const u of users) {
+      try {
+        const r = await this.enforce(u.id, {
+          source: opts?.source ?? 'batch',
+          reason: 'Réévaluation batch anti-désintermédiation',
+        });
+        penalties[r.appliedPenalty] = (penalties[r.appliedPenalty] ?? 0) + 1;
+        if (r.enforced) enforced++;
+      } catch (error) {
+        this.logger.error(`enforceBatch: enforce a échoué pour ${u.id}`, error as Error);
+      }
+    }
+
+    return { evaluated: users.length, enforced, penalties };
+  }
+
+  /**
+   * CRON d'évaluation automatique : toutes les 6h, ré-enforce les comptes flaggés
+   * (escalade FREEZE→DEACTIVATE si le score a monté, maintien du gel, etc.).
+   */
+  @Cron(CronExpression.EVERY_6_HOURS)
+  async scheduledEnforce(): Promise<void> {
+    try {
+      const res = await this.enforceBatch({ source: 'cron' });
+      if (res.evaluated > 0) {
+        this.logger.log(
+          `Cron anti-désintermédiation: ${res.evaluated} compte(s) réévalué(s), ${res.enforced} nouvelle(s) escalade(s).`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Cron anti-désintermédiation a échoué', error as Error);
+    }
+  }
+
+  /** Trace d'enforcement (AuditLog). ipAddress est requis par le schéma → marqueur système. */
+  private async writeEnforcementTrace(
+    userId: string,
+    penalty: LeakagePenalty,
+    result: LeakageRiskResult,
+    opts?: { source?: string; reason?: string },
+  ): Promise<void> {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: `LEAKAGE_ENFORCE_${penalty}`,
+          resource: 'User',
+          details: {
+            penalty,
+            leakageRiskScore: result.leakageRiskScore,
+            leakageFlagged: result.leakageFlagged,
+            offPlatformSolicitationCount: result.offPlatformSolicitationCount,
+            signals: result.signals as any,
+            reason: opts?.reason ?? null,
+            source: opts?.source ?? 'auto',
+          },
+          ipAddress: 'system',
+          userAgent: `disintermediation-detector:${opts?.source ?? 'auto'}`,
+        },
+      });
+    } catch (error) {
+      // Une trace manquée ne doit jamais casser l'enforcement lui-même.
+      this.logger.error(`writeEnforcementTrace a échoué pour ${userId}`, error as Error);
+    }
   }
 
   /** Liste des comptes flaggés leakage (endpoint admin). */
