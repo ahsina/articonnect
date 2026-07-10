@@ -138,8 +138,8 @@ export default function MissionDetailPage() {
         apiClient.get('/users/profile').catch(() => ({ data: null })),
       ]);
       setMission(missionResponse.data);
-      setTimeline(timelineResponse.data || []);
-      setNegotiations(negotiationsResponse.data || []);
+      setTimeline(Array.isArray(timelineResponse.data) ? timelineResponse.data : []);
+      setNegotiations(Array.isArray(negotiationsResponse.data) ? negotiationsResponse.data : []);
       if (userResponse.data?.id) {
         setCurrentUserId(userResponse.data.id);
       }
@@ -630,13 +630,13 @@ export default function MissionDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">{t('artisan', 'budget') || 'Budget'}</div>
-                  <div className="font-semibold text-lg">EUR {mission.budget != null ? mission.budget.toLocaleString() : "—"}</div>
+                  <div className="font-semibold text-lg">{mission.budget != null ? `EUR ${mission.budget.toLocaleString()}` : "—"}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">
                     {t('artisan', 'duration') || 'Est. Duration'}
                   </div>
-                  <div className="font-semibold">{mission.estimatedDuration} hours</div>
+                  <div className="font-semibold">{mission.estimatedDuration != null ? `${mission.estimatedDuration} ${t('artisan', 'hours') || 'hours'}` : "—"}</div>
                 </div>
               </div>
               {mission.scheduledDate && (
@@ -1190,7 +1190,9 @@ export default function MissionDetailPage() {
             <CardTitle>{t('artisan', 'missionTimeline') || 'Mission Timeline'}</CardTitle>
           </CardHeader>
           <CardContent>
-            {timeline.length === 0 ? (
+            {(() => {
+            const timelineEvents = Array.isArray(timeline) ? timeline : [];
+            return timelineEvents.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {t('artisan', 'noTimeline') || 'No timeline events yet'}
               </div>
@@ -1198,7 +1200,7 @@ export default function MissionDetailPage() {
               <div className="relative">
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-muted" />
                 <div className="space-y-6">
-                  {timeline.map((event) => (
+                  {timelineEvents.map((event) => (
                     <div key={event.id} className="relative pl-10">
                       <div className="absolute left-2 w-4 h-4 rounded-full bg-primary border-2 border-white" />
                       <div className="bg-background p-4 rounded-lg">
@@ -1219,7 +1221,8 @@ export default function MissionDetailPage() {
                   ))}
                 </div>
               </div>
-            )}
+            );
+            })()}
           </CardContent>
         </Card>
       )}

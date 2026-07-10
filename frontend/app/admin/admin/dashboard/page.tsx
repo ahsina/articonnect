@@ -139,18 +139,18 @@ export default function AdminDashboardPage() {
   };
 
   const quickLinks: { href: string; label: string; icon: LucideIcon }[] = [
-    { href: '/admin/fraud-settings', label: t('adminDashboard', 'fraudSettings'), icon: ShieldAlert },
-    { href: '/admin/monitoring', label: t('adminDashboard', 'monitoring'), icon: Activity },
-    { href: '/admin/feature-flags', label: t('adminDashboard', 'featureFlags'), icon: Flag },
-    { href: '/admin/cron', label: t('adminDashboard', 'cronJobs'), icon: Timer },
-    { href: '/admin/verifications', label: t('adminDashboard', 'kycVerification'), icon: FileCheck },
-    { href: '/admin/disputes', label: t('adminDashboard', 'disputes'), icon: AlertTriangle },
-    { href: '/admin/audit-logs', label: t('adminDashboard', 'auditLogs'), icon: ScrollText },
-    { href: '/admin/moderation', label: t('adminDashboard', 'moderation'), icon: Eye },
-    { href: '/admin/no-shows', label: t('adminDashboard', 'noShows'), icon: Ban },
-    { href: '/admin/certifications', label: t('adminDashboard', 'certifications'), icon: Award },
-    { href: '/admin/specialties', label: t('adminDashboard', 'specialties'), icon: Tags },
-    { href: '/admin/reputation', label: t('adminDashboard', 'reputation'), icon: Star },
+    { href: '/admin/admin/fraud-settings', label: t('adminDashboard', 'fraudSettings'), icon: ShieldAlert },
+    { href: '/admin/admin/monitoring', label: t('adminDashboard', 'monitoring'), icon: Activity },
+    { href: '/admin/admin/feature-flags', label: t('adminDashboard', 'featureFlags'), icon: Flag },
+    { href: '/admin/admin/cron', label: t('adminDashboard', 'cronJobs'), icon: Timer },
+    { href: '/admin/admin/verifications', label: t('adminDashboard', 'kycVerification'), icon: FileCheck },
+    { href: '/admin/admin/disputes', label: t('adminDashboard', 'disputes'), icon: AlertTriangle },
+    { href: '/admin/admin/audit-logs', label: t('adminDashboard', 'auditLogs'), icon: ScrollText },
+    { href: '/admin/admin/moderation', label: t('adminDashboard', 'moderation'), icon: Eye },
+    { href: '/admin/admin/no-shows', label: t('adminDashboard', 'noShows'), icon: Ban },
+    { href: '/admin/admin/certifications', label: t('adminDashboard', 'certifications'), icon: Award },
+    { href: '/admin/admin/specialties', label: t('adminDashboard', 'specialties'), icon: Tags },
+    { href: '/admin/admin/reputation', label: t('adminDashboard', 'reputation'), icon: Star },
   ];
 
   return (
@@ -180,9 +180,9 @@ export default function AdminDashboardPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { href: '/admin/users', icon: Users, title: t('admin', 'userManagement'), desc: t('admin', 'viewManageUsers') },
-            { href: '/admin/missions', icon: ClipboardList, title: t('admin', 'missionManagement'), desc: t('admin', 'trackModerateMissions') },
-            { href: '/admin/analytics', icon: BarChart3, title: t('admin', 'analytics'), desc: t('admin', 'detailedReports') },
+            { href: '/admin/admin/users', icon: Users, title: t('admin', 'userManagement'), desc: t('admin', 'viewManageUsers') },
+            { href: '/admin/admin/missions', icon: ClipboardList, title: t('admin', 'missionManagement'), desc: t('admin', 'trackModerateMissions') },
+            { href: '/admin/admin/analytics', icon: BarChart3, title: t('admin', 'analytics'), desc: t('admin', 'detailedReports') },
           ].map((a) => {
             const Icon = a.icon;
             return (
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
         <Card className="mt-8">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t('dashboard', 'recentActivity')}</CardTitle>
-            <button onClick={() => router.push('/admin/audit-logs')} className="text-sm text-primary hover:underline">
+            <button onClick={() => router.push('/admin/admin/audit-logs')} className="text-sm text-primary hover:underline">
               {t('adminDashboard', 'viewAll')} 
             </button>
           </CardHeader>
@@ -269,7 +269,7 @@ export default function AdminDashboardPage() {
         {/* Platform Settings - Prominent Link */}
         <div className="mt-8">
           <button
-            onClick={() => router.push('/admin/settings')}
+            onClick={() => router.push('/admin/admin/settings')}
             className="w-full p-6 bg-muted rounded-2xl hover:shadow-glow transition-all text-left"
           >
             <div className="flex items-center gap-4 text-primary-foreground">

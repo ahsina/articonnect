@@ -57,7 +57,7 @@ export default function MissionsManagementPage() {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push('/admin/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
               {t('adminMissions', 'back')}
@@ -320,28 +320,28 @@ export default function MissionsManagementPage() {
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={() => router.push('/admin/moderation')}
+                onClick={() => router.push('/admin/admin/moderation')}
                 className="flex items-center gap-2 px-4 py-3 bg-amber-100 text-amber-800 rounded-lg hover:bg-yellow-200"
               >
                 <span></span>
                 <span>{t('adminMissions', 'viewDisputes')}</span>
               </button>
               <button
-                onClick={() => router.push('/admin/cron')}
+                onClick={() => router.push('/admin/admin/cron')}
                 className="flex items-center gap-2 px-4 py-3 bg-primary/10 text-primary rounded-lg hover:bg-blue-200"
               >
                 <span></span>
                 <span>{t('adminMissions', 'triggerAutoValidation')}</span>
               </button>
               <button
-                onClick={() => router.push('/admin/monitoring')}
+                onClick={() => router.push('/admin/admin/monitoring')}
                 className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
               >
                 <span></span>
                 <span>{t('adminMissions', 'viewMonitoring')}</span>
               </button>
               <button
-                onClick={() => router.push('/admin/analytics')}
+                onClick={() => router.push('/admin/admin/analytics')}
                 className="flex items-center gap-2 px-4 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
               >
                 <span></span>

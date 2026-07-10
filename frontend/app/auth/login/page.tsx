@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/lib/hooks/useToast';
 import { authApi } from '@/lib/api/auth';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,8 +23,14 @@ export default function LoginPage() {
   });
 
   const handleOAuthLogin = (provider: 'google' | 'facebook' | 'apple') => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    window.location.href = `${apiUrl}/auth/${provider}`;
+    // Base OAuth calculée depuis l'origine courante (ex: https://krafolt.com) afin de ne
+    // jamais renvoyer vers une IP/URL codée en dur : le redirect_uri suit le domaine réel.
+    // NEXT_PUBLIC_API_URL ne sert que de repli en dev local (API sur un autre port).
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const isLocal = /localhost|127\.0\.0\.1/.test(origin);
+    const base =
+      (!isLocal && origin) || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    window.location.href = `${base}/auth/${provider}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +87,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-muted flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">

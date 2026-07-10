@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -86,7 +87,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-muted flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
@@ -228,11 +232,11 @@ export default function RegisterPage() {
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground">
                 {t('auth', 'acceptTerms')}{' '}
-                <Link href="/terms" className="text-primary hover:underline">
+                <Link href="/legal/terms" className="text-primary hover:underline">
                   {t('auth', 'termsOfService')}
                 </Link>{' '}
                 et la{' '}
-                <Link href="/privacy" className="text-primary hover:underline">
+                <Link href="/legal/privacy" className="text-primary hover:underline">
                   {t('auth', 'privacyPolicy')}
                 </Link>
               </label>

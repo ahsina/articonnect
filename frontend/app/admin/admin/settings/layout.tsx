@@ -13,20 +13,20 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const router = useRouter();
 
   const settingsNavItems: { href: string; label: string; icon: LucideIcon }[] = [
-    { href: '/admin/settings', label: t('adminSettingsNav', 'overview') || 'Overview', icon: Settings },
-    { href: '/admin/settings/fees', label: t('adminSettingsNav', 'platformFees') || 'Platform Fees', icon: Percent },
-    { href: '/admin/settings/payments', label: t('adminSettingsNav', 'payments') || 'Payments', icon: CreditCard },
-    { href: '/admin/settings/tax', label: t('adminSettingsNav', 'taxRates') || 'VAT/Tax Rates', icon: Receipt },
-    { href: '/admin/settings/missions', label: t('adminSettingsNav', 'missions') || 'Missions', icon: ClipboardList },
-    { href: '/admin/settings/reputation', label: t('adminSettingsNav', 'reputationRules') || 'Reputation Rules', icon: Star },
-    { href: '/admin/settings/no-show', label: t('adminSettingsNav', 'noShowConfig') || 'No-Show Config', icon: Ban },
-    { href: '/admin/settings/limits', label: t('adminSettingsNav', 'rateLimits') || 'Rate Limits', icon: Gauge },
-    { href: '/admin/settings/notifications', label: t('adminSettingsNav', 'notifications') || 'Notifications', icon: Bell },
-    { href: '/admin/settings/content', label: t('adminSettingsNav', 'contentModeration') || 'Content Moderation', icon: FileText },
-    { href: '/admin/settings/users', label: t('adminSettingsNav', 'userSettings') || 'User Settings', icon: Users },
-    { href: '/admin/settings/integrations', label: t('adminSettingsNav', 'integrations') || 'Integrations', icon: Plug },
-    { href: '/admin/settings/compliance', label: t('adminSettingsNav', 'compliance') || 'Compliance', icon: ScrollText },
-    { href: '/admin/settings/performance', label: t('adminSettingsNav', 'performance') || 'Performance', icon: Rocket },
+    { href: '/admin/admin/settings', label: t('adminSettingsNav', 'overview') || 'Overview', icon: Settings },
+    { href: '/admin/admin/settings/fees', label: t('adminSettingsNav', 'platformFees') || 'Platform Fees', icon: Percent },
+    { href: '/admin/admin/settings/payments', label: t('adminSettingsNav', 'payments') || 'Payments', icon: CreditCard },
+    { href: '/admin/admin/settings/tax', label: t('adminSettingsNav', 'taxRates') || 'VAT/Tax Rates', icon: Receipt },
+    { href: '/admin/admin/settings/missions', label: t('adminSettingsNav', 'missions') || 'Missions', icon: ClipboardList },
+    { href: '/admin/admin/settings/reputation', label: t('adminSettingsNav', 'reputationRules') || 'Reputation Rules', icon: Star },
+    { href: '/admin/admin/settings/no-show', label: t('adminSettingsNav', 'noShowConfig') || 'No-Show Config', icon: Ban },
+    { href: '/admin/admin/settings/limits', label: t('adminSettingsNav', 'rateLimits') || 'Rate Limits', icon: Gauge },
+    { href: '/admin/admin/settings/notifications', label: t('adminSettingsNav', 'notifications') || 'Notifications', icon: Bell },
+    { href: '/admin/admin/settings/content', label: t('adminSettingsNav', 'contentModeration') || 'Content Moderation', icon: FileText },
+    { href: '/admin/admin/settings/users', label: t('adminSettingsNav', 'userSettings') || 'User Settings', icon: Users },
+    { href: '/admin/admin/settings/integrations', label: t('adminSettingsNav', 'integrations') || 'Integrations', icon: Plug },
+    { href: '/admin/admin/settings/compliance', label: t('adminSettingsNav', 'compliance') || 'Compliance', icon: ScrollText },
+    { href: '/admin/admin/settings/performance', label: t('adminSettingsNav', 'performance') || 'Performance', icon: Rocket },
   ];
 
   return (
@@ -36,7 +36,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push('/admin/admin/dashboard')}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-4 w-4" /> {t('adminSettingsNav', 'backToDashboard') || 'Back to Dashboard'}

@@ -253,7 +253,7 @@ export default function FraudSettingsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push('/admin/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
               {t('adminFraudSettings', 'back')}

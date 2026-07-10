@@ -10,19 +10,19 @@ const settingsCategories = [
     descriptionKey: 'financialSettingsDesc',
     items: [
       {
-        href: '/admin/settings/fees',
+        href: '/admin/admin/settings/fees',
         labelKey: 'platformFees',
         descriptionKey: 'platformFeesDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/payments',
+        href: '/admin/admin/settings/payments',
         labelKey: 'paymentConfig',
         descriptionKey: 'paymentConfigDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/tax',
+        href: '/admin/admin/settings/tax',
         labelKey: 'taxRates',
         descriptionKey: 'taxRatesDesc',
         icon: '',
@@ -34,19 +34,19 @@ const settingsCategories = [
     descriptionKey: 'missionReputationDesc',
     items: [
       {
-        href: '/admin/settings/missions',
+        href: '/admin/admin/settings/missions',
         labelKey: 'missionSettings',
         descriptionKey: 'missionSettingsDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/reputation',
+        href: '/admin/admin/settings/reputation',
         labelKey: 'reputationRules',
         descriptionKey: 'reputationRulesDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/no-show',
+        href: '/admin/admin/settings/no-show',
         labelKey: 'noShowConfig',
         descriptionKey: 'noShowConfigDesc',
         icon: '',
@@ -58,19 +58,19 @@ const settingsCategories = [
     descriptionKey: 'securityLimitsDesc',
     items: [
       {
-        href: '/admin/settings/limits',
+        href: '/admin/admin/settings/limits',
         labelKey: 'rateLimitsSecurity',
         descriptionKey: 'rateLimitsSecurityDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/content',
+        href: '/admin/admin/settings/content',
         labelKey: 'contentModeration',
         descriptionKey: 'contentModerationDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/compliance',
+        href: '/admin/admin/settings/compliance',
         labelKey: 'complianceSettings',
         descriptionKey: 'complianceSettingsDesc',
         icon: '',
@@ -82,13 +82,13 @@ const settingsCategories = [
     descriptionKey: 'usersCommunicationsDesc',
     items: [
       {
-        href: '/admin/settings/users',
+        href: '/admin/admin/settings/users',
         labelKey: 'userSettings',
         descriptionKey: 'userSettingsDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/notifications',
+        href: '/admin/admin/settings/notifications',
         labelKey: 'notificationSettings',
         descriptionKey: 'notificationSettingsDesc',
         icon: '',
@@ -100,13 +100,13 @@ const settingsCategories = [
     descriptionKey: 'technicalSettingsDesc',
     items: [
       {
-        href: '/admin/settings/integrations',
+        href: '/admin/admin/settings/integrations',
         labelKey: 'integrations',
         descriptionKey: 'integrationsDesc',
         icon: '',
       },
       {
-        href: '/admin/settings/performance',
+        href: '/admin/admin/settings/performance',
         labelKey: 'performanceCache',
         descriptionKey: 'performanceCacheDesc',
         icon: '',

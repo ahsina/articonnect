@@ -1,0 +1,146 @@
+[
+ {
+  "zone": "ROLE CLIENT",
+  "path": "/client/artisans",
+  "severity": "high",
+  "kind": "screen-crash",
+  "detail": "The artisan directory (list) page crashes to the global error boundary showing 'Oups / Une erreur est survenue / Quelque chose s'est mal passé de notre côté'. Root cause is a client-side TypeError 'Cannot read properties of undefined (reading 0)' thrown inside an Array.map in the page chunk. The page renders no artisan content (only 1 link / 1 button = the error-boundary retry UI). Because Next.js prefetches this route chunk from the nav, the same console error is also logged on nearly every other client page (dashboard, missions, marketplace, cart, invoices, favorites, messages, disputes, profile, settings, etc.) — all instances trace to this one broken page.",
+  "evidence": "Body text: 'Oups | Une erreur est survenue | Quelque chose s'est mal passé de notre côté'. Console: TypeError: Cannot read properties of undefined (reading '0') at app/client/artisans/page-5c25d66c9c478fa2.js:1:4976 at Array.map. Note: the artisan DETAIL page /client/artisans/[id] itself works (renders 8 links/13 buttons, no crash)."
+ },
+ {
+  "zone": "ROLE CLIENT",
+  "path": "/client/marketplace/[id]",
+  "severity": "high",
+  "kind": "screen-crash",
+  "detail": "The product detail page crashes to the global error boundary ('Oups / Une erreur est survenue'). Root cause is a client-side TypeError 'Cannot read properties of undefined (reading reduce)' in the marketplace/[id] page chunk. Tested with a real product id resolved from GET /api/marketplace/products (c83b503a-8484-4b02-a811-8efa653eac57, price 59.9, status ACTIVE) so this is not a missing-data case — the page component fails to render valid product data. No product can be viewed in detail from the marketplace.",
+  "evidence": "Body renders only the error boundary. Console: TypeError: Cannot read properties of undefined (reading 'reduce') at u (app/client/marketplace/[id]/page-9f99f2c...). Also emits 401 GET /api/users/profile and 401 GET /api/i18n/user/locale on this route."
+ },
+ {
+  "zone": "ROLE CLIENT",
+  "path": "/client/profile",
+  "severity": "high",
+  "kind": "api-error",
+  "detail": "The 'Enregistrer' (Save) button on the client profile page always fails with HTTP 400. The frontend PUTs address, city, postalCode and country fields that the backend PUT /users/profile DTO rejects (whitelist validation). A client can never save their profile. Console logs 'Error updating profile'.",
+  "evidence": "PUT /api/users/profile -> 400. Request body: {\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"phone\":\"+352621123456\",\"address\":\"\",\"city\":\"\",\"postalCode\":\"\",\"country\":\"LU\"}. Response: {\"error\":\"Bad Request\",\"message\":[\"property address should not exist\",\"property city should not exist\",\"property postalCode should not exist\",\"property country should not exist\"]}"
+ },
+ {
+  "zone": "ROLE CLIENT",
+  "path": "/client/orders",
+  "severity": "medium",
+  "kind": "button-dead",
+  "detail": "The 'Laisser un avis' (leave a review) button does not open any review form/modal. The button's own hit area is empty (elementFromPoint returns nothing at its center) and the click is captured by an enclosing link that navigates to a marketplace product detail page (/client/marketplace/[id]) — which itself crashes (see finding #2). So the primary post-order action (rating the order) is unreachable.",
+  "evidence": "Click on 'Laisser un avis' changes URL from /client/orders to /client/marketplace/3cf4b9b6-1c91-4a0e-b46b-c14034347771 instead of showing review UI; no dialog/rating widget appears (dialog count 0, no review words in DOM). Crawler flagged it as '[clic KO] Laisser un avis'."
+ },
+ {
+  "zone": "ROLE CLIENT",
+  "path": "/client/payment/[missionId]",
+  "severity": "medium",
+  "kind": "api-error",
+  "detail": "The payment page auto-fires POST /api/payments/create-intent on load and retries it repeatedly (~9 identical calls), every one returning HTTP 400 'Prix non défini ou sous le plancher (1€)'. For the provided client mission the payment intent can never be created, and the retry storm is itself a defect (no backoff / stops). Payment cannot be initialized for this mission.",
+  "evidence": "9x POST /api/payments/create-intent -> 400. Request {\"missionId\":\"b3b241d7-f0bd-49f6-8cf7-889f85c2a634\"}. Response {\"error\":\"Bad Request\",\"message\":\"Prix non défini ou sous le plancher (1€)\"}. Page still shows 'Paiement de la mission / Paiement sécurisé' header."
+ },
+ {
+  "zone": "ROLE ARTISAN coeur (role=artisan)",
+  "path": "/artisan/missions/b08927dd-7a77-46c0-8004-ca957428a538",
+  "severity": "high",
+  "kind": "screen-crash",
+  "detail": "L'onglet 'Chronologie' (timeline) du detail mission fait crasher TOUTE la page dans l'error boundary global 'Oups — Une erreur est survenue' (boutons Reessayer/Accueil). L'onglet 'Details' s'affiche bien, mais des qu'on clique 'Chronologie' une TypeError 'N.map is not a function' est levee (le composant timeline mappe sur une valeur non-array). Reproduit systematiquement (2/2). Regression grave car 'Chronologie' est un onglet central du detail mission.",
+  "evidence": "consoleError repete: 'TypeError: N.map is not a function at f (.../app/artisan/missions/%5Bid%5D/page-1885b57d8e02092c.js:1:26778)'. Apres clic sur l'onglet Chronologie, la page entiere est remplacee par la page d'erreur 'Oups / Une erreur est survenue' (capture chrono.png)."
+ },
+ {
+  "zone": "ROLE ARTISAN coeur (role=artisan)",
+  "path": "/artisan/missions/b08927dd-7a77-46c0-8004-ca957428a538",
+  "severity": "low",
+  "kind": "data-broken",
+  "detail": "Dans 'Informations sur la mission', la duree estimee s'affiche 'Durée est. hours' (mot 'hours' sans nombre) et le budget 'EUR —' quand la mission a des valeurs nulles. Rendu maladroit (unite affichee sans valeur). Impact faible, lie a des donnees de demo nulles.",
+  "evidence": "Capture mission.png: 'Durée est.' -> 'hours' ; 'Budget' -> 'EUR —'."
+ },
+ {
+  "zone": "ARTISAN ENTREPRISE + employé + sous-traitant (role=artisan)",
+  "path": "/artisan/company/employees/[id]",
+  "severity": "high",
+  "kind": "screen-crash",
+  "detail": "Le détail d'un employé plante complètement : la page affiche l'error-boundary 'Oups — Une erreur est survenue' (page blanche, aucun contenu). Cause : l'API GET /api/employees/{id}/stats renvoie averageRating sous forme de STRING (\"0\") et le composant appelle averageRating.toFixed() -> TypeError: A.averageRating.toFixed is not a function. Reproduit avec l'employé fbb24b3e-2073-4286-9ab8-a3542c9e3e7f.",
+  "evidence": "console: 'TypeError: A.averageRating.toFixed is not a function at p (.../employees/[id]/page-...js)'. API 200 body: {\"totalMissions\":61,...,\"averageRating\":\"0\",...}. bodyText de la page = 'Oups | Une erreur est survenue | Quelque chose s'est mal passé de notre côté. Vous pouvez réessayer.' (302 chars)."
+ },
+ {
+  "zone": "ARTISAN ENTREPRISE + employé + sous-traitant (role=artisan)",
+  "path": "/artisan/company/employees/[id]/shifts",
+  "severity": "high",
+  "kind": "screen-crash",
+  "detail": "Le planning/pointages d'un employé plante complètement : page blanche error-boundary 'Oups — Une erreur est survenue'. Cause : TypeError: f.filter is not a function -> le code attend un tableau mais l'API GET /api/employee-features/employee/{id}/schedule renvoie un OBJET {employee,period,summary,shifts:[]} (le tableau est sous .shifts, le front filtre l'objet). Reproduit avec fbb24b3e-2073-4286-9ab8-a3542c9e3e7f.",
+  "evidence": "console: 'TypeError: f.filter is not a function at E (.../employees/[id]/shifts/page-44cc99322d14d633.js)'. API schedule 200 = {\"employee\":{...},\"period\":{...},\"summary\":{...},\"shifts\":[]}. bodyText page = 'Oups | Une erreur est survenue ...' (302 chars)."
+ },
+ {
+  "zone": "ARTISAN ENTREPRISE + employé + sous-traitant (role=artisan)",
+  "path": "/artisan/company/settings",
+  "severity": "high",
+  "kind": "api-error",
+  "detail": "L'enregistrement des Paramètres de l'entreprise échoue en 400 : le bouton central de sauvegarde est mort. Le front envoie un champ 'country' que le DTO backend refuse (validation whitelist) -> PUT /api/companies/{id} 400 'property country should not exist'. Un second endpoint de sauvegarde, PUT /api/companies/{id}/settings, renvoie aussi 400 (console 'Error saving settings: Z'). Aucune modification des infos entreprise n'est enregistrable.",
+  "evidence": "payload PUT /api/companies/df12f671-4798-4782-be7c-7da8834eccab = {companyName,description,website,baseAddress,city,postalCode,country:'LU',serviceRadius:20} ; réponse 400 {\"message\":[\"property country should not exist\"]}. Crawl a aussi capté '400 PUT /api/companies/{id}/settings' + consoleError 'Error saving settings: Z' au clic sur 'Enregistrer les modifications'."
+ },
+ {
+  "zone": "ARTISAN ENTREPRISE + employé + sous-traitant (role=artisan)",
+  "path": "/employee/chat",
+  "severity": "medium",
+  "kind": "api-error",
+  "detail": "L'espace employé appelle un endpoint inexistant : GET /api/auth/me renvoie 404 (répété). Avec une session non-employé (artisan/owner), la page /employee/chat rebondit sur l'écran de connexion au lieu d'afficher le chat. Les boutons '[404]' détectés par le crawl sont en réalité les boutons OAuth (Google/Facebook/Apple) de cette page de login, qui pointent vers des providers externes avec des client_id de démo (Google renvoie une OAuth policy error) — connu (clés démo). Le défaut réel isolable ici est le 404 sur /api/auth/me.",
+  "evidence": "4xx sur /employee/chat: '404 GET /api/auth/me' (x3), '401 GET /api/users/profile', '401 GET /api/i18n/user/locale'. bodyText = page de connexion ('Connectez-vous à votre compte Krafolt'). Boutons icônes -> accounts.google.com/signin/oauth/error (client_id=demo-google-client-id), facebook.com/dialog/oauth (client_id=demo-facebook-app-id), appleid.apple.com (client_id=com.articonnect.demo)."
+ },
+ {
+  "zone": "ADMIN coeur (role=admin)",
+  "path": "/admin/admin/disputes",
+  "severity": "high",
+  "kind": "button-dead",
+  "detail": "Le bouton 'Retour' en haut de page renvoie vers /admin/dashboard (préfixe admin simple) qui est un 404 'Page introuvable'. Défaut SYSTÉMIQUE: le même bouton 'Retour' (router.push('/admin/dashboard')) est présent et cassé sur ~13 sous-pages admin: disputes, cron, specialties, reputation, monitoring, fraud-settings, feature-flags, no-shows, certifications, verifications, audit-logs, missions, et settings/layout. La vraie route est /admin/admin/dashboard (double 'admin'). Cause racine: le préfixe /admin/admin est omis dans les router.push.",
+  "evidence": "Clic live sur 'Retour' depuis /admin/admin/disputes -> url=https://krafolt.com/admin/dashboard, 404=true (texte 'Page introuvable'). grep: router.push('/admin/dashboard') dans 13 fichiers admin. Aucun rewrite/middleware Next ne remappe cette URL (next.config sans rewrites, pas de middleware.ts)."
+ },
+ {
+  "zone": "ADMIN coeur (role=admin)",
+  "path": "/admin/admin/dashboard",
+  "severity": "high",
+  "kind": "button-dead",
+  "detail": "Le grand bouton pleine largeur mis en avant 'Paramètres de la plateforme' (onClick router.push('/admin/settings')) mène à /admin/settings qui est un 404. La vraie page settings est /admin/admin/settings. De plus le bouton n'est pas cliquable par pointer (le click Playwright expire à 5000ms, un élément intercepte les événements). Point d'entrée central vers les réglages plateforme = mort.",
+  "evidence": "Navigation directe vers /admin/settings -> HTTP 404 + 'Page introuvable'. Source: frontend/app/admin/admin/dashboard/page.tsx:272 onClick={()=>router.push('/admin/settings')}. La page réelle existe: frontend/app/admin/admin/settings/page.tsx. Clic normal et force-click sur le bouton n'aboutissent pas (timeout 5000ms / pas de navigation)."
+ },
+ {
+  "zone": "ADMIN coeur (role=admin)",
+  "path": "/admin/admin/cron",
+  "severity": "low",
+  "kind": "data-broken",
+  "detail": "Le crawler capte une TypeError console au chargement: \"Cannot read properties of undefined (reading 'length')\" (chunk cron/page). Non reproductible en attente networkidle et la page s'affiche entièrement (santé 5/5 jobs actifs, liste des jobs, prochaines exécutions). Impact visible nul; probable erreur transitoire de rendu/StrictMode. À corriger mais pas bloquant.",
+  "evidence": "crawl.js: 2x consoleError 'Cannot read properties of undefined (reading length)' at c (chunks/app/admin/admin/cron/page-...). Repro avec waitUntil networkidle: 0 erreur console, corps de page complet rendu."
+ },
+ {
+  "zone": "AUTH + LEGAL + PARTAGE",
+  "path": "/auth/register",
+  "severity": "medium",
+  "kind": "bad-href",
+  "detail": "Les liens du consentement d'inscription 'terms of service' et 'privacy policy' pointent vers /terms et /privacy, routes inexistantes (les vraies pages sont /legal/terms et /legal/privacy). Un utilisateur qui clique dessus pendant l'inscription tombe sur un 404.",
+  "evidence": "crawl badHrefs: [\"/terms (terms of service)\",\"/privacy (privacy policy)\"] ; routes.json ne contient que /legal/terms et /legal/privacy, pas /terms ni /privacy."
+ },
+ {
+  "zone": "AUTH + LEGAL + PARTAGE",
+  "path": "/auth/login",
+  "severity": "medium",
+  "kind": "button-dead",
+  "detail": "Le CTA principal 'Create account' est recouvert par la banniere de consentement cookies (bas de page) et n'est pas cliquable au premier chargement : le clic timeout car document.elementFromPoint au centre du bouton renvoie le <p> de la banniere cookies. Apres avoir clique Accepter/Refuser, le bouton fonctionne et mene bien vers /auth/register.",
+  "evidence": "invca.js : element at CA center = '<p class=\"text-sm text-muted-foreground\">Nous utilisons des cookies...' ; 'CA still KO' avant acceptation, puis apres Accepter: /auth/login -> /auth/register. crawl a aussi remonte [clic KO] Create account."
+ },
+ {
+  "zone": "AUTH + LEGAL + PARTAGE",
+  "path": "/auth/login",
+  "severity": "medium",
+  "kind": "button-dead",
+  "detail": "Les 3 boutons de connexion sociale (Google, Facebook, Apple) menent a des pages d'erreur du fournisseur OAuth. Ils utilisent des identifiants demo (client_id=demo-google-client-id, demo-facebook-app-id, client_id Apple com.articonnect.demo) ET un redirect_uri pointant vers https://149.56.131.178:9443/api/auth/.../callback au lieu de https://krafolt.com. Google renvoie 'invalid_request / this app doesn't comply with Google OAuth 2.0 policy'. Boutons en impasse pour l'utilisateur (le crawl les a signales [404] car l'URL Google contient /error).",
+  "evidence": "invclick.js btn1 -> accounts.google.com/signin/oauth/error?authError=... redirect_uri=https://149.56.131.178:9443/api/auth/google/callback&client_id=demo-google-client-id ; btn2 -> facebook.com/.../dialog/oauth?...client_id=demo-facebook-app-id ; btn3 -> appleid.apple.com/auth/authorize?...client_id=com.articonnect.demo. Le redirect_uri IP:9443 casserait l'OAuth meme avec de vraies cles."
+ },
+ {
+  "zone": "AUTH + LEGAL + PARTAGE",
+  "path": "/auth/login",
+  "severity": "medium",
+  "kind": "data-broken",
+  "detail": "Aucun selecteur de langue present sur les pages auth (/auth/login et /auth/register) alors que la tache demande de le verifier et que le switcher est cense etre 'rendu partout'. De plus le formulaire s'affiche en anglais ('Login', 'Create account', 'Forgot password') tandis que la banniere cookies est en francais : rendu mixte EN/FR sans moyen de changer de langue.",
+  "evidence": "invlang2.js : seuls boutons = Login, 3 icones OAuth (svg, sans texte), Create account, Refuser, Accepter ; 0 select, 0 lien lang, aucun bouton avec title/aria-label de langue ni globe. Textes form en EN + banniere cookies 'Nous utilisons des cookies...' en FR."
+ }
+]

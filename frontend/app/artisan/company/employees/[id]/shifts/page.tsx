@@ -73,7 +73,11 @@ export default function EmployeeShiftsPage() {
         }),
       ]);
       setEmployee(employeeData);
-      setShifts(shiftsData || []);
+      // API may return either a raw array or an object { employee, period, summary, shifts: [] }
+      const shiftsList = Array.isArray(shiftsData)
+        ? shiftsData
+        : ((shiftsData as { shifts?: EmployeeShift[] })?.shifts ?? []);
+      setShifts(Array.isArray(shiftsList) ? shiftsList : []);
     } catch (error) {
       console.error('Error loading shift data:', error);
     } finally {

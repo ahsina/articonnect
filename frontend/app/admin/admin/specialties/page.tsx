@@ -175,7 +175,7 @@ export default function SpecialtiesPage() {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push('/admin/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
               {t('adminSpecialties', 'back')}

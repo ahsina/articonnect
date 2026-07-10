@@ -33,47 +33,47 @@ interface NavItemGroup {
 type NavItem = NavItemLink | NavItemGroup;
 
 const adminNavItems: NavItem[] = [
-  { href: '/admin/dashboard', label: 'dashboard', icon: LayoutDashboard },
-  { href: '/admin/users', label: 'users', icon: Users },
-  { href: '/admin/missions', label: 'missions', icon: ClipboardList },
-  { href: '/admin/analytics', label: 'analytics', icon: TrendingUp },
+  { href: '/admin/admin/dashboard', label: 'dashboard', icon: LayoutDashboard },
+  { href: '/admin/admin/users', label: 'users', icon: Users },
+  { href: '/admin/admin/missions', label: 'missions', icon: ClipboardList },
+  { href: '/admin/admin/analytics', label: 'analytics', icon: TrendingUp },
   {
     label: 'moderation',
     icon: ShieldCheck,
     children: [
-      { href: '/admin/moderation', label: 'reports', icon: Eye },
-      { href: '/admin/disputes', label: 'disputes', icon: AlertTriangle },
-      { href: '/admin/no-shows', label: 'noShows', icon: Ban },
+      { href: '/admin/admin/moderation', label: 'reports', icon: Eye },
+      { href: '/admin/admin/disputes', label: 'disputes', icon: AlertTriangle },
+      { href: '/admin/admin/no-shows', label: 'noShows', icon: Ban },
     ],
   },
   {
     label: 'verification',
     icon: BadgeCheck,
     children: [
-      { href: '/admin/verifications', label: 'kycVerification', icon: FileCheck },
-      { href: '/admin/certifications', label: 'certifications', icon: Award },
+      { href: '/admin/admin/verifications', label: 'kycVerification', icon: FileCheck },
+      { href: '/admin/admin/certifications', label: 'certifications', icon: Award },
     ],
   },
   {
     label: 'platform',
     icon: Wrench,
     children: [
-      { href: '/admin/specialties', label: 'specialties', icon: Tags },
-      { href: '/admin/reputation', label: 'reputation', icon: Star },
-      { href: '/admin/feature-flags', label: 'featureFlags', icon: Flag },
+      { href: '/admin/admin/specialties', label: 'specialties', icon: Tags },
+      { href: '/admin/admin/reputation', label: 'reputation', icon: Star },
+      { href: '/admin/admin/feature-flags', label: 'featureFlags', icon: Flag },
     ],
   },
   {
     label: 'system',
     icon: Server,
     children: [
-      { href: '/admin/monitoring', label: 'monitoring', icon: Activity },
-      { href: '/admin/cron', label: 'cronJobs', icon: Timer },
-      { href: '/admin/fraud-settings', label: 'fraudSettings', icon: ShieldAlert },
-      { href: '/admin/audit-logs', label: 'auditLogs', icon: ScrollText },
+      { href: '/admin/admin/monitoring', label: 'monitoring', icon: Activity },
+      { href: '/admin/admin/cron', label: 'cronJobs', icon: Timer },
+      { href: '/admin/admin/fraud-settings', label: 'fraudSettings', icon: ShieldAlert },
+      { href: '/admin/admin/audit-logs', label: 'auditLogs', icon: ScrollText },
     ],
   },
-  { href: '/admin/settings', label: 'settings', icon: Settings, highlight: true },
+  { href: '/admin/admin/settings', label: 'settings', icon: Settings, highlight: true },
 ];
 
 function isNavGroup(item: NavItem): item is NavItemGroup {
@@ -94,11 +94,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const isActive = (href: string) => {
-    if (href === '/admin/dashboard') {
-      return pathname === '/admin/dashboard' || pathname === '/admin';
+    if (href === '/admin/admin/dashboard') {
+      return pathname === '/admin/admin/dashboard' || pathname === '/admin/admin';
     }
-    if (href === '/admin/settings') {
-      return pathname.startsWith('/admin/settings');
+    if (href === '/admin/admin/settings') {
+      return pathname.startsWith('/admin/admin/settings');
     }
     return pathname === href || pathname.startsWith(href + '/');
   };

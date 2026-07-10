@@ -77,6 +77,10 @@ export class UserService {
         firstName: updateDto.firstName,
         lastName: updateDto.lastName,
         phone: updateDto.phone,
+        address: updateDto.address,
+        city: updateDto.city,
+        postalCode: updateDto.postalCode,
+        country: updateDto.country,
       },
       select: {
         id: true,
@@ -86,6 +90,10 @@ export class UserService {
         phone: true,
         avatar: true,
         role: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        country: true,
       },
     });
 

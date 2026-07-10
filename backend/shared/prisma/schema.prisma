@@ -44,6 +44,12 @@ model User {
   avatar    String? // URL S3
   fcmTokens String[] @default([]) // Firebase Cloud Messaging tokens for push notifications
 
+  // Adresse de contact (profil client) — champs simples optionnels
+  address    String?
+  city       String?
+  postalCode String?
+  country    String? // FR, LU, BE, ...
+
   // Outlook Calendar Integration
   outlookAccessToken  String? // OAuth access token for Microsoft Graph API
   outlookRefreshToken String? // OAuth refresh token

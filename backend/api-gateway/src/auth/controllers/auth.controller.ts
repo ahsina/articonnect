@@ -178,6 +178,17 @@ export class AuthController {
     return req.user;
   }
 
+  // Alias GET pour les clients (espace employé) qui interrogent GET /auth/me.
+  // Additif : même contrat que POST /auth/me, protégé par le même guard JWT.
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current user (GET alias)' })
+  async getMe(@Request() req) {
+    return req.user;
+  }
+
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

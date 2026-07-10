@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { marketplaceApi } from '@/lib/api/marketplace';
+import { StarRating } from '@/components/ui/star-rating';
+import apiClient from '@/lib/api/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderItem {
@@ -56,6 +58,44 @@ export default function ClientOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // Avis produit (modal)
+  const [reviewProduct, setReviewProduct] = useState<{ productId: string; name: string } | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [reviewDone, setReviewDone] = useState(false);
+
+  const openReview = (order: Order) => {
+    const item = order.items?.[0];
+    if (!item) return;
+    setReviewProduct({ productId: item.productId, name: item.product?.name || t('orders', 'order') });
+    setReviewRating(0);
+    setReviewComment('');
+    setReviewError('');
+    setReviewDone(false);
+  };
+
+  const submitReview = async () => {
+    if (!reviewProduct) return;
+    if (reviewRating === 0) {
+      setReviewError('Veuillez sélectionner une note');
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewError('');
+    try {
+      await apiClient.post(`/marketplace/products/${reviewProduct.productId}/reviews`, {
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+      setReviewDone(true);
+    } catch (err: any) {
+      setReviewError(err?.response?.data?.message || "Erreur lors de l'envoi de l'avis");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -309,7 +349,11 @@ export default function ClientOrdersPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => order.items?.[0] && router.push(`/client/marketplace/${order.items[0].productId}`)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openReview(order);
+                        }}
                       >
                         {t('orders', 'leaveReview')}
                       </Button>
@@ -446,6 +490,65 @@ export default function ClientOrdersPage() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Review Modal */}
+        {reviewProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-lg">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{t('orders', 'leaveReview')}</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => setReviewProduct(null)}>
+                    ✕
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {reviewDone ? (
+                  <div className="space-y-4 text-center py-4">
+                    <p className="text-foreground font-medium">Merci pour votre avis !</p>
+                    <Button onClick={() => setReviewProduct(null)}>Fermer</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">{reviewProduct.name}</p>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Note *</label>
+                      <StarRating rating={reviewRating} onRatingChange={setReviewRating} size="lg" />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Votre avis</label>
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                        placeholder="Décrivez votre expérience..."
+                      />
+                    </div>
+
+                    {reviewError && (
+                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <p className="text-sm text-red-600">{reviewError}</p>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <Button variant="outline" onClick={() => setReviewProduct(null)} disabled={reviewSubmitting}>
+                        {t('common', 'cancel')}
+                      </Button>
+                      <Button onClick={submitReview} disabled={reviewSubmitting || reviewRating === 0}>
+                        {reviewSubmitting ? t('common', 'sending') : 'Publier'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

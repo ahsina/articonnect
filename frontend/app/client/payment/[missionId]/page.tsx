@@ -16,6 +16,10 @@ export default function MissionPaymentPage() {
   const elementsRef = useRef<StripeElements | null>(null);
   const stripeRef = useRef<Stripe | null>(null);
   const mountedRef = useRef(false);
+  // Guard : ne demander un PaymentIntent qu'UNE seule fois (la promesse est mise en cache,
+  // donc un ré-render / re-run de l'effet réutilise le même appel — même en cas d'erreur 400,
+  // on ne relance jamais la requête en boucle).
+  const intentRef = useRef<Promise<string | undefined> | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -31,9 +35,15 @@ export default function MissionPaymentPage() {
           setLoading(false);
           return;
         }
-        // 1) Demander un PaymentIntent au backend
-        const { data } = await apiClient.post('/payments/create-intent', { missionId });
-        const clientSecret: string | undefined = data?.clientSecret;
+        // 1) Demander un PaymentIntent au backend — UNE seule fois (promesse mise en cache).
+        //    En cas d'échec (400 : prix non défini, etc.) on réutilise la promesse rejetée
+        //    au lieu de relancer l'appel à chaque render.
+        if (!intentRef.current) {
+          intentRef.current = apiClient
+            .post('/payments/create-intent', { missionId })
+            .then((res) => res.data?.clientSecret as string | undefined);
+        }
+        const clientSecret = await intentRef.current;
         if (!clientSecret) throw new Error(t('clientPayment', 'noClientSecret'));
 
         // 2) Charger Stripe + monter le Payment Element

@@ -224,7 +224,7 @@ export default function EmployeeDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-primary/10 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-primary">
-                    {stats?.totalMissions || 0}
+                    {Number(stats?.totalMissions ?? 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {t('company', 'totalMissions') || 'Total Missions'}
@@ -232,7 +232,7 @@ export default function EmployeeDetailPage() {
                 </div>
                 <div className="bg-green-100 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-foreground">
-                    {stats?.completedMissions || 0}
+                    {Number(stats?.completedMissions ?? 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {t('company', 'completed') || 'Completed'}
@@ -240,13 +240,13 @@ export default function EmployeeDetailPage() {
                 </div>
                 <div className="bg-amber-100 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-foreground">
-                    {stats?.activeMissions || 0}
+                    {Number(stats?.activeMissions ?? 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">{t('company', 'active') || 'Active'}</div>
                 </div>
                 <div className="bg-purple-100 p-4 rounded-lg">
                   <div className="text-2xl font-bold text-foreground">
-                    {stats?.averageRating ? stats.averageRating.toFixed(1) : 'N/A'}
+                    {stats?.averageRating != null ? Number(stats.averageRating).toFixed(1) : 'N/A'}
                   </div>
                   <div className="text-sm text-muted-foreground">{t('company', 'rating') || 'Rating'}</div>
                 </div>
@@ -266,7 +266,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'totalEarnings') || 'Total Earnings'}
                   </span>
                   <span className="font-semibold">
-                    €{stats?.totalEarnings?.toLocaleString() || '0'}
+                    €{(Number(stats?.totalEarnings ?? 0) || 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
@@ -274,7 +274,7 @@ export default function EmployeeDetailPage() {
                     {t('company', 'pendingPayment') || 'Pending Payment'}
                   </span>
                   <span className="font-semibold">
-                    €{stats?.pendingEarnings?.toLocaleString() || '0'}
+                    €{(Number(stats?.pendingEarnings ?? 0) || 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">

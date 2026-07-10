@@ -133,7 +133,7 @@ export default function DisputesPage() {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push('/admin/admin/dashboard')}
               className="text-muted-foreground hover:text-foreground"
             >
               {t('adminDisputes', 'back')}

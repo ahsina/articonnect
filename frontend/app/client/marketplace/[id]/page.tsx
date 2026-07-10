@@ -52,6 +52,38 @@ interface ProductReview {
   };
 }
 
+// Guarantees array/object fields exist so the page never crashes on a
+// partial API response (missing reviews / images / variants / artisan, etc.)
+function normalizeProduct(data: any): Product {
+  const raw = data || {};
+  return {
+    ...raw,
+    id: raw.id,
+    name: raw.name || '',
+    description: raw.description || '',
+    price: Number(raw.price) || 0,
+    category: raw.category || '',
+    images: Array.isArray(raw.images) ? raw.images : [],
+    stock: Number(raw.stock) || 0,
+    variants: Array.isArray(raw.variants) ? raw.variants : [],
+    specifications:
+      raw.specifications && typeof raw.specifications === 'object'
+        ? raw.specifications
+        : {},
+    artisan: {
+      id: raw.artisan?.id || '',
+      firstName: raw.artisan?.firstName || '',
+      lastName: raw.artisan?.lastName || '',
+      companyName: raw.artisan?.companyName || '',
+      city: raw.artisan?.city || '',
+      avatar: raw.artisan?.avatar,
+      rating: Number(raw.artisan?.rating) || 0,
+    },
+    reviews: Array.isArray(raw.reviews) ? raw.reviews : [],
+    createdAt: raw.createdAt || '',
+  };
+}
+
 export default function ProductDetailsPage() {
   const { t } = useLanguage();
   const params = useParams();
@@ -84,7 +116,7 @@ export default function ProductDetailsPage() {
   const loadProduct = async () => {
     try {
       const data = await marketplaceApi.getProductById(productId);
-      setProduct(data);
+      setProduct(normalizeProduct(data));
       setLoading(false);
     } catch (error) {
       console.error('Error loading product:', error);

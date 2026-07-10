@@ -48,6 +48,12 @@ export class UpdateCompanyDto {
   @IsString()
   postalCode?: string;
 
+  @ApiPropertyOptional({ description: 'Country code (FR, LU, BE)', example: 'LU' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  country?: string;
+
   @ApiPropertyOptional({ description: 'Latitude', example: 48.8566 })
   @IsOptional()
   @IsNumber()

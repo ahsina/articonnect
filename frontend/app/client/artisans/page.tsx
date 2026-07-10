@@ -67,10 +67,10 @@ export default function ArtisansListPage() {
       const data = await userApi.getArtisans();
 
       // Transform API data to match Artisan interface
-      const artisansData: Artisan[] = data.map((artisan: any) => ({
+      const artisansData: Artisan[] = (Array.isArray(data) ? data : []).map((artisan: any): any => ({
         id: artisan.id,
-        firstName: artisan.firstName,
-        lastName: artisan.lastName,
+        firstName: artisan.firstName || '',
+        lastName: artisan.lastName || '',
         artisanProfile: artisan.artisanProfile ? {
           companyName: artisan.artisanProfile.companyName || 'N/A',
           description: artisan.artisanProfile.description || '',
@@ -215,8 +215,8 @@ export default function ArtisansListPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-lg font-semibold">
-                        {artisan.firstName[0]}
-                        {artisan.lastName[0]}
+                        {artisan.firstName?.[0]}
+                        {artisan.lastName?.[0]}
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">
