@@ -1,0 +1,56 @@
+[
+ {
+  "desc": "Numéro de téléphone complet et lisible passe le filtre chat en insérant des fragments alphabétiques de <3 caractères entre les groupes de chiffres ('62 ko 11 ok 23 xy 456' -> 621123456, mobile LU réel). detectObfuscatedPhone (ligne 413) ne retire que les mots de 3-20 caractères intercalés entre chiffres; un bruit de 2 lettres non-homoglyphe (ko/ok/xy/kj...) casse la version compacte sous le seuil des motifs PHONE_* et n'est pas nettoyé. Contournement direct de la commission via contact voix.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts:409-417 (detectObfuscatedPhone: le pas 'retire mot 3-20 car.' doit descendre a 1+ car., ou compter les chiffres totaux du voisinage)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Email lisible partagé en chat via obfuscation par crochets non couverts: 'j.dupont[a]gmail[.]com' et 'jeandupont at gmail' passent (201) et restent parfaitement reconstituables. EMAIL_OBFUSCATED/EMAIL_SPACED (l.222-241) listent les connecteurs (at)/[at]/at/arobase/chez et (dot)/[dot]/point/dot mais omettent le simple '[a]', '(a)', et n'attrapent pas un 'at' sans connecteur de point derriere.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts:222-241 (EMAIL_OBFUSCATED / EMAIL_SPACED: elargir les connecteurs @/at aux formes [a]/(a)/{a} et rendre le connecteur point optionnel quand un domaine mail connu suit)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Numéro reconstitué à travers plusieurs messages consécutifs: chaque fragment (<9 chiffres) passe individuellement car filterContent est purement par-message et sans état conversationnel. '62 11' + '23 456' = 621 123 456. Aucune corrélation inter-messages.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/chat.service.ts:41 + content-filter.service.ts:435 (ajouter une détection glissante sur les N derniers messages de la conversation, concaténés en compact)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Séquence de 8 chiffres consécutifs (ex '45 67 89 10') passe car PHONE_LONG_DIGITS exige 9 chiffres (l.190) et les motifs pays exigent un préfixe (2/04/+33). De nombreux numéros lisibles/partiels de 8 chiffres passent en clair.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts:188-195 (abaisser le seuil PHONE_LONG_DIGITS a 8, ou detecter 8 chiffres compacts precedes d'un mot 'num/tel/gsm/fixe')",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Sites web externes avec TLD hors allowlist figée (.immo et beaucoup d'autres) passent en clair (URL_DOMAIN, l.258) — canal pour rediriger vers une page de contact/booking hors plateforme.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts:254-263 (remplacer l'allowlist de TLD par une liste de TLD IANA large ou une heuristique domaine.tld + chemin)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Pseudo de réseau social lisible passe quand le réseau est désigné par périphrase ('jeandupont.lux sur le reseau photo') car SOCIAL_MENTION/SOCIAL_HANDLE_ABBR exigent le nom littéral du réseau (insta/fb/tiktok...).",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts:296-317 (SOCIAL_MENTION: capturer aussi les tokens 'pseudo.xxx / @pseudo / suis-moi <handle>' sans exiger le nom du reseau)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Trou dans le bareme d'annulation aux etats de revelation de contact. Dans mission.service.ts, cancelMission() et getCancellationFees() n'appliquent des frais que pour les statuts ACCEPTED/IN_TRANSIT (10%) et IN_PROGRESS (25%); les statuts DEPOSIT_PAID et PAID retombent a feeRate=0 avec remboursement integral. Or ce sont precisement les etats ou escrowSecured=true declenche la revelation croisee du contact reel (tel/email) facon Uber (contact-reveal.service.ts). Un client peut donc: payer l'acompte -> deverrouiller le contact de l'artisan -> annuler gratuitement avec remboursement total -> garder le contact (contactRevealLog n'est jamais supprime a l'annulation) -> conclure le chantier hors plateforme sans commission. La friction 'apres mise en relation' voulue (10/25%) manque exactement a l'etape ou la mise en relation a lieu. Confirme live: /cancellation-fees renvoie feeRate=0/refundable=100% des l'etat PENDING_DEPOSIT. Chaine end-to-end non rejouable sur ce deploiement car le webhook Stripe payment_intent.succeeded n'atteint pas le serveur (depositPaidAt jamais ecrit, donc la revelation elle-meme ne se declenche pas non plus ici).",
+  "severity": "medium",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (cancelMission L1134-1193, getCancellationFees L1196-1215); backend/api-gateway/src/mission/services/contact-reveal.service.ts (resolveContactReveal/grantCrossReveal, escrowSecured)",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "Canal de sous-traitance a 0% de commission non bloque. Un artisan peut enregistrer des sous-traitants EXTERNES avec contact off-platform complet (email/tel/SIRET), forcer leur statut a ACTIVE via PUT /subcontractors/:id (contournant l'acceptation d'invitation), puis creer une assignment a commissionRate=0 / agreedAmount=montant total sur une mission plateforme. Tout passe (201). La garde flagLowCommissionAssignment se contente d'incrementer offPlatformSolicitationCount et d'ecrire un AuditLog (non-bloquant, leakageFlagged reste False). C'est un ledger parallele invisible qui permet de deplacer 100% de la valeur d'un chantier vers un tiers hors plateforme, et un moyen d'enregistrer un nombre illimite de contacts off-platform. Portee limitee: la commission sur la transaction initiale client->artisan reste prelevee.",
+  "severity": "low",
+  "files": "backend/api-gateway/src/subcontractor/services/subcontractor.service.ts (createAssignment L224-270, flagLowCommissionAssignment L279-315, update() acceptant status=ACTIVE arbitraire L155-175)",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "Contournement du filtre anti-desintermediation par obfuscation 'chiffres a large ecart' : en intercalant un texte de >20 caracteres entre chaque groupe de chiffres, un numero de telephone (ou email) complet est livre VERBATIM au destinataire (HTTP 201), sans blocage, sans ContentViolation loggee et sans aucun increment du leakageRiskScore. Le compte reste ACTIVE et non-flagge, donc la fuite est repetable indefiniment sans jamais declencher les seuils (5 violations => suspension ; score>=75 => FREEZE_MATCHING). Cause racine: PHONE_LONG_DIGITS exige >=9 chiffres contigus apres compactage (toCompact conserve les lettres comme frontieres) et detectObfuscatedPhone ne supprime que les fragments alphabetiques de 3 a 20 caracteres entre deux chiffres (regex /(?<=\\d)[^\\d]{3,20}(?=\\d)/), donc tout separateur textuel >20 caracteres passe entre les mailles et empeche la fusion des chiffres. Aucun signal du DisintermediationDetector ne se declenche car aucune ContentViolation n'est creee.",
+  "severity": "high",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (detectObfuscatedPhone L409-417, borne [^\\d]{3,20} ; PHONE_LONG_DIGITS L188-195 seuil 9 chiffres contigus ; toCompact/SEPARATORS L63-64,372-376) ; impact detecteur : backend/api-gateway/src/fraud/services/disintermediation-detector.service.ts (Signal 1 alimente uniquement par ContentViolation, jamais cree pour ces messages)",
+  "vector": "evasion-detecteur"
+ }
+]

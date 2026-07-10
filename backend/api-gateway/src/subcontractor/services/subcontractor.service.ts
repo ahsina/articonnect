@@ -14,11 +14,11 @@ import {
 export class SubcontractorService {
   private readonly logger = new Logger(SubcontractorService.name);
 
-  // Taux de commission plateforme MINIMUM (en %) attendu sur une sous-traitance. En-dessous
+  // Taux de commission plateforme MINIMUM (en %) exigé sur une sous-traitance. En-dessous
   // (typiquement 0), la sous-traitance devient un canal de rémunération « 0 commission »
-  // invisible → contournement de la plateforme. On ne bloque pas (contrats légitimes variés)
-  // mais on TRACE (AuditLog) et on incrémente le signal leakage de l'artisan pour rendre le
-  // canal visible au détecteur anti-désintermédiation.
+  // invisible → contournement de la plateforme (ledger parallèle). createAssignment REJETTE (400)
+  // tout taux strictement sous ce plancher, ET trace la tentative (AuditLog + signal leakage) pour
+  // la rendre visible au détecteur anti-désintermédiation.
   private static readonly PLATFORM_MIN_SUBCONTRACTOR_COMMISSION = 5;
 
   constructor(
@@ -153,7 +153,37 @@ export class SubcontractorService {
   }
 
   async update(id: string, artisanId: string, dto: UpdateSubcontractorDto) {
-    await this.findOne(id, artisanId);
+    const current = await this.findOne(id, artisanId);
+
+    // Anti-désintermédiation : le statut ACTIVE d'un sous-traitant ne doit résulter QUE de
+    // l'acceptation d'invitation (acceptInvitation), jamais d'un PUT arbitraire de l'artisan. Sans
+    // ce garde, un artisan pouvait forcer PENDING_INVITATION → ACTIVE et enregistrer un partenaire
+    // (contacts hors-plateforme) sans passer par le token d'invitation tracé. On restreint donc les
+    // transitions de statut autorisées via update(). Le flux légitime d'acceptation utilise un
+    // update() interne distinct (acceptInvitation) → non impacté.
+    if (dto.status && dto.status !== current.status) {
+      const allowedTransitions: Record<string, SubcontractorStatus[]> = {
+        [SubcontractorStatus.PENDING_INVITATION]: [SubcontractorStatus.TERMINATED],
+        [SubcontractorStatus.ACTIVE]: [
+          SubcontractorStatus.INACTIVE,
+          SubcontractorStatus.TERMINATED,
+        ],
+        // INACTIVE → ACTIVE autorisé : réactive un sous-traitant DÉJÀ accepté (passé par ACTIVE),
+        // ce n'est donc pas un contournement de l'acceptation d'invitation.
+        [SubcontractorStatus.INACTIVE]: [
+          SubcontractorStatus.ACTIVE,
+          SubcontractorStatus.TERMINATED,
+        ],
+        [SubcontractorStatus.TERMINATED]: [],
+      };
+      const allowed = allowedTransitions[current.status] || [];
+      if (!allowed.includes(dto.status)) {
+        throw new BadRequestException(
+          `Transition de statut ${current.status} → ${dto.status} non autorisée. ` +
+            `Le statut ACTIVE ne peut résulter que de l'acceptation d'une invitation.`,
+        );
+      }
+    }
 
     return this.prisma.subcontractor.update({
       where: { id },
@@ -236,6 +266,21 @@ export class SubcontractorService {
       throw new ForbiddenException('Mission not found or access denied');
     }
 
+    // Anti-désintermédiation : une sous-traitance sous le PLANCHER de commission plateforme
+    // (typiquement 0 %) est un canal de rémunération « 0 commission » invisible → ledger parallèle
+    // + enregistrement illimité de contacts hors-plateforme. On ne se contente plus de flagger : on
+    // REJETTE (400) tout taux strictement sous le plancher, tout en TRAÇANT la tentative (best-effort)
+    // pour la rendre visible au détecteur (AuditLog + signal leakage).
+    if (
+      dto.commissionRate == null ||
+      dto.commissionRate < SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION
+    ) {
+      await this.flagLowCommissionAssignment(artisanId, null, dto);
+      throw new BadRequestException(
+        `Le taux de commission de sous-traitance doit être au minimum de ${SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION} % (plancher plateforme). Taux fourni : ${dto.commissionRate ?? 'aucun'} %.`,
+      );
+    }
+
     const assignment = await this.prisma.subcontractorAssignment.create({
       data: {
         subcontractorId: dto.subcontractorId,
@@ -255,36 +300,26 @@ export class SubcontractorService {
       },
     });
 
-    // Anti-désintermédiation : une sous-traitance à commission anormalement basse (typiquement 0)
-    // est un canal de rémunération invisible qui shunte le prélèvement plateforme (ledger
-    // parallèle). On ne bloque pas (des accords légitimes existent) mais on REND LE CANAL VISIBLE :
-    // trace AuditLog + incrément du signal leakage de l'artisan (alimente leakageRiskScore).
-    if (
-      dto.commissionRate == null ||
-      dto.commissionRate < SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION
-    ) {
-      await this.flagLowCommissionAssignment(artisanId, assignment.id, dto);
-    }
-
     return assignment;
   }
 
   /**
-   * Trace (non bloquant) une sous-traitance à commission plateforme anormalement basse et
-   * incrémente le compteur de sollicitation hors-plateforme de l'artisan (réutilise le champ
-   * existant offPlatformSolicitationCount → détecteur anti-désintermédiation). Ne lève jamais :
-   * l'attribution reste valide même si la trace échoue.
+   * Trace (non bloquant) une TENTATIVE de sous-traitance sous le plancher de commission plateforme
+   * (REJETÉE par createAssignment) et incrémente le compteur de sollicitation hors-plateforme de
+   * l'artisan (réutilise le champ existant offPlatformSolicitationCount → détecteur
+   * anti-désintermédiation). `assignmentId` est null car l'attribution n'est jamais créée. Ne lève
+   * jamais : la trace est best-effort et ne doit pas masquer le 400 de rejet.
    */
   private async flagLowCommissionAssignment(
     artisanId: string,
-    assignmentId: string,
+    assignmentId: string | null,
     dto: CreateSubcontractorAssignmentDto,
   ): Promise<void> {
     try {
       await this.prisma.auditLog.create({
         data: {
           userId: artisanId,
-          action: 'SUBCONTRACTOR_LOW_COMMISSION',
+          action: 'SUBCONTRACTOR_LOW_COMMISSION_REJECTED',
           resource: 'SubcontractorAssignment',
           details: {
             assignmentId,
@@ -305,7 +340,7 @@ export class SubcontractorService {
       });
 
       this.logger.warn(
-        `Sous-traitance à commission basse (${dto.commissionRate ?? 'null'}% < ${SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION}%) | artisan: ${artisanId} | assignment: ${assignmentId} → signal leakage +1`,
+        `Sous-traitance à commission basse REJETÉE (${dto.commissionRate ?? 'null'}% < ${SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION}%) | artisan: ${artisanId} → signal leakage +1`,
       );
     } catch (error) {
       // Une trace manquée ne doit jamais casser la création d'attribution (happy-path préservé).

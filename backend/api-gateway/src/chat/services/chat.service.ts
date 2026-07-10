@@ -63,6 +63,46 @@ export class ChatService {
       }
     }
 
+    // 🛡️ Détection GLISSANTE inter-messages : un numéro éclaté sur plusieurs messages courts
+    // consécutifs (« 62 11 » puis « 23 456 ») passe le filtre sans état message par message.
+    // On concatène les chiffres des ~4 derniers messages du MÊME expéditeur vers le MÊME
+    // destinataire (fenêtre 15 min) + le message courant ; si un numéro complet émerge → blocage.
+    // Fail-open sur toute erreur d'infra (DB / déchiffrement) : ne bloque jamais un message légitime.
+    try {
+      const since = new Date(Date.now() - 15 * 60 * 1000);
+      const prior = await this.prisma.message.findMany({
+        where: { senderId: data.senderId, receiverId: data.receiverId, createdAt: { gte: since } },
+        orderBy: { createdAt: 'desc' },
+        take: 4,
+        select: { content: true },
+      });
+      if (prior.length > 0) {
+        const key = this.encryptionService.generateConversationKey(data.senderId, data.receiverId);
+        const priorTexts = prior
+          .map((m) => {
+            try {
+              return this.encryptionService.decryptMessage(m.content, key);
+            } catch {
+              return '';
+            }
+          })
+          .reverse(); // ordre chronologique (le plus ancien en premier)
+        const chrono = [...priorTexts, data.content];
+        const split = await this.contentFilter.detectSplitPhone(data.senderId, chrono);
+        if (split) {
+          throw new BadRequestException({
+            message: 'Votre message complète un numéro de téléphone partagé sur plusieurs messages. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via Krafolt.',
+            detectedPatterns: ['PHONE_SPLIT_MULTIMSG'],
+            violationType: 'HIGH',
+            code: 'CONTACT_INFO_BLOCKED',
+          });
+        }
+      }
+    } catch (e) {
+      // Le blocage volontaire doit remonter ; toute autre erreur est avalée (fail-open).
+      if (e instanceof BadRequestException) throw e;
+    }
+
     // 🛡️ Signal anti-fishing : IMAGE/FILE envoyé AVANT paiement de la mission (ou chat direct
     // sans mission payée) → on TRACE (ne bloque pas). L'OCR réel de l'image est hors périmètre.
     const isMedia = data.type === 'IMAGE' || data.type === 'FILE';

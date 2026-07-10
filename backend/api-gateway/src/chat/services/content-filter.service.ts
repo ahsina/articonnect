@@ -184,10 +184,14 @@ export class ContentFilterService {
       enabled: true,
       detectOn: 'compact',
     },
-    // Longue séquence de chiffres (>= 9) potentiellement un numéro déguisé.
+    // Longue séquence de chiffres (>= 8) potentiellement un numéro déguisé.
+    // Seuil 8 (et non 9) pour couvrir les numéros LU/BE nationaux à 8 chiffres.
+    // Détection sur la version COMPACTE où les LETTRES sont conservées : « 250 euros »,
+    // « 10 juillet 2026 » gardent leurs mots comme frontières (runs de 3/4 chiffres),
+    // donc SEULE une suite de 8+ chiffres CONTIGUS (après retrait des séparateurs) matche.
     {
       name: 'PHONE_LONG_DIGITS',
-      regex: /(?<!\d)\d{9,14}(?!\d)/g,
+      regex: /(?<!\d)\d{8,14}(?!\d)/g,
       replacement: '[NUMÉRO BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -219,10 +223,14 @@ export class ContentFilterService {
       enabled: true,
       detectOn: 'text',
     },
+    // Connecteurs @ : @, (at)/[at]/{at}, (a)/[a]/{a}, at/arobase/chez.
+    // Connecteurs point : ., (dot)/[dot]/{dot}, (.)/[.]/{.}, dot/point/punkt.
+    // Le point + TLD devient OPTIONNEL quand un domaine mail CONNU suit (« x at gmail »,
+    // « j.dupont[a]gmail[.]com ») ; sinon le point reste requis pour éviter les faux positifs.
     {
       name: 'EMAIL_OBFUSCATED',
       regex:
-        /[a-zA-Z0-9._%+-]+\s*(?:@|\(at\)|\[at\]|\bat\b|arobas+e?|arobaz[e]?|chez)\s*[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\bdot\b|point|punkt)\s*[a-zA-Z]{2,}/gi,
+        /[a-zA-Z0-9._%+-]+\s*(?:@|\(at\)|\[at\]|\{at\}|\(a\)|\[a\]|\{a\}|\bat\b|arobas+e?|arobaz[e]?|chez)\s*(?:(?:gmail|hotmail|outlook|yahoo|protonmail|proton|icloud|gmx|aol)(?:\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})?|[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})/gi,
       replacement: '[EMAIL BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -251,11 +259,18 @@ export class ContentFilterService {
       enabled: true,
       detectOn: 'text',
     },
-    // Domaine nu avec TLD connu (évite les faux positifs sur les décimaux « 3.5 »).
+    // Domaine nu « label.tld » GÉNÉRIQUE (TLD = 2 à 24 lettres) plutôt qu'une allow-list figée
+    // qui laissait passer les TLD récents / exotiques. Garde-fous :
+    //  - whitelist krafolt.(com|lu) (notre propre domaine, non bloqué) ;
+    //  - EXCLUSION des extensions de FICHIERS courantes (.pdf/.jpg/.png/.docx/.xlsx…) : un nom
+    //    de pièce jointe « devis.pdf » ne doit jamais être pris pour un lien ;
+    //  - sensible à la casse (pas de flag « i ») : le label ET le TLD doivent être en minuscules,
+    //    ce qui protège les initiales/patronymes capitalisés (« M.Dupont », « Jean.Martin »)
+    //    tout en attrapant les vrais domaines/handles saisis en minuscules (« monsite.tld »).
     {
       name: 'URL_DOMAIN',
       regex:
-        /(?<![@\w.])(?!(?:www\.)?krafolt\.(?:com|lu)\b)[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.(?:com|net|org|fr|lu|be|io|me|eu|de|nl|info|biz|shop|site|online|app|co|xyz|gg|tel|link|page|dev|pro|store|club|cc|ru|work|live|icu|top|vip|ws|su|tk|ml|ga|cf|gq|cn|ovh)\b(?:\/[^\s]*)?/gi,
+        /(?<![@\w.])(?!(?:www\.)?krafolt\.(?:com|lu)\b)[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.(?!(?:pdf|jpe?g|png|gif|webp|svg|bmp|tiff?|heic|docx?|xlsx?|pptx?|odt|ods|odp|pages|numbers|key|txt|rtf|csv|md|json|xml|html?|zip|rar|7z|tar|gz|mp[34]|m4[av]|mov|avi|mkv|wmv|wav|flac|aac|ogg|dwg|dxf|ai|psd|eps|indd)\b)[a-z]{2,24}\b(?:\/[^\s]*)?/g,
       replacement: '[LIEN BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -319,6 +334,20 @@ export class ContentFilterService {
     {
       name: 'HANDLE_AT',
       regex: /(?<![a-zA-Z0-9._%+-])@[a-zA-Z0-9._]{3,30}\b/g,
+      replacement: '[CONTACT BLOQUÉ]',
+      severity: 'MEDIUM',
+      enabled: true,
+      detectOn: 'text',
+    },
+    // Périphrase « suis-moi / ajoute-moi <handle> » SANS nommer le réseau (« suis-moi @x »,
+    // « ajoute-moi jean_doe », « suis-moi mon.compte », « follow me user123 »). Le handle
+    // doit être « handle-ish » (préfixe @ OU contenir un « . », « _ » ou un chiffre) afin de
+    // NE PAS masquer un mot courant (« ajoute-moi demain », « suis-moi partout »).
+    // MEDIUM : masqué + logué, non bloquant, pour limiter les faux positifs.
+    {
+      name: 'SOCIAL_FOLLOW_ME',
+      regex:
+        /\b(?:suis|ajoute|rejoins|abonne|follow|add)[\s-]?(?:moi|toi|me)\b\s*(?:sur|on|via)?\s*(?:@[a-z0-9._]{3,30}|[a-z0-9][a-z0-9._]*[._\d][a-z0-9._]*)\b/gi,
       replacement: '[CONTACT BLOQUÉ]',
       severity: 'MEDIUM',
       enabled: true,
@@ -408,12 +437,79 @@ export class ContentFilterService {
    */
   private detectObfuscatedPhone(normalized: string, compact: string): boolean {
     const mapped = this.applyPhoneHomoglyphs(normalized);
-    let phoneish = this.toCompact(mapped);
-    // Retire un mot/bruit alphabétique (3–20) coincé ENTRE deux chiffres.
-    phoneish = phoneish.replace(/(?<=\d)[^\d]{3,20}(?=\d)/g, '');
+    const mappedCompact = this.toCompact(mapped);
+    // Retire le BRUIT alphabétique intercalé ENTRE deux chiffres. Borne élargie {1,40} :
+    //  - {1,2} capture le bruit COURT (« 62 ko 11 ok 23 xy 456 » → « 621123456 »),
+    //  - {…,40} capture le bruit LONG (« 621 (indicatif interne) 123 456 »).
+    // Un intervalle > 40 caractères entre deux chiffres n'est PAS retiré : il sert de
+    // frontière et évite de recoller deux nombres réellement distincts d'une phrase.
+    const phoneish = mappedCompact.replace(/(?<=\d)[^\d]{1,40}(?=\d)/g, '');
     if (phoneish === compact) return false; // aucune obfuscation réelle → laissé aux motifs standard
     // Une fois nettoyé : ≥8 chiffres consécutifs couvrent LU (6/8/9) / FR / BE.
-    return /(?<!\d)\d{8,}(?!\d)/.test(phoneish);
+    const run = /(?<!\d)(\d{8,})(?!\d)/.exec(phoneish);
+    if (!run) return false;
+    // Garde-fou « chiffres majoritaires » : le bruit retiré entre les chiffres ne doit pas
+    // excéder 3× la longueur du numéro révélé — écarte les phrases où de rares chiffres épars
+    // sont noyés dans beaucoup de texte, tout en conservant un vrai numéro coupé par du bruit.
+    const removed = mappedCompact.length - phoneish.length;
+    return removed <= run[1].length * 3;
+  }
+
+  /** Chiffres « téléphone » d'un fragment : homoglyphes appliqués puis compactage. */
+  private phoneCompact(text: string): string {
+    return this.toCompact(this.applyPhoneHomoglyphs(this.normalize(text || '')));
+  }
+
+  /**
+   * Vrai si le fragment est COURT et MAJORITAIREMENT numérique (morceau de numéro probable).
+   * Une phrase normale (« 250 euros », « le 10 juillet 2026 ») n'est jamais dense → jamais
+   * considérée comme un fragment de numéro.
+   */
+  private isPhoneFragment(text: string): boolean {
+    const compact = this.phoneCompact(text);
+    if (compact.length === 0 || compact.length > 14) return false;
+    const digits = (compact.match(/\d/g) || []).length;
+    return digits >= 2 && digits / compact.length >= 0.6;
+  }
+
+  /**
+   * Détection GLISSANTE inter-messages d'un numéro éclaté sur plusieurs messages consécutifs
+   * du MÊME expéditeur vers le MÊME destinataire (« 62 11 » puis « 23 456 »). `filterContent`
+   * étant sans état, chaque fragment (< seuil) passe individuellement ; on concatène ici les
+   * chiffres des fragments « denses » consécutifs se terminant au message COURANT et on cherche
+   * un run ≥ 9 chiffres.
+   *
+   * @param userId          Auteur (pour tracer la violation).
+   * @param messagesChrono  Contenus en ORDRE CHRONOLOGIQUE, le message COURANT en dernier.
+   *
+   * Fail-safe : exige que le message courant soit lui-même un fragment dense ET qu'au moins
+   * 2 fragments consécutifs le soient → un message légitime isolé n'est JAMAIS bloqué.
+   */
+  async detectSplitPhone(userId: string, messagesChrono: string[]): Promise<boolean> {
+    if (!Array.isArray(messagesChrono) || messagesChrono.length < 2) return false;
+    const last = messagesChrono[messagesChrono.length - 1];
+    if (!this.isPhoneFragment(last)) return false; // le message courant doit être un fragment
+
+    // Remonte la traîne de fragments « denses » consécutifs (le plus récent en dernier).
+    const run: string[] = [];
+    for (let i = messagesChrono.length - 1; i >= 0; i--) {
+      if (this.isPhoneFragment(messagesChrono[i])) run.unshift(messagesChrono[i]);
+      else break;
+    }
+    if (run.length < 2) return false;
+
+    const digits = run.map((t) => (this.phoneCompact(t).match(/\d/g) || []).join('')).join('');
+    if (!/\d{9,}/.test(digits)) return false;
+
+    // Violation : on TRACE (alimente le détecteur + auto-suspension) puis on signale le blocage.
+    await this.logViolation(
+      userId,
+      `[MULTI-MSG] ${run.join(' | ')}`.substring(0, 500),
+      ['PHONE_SPLIT_MULTIMSG'],
+      'HIGH',
+      'chat_multimsg',
+    );
+    return true;
   }
 
   /** Compile une regex globale fraîche (évite le bug de lastIndex partagé). */

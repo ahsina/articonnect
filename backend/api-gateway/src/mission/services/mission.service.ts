@@ -18,6 +18,14 @@ export class MissionService {
   // Instanciée manuellement (pas de provider dédié) : partage la même connexion Prisma.
   private readonly contactReveal: ContactRevealService;
 
+  // Frais d'annulation appliqué au CLIENT quand la mise en relation (contact réel révélé façon
+  // Uber) est DÉJÀ ÉTABLIE : états DEPOSIT_PAID / PAID (escrow sécurisé → tel/email révélés). Sans
+  // cette retenue, un client pouvait payer l'acompte pour déverrouiller le contact de l'artisan puis
+  // annuler « gratuitement » (remboursement 100 %) et conclure hors plateforme → 0 commission. On
+  // retient au minimum la commission plateforme (~12 %) + une friction : 15 %. On NE pénalise PAS le
+  // client si c'est l'ARTISAN qui annule (no-show / faute artisan) → remboursement plein préservé.
+  private static readonly CONTACT_REVEALED_CANCELLATION_FEE_RATE = 0.15;
+
   constructor(
     private prisma: PrismaService,
     private reputationService: ReputationService,
@@ -1141,12 +1149,7 @@ export class MissionService {
     }
     // Barème d'annulation (même logique que getCancellationFees) + remboursement RÉEL.
     const basePrice = Number(mission.agreedPrice || mission.clientBudget || 0);
-    let feeRate = 0;
-    if (mission.status === MissionStatus.ACCEPTED || mission.status === MissionStatus.IN_TRANSIT) {
-      feeRate = 0.1;
-    } else if (mission.status === MissionStatus.IN_PROGRESS) {
-      feeRate = 0.25;
-    }
+    const feeRate = this.computeCancellationFeeRate(mission, userId);
     const cancellationFee = Math.round(basePrice * feeRate * 100) / 100;
     const refundable = Math.round((basePrice - cancellationFee) * 100) / 100;
 
@@ -1196,15 +1199,7 @@ export class MissionService {
   async getCancellationFees(missionId: string, userId: string) {
     const mission = await this.findOne(missionId, userId);
     const basePrice = Number(mission.agreedPrice || mission.clientBudget || 0);
-    let feeRate = 0;
-    if (
-      mission.status === MissionStatus.ACCEPTED ||
-      mission.status === MissionStatus.IN_TRANSIT
-    ) {
-      feeRate = 0.1;
-    } else if (mission.status === MissionStatus.IN_PROGRESS) {
-      feeRate = 0.25;
-    }
+    const feeRate = this.computeCancellationFeeRate(mission, userId);
     const cancellationFee = Math.round(basePrice * feeRate * 100) / 100;
     return {
       missionId,
@@ -1214,6 +1209,42 @@ export class MissionService {
       cancellationFee,
       refundable: Math.round((basePrice - cancellationFee) * 100) / 100,
     };
+  }
+
+  /**
+   * Barème d'annulation UNIQUE (utilisé par l'AFFICHAGE getCancellationFees ET le PRÉLÈVEMENT réel
+   * cancelMission → aucune divergence possible).
+   *
+   *  - ACCEPTED / IN_TRANSIT : 10 %
+   *  - IN_PROGRESS           : 25 %
+   *  - DEPOSIT_PAID / PAID   : contact réel DÉJÀ révélé (escrow sécurisé, façon Uber). Une annulation
+   *    du CLIENT à ces états n'est plus « gratuite » : on retient la commission plateforme + friction
+   *    (CONTACT_REVEALED_CANCELLATION_FEE_RATE). Sinon : payer l'acompte → déverrouiller le contact
+   *    de l'artisan → annuler avec remboursement 100 % → conclure hors plateforme (0 commission).
+   *
+   * ANTI-PÉNALISATION DU CLIENT EN CAS DE FAUTE ARTISAN : la retenue « contact révélé » ne s'applique
+   * QUE si c'est le CLIENT qui annule. Si l'ARTISAN (ou un admin) annule (no-show / faute artisan), le
+   * client garde un remboursement plein (feeRate = 0 à ces états).
+   */
+  private computeCancellationFeeRate(mission: any, userId: string): number {
+    if (
+      mission.status === MissionStatus.ACCEPTED ||
+      mission.status === MissionStatus.IN_TRANSIT
+    ) {
+      return 0.1;
+    }
+    if (mission.status === MissionStatus.IN_PROGRESS) {
+      return 0.25;
+    }
+    const isClientCancelling = mission.clientId === userId;
+    if (
+      isClientCancelling &&
+      (mission.status === MissionStatus.DEPOSIT_PAID ||
+        mission.status === MissionStatus.PAID)
+    ) {
+      return MissionService.CONTACT_REVEALED_CANCELLATION_FEE_RATE;
+    }
+    return 0;
   }
 
   async addPhotos(
