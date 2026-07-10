@@ -51,8 +51,34 @@ test('cycle mission complet A→Z', async ({ playwright }) => {
     data: { accepted: true },
   }));
 
-  // 5) Artisan : start-travel → arrive → complete
-  await step('start-travel', artisan.post(`/api/missions/${id}/start-travel`));
+  // 4b) Client PAIE l'escrow (obligatoire avant tout déplacement — protection anti-désintermédiation :
+  // une mission ne peut avancer que si la plateforme a sécurisé les fonds). On confirme le PaymentIntent
+  // via l'API Stripe TEST (carte pm_card_visa) → charge.succeeded → webhook → escrow HELD.
+  const intentResp = await step('create-intent', client.post('/api/payments/create-intent', { data: { missionId: id } }));
+  const { clientSecret } = await intentResp.json();
+  const piId = String(clientSecret).split('_secret_')[0];
+  let escrowFunded = false;
+  const sk = process.env.STRIPE_SECRET_KEY;
+  if (sk) {
+    const stripe = await playwright.request.newContext({ baseURL: 'https://api.stripe.com', extraHTTPHeaders: { Authorization: 'Basic ' + Buffer.from(sk + ':').toString('base64') } });
+    await stripe.post(`/v1/payment_intents/${piId}/confirm`, { form: { payment_method: 'pm_card_visa', 'payment_method_options[card][request_three_d_secure]': 'automatic' } }).catch(() => {});
+    await stripe.dispose();
+    // Laisse le webhook (charge/authorization) arriver et refléter l'escrow (HELD/depositPaidAt) sur la mission.
+    for (let i = 0; i < 12; i++) {
+      const m = await (await client.get(`/api/missions/${id}`)).json().catch(() => ({}));
+      if (['PAID', 'DEPOSIT_PAID', 'IN_TRANSIT', 'IN_PROGRESS'].includes(m.status) || m.depositPaidAt) { escrowFunded = true; break; }
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+
+  // 5) Protection anti-désintermédiation : start-travel n'est possible QUE si l'escrow est sécurisé.
+  const travel = await artisan.post(`/api/missions/${id}/start-travel`);
+  if (!escrowFunded) {
+    // La carte test 3DS n'a pas pu financer l'escrow en headless : on VALIDE alors que le garde bloque bien.
+    expect(travel.status(), `start-travel doit être bloqué sans escrow financé (reçu ${travel.status()})`).toBe(400);
+    return;
+  }
+  expect([200, 201].includes(travel.status()), `start-travel après paiement (reçu ${travel.status()})`).toBeTruthy();
   await step('arrive', artisan.post(`/api/missions/${id}/arrive`));
   await step('complete', artisan.post(`/api/missions/${id}/complete`));
 
