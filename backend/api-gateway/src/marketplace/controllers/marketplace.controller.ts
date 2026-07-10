@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ProductService } from '../services/product.service';
 import { OrderService } from '../services/order.service';
 import { CategoryService } from '../services/category.service';
-import { CreateProductDto, UpdateProductDto } from '../dto/product.dto';
+import { CreateProductDto, UpdateProductDto, CreateProductReviewDto } from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { CreateOrderDto, UpdateOrderStatusDto } from '../dto/order.dto';
 
@@ -142,6 +142,30 @@ export class MarketplaceController {
   @ApiResponse({ status: 404, description: 'Variant not found' })
   async deleteVariant(@Request() req, @Param('variantId') variantId: string) {
     return this.productService.deleteVariant(variantId, req.user.userId);
+  }
+
+  // ==================== PRODUCT REVIEWS ====================
+
+  @Post('products/:id/reviews')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Leave (or update) a review on a purchased product' })
+  @ApiResponse({ status: 201, description: 'Review created/updated' })
+  @ApiResponse({ status: 403, description: 'Product not purchased by the user' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async createProductReview(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() data: CreateProductReviewDto,
+  ) {
+    return this.productService.createProductReview(req.user.userId, id, data);
+  }
+
+  @Get('products/:id/reviews')
+  @ApiOperation({ summary: 'Get reviews of a product' })
+  @ApiResponse({ status: 200, description: 'List of product reviews' })
+  async getProductReviews(@Param('id') id: string) {
+    return this.productService.getProductReviews(id);
   }
 
   // ==================== ORDERS ====================

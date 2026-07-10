@@ -106,9 +106,10 @@ model User {
   disputesResolved Dispute[] @relation("DisputesResolved")
 
   // Marketplace
-  products Product[]
-  orders   Order[]
-  returns  OrderReturn[] @relation("ClientReturns")
+  products       Product[]
+  orders         Order[]
+  returns        OrderReturn[]   @relation("ClientReturns")
+  productReviews ProductReview[] @relation("ProductReviews")
 
   // Saved by clients
   savedByClients SavedArtisan[]
@@ -1245,6 +1246,7 @@ model Product {
   returnItems ReturnItem[]     @relation("ReturnItems")
   favorites   Favorite[]
   reports     Report[]
+  reviews     ProductReview[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   deletedAt   DateTime?        // Soft delete
@@ -1263,6 +1265,21 @@ model ProductVariant {
   stock           Int
   createdAt       DateTime @default(now())
 
+  @@index([productId])
+}
+
+model ProductReview {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User     @relation("ProductReviews", fields: [reviewerId], references: [id])
+  rating     Int // 1-5 stars
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([productId, reviewerId]) // Un seul avis par client par produit -> upsert
   @@index([productId])
 }
 

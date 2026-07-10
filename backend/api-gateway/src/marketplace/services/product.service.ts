@@ -5,7 +5,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateProductDto, UpdateProductDto, ProductFilters } from '../dto/product.dto';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  ProductFilters,
+  CreateProductReviewDto,
+} from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { Prisma } from '@prisma/client';
 
@@ -190,6 +195,14 @@ export class ProductService {
           },
         },
         variants: true,
+        reviews: {
+          include: {
+            reviewer: {
+              select: { id: true, firstName: true, lastName: true, avatar: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
 
@@ -197,7 +210,10 @@ export class ProductService {
       throw new NotFoundException('Produit introuvable');
     }
 
-    return product;
+    return {
+      ...product,
+      reviews: product.reviews.map((r) => this.mapReview(r)),
+    };
   }
 
   async update(id: string, artisanId: string, data: UpdateProductDto) {
@@ -330,5 +346,95 @@ export class ProductService {
     });
 
     return { message: 'Variante supprimée avec succès' };
+  }
+
+  // ==================== PRODUCT REVIEWS ====================
+
+  /**
+   * Normalise un avis pour le front : expose à la fois `reviewer` (contrat API)
+   * et `client` (forme consommée par la page marketplace/[id]).
+   */
+  private mapReview(review: any) {
+    return {
+      id: review.id,
+      productId: review.productId,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      updatedAt: review.updatedAt,
+      reviewer: review.reviewer,
+      client: review.reviewer,
+    };
+  }
+
+  /**
+   * Crée (ou met à jour) l'avis d'un client sur un produit qu'il a commandé.
+   * Un seul avis par client et par produit (upsert sur la contrainte unique).
+   */
+  async createProductReview(userId: string, productId: string, data: CreateProductReviewDto) {
+    // Le produit doit exister
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Produit introuvable');
+    }
+
+    // L'utilisateur doit avoir commandé ce produit (une de ses commandes contient cet article)
+    const hasOrdered = await this.prisma.order.findFirst({
+      where: {
+        clientId: userId,
+        items: { some: { productId } },
+      },
+      select: { id: true },
+    });
+
+    if (!hasOrdered) {
+      throw new ForbiddenException(
+        'Vous ne pouvez noter qu\'un produit que vous avez commandé',
+      );
+    }
+
+    const review = await this.prisma.productReview.upsert({
+      where: {
+        productId_reviewerId: { productId, reviewerId: userId },
+      },
+      create: {
+        productId,
+        reviewerId: userId,
+        rating: data.rating,
+        comment: data.comment,
+      },
+      update: {
+        rating: data.rating,
+        comment: data.comment,
+      },
+      include: {
+        reviewer: {
+          select: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+      },
+    });
+
+    return this.mapReview(review);
+  }
+
+  /**
+   * Liste les avis d'un produit, du plus récent au plus ancien.
+   */
+  async getProductReviews(productId: string) {
+    const reviews = await this.prisma.productReview.findMany({
+      where: { productId },
+      include: {
+        reviewer: {
+          select: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return reviews.map((r) => this.mapReview(r));
   }
 }

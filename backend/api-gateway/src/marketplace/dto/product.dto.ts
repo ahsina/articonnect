@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsArray, IsEnum, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, IsEnum, IsInt, Min, Max, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductStatus } from '@prisma/client';
 
@@ -100,6 +100,20 @@ export class UpdateProductDto {
   @IsOptional()
   @IsEnum(ProductStatus)
   status?: ProductStatus;
+}
+
+export class CreateProductReviewDto {
+  @ApiProperty({ example: 5, minimum: 1, maximum: 5, description: 'Note de 1 à 5 étoiles' })
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating: number;
+
+  @ApiProperty({ required: false, example: 'Produit de très bonne qualité, livraison rapide.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  comment?: string;
 }
 
 export interface ProductFilters {
