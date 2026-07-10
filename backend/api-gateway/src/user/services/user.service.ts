@@ -246,9 +246,84 @@ export class UserService {
     },
   } satisfies Prisma.UserSelect;
 
+  // Mots-clés qui trahissent un segment « rue » (à ne JAMAIS exposer comme ville).
+  private static readonly STREET_KEYWORDS = [
+    'rue',
+    'avenue',
+    'av.',
+    'ave',
+    'boulevard',
+    'bd',
+    'blvd',
+    'chemin',
+    'route',
+    'rte',
+    'impasse',
+    'allee',
+    'allée',
+    'place',
+    'quai',
+    'chaussee',
+    'chaussée',
+    'passage',
+    'square',
+    'cours',
+    'voie',
+    'sentier',
+    'lot',
+    'lotissement',
+    'residence',
+    'résidence',
+    'zone',
+    'zi',
+    'za',
+    'street',
+    'st.',
+    'road',
+    'rd.',
+    'lane',
+    'drive',
+    'straße',
+    'strasse',
+    'str.',
+    'weg',
+  ];
+
+  // Pays connus : jamais retenus comme « ville », mais servent de repli non-identifiant.
+  private static readonly KNOWN_COUNTRIES = [
+    'france',
+    'fr',
+    'luxembourg',
+    'lu',
+    'belgique',
+    'belgium',
+    'belgie',
+    'belgië',
+    'be',
+    'allemagne',
+    'germany',
+    'deutschland',
+    'de',
+  ];
+
+  /** Un segment ressemble-t-il à une rue (numéro et/ou mot-clé de voie) ? */
+  private looksLikeStreet(seg: string): boolean {
+    const s = seg.trim().toLowerCase();
+    if (!s) return true;
+    // Commence par un chiffre (« 5 Boulevard Voltaire », « 10 Rue de l'Artisan ») -> rue.
+    if (/^\d/.test(s)) return true;
+    // Contient un chiffre suivi d'un espace (numéro de voirie intégré).
+    if (/\d/.test(s) && !/^[a-z]?-?\s*\d{4,5}\b/.test(s)) return true;
+    // Contient un mot-clé de voie.
+    const tokens = s.split(/[\s'’-]+/);
+    return UserService.STREET_KEYWORDS.some((kw) => tokens.includes(kw) || s.includes(kw + ' '));
+  }
+
   /**
-   * Dérive une ville approximative à partir d'une adresse libre, sans jamais exposer la rue.
-   * Retourne null si aucune ville ne peut être extraite de façon fiable.
+   * Dérive une ville approximative à partir d'une adresse libre, sans JAMAIS exposer la rue.
+   * Stratégie liste blanche : on ne retient un segment comme ville que s'il ne ressemble PAS à
+   * une rue (pas de numéro, pas de mot-clé de voie) et n'est pas un pays. À défaut d'une ville
+   * fiable on renvoie null (valeur non-identifiante) plutôt que de risquer de fuiter la rue.
    */
   private approximateCity(baseAddress?: string | null): string | null {
     if (!baseAddress) return null;
@@ -256,16 +331,29 @@ export class UserService {
       .split(',')
       .map((p) => p.trim())
       .filter(Boolean);
-    // Une adresse d'un seul segment est probablement une rue seule -> on ne renvoie rien
-    // pour éviter de fuiter l'adresse exacte.
-    if (parts.length < 2) return null;
-    // Format « 75002 Paris » / « L-1855 Luxembourg » -> on garde la partie ville.
+    if (parts.length === 0) return null;
+
+    // Format « 75002 Paris » / « L-1855 Luxembourg » -> on isole la partie ville, purgée du CP.
     for (const seg of parts) {
       const m = seg.match(/^[A-Z]?-?\s*\d{4,5}\s+(.+)$/);
-      if (m) return m[1].trim();
+      if (m) {
+        const city = m[1].trim();
+        if (city && !this.looksLikeStreet(city)) return city;
+      }
     }
-    // Sinon la ville est généralement l'avant-dernier segment (le dernier étant le pays).
-    return parts[parts.length - 2] || null;
+
+    // Sinon : on cherche, en partant de la fin, le dernier segment qui n'est ni un pays ni une
+    // rue. On ne retient jamais un segment qui ressemble à une rue (numéro + voie).
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const seg = parts[i];
+      const norm = seg.trim().toLowerCase();
+      if (UserService.KNOWN_COUNTRIES.includes(norm)) continue;
+      if (this.looksLikeStreet(seg)) continue;
+      return seg;
+    }
+
+    // Aucune ville fiable isolable -> ne rien renvoyer plutôt que de fuiter la rue.
+    return null;
   }
 
   /**

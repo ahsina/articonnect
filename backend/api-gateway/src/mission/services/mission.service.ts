@@ -245,26 +245,17 @@ export class MissionService {
   }
 
   /**
-   * « Payée en escrow » au sens révélation (façon Uber) :
-   *   Transaction.status ∈ {HELD, COMPLETED}  OU
-   *   mission.status ∈ {PAID, DEPOSIT_PAID, IN_TRANSIT, IN_PROGRESS, COMPLETED, AUTO_VALIDATED} OU
-   *   depositPaidAt posé.
-   * Ces statuts avancés ne sont atteignables qu'après sécurisation réelle des fonds (cf. gardes
-   * paiement de startTravel/markArrival/markCompleted), donc le critère de statut reste fiable.
+   * « Payée en escrow » au sens révélation (façon Uber) : repose UNIQUEMENT sur la PREUVE FINANCIÈRE.
+   *   Transaction.status ∈ {HELD, COMPLETED}  OU  depositPaidAt posé (webhook Stripe).
+   *
+   * On NE se fie PLUS à mission.status (PAID/IN_PROGRESS/COMPLETED…) : un statut avancé forcé via
+   * l'endpoint générique PUT /:id/status (sans passer par l'escrow) ne doit JAMAIS révéler le contact
+   * (faille anti-désintermédiation). Seule la preuve financière déverrouille les coordonnées.
+   * NB : findOne charge bien `transaction { status }` et `depositPaidAt` (scalaire), donc le critère
+   * est calculable dans le contexte de révélation.
    */
   private isMissionPaidInEscrow(mission: any): boolean {
-    const paidStatuses = [
-      'PAID',
-      'DEPOSIT_PAID',
-      'IN_TRANSIT',
-      'IN_PROGRESS',
-      'COMPLETED',
-      'AUTO_VALIDATED',
-    ];
-    return (
-      this.hasSecuredFunds(mission) ||
-      paidStatuses.includes(String(mission?.status))
-    );
+    return this.hasSecuredFunds(mission);
   }
 
   /**
@@ -294,6 +285,46 @@ export class MissionService {
       where: { id: userId },
       select: { role: true },
     });
+
+    // ── MONEY GATE (anti-désintermédiation) ──────────────────────────────────────────────────────
+    // Cet endpoint GÉNÉRIQUE ne doit JAMAIS permettre de franchir la barrière paiement : sans lui, un
+    // participant pouvait forcer ACCEPTED→PAID→IN_PROGRESS→COMPLETED sans escrow (mission terminée
+    // sans commission + contact révélé). Toute transition vers un statut impliquant paiement/avancement
+    // exige la PREUVE FINANCIÈRE réelle (hasSecuredFunds). findOne masque `transaction`, on recharge
+    // donc la preuve (transaction.status + depositPaidAt) directement.
+    const fundedStatuses: MissionStatus[] = [
+      MissionStatus.PAID,
+      MissionStatus.DEPOSIT_PAID,
+      MissionStatus.IN_TRANSIT,
+      MissionStatus.IN_PROGRESS,
+      MissionStatus.COMPLETED,
+      MissionStatus.AUTO_VALIDATED,
+    ];
+    if (fundedStatuses.includes(updateDto.status)) {
+      // Un ARTISAN ne pose JAMAIS lui-même un statut de paiement : PAID/DEPOSIT_PAID viennent du
+      // webhook Stripe. On refuse explicitement (défense en profondeur en plus du money gate).
+      if (
+        user?.role === 'ARTISAN' &&
+        (updateDto.status === MissionStatus.PAID ||
+          updateDto.status === MissionStatus.DEPOSIT_PAID)
+      ) {
+        throw new ForbiddenException(
+          'Le paiement est confirmé par la plateforme (webhook Stripe), pas par l\'artisan',
+        );
+      }
+      const funded = await this.prisma.mission.findUnique({
+        where: { id: missionId },
+        select: {
+          depositPaidAt: true,
+          transaction: { select: { status: true } },
+        },
+      });
+      if (!this.hasSecuredFunds(funded)) {
+        throw new BadRequestException(
+          'Paiement plateforme requis (escrow) avant ce changement de statut',
+        );
+      }
+    }
 
     const updated = await this.prisma.mission.update({
       where: { id: missionId },
@@ -1137,6 +1168,28 @@ export class MissionService {
       user?.role || 'CLIENT',
       `${reason || 'Mission annulée'} — frais ${cancellationFee}€, remboursé ${refundResult.refunded}€`,
     );
+
+    // ── ANNULATION-APRÈS-MATCH NON GRATUITE (anti-désintermédiation) ──────────────────────────────
+    // Sans escrow, une annulation ne prélève rien : un client pouvait matcher un artisan (contact
+    // partiel + échanges) puis annuler à l'infini pour conclure hors plateforme, sans coût. On rend
+    // l'annulation d'une mission DÉJÀ APPARIÉE (ACCEPTED + artisan assigné) par le CLIENT coûteuse EN
+    // RÉPUTATION, même en l'absence de fonds sécurisés. Best-effort : ne casse pas l'annulation.
+    const wasMatchedByClient =
+      mission.clientId === userId &&
+      !!mission.artisanId &&
+      mission.status === MissionStatus.ACCEPTED;
+    if (wasMatchedByClient) {
+      try {
+        await this.reputationService.applyMissionCancelledPenalty(userId, missionId);
+      } catch (e) {
+        // La pénalité de réputation ne doit jamais empêcher l'annulation/le remboursement.
+        console.error(
+          `[cancelMission] pénalité réputation non appliquée (mission ${missionId})`,
+          e,
+        );
+      }
+    }
+
     return { ...updated, cancellationFee, refunded: refundResult.refunded };
   }
 

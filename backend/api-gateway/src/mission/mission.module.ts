@@ -16,9 +16,13 @@ import { PaymentModule } from '../payment/payment.module';
 import { NotificationModule } from '../notification/notification.module';
 import { FraudModule } from '../fraud/fraud.module';
 import { AuthModule } from '../auth/auth.module';
+// ChatModule exporte ContentFilterService (filtre anti-coordonnées) : on l'importe pour
+// appliquer le MÊME filtre au canal négociation/offre (anti-désintermédiation).
+// Pas de dépendance circulaire : ChatModule n'importe pas MissionModule.
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
-  imports: [PaymentModule, NotificationModule, FraudModule, AuthModule],
+  imports: [PaymentModule, NotificationModule, FraudModule, AuthModule, ChatModule],
   controllers: [
     MissionController,
     MissionSearchController,

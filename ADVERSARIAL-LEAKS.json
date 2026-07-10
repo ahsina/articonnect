@@ -1,0 +1,122 @@
+[
+ {
+  "desc": "Fuite d'adresse exacte via l'annuaire artisans : /users/artisans et /users/artisans/:id renvoient l'adresse de rue complete (numero + rue) de chaque artisan dans le champ 'city'. La whitelist bloque bien phone/email mais la fonction approximateCity() (censee ne renvoyer qu'une ville approximative) est buggee : pour un baseAddress au format 'rue, ville' (2 segments, sans code postal) elle renvoie l'avant-dernier segment = la RUE. Tout l'annuaire est scrapable au niveau rue avec un seul compte gratuit. Exemples reels captures : '5 Boulevard Voltaire', '10 Rue de l'Artisan', '15 Rue des Artisans'. Aide directe a la desintermediation (localiser/contacter l'artisan hors plateforme).",
+  "severity": "high",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/user/services/user.service.ts (approximateCity ~ligne 250, toPublicArtisan, getArtisans/getArtisan)",
+  "vector": "scrape-annuaire"
+ },
+ {
+  "desc": "Fuite d'adresse exacte via /missions/search : le service inclut artisan:{ select:{ artisanProfile:true }} et redactMissionLocation() ne caviarde QUE l'adresse de la mission, pas le profil de l'artisan assigne embarque. Resultat : baseAddress exacte ('10 Rue de l'Artisan, Luxembourg') + latitude/longitude bruts de l'artisan assigne sont exposes a tout artisan qui recherche des missions -> un concurrent peut recolter les adresses exactes d'autres artisans.",
+  "severity": "medium",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/mission/services/mission-search.service.ts (include ligne ~100-108 artisanProfile:true ; redactMissionLocation ligne ~171-197)",
+  "vector": "scrape-annuaire"
+ },
+ {
+  "desc": "quote.service.ts : le masquage anti-désintermédiation n'existe QUE dans findOne(). Les méthodes create(), findAll(), update() et createNewVersion() font select:{email:true} sur client (et artisan) et renvoient l'objet sans masquer ni vérifier l'escrow. Un ARTISAN obtient donc l'email RÉEL + nom de famille complet du client avant tout paiement, via POST /quotes, GET /quotes (liste, à chaque appel), PUT /quotes/:id, POST /quotes/:id/new-version. Prouvé en réel: jean.dupont@example.com / 'Dupont' récupérés sans escrow.",
+  "severity": "high",
+  "files": "backend/api-gateway/src/quote/services/quote.service.ts (create L101-157 include client email L148-149; findAll L160-190 select client email L179; update L280-351 select L~345; createNewVersion L464-531 select L~525). Corriger comme findOne L251-273 : masquer email/phone tant que la mission n'est pas payée en escrow, et pour l'artisan assigné uniquement.",
+  "vector": "contact-avant-paiement"
+ },
+ {
+  "desc": "POST /quotes (quote.create) accepte un clientId ARBITRAIRE fourni par l'artisan, sans exiger de mission/négociation liant l'artisan à ce client, sans missionId, sans vérif d'ownership. Combiné à la fuite d'email ci-dessus, cela transforme l'endpoint en ORACLE de moisson d'emails+noms par userId sur N'IMPORTE quel utilisateur (client OU autre artisan). Les userId sont librement obtenus via client.id exposé dans GET /missions/:id des missions ouvertes. Prouvé: extraction de l'email de Jean (client) ET de Pierre (artisan) par simple userId.",
+  "severity": "high",
+  "files": "backend/api-gateway/src/quote/services/quote.service.ts create() L101-157 (aucune validation que dto.clientId a une relation avec l'artisan) ; backend/api-gateway/src/mission/services/mission.service.ts findOne L129 expose client.id (userId) sur missions ouvertes, source des userId pour la moisson.",
+  "vector": "contact-avant-paiement"
+ },
+ {
+  "desc": "Canal NEGOCIATION/OFFRE totalement non filtre : negotiation.service.ts (create) stocke createDto.message brut (message: createDto.message) sans jamais appeler ContentFilterService, et getNegotiations le renvoie tel quel. Un artisan poste dans l'offre '+352 621 123 456', son email et 'on evite la commission Krafolt' -> le client le lit verbatim via GET /missions/:id/negotiations. C'est le meme contenu qui est bloque a 400 dans le chat : la protection est contournee en changeant simplement de canal. C'est le vecteur de desintermediation le plus grave.",
+  "severity": "CRITICAL",
+  "files": "backend/api-gateway/src/mission/services/negotiation.service.ts (l.93-103 create, message brut) ; backend/api-gateway/src/mission/controllers/mission.controller.ts (POST :id/negotiations, GET :id/negotiations) ; DTO backend/api-gateway/src/mission/dto/negotiation.dto.ts (champ message?)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "CHAT — numero LISIBLE contourne le filtre en 1 message quand des LETTRES/mots separent les runs de chiffres. toCompact() retire les separateurs mais GARDE les lettres (par design, pour ne pas fusionner 2 numeros) : du coup '621 (indicatif interne) 123 456' n'a aucun run de 9 chiffres et passe, tout en restant parfaitement reconstituable par le destinataire. Idem separateur-lettre 'o' entre chiffres.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (toCompact + SEPARATORS gardent les lettres ; patterns PHONE_LU_* exigent des runs contigus)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "CHAT — numero coupe sur 2 messages consecutifs ('621' puis '12 34 56') : chaque fragment fait <9 chiffres donc aucun pattern telephone ne matche ; le destinataire reassemble 621 123 456. Aucune correlation inter-messages.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (filtrage par message isole, pas de detection de fragments)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "CHAT — numero ecrit en mots LUXEMBOURGEOIS passe : le dico WRITTEN_PHONE couvre fr/en/de mais pas le luxembourgeois (eent, zwee, dräi, véier, fënnef, siwen, aacht, néng, zéng), or LU est LE marche cible. 'sechs zwee eent...' est lisible et n'atteint pas 4 mots-nombres consecutifs reconnus.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (pattern WRITTEN_PHONE)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "CHAT — handles reseaux/messagerie via abbreviations non couvertes ('IG', 'tg', 'fb dm'...) suivies d'un pseudo NU (sans @) : ni SOCIAL_MENTION ni HANDLE_AT (qui exige @) ne matchent. 'mon IG c'est johndoe_plomberie2024' et 'sur tg johndoe123' passent en clair.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (patterns SOCIAL_MENTION, MESSAGING_APP_MENTION, HANDLE_AT)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "CHAT — URL externe a TLD hors liste blanche passe (URL_DOMAIN a une liste finie de TLD ; .cc, .ru, .work, etc. absents). 'johndoe-plombier.cc' passe comme lien de reservation directe.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (pattern URL_DOMAIN, liste de TLD)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "CHAT — email obfusque par faute/espacement passe : 'arobasse' (double s) n'est pas dans EMAIL_OBFUSCATED (qui a 'arobase'), et l'espacement des lettres du domaine casse la regex. Email reconstituable cote client.",
+  "severity": "LOW",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (pattern EMAIL_OBFUSCATED)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Money-gate bypassable via l'endpoint generique PUT /missions/:id/status. Contrairement aux endpoints dedies (start-travel/arrive/complete qui appellent hasSecuredFunds()), updateStatus() ne verifie QUE validateStatusTransition() et n'a AUCUN controle de paiement. Un participant authentifie (artisan OU client) peut donc marcher ACCEPTED->PAID->IN_PROGRESS->COMPLETED sans escrow, terminant la mission sans que la plateforme percoive sa commission. Aucun RolesGuard non plus: un artisan peut poser lui-meme le statut 'PAID'.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/mission/controllers/mission.controller.ts:98 (PUT :id/status, JwtAuthGuard seul, pas de RolesGuard ni money gate) ; backend/api-gateway/src/mission/services/mission.service.ts:282-315 (updateStatus: valide seulement la transition, aucun hasSecuredFunds())",
+  "vector": "terminer-sans-payer"
+ },
+ {
+  "desc": "Desintermediation totale: en forcant status=PAID/IN_PROGRESS/COMPLETED via le meme endpoint non garde, isMissionPaidInEscrow() retourne true (paidStatuses base sur le statut, pas sur la preuve financiere), ce qui declenche la revelation des coordonnees. L'artisan recupere le TELEPHONE reel et le NOM complet du client sans jamais payer -> il peut conclure hors-plateforme et esquiver la commission. Verifie en live: phone '+352621123456' + 'Dupont' exposes.",
+  "severity": "CRITICAL",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts:255-268 (isMissionPaidInEscrow: paidStatuses inclut PAID/IN_PROGRESS/COMPLETED, atteignables via l'endpoint non garde) ; mission.service.ts:201-217 (contact reveal pilote par escrowSecured)",
+  "vector": "terminer-sans-payer"
+ },
+ {
+  "desc": "CONTOURNEMENT DU TIME-BOX via GET /quotes/:id. La revelation time-boxee (72h + re-masquage) est correctement implementee sur GET /missions/:id (contact-reveal.service.ts / mission.service.ts) et TIENT. Mais QuoteService.findOne applique une regle differente et FAILLEE: le telephone ET le nom de famille complet de la contrepartie sont reveles des que la mission est PAID/DEPOSIT_PAID/IN_PROGRESS/COMPLETED/AUTO_VALIDATED, SANS delai de grace, SANS fenetre active, SANS re-masquage. Un client (ou l'artisan assigne) d'une mission terminee depuis des mois peut donc re-recuperer le numero de la contrepartie a volonte via son devis accepte -> desintermediation directe ('prochain job en direct'). En prime, aucun ContactRevealLog n'est ecrit: la revelation est NON AUDITEE, ce qui aveugle le detecteur de leakage. Prouve en reel: meme mission, 30 jours apres cloture, /missions/:id -> phone=null (re-masque) mais /quotes/:id -> '+352621234567' + 'Lebon'.",
+  "severity": "high",
+  "files": "backend/api-gateway/src/quote/services/quote.service.ts:215-278 (findOne: isPaid base uniquement sur statut mission/tx, pas de fenetre temporelle ni re-masquage ni journalisation) — a contraster avec backend/api-gateway/src/mission/services/contact-reveal.service.ts:31-41 (isWithinActiveWindow, GRACE 72h) et backend/api-gateway/src/mission/services/mission.service.ts:192-245 (maskUserContact + audit ContactRevealLog)",
+  "vector": "reutiliser-contact-apres"
+ },
+ {
+  "desc": "ANNULATION GRATUITE APRES APPARIEMENT (desintermediation directe). Une fois qu'un artisan a fait une offre et que le client l'accepte (mission ACCEPTED, artisan assigne, contact etabli via messages), le client peut annuler sans rien payer : cancellationFee (10%=75 EUR) est purement affiche mais JAMAIS preleve tant qu'aucun acompte/escrow n'a ete capture (refundForCancellation renvoie refunded=0, aucun charge carte, aucune dette). Aucune penalite de reputation (applyMissionCancelledPenalty jamais appele). Prouve illimite (3 cycles). Le client peut donc match-puis-conclure hors plateforme a l'infini, commission plateforme = 0. La friction n'existe qu'une fois l'argent en escrow ; entre l'appariement et le paiement, fenetre 100% gratuite.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (cancelMission L1103-1141, getCancellationFees L1143-1164 : feeRate 0 hors ACCEPTED/IN_TRANSIT/IN_PROGRESS, fee non collecte si pas d'escrow) ; backend/api-gateway/src/payment/services/payment.service.ts (refundForCancellation L1509-1524 : retourne refunded 0 sans prelever le fee quand aucun paiement capture) ; backend/api-gateway/src/payment/services/reputation.service.ts (applyMissionCancelledPenalty L278 defini mais jamais wire)",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "CANAL SOUS-TRAITANCE SANS COMMISSION. POST /subcontractors/assignments enregistre un montant (agreedAmount, jusqu'a 100% du prix mission) avec commissionRate librement fixe a 0 et un paymentReference, sans AUCUNE integration de paiement plateforme : c'est un ledger de paiement parallele que la plateforme ne prend jamais en commission. De plus POST /subcontractors accepte des contacts externes non verifies (email/tel/SIRET arbitraires) et renvoie l'invitationToken en clair. Un artisan peut ainsi router le travail gagne sur la plateforme vers des tiers payes entierement hors rails (commission=0), et meme lier le client lui-meme comme 'sous-traitant'.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/subcontractor/services/subcontractor.service.ts (create L21-92 expose invitationToken + contacts non verifies ; createAssignment L210-243 : agreedAmount/commissionRate=0 sans flux de paiement plateforme) ; backend/api-gateway/src/subcontractor/controllers/subcontractor.controller.ts",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "FUITE DE CONTACT VIA MESSAGE D'OFFRE (facilitateur). Les champs email/telephone de l'artisan sont masques dans GET /missions/:id, MAIS le champ 'message' d'une negociation/offre est du texte libre non filtre : l'artisan y a inscrit 'Mon direct: 0621234567', lu par le client. Le companyName ('Plomberie Lebon') est aussi expose. Combine avec l'annulation gratuite, cela permet l'echange de coordonnees puis la conclusion hors plateforme.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/mission/services/negotiation.service.ts (create L96-106 : message stocke tel quel, aucun filtre anti-coordonnees) ; backend/api-gateway/src/mission/services/mission.service.ts (findOne : companyName expose)",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "Le filtre anti-desintermediation est trivialement contournable: telephone scinde sur 2 messages, homoglyphes lettre-pour-chiffre (O6 I2), email a separateur non couvert (gmail,com), et intention hors-plateforme sans mot-cle passent tous en HTTP 201 et sont STOCKES INTACTS (non masques). Zero ContentViolation, zero incrementation offPlatformSolicitationCount, aucune sanction, login intact. Un fraudeur echange coordonnees reelles + convient d'un deal cash hors plateforme sans jamais declencher le detecteur (leakageRiskScore reste ~0, leakageFlagged jamais mis, mises en relation jamais gelees). Le happy-path naif est bien bloque/suspendu, mais l'attaquant motive fuit a 100%.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (patterns PHONE_*/EMAIL/WRITTEN_PHONE detectOn compact - aucune reconstruction multi-message, pas de homoglyphes O->0/I->1, separateur ',' avant TLD non couvert); consequence sur backend/api-gateway/src/fraud/services/disintermediation-detector.service.ts (aucun signal alimente)",
+  "vector": "evasion-detecteur"
+ },
+ {
+  "desc": "Bug de synchronisation: la constante CONTACT_PATTERN_NAMES du detecteur (PHONE_FR_INTERNATIONAL/NATIONAL/MOBILE, PHONE_LU, WHATSAPP, TELEGRAM, SIGNAL) ne correspond pas aux noms de patterns reellement emis par le content-filter (PHONE_FR, PHONE_LU_CC/MOBILE/FIXED, MESSAGING_APP_MENTION/LINK). Verifie en prod: 5 messages contact bloques -> le detecteur n'en compte qu'1 (contactViolationCount=1). Le Signal 1 (jusqu'a 45 pts) est donc quasi inoperant, ce qui empeche le score d'atteindre le seuil de gel meme pour un spammeur non-evasif.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/fraud/services/disintermediation-detector.service.ts:72-84 (CONTACT_PATTERN_NAMES) vs backend/api-gateway/src/chat/services/content-filter.service.ts:104-311 (noms reels)",
+  "vector": "evasion-detecteur"
+ },
+ {
+  "desc": "Le Signal 2 (offPlatformSolicitationCount, alimente par les reports OFF_PLATFORM_SOLICITATION et les medias pre-paiement) est plafonne a min(count*8,40), soit strictement < 75 (seuil FREEZE_MATCHING) et < 90 (DEACTIVATE). Consequence: aucun volume de signalements de sollicitation hors-plateforme ne peut, a lui seul, geler ou desactiver automatiquement un compte via computeLeakageRisk; il faut une action admin manuelle (flag/resolve MATCHING_FROZEN). L'auto-enforcement gradue annonce (FREEZE/DEACTIVATE) est en pratique inatteignable par les seuls signaux collectables.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/fraud/services/disintermediation-detector.service.ts:194-205 (Signal 2 cap 40) et 260-263 (leakageFlagged = score>=75)",
+  "vector": "evasion-detecteur"
+ }
+]

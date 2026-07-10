@@ -14,6 +14,13 @@ import {
 export class SubcontractorService {
   private readonly logger = new Logger(SubcontractorService.name);
 
+  // Taux de commission plateforme MINIMUM (en %) attendu sur une sous-traitance. En-dessous
+  // (typiquement 0), la sous-traitance devient un canal de rémunération « 0 commission »
+  // invisible → contournement de la plateforme. On ne bloque pas (contrats légitimes variés)
+  // mais on TRACE (AuditLog) et on incrémente le signal leakage de l'artisan pour rendre le
+  // canal visible au détecteur anti-désintermédiation.
+  private static readonly PLATFORM_MIN_SUBCONTRACTOR_COMMISSION = 5;
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -89,7 +96,12 @@ export class SubcontractorService {
       }
     }
 
-    return subcontractor;
+    // SÉCURITÉ anti-désintermédiation : NE JAMAIS renvoyer invitationToken en clair dans la
+    // réponse API. Le token est un secret d'invitation (bearer) : il ne doit partir QUE par
+    // l'email d'invitation ci-dessus (canal plateforme). L'exposer dans la réponse permettrait
+    // de le transmettre hors-plateforme et de shunter le flux d'onboarding tracé.
+    const { invitationToken: _invitationToken, ...safeSubcontractor } = subcontractor;
+    return safeSubcontractor;
   }
 
   async findAll(artisanId: string, status?: SubcontractorStatus) {
@@ -224,7 +236,7 @@ export class SubcontractorService {
       throw new ForbiddenException('Mission not found or access denied');
     }
 
-    return this.prisma.subcontractorAssignment.create({
+    const assignment = await this.prisma.subcontractorAssignment.create({
       data: {
         subcontractorId: dto.subcontractorId,
         missionId: dto.missionId,
@@ -242,6 +254,63 @@ export class SubcontractorService {
         },
       },
     });
+
+    // Anti-désintermédiation : une sous-traitance à commission anormalement basse (typiquement 0)
+    // est un canal de rémunération invisible qui shunte le prélèvement plateforme (ledger
+    // parallèle). On ne bloque pas (des accords légitimes existent) mais on REND LE CANAL VISIBLE :
+    // trace AuditLog + incrément du signal leakage de l'artisan (alimente leakageRiskScore).
+    if (
+      dto.commissionRate == null ||
+      dto.commissionRate < SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION
+    ) {
+      await this.flagLowCommissionAssignment(artisanId, assignment.id, dto);
+    }
+
+    return assignment;
+  }
+
+  /**
+   * Trace (non bloquant) une sous-traitance à commission plateforme anormalement basse et
+   * incrémente le compteur de sollicitation hors-plateforme de l'artisan (réutilise le champ
+   * existant offPlatformSolicitationCount → détecteur anti-désintermédiation). Ne lève jamais :
+   * l'attribution reste valide même si la trace échoue.
+   */
+  private async flagLowCommissionAssignment(
+    artisanId: string,
+    assignmentId: string,
+    dto: CreateSubcontractorAssignmentDto,
+  ): Promise<void> {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId: artisanId,
+          action: 'SUBCONTRACTOR_LOW_COMMISSION',
+          resource: 'SubcontractorAssignment',
+          details: {
+            assignmentId,
+            subcontractorId: dto.subcontractorId,
+            missionId: dto.missionId,
+            commissionRate: dto.commissionRate ?? null,
+            agreedAmount: dto.agreedAmount,
+            minExpected: SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION,
+          },
+          ipAddress: 'system',
+          userAgent: 'subcontractor-service:low-commission-guard',
+        },
+      });
+
+      await this.prisma.user.update({
+        where: { id: artisanId },
+        data: { offPlatformSolicitationCount: { increment: 1 } },
+      });
+
+      this.logger.warn(
+        `Sous-traitance à commission basse (${dto.commissionRate ?? 'null'}% < ${SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION}%) | artisan: ${artisanId} | assignment: ${assignmentId} → signal leakage +1`,
+      );
+    } catch (error) {
+      // Une trace manquée ne doit jamais casser la création d'attribution (happy-path préservé).
+      this.logger.error(`flagLowCommissionAssignment a échoué pour ${artisanId}`, error as Error);
+    }
   }
 
   async getAssignments(artisanId: string, subcontractorId?: string, missionId?: string) {

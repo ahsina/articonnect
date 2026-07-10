@@ -13,15 +13,183 @@ import {
 } from '../dto/quote.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { QuoteTotals } from '../../common/types/json-fields.types';
+import { ContactRevealService } from '../../mission/services/contact-reveal.service';
 
 @Injectable()
 export class QuoteService {
   private readonly logger = new Logger(QuoteService.name);
 
+  // Révélation de contact time-boxée + auditée + révocable (anti-désintermédiation), partagée avec
+  // MissionService. Instanciée manuellement (pas de provider dédié) : même connexion Prisma.
+  private readonly contactReveal: ContactRevealService;
+
   constructor(
     private prisma: PrismaService,
     private readonly notificationService: NotificationService,
-  ) {}
+  ) {
+    this.contactReveal = new ContactRevealService(this.prisma);
+  }
+
+  /**
+   * Include Prisma standard pour la mission liée à un devis : fournit tout ce dont la couche de
+   * révélation a besoin (preuve d'escrow + dates de clôture pour le time-box + parties de la mission).
+   */
+  private static readonly MISSION_REVEAL_SELECT = {
+    id: true,
+    title: true,
+    status: true,
+    clientId: true,
+    artisanId: true,
+    depositPaidAt: true,
+    completedAt: true,
+    validatedAt: true,
+    autoValidatedAt: true,
+    transaction: { select: { status: true } },
+  };
+
+  /**
+   * Masque les coordonnées réelles (email/téléphone/nom de famille) d'un utilisateur tant que la
+   * révélation n'est pas autorisée. Avant révélation : prénom + initiale du nom. L'EMAIL n'est JAMAIS
+   * exposé (politique messaging-first phone-only, on pousse vers le chat in-app filtré).
+   */
+  private maskQuoteUserContact(user: any, reveal: boolean): any {
+    if (!user) return user;
+    if (reveal) {
+      // Fenêtre active : téléphone révélé, mais email toujours masqué.
+      return { ...user, email: null };
+    }
+    const { phone: _phone, email: _email, lastName, ...rest } = user;
+    return {
+      ...rest,
+      lastName: lastName ? `${String(lastName).charAt(0)}.` : null,
+      phone: null,
+      email: null,
+    };
+  }
+
+  /**
+   * « Payée en escrow » au sens révélation (façon Uber) : Transaction HELD/COMPLETED, depositPaidAt
+   * posé, ou mission dans un statut avancé (atteignable seulement après sécurisation réelle des fonds).
+   * Sans mission liée : jamais d'escrow → aucune révélation croisée.
+   */
+  private isQuoteEscrowSecured(mission: any): boolean {
+    if (!mission) return false;
+    const txStatus = mission.transaction?.status;
+    return (
+      !!mission.depositPaidAt ||
+      txStatus === 'HELD' ||
+      txStatus === 'COMPLETED' ||
+      QuoteService.PAID_MISSION_STATUSES.includes(String(mission.status))
+    );
+  }
+
+  /**
+   * Applique le masquage anti-désintermédiation au CLIENT et à l'ARTISAN d'un devis (mutation en place
+   * de quote.client / quote.artisan). Le contact croisé n'est révélé que si la mission liée est payée
+   * en escrow ET dans sa fenêtre active (COMPLETED/AUTO_VALIDATED + 72h de grâce, puis re-masquage),
+   * uniquement pour le client et l'artisan effectivement assigné. La décision croisée est déléguée à
+   * ContactRevealService (audit ContactRevealLog + refus des viewers `leakageFlagged`). Un devis sans
+   * mission liée (ou hors fenêtre) → aucune révélation croisée (fail-closed).
+   */
+  private async maskQuoteParties(quote: any, userId: string): Promise<any> {
+    if (!quote) return quote;
+
+    const mission = quote.mission ?? null;
+    const isClientViewer = userId === quote.clientId;
+    const isAssignedArtisanViewer =
+      userId === quote.artisanId &&
+      (mission?.artisanId == null || mission.artisanId === userId);
+    const escrowSecured = this.isQuoteEscrowSecured(mission);
+
+    // Par défaut : chaque partie voit sa propre donnée (email quand même masqué), rien d'autre.
+    let revealClientContact = isClientViewer;
+    let revealArtisanContact = isAssignedArtisanViewer;
+
+    if (mission?.id) {
+      // Chemin audité + time-boxé + révocable, mutualisé avec MissionService.
+      const resolved = await this.contactReveal.resolveContactReveal({
+        mission,
+        userId,
+        isAdmin: false,
+        isClientViewer,
+        isAssignedArtisanViewer,
+        escrowSecured,
+      });
+      // Le contact croisé ne s'applique qu'aux parties EFFECTIVEMENT liées à cette mission
+      // (un autre soumissionnaire ne récupère jamais le contact via son propre devis).
+      if (mission.clientId === quote.clientId) {
+        revealClientContact = resolved.revealClientContact;
+      }
+      if (mission.artisanId === quote.artisanId) {
+        revealArtisanContact = resolved.revealArtisanContact;
+      }
+    }
+
+    if (quote.client) {
+      quote.client = this.maskQuoteUserContact(quote.client, revealClientContact);
+    }
+    if (quote.artisan) {
+      quote.artisan = this.maskQuoteUserContact(quote.artisan, revealArtisanContact);
+    }
+    return quote;
+  }
+
+  /**
+   * Garde anti-moisson : refuse la création d'un devis vers un clientId avec lequel l'artisan n'a
+   * AUCUNE relation vérifiable (sinon POST /quotes devient un oracle d'emails par userId).
+   *  - Devis rattaché à une mission → l'artisan doit y être impliqué (assigné ou a fait une offre) et
+   *    la mission doit appartenir au client visé.
+   *  - Devis « libre » → exiger une relation préexistante (négociation passée ou mission commune).
+   */
+  private async assertQuoteRelationAllowed(
+    artisanId: string,
+    clientId: string,
+    missionId?: string,
+  ): Promise<void> {
+    if (missionId) {
+      const mission = await this.prisma.mission.findUnique({
+        where: { id: missionId },
+        select: { id: true, clientId: true, artisanId: true },
+      });
+      if (!mission) {
+        throw new ForbiddenException('Devis non autorisé : mission introuvable');
+      }
+      if (mission.clientId !== clientId) {
+        throw new ForbiddenException(
+          'Devis non autorisé : aucune relation avec ce client',
+        );
+      }
+      if (mission.artisanId === artisanId) {
+        return; // artisan assigné à la mission
+      }
+      const nego = await this.prisma.negotiation.findFirst({
+        where: { missionId, OR: [{ senderId: artisanId }, { receiverId: artisanId }] },
+        select: { id: true },
+      });
+      if (nego) return; // artisan a fait une offre / négocié sur cette mission
+      throw new ForbiddenException('Devis non autorisé : aucune relation avec ce client');
+    }
+
+    // Devis sans mission : exiger une relation préexistante entre l'artisan et le client.
+    const [nego, mission] = await Promise.all([
+      this.prisma.negotiation.findFirst({
+        where: {
+          OR: [
+            { senderId: artisanId, receiverId: clientId },
+            { senderId: clientId, receiverId: artisanId },
+          ],
+        },
+        select: { id: true },
+      }),
+      this.prisma.mission.findFirst({
+        where: { clientId, artisanId },
+        select: { id: true },
+      }),
+    ]);
+    if (!nego && !mission) {
+      throw new ForbiddenException('Devis non autorisé : aucune relation avec ce client');
+    }
+  }
 
   /**
    * Notifie un utilisateur d'un évènement lié à un devis (best-effort : un échec
@@ -99,6 +267,9 @@ export class QuoteService {
   }
 
   async create(artisanId: string, dto: CreateQuoteDto) {
+    // Anti-moisson d'emails : l'artisan doit avoir une relation vérifiable avec le client visé.
+    await this.assertQuoteRelationAllowed(artisanId, dto.clientId, dto.missionId);
+
     const quoteNumber = await this.generateQuoteNumber();
     const totals = this.calculateTotals(dto.lineItems, dto.discountPercent, dto.taxRate);
 
@@ -146,15 +317,17 @@ export class QuoteService {
       include: {
         lineItems: true,
         client: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
         artisan: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
+        mission: { select: QuoteService.MISSION_REVEAL_SELECT },
       },
     });
 
-    return quote;
+    // Masquage anti-désintermédiation avant renvoi (plus aucun email/téléphone brut avant escrow).
+    return this.maskQuoteParties(quote, artisanId);
   }
 
   async findAll(artisanId: string, filters: QuoteFilterDto) {
@@ -176,9 +349,10 @@ export class QuoteService {
         where,
         include: {
           client: {
-            select: { id: true, firstName: true, lastName: true, email: true },
+            select: { id: true, firstName: true, lastName: true, email: true, phone: true },
           },
           lineItems: true,
+          mission: { select: QuoteService.MISSION_REVEAL_SELECT },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -187,8 +361,14 @@ export class QuoteService {
       this.prisma.quote.count({ where }),
     ]);
 
+    // Masquage anti-désintermédiation sur chaque devis listé (l'artisan ne récupère plus l'email/
+    // téléphone brut de ses clients tant que la mission n'est pas payée en escrow).
+    const maskedQuotes = await Promise.all(
+      quotes.map((q) => this.maskQuoteParties(q, artisanId)),
+    );
+
     return {
-      data: quotes,
+      data: maskedQuotes,
       meta: {
         total,
         page,
@@ -227,15 +407,7 @@ export class QuoteService {
           select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
         template: true,
-        mission: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            artisanId: true,
-            transaction: { select: { status: true } },
-          },
-        },
+        mission: { select: QuoteService.MISSION_REVEAL_SELECT },
       },
     });
 
@@ -247,34 +419,10 @@ export class QuoteService {
       throw new ForbiddenException('Access denied');
     }
 
-    // Révélation des coordonnées conditionnée au paiement escrow (anti-désintermédiation).
-    // Avant paiement : ni le client ni l'artisan ne voient l'email/téléphone de l'autre partie.
-    const txStatus = quote.mission?.transaction?.status;
-    const isPaid =
-      txStatus === 'HELD' ||
-      txStatus === 'COMPLETED' ||
-      (quote.mission != null &&
-        QuoteService.PAID_MISSION_STATUSES.includes(quote.mission.status as string));
-
-    // Le contact n'est révélé qu'au client et à l'artisan effectivement assigné à la mission
-    // (celui qui exécute la prestation payée), jamais aux autres soumissionnaires.
-    const isClient = userId === quote.clientId;
-    const isAssignedArtisan =
-      userId === quote.artisanId &&
-      (quote.mission?.artisanId == null || quote.mission.artisanId === userId);
-
-    if (!isPaid || !(isClient || isAssignedArtisan)) {
-      if (quote.client) {
-        (quote.client as { email?: string | null }).email = null;
-        (quote.client as { phone?: string | null }).phone = null;
-      }
-      if (quote.artisan) {
-        (quote.artisan as { email?: string | null }).email = null;
-        (quote.artisan as { phone?: string | null }).phone = null;
-      }
-    }
-
-    return quote;
+    // Révélation des coordonnées TIME-BOXÉE + AUDITÉE + RÉVOCABLE (façon Uber) : conditionnée au
+    // paiement escrow ET à la fenêtre active de la mission (COMPLETED/AUTO_VALIDATED + 72h de grâce,
+    // puis re-masquage), uniquement pour le client et l'artisan assigné. Email jamais exposé.
+    return this.maskQuoteParties(quote, userId);
   }
 
   async update(id: string, artisanId: string, dto: UpdateQuoteDto) {
@@ -343,12 +491,14 @@ export class QuoteService {
       include: {
         lineItems: true,
         client: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
+        mission: { select: QuoteService.MISSION_REVEAL_SELECT },
       },
     });
 
-    return updated;
+    // Masquage anti-désintermédiation avant renvoi.
+    return this.maskQuoteParties(updated, artisanId);
   }
 
   async send(id: string, artisanId: string, dto: SendQuoteDto) {
@@ -523,12 +673,14 @@ export class QuoteService {
       include: {
         lineItems: true,
         client: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
+        mission: { select: QuoteService.MISSION_REVEAL_SELECT },
       },
     });
 
-    return newQuote;
+    // Masquage anti-désintermédiation avant renvoi.
+    return this.maskQuoteParties(newQuote, artisanId);
   }
 
   async delete(id: string, artisanId: string) {

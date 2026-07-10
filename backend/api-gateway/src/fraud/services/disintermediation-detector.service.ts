@@ -68,20 +68,37 @@ const PAID_MISSION_STATUSES = [
   'AUTO_VALIDATED',
 ];
 
-// Noms de patterns du content-filter qui correspondent à un partage de coordonnées (vs simple lien).
-const CONTACT_PATTERN_NAMES = [
-  'PHONE_FR_INTERNATIONAL',
-  'PHONE_FR_NATIONAL',
-  'PHONE_FR_MOBILE',
-  'PHONE_LU', // couverture Luxembourg éventuelle (marché réel)
-  'EMAIL',
-  'EMAIL_OBFUSCATED',
-  'WHATSAPP',
-  'TELEGRAM',
-  'SIGNAL',
-  'CONTACT_KEYWORDS',
-  'WRITTEN_PHONE',
-];
+/**
+ * Détecte si un nom de pattern émis par le content-filter correspond à un PARTAGE DE
+ * COORDONNÉES (téléphone / email / messagerie / réseau social / URL / handle).
+ *
+ * IMPORTANT — anti-désynchronisation : on ne fige PLUS une liste de noms (qui divergeait
+ * silencieusement des vrais patterns émis par ContentFilterService, faisant compter 1
+ * violation là où 5 étaient bloquées). On matche par PRÉFIXE/INCLUSION de familles, ce qui
+ * couvre automatiquement toutes les variantes présentes et futures du content-filter :
+ *   PHONE_FR, PHONE_LU_CC/MOBILE/FIXED, PHONE_BE_CC/MOBILE, PHONE_INTL_*, PHONE_LONG_DIGITS,
+ *   WRITTEN_PHONE, EMAIL / EMAIL_OBFUSCATED, MESSAGING_APP_LINK/MENTION (WhatsApp/Telegram/
+ *   Signal…), SOCIAL_LINK/MENTION, HANDLE_AT, URL_SCHEME/URL_DOMAIN, CONTACT_KEYWORDS.
+ * On EXCLUT volontairement OFFPLATFORM_INTENT (compté par le Signal 3 « mots-clés de sortie »)
+ * et IMAGE_PRE_PAYMENT (déjà comptabilisé via offPlatformSolicitationCount — Signal 2).
+ */
+function isContactPattern(patternName: string): boolean {
+  if (!patternName) return false;
+  const p = patternName.toUpperCase();
+  return (
+    p.startsWith('PHONE') || // tous les téléphones (FR/LU/BE/INTL/long-digits)
+    p.includes('WRITTEN_PHONE') || // numéros écrits en toutes lettres
+    p.includes('EMAIL') || // EMAIL / EMAIL_OBFUSCATED
+    p.includes('MESSAGING') || // MESSAGING_APP_LINK / _MENTION
+    p.includes('WHATSAPP') ||
+    p.includes('TELEGRAM') ||
+    p.includes('SIGNAL') ||
+    p.includes('SOCIAL') || // SOCIAL_LINK / _MENTION
+    p.includes('HANDLE') || // HANDLE_AT (@pseudo)
+    p.startsWith('URL') || // URL_SCHEME / URL_DOMAIN
+    p.includes('CONTACT') // CONTACT_KEYWORDS
+  );
+}
 
 @Injectable()
 export class DisintermediationDetectorService {
@@ -176,7 +193,7 @@ export class DisintermediationDetectorService {
       select: { detectedPatterns: true, content: true, createdAt: true },
     });
     const contactViolationCount = contactViolations.filter((v) =>
-      (v.detectedPatterns || []).some((p) => CONTACT_PATTERN_NAMES.includes(p)),
+      (v.detectedPatterns || []).some((p) => isContactPattern(p)),
     ).length;
 
     let score = 0;
@@ -194,7 +211,13 @@ export class DisintermediationDetectorService {
     // --- Signal 2 : compteur de sollicitation hors-plateforme --------------------------------
     const solicitationCount = user.offPlatformSolicitationCount || 0;
     if (solicitationCount > 0) {
-      const s = Math.min(solicitationCount * 8, 40);
+      // Barème relevé : l'ancien plafond (min(count*8, 40)) était < 75 (seuil FREEZE) → aucun
+      // volume de sollicitations ne pouvait geler un compte. Désormais ~5-6 sollicitations
+      // avérées, combinées aux autres signaux (violations contact + demandes répétées),
+      // atteignent le gel. On garde un plafond (60) sous 75 pour NE PAS geler sur ce seul
+      // signal (protège les médias pré-paiement légitimes, dédoublonnés par mission/24h) et
+      // éviter tout déclenchement trivial (1 sollicitation ne gèle jamais).
+      const s = Math.min(solicitationCount * 15, 60);
       score += s;
       signals.push({
         type: 'OFF_PLATFORM_SOLICITATION',

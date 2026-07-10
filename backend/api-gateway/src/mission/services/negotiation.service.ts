@@ -5,6 +5,7 @@ import { NotificationService } from '../../notification/services/notification.se
 import { MissionType, MissionStatus } from '@prisma/client';
 import { PriceAnomalyDetectorService } from '../../fraud/services/price-anomaly-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
+import { ContentFilterService } from '../../chat/services/content-filter.service';
 
 @Injectable()
 export class NegotiationService {
@@ -15,6 +16,7 @@ export class NegotiationService {
     private notificationService: NotificationService,
     private priceAnomalyDetector: PriceAnomalyDetectorService,
     private featureToggle: FeatureToggleService,
+    private contentFilter: ContentFilterService,
   ) {}
 
   async create(userId: string, createDto: CreateNegotiationDto) {
@@ -87,6 +89,31 @@ export class NegotiationService {
       );
     }
 
+    // Anti-désintermédiation : le canal négociation/offre était le SEUL canal texte non filtré.
+    // On applique le MÊME filtre anti-coordonnées que le chat AVANT de stocker le message.
+    // - Violation HIGH (téléphone/email/URL/app de messagerie…) → 400 explicite (comme le chat).
+    // - Sinon on stocke la version FILTRÉE (motifs MEDIUM masqués) plutôt que le brut.
+    let messageToStore = createDto.message;
+    if (createDto.message && createDto.message.trim().length > 0) {
+      const filterResult = await this.contentFilter.filterContent(
+        createDto.message,
+        userId,
+        'negotiation',
+      );
+      if (filterResult.isBlocked) {
+        throw new BadRequestException({
+          message:
+            'Votre offre contient des coordonnées interdites. Communiquez uniquement via Krafolt.',
+          code: 'CONTACT_INFO_BLOCKED',
+        });
+      }
+      // Si des motifs (MEDIUM) ont été détectés, on persiste la version masquée, pas le brut.
+      messageToStore =
+        filterResult.detectedPatterns.length > 0
+          ? filterResult.filteredContent
+          : createDto.message;
+    }
+
     // Calculate expiration based on mission type
     const expiresAt = this.calculateNegotiationExpiration(mission.type);
 
@@ -99,7 +126,7 @@ export class NegotiationService {
         laborCost: createDto.laborCost,
         materialCost: createDto.materialCost,
         travelCost: createDto.travelCost,
-        message: createDto.message,
+        message: messageToStore,
         expiresAt,
       },
     });

@@ -63,6 +63,19 @@ export class ContentFilterService {
   private static readonly SEPARATORS =
     /[\s.\-_/\\()\[\]{}|·•*'"~,;:…  -​  　‐-―−⁃•‧∙・･·．－～]+/gu;
 
+  // Homoglyphes lettre→chiffre pour la détection de numéros déguisés (« O6 I2 34 56 »).
+  // On les applique UNIQUEMENT à une lettre COLLÉE à un vrai chiffre (voir
+  // applyPhoneHomoglyphs) afin de ne pas transformer la prose (« Bonjour », « salut »).
+  // On exclut volontairement a/e/t (trop fréquents en français) pour rester sûr.
+  private static readonly HOMOGLYPHS: Record<string, string> = {
+    o: '0', O: '0',
+    i: '1', I: '1', l: '1', L: '1',
+    z: '2', Z: '2',
+    s: '5', S: '5',
+    b: '8', B: '8',
+    g: '9', G: '9', q: '9', Q: '9',
+  };
+
   // Statuts de mission « argent engagé » : au-delà, le contact est légitimement révélé
   // (happy-path) et le message média n'est plus un signal de risque pré-paiement.
   private static readonly PAID_MISSION_STATUSES = new Set<string>([
@@ -188,7 +201,7 @@ export class ContentFilterService {
     {
       name: 'WRITTEN_PHONE',
       regex:
-        /(?:\b(?:z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|et|zero|one|two|three|four|five|six|seven|eight|nine|ten|null|eins|zwei|drei|vier|sechs)\b[\s,.\-]*){4,}/gi,
+        /(?:\b(?:z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|et|zero|one|two|three|four|five|six|seven|eight|nine|ten|null|eins|zwei|drei|vier|sechs|eent|zwee|dr[aä]i|v[eé]ier|f[eë]nnef|siwen|aacht|n[eé]ng|z[eé]ng)\b[\s,.\-]*){4,}/gi,
       replacement: '[NUMÉRO BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -209,7 +222,18 @@ export class ContentFilterService {
     {
       name: 'EMAIL_OBFUSCATED',
       regex:
-        /[a-zA-Z0-9._%+-]+\s*(?:@|\(at\)|\[at\]|\bat\b|arobase|chez)\s*[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\bdot\b|point|punkt)\s*[a-zA-Z]{2,}/gi,
+        /[a-zA-Z0-9._%+-]+\s*(?:@|\(at\)|\[at\]|\bat\b|arobas+e?|arobaz[e]?|chez)\s*[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\bdot\b|point|punkt)\s*[a-zA-Z]{2,}/gi,
+      replacement: '[EMAIL BLOQUÉ]',
+      severity: 'HIGH',
+      enabled: true,
+      detectOn: 'text',
+    },
+    // Email avec lettres ESPACÉES (« j o h n at g m a i l dot c o m »). On exige les
+    // connecteurs forts « at » + « dot/point » pour éviter tout faux positif sur du texte.
+    {
+      name: 'EMAIL_SPACED',
+      regex:
+        /(?:[a-z0-9]\s+){2,}(?:@|\(at\)|\[at\]|\bat\b|arobas+e?|arobaz[e]?|chez)(?:\s+[a-z0-9]){2,}\s+(?:\.|\(dot\)|\[dot\]|\bdot\b|point|punkt)(?:\s+[a-z]){2,}/gi,
       replacement: '[EMAIL BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -231,7 +255,7 @@ export class ContentFilterService {
     {
       name: 'URL_DOMAIN',
       regex:
-        /(?<![@\w.])[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.(?:com|net|org|fr|lu|be|io|me|eu|de|nl|info|biz|shop|site|online|app|co|xyz|gg|tel|link|page|dev|pro|store|club)\b(?:\/[^\s]*)?/gi,
+        /(?<![@\w.])(?!(?:www\.)?krafolt\.(?:com|lu)\b)[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.(?:com|net|org|fr|lu|be|io|me|eu|de|nl|info|biz|shop|site|online|app|co|xyz|gg|tel|link|page|dev|pro|store|club|cc|ru|work|live|icu|top|vip|ws|su|tk|ml|ga|cf|gq|cn|ovh)\b(?:\/[^\s]*)?/gi,
       replacement: '[LIEN BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -275,6 +299,19 @@ export class ContentFilterService {
         /\b(?:insta(?:gram)?|facebook|tiktok|linkedin|snap(?:chat)?)\b(?:\s*(?:me|moi|:|@|#)?\s*[a-z0-9._]{2,30})?/gi,
       replacement: '[CONTACT BLOQUÉ]',
       severity: 'HIGH',
+      enabled: true,
+      detectOn: 'text',
+    },
+    // Abréviations réseaux/messagerie SUIVIES d'un pseudo NU (sans @) :
+    // « IG john_doe », « ig: cooldude », « fb dm jeanlu », « snap monpseudo », « tg @x »…
+    // On exige un token >=4 caractères derrière pour limiter les faux positifs.
+    // MEDIUM : non bloquant mais le pseudo est masqué + la violation est loguée.
+    {
+      name: 'SOCIAL_HANDLE_ABBR',
+      regex:
+        /\b(?:ig|insta|fb|messenger|tg|tele|snap|viber)\b\s*(?:dm|me|moi|:|@|#|=|->|→)?\s*@?[a-z0-9._]{4,30}\b/gi,
+      replacement: '[CONTACT BLOQUÉ]',
+      severity: 'MEDIUM',
       enabled: true,
       detectOn: 'text',
     },
@@ -338,6 +375,47 @@ export class ContentFilterService {
       .replace(ContentFilterService.SEPARATORS, '');
   }
 
+  /**
+   * Applique les homoglyphes lettre→chiffre, mais SEULEMENT sur une lettre
+   * immédiatement collée à un vrai chiffre (frontière calculée sur la chaîne
+   * d'origine). Cible « O6 I2 34 56 » / « O6I2345678 » sans jamais toucher à la
+   * prose (« Bonjour », « salut » n'ont pas de chiffre adjacent).
+   */
+  private applyPhoneHomoglyphs(s: string): string {
+    const map = ContentFilterService.HOMOGLYPHS;
+    const chars = [...s];
+    const isDigit = (c?: string): boolean => !!c && c >= '0' && c <= '9';
+    return chars
+      .map((c, i) =>
+        map[c] && (isDigit(chars[i - 1]) || isDigit(chars[i + 1])) ? map[c] : c,
+      )
+      .join('');
+  }
+
+  /**
+   * Détecte un téléphone OBFUSQUÉ que les motifs « compact » standard laissent passer :
+   *  - homoglyphes lettre-pour-chiffre (« O6 I2 34 56 ») ;
+   *  - chiffres séparés par du BRUIT LISIBLE / des mots (« 621 (indicatif interne) 123 456 »).
+   *
+   * Méthode : on mappe les homoglyphes, on compacte (séparateurs retirés), puis on retire
+   * les courts fragments alphabétiques (3–20) INTERCALÉS ENTRE DEUX CHIFFRES (un mot glissé
+   * au milieu d'un numéro), et on cherche une longue suite de chiffres.
+   *
+   * Anti-faux-positif : ne se déclenche QUE si cette normalisation a réellement transformé
+   * la zone (`phoneish !== compact`) — sinon les dates/montants nus (« 20122026 », « 250 »)
+   * restent gérés par PHONE_LONG_DIGITS (seuil 9) et ne sont pas re-jugés ici. Le fragment
+   * retiré doit faire ≥3 caractères, ce qui protège les connecteurs courts (« 2026 à 8h »).
+   */
+  private detectObfuscatedPhone(normalized: string, compact: string): boolean {
+    const mapped = this.applyPhoneHomoglyphs(normalized);
+    let phoneish = this.toCompact(mapped);
+    // Retire un mot/bruit alphabétique (3–20) coincé ENTRE deux chiffres.
+    phoneish = phoneish.replace(/(?<=\d)[^\d]{3,20}(?=\d)/g, '');
+    if (phoneish === compact) return false; // aucune obfuscation réelle → laissé aux motifs standard
+    // Une fois nettoyé : ≥8 chiffres consécutifs couvrent LU (6/8/9) / FR / BE.
+    return /(?<!\d)\d{8,}(?!\d)/.test(phoneish);
+  }
+
   /** Compile une regex globale fraîche (évite le bug de lastIndex partagé). */
   private freshGlobal(source: RegExp): RegExp {
     const flags = source.flags.includes('g') ? source.flags : source.flags + 'g';
@@ -397,6 +475,20 @@ export class ContentFilterService {
 
       this.logger.warn(
         `Contact info detected | User: ${userId} | Context: ${context} | Pattern: ${pattern.name} | Matches: ${matches.length}`,
+      );
+    }
+
+    // Passe dédiée : téléphone obfusqué (homoglyphes + mots intercalés) que les motifs
+    // « compact » standard laissent passer. HIGH. Le message étant bloqué, on ne tente
+    // pas de masquage best-effort (impossible de remapper les positions transformées).
+    if (
+      !detectedPatterns.includes('PHONE_OBFUSCATED') &&
+      this.detectObfuscatedPhone(normalized, compact)
+    ) {
+      detectedPatterns.push('PHONE_OBFUSCATED');
+      highestSeverity = 'HIGH';
+      this.logger.warn(
+        `Contact info detected | User: ${userId} | Context: ${context} | Pattern: PHONE_OBFUSCATED`,
       );
     }
 
@@ -576,6 +668,7 @@ export class ContentFilterService {
         return false;
       }
     }
+    if (this.detectObfuscatedPhone(normalized, compact)) return false;
     return true;
   }
 
@@ -590,6 +683,9 @@ export class ContentFilterService {
       if (this.freshGlobal(pattern.regex).test(haystack)) {
         detected.push(pattern.name);
       }
+    }
+    if (this.detectObfuscatedPhone(normalized, compact)) {
+      detected.push('PHONE_OBFUSCATED');
     }
     return detected;
   }

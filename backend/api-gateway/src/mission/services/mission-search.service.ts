@@ -103,7 +103,26 @@ export class MissionSearchService {
               firstName: true,
               lastName: true,
               avatar: true,
-              artisanProfile: true,
+              // WHITELIST du profil artisan embarqué : jamais baseAddress / latitude / longitude
+              // bruts (l'adresse exacte de l'artisan fuirait via l'annuaire des missions).
+              // redactMissionLocation ne caviarde que l'adresse de la MISSION, pas ce sous-objet.
+              artisanProfile: {
+                select: {
+                  id: true,
+                  companyName: true,
+                  description: true,
+                  rating: true,
+                  reviewCount: true,
+                  missionCount: true,
+                  serviceRadius: true,
+                  available: true,
+                  hourlyRate: true,
+                  emergencyRate: true,
+                  businessVerified: true,
+                  businessVerificationStatus: true,
+                  specialties: true,
+                },
+              },
             },
           },
           // Statut escrow pour décider de la révélation de l'adresse exacte à l'artisan assigné.
