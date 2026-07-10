@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request } f
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ReviewService } from '../services/review.service';
-import { CreateReviewDto, UpdateReviewDto } from '../dto/review.dto';
+import { CreateReviewDto, CreateArtisanReviewDto, UpdateReviewDto } from '../dto/review.dto';
 
 interface RequestWithUser {
   user: {
@@ -33,6 +33,38 @@ export class ReviewController {
   @ApiResponse({ status: 200, description: 'List of reviews' })
   async getArtisanReviews(@Param('artisanId') artisanId: string) {
     return this.reviewService.findByArtisan(artisanId);
+  }
+
+  // ================================================================
+  // ARTISAN → CLIENT (évaluation réciproque)
+  // ================================================================
+
+  @Post('client')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Artisan evaluates a client after a completed mission' })
+  @ApiResponse({ status: 201, description: 'Client review created' })
+  @ApiResponse({ status: 400, description: 'Mission not completed or already reviewed' })
+  @ApiResponse({ status: 403, description: 'Not the artisan of this mission' })
+  async createClientReview(
+    @Request() req: RequestWithUser,
+    @Body() createDto: CreateArtisanReviewDto,
+  ) {
+    return this.reviewService.createArtisanReview(req.user.userId, createDto);
+  }
+
+  @Get('client/:clientId')
+  @ApiOperation({ summary: 'Get reviews received by a client (from artisans)' })
+  @ApiResponse({ status: 200, description: 'List of client reviews' })
+  async getClientReviews(@Param('clientId') clientId: string) {
+    return this.reviewService.findByClient(clientId);
+  }
+
+  @Get('client/:clientId/reputation')
+  @ApiOperation({ summary: 'Get aggregated client reputation stats' })
+  @ApiResponse({ status: 200, description: 'Client reputation stats' })
+  async getClientReputation(@Param('clientId') clientId: string) {
+    return this.reviewService.getClientReputationStats(clientId);
   }
 
   @Get('mission/:missionId')

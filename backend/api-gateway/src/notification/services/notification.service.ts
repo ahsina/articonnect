@@ -497,12 +497,17 @@ export class NotificationService {
   // ==================== USER PREFERENCES ====================
 
   async getUserPreferences(userId: string): Promise<NotificationPreferences> {
-    const prefs = await this.prisma.notificationPreference.findUnique({
+    // IMPORTANT : la source de vérité des préférences est le modèle `notificationPreferences`
+    // (pluriel) — c'est la table écrite/lue par l'API publique
+    // (NotificationPreferencesService, PUT /notifications/preferences). L'ancien modèle
+    // `notificationPreference` (singulier) n'est jamais alimenté par l'UI : lire cette table-là
+    // rendait toutes les préférences posées via l'API sans effet à l'émission (canaux + types).
+    const prefs = await this.prisma.notificationPreferences.findUnique({
       where: { userId },
     });
 
     if (!prefs) {
-      // Return defaults
+      // Return defaults (tout activé) — préserve le happy-path pour un utilisateur sans préférences.
       return {
         inApp: true,
         push: true,
@@ -513,15 +518,35 @@ export class NotificationService {
       };
     }
 
+    // Traduit les bascules « par type » de la table publique vers `disabledTypes` :
+    // une catégorie désactivée supprime la notification (createNotification renvoie null),
+    // tous canaux confondus, y compris l'in-app.
+    const disabledTypes: NotificationType[] = [];
+    if (!prefs.newMission) disabledTypes.push(NotificationType.NEW_MISSION);
+    if (!prefs.missionUpdate) {
+      disabledTypes.push(
+        NotificationType.MISSION_ACCEPTED,
+        NotificationType.MISSION_COMPLETED,
+        NotificationType.MISSION_CANCELLED,
+      );
+    }
+    if (!prefs.newMessage) {
+      disabledTypes.push(NotificationType.MESSAGE_NEW, NotificationType.CHAT_MESSAGE);
+    }
+    if (!prefs.paymentReceived) disabledTypes.push(NotificationType.PAYMENT_RECEIVED);
+    if (!prefs.reviewReceived) disabledTypes.push(NotificationType.REVIEW_NEW);
+
     return {
-      inApp: prefs.inApp,
-      push: prefs.push,
-      email: prefs.email,
-      sms: prefs.sms,
-      quietHoursStart: prefs.quietHoursStart || undefined,
-      quietHoursEnd: prefs.quietHoursEnd || undefined,
-      emailDigest: prefs.emailDigest as NotificationPreferences['emailDigest'],
-      disabledTypes: (prefs.disabledTypes || []) as NotificationType[],
+      // La table publique ne modélise pas de canal « in-app » distinct : l'in-app reste actif
+      // (le filtrage par type via disabledTypes ci-dessus gère la suppression).
+      inApp: true,
+      push: prefs.pushNotifications,
+      email: prefs.emailNotifications,
+      sms: prefs.smsNotifications,
+      // On conserve l'envoi instantané quand le canal email est actif (comportement historique) ;
+      // `weeklyDigest` pilote un résumé hebdomadaire séparé, pas le mode d'envoi par notification.
+      emailDigest: 'INSTANT',
+      disabledTypes,
     };
   }
 

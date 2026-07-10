@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { EmailService } from '../../email/services/email.service';
 import { randomBytes } from 'crypto';
@@ -169,6 +169,22 @@ export class SubcontractorService {
 
     if (subcontractor.status !== SubcontractorStatus.PENDING_INVITATION) {
       throw new BadRequestException('Invitation already processed');
+    }
+
+    // The (artisanId, subcontractorUserId) pair is unique. If this user is
+    // already linked to this artisan (via a prior invitation/record), accepting
+    // would violate the constraint and surface a raw Prisma P2002 as a 500.
+    // Detect it up front and reject cleanly.
+    const existingLink = await this.prisma.subcontractor.findFirst({
+      where: {
+        artisanId: subcontractor.artisanId,
+        subcontractorUserId: userId,
+        id: { not: subcontractor.id },
+      },
+    });
+
+    if (existingLink) {
+      throw new ConflictException('You are already a subcontractor of this artisan');
     }
 
     return this.prisma.subcontractor.update({

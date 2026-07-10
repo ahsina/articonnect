@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { InvoiceService } from '../../invoice/services/invoice.service';
 import { createHash, randomBytes } from 'crypto';
 
 /**
@@ -40,7 +41,10 @@ export interface SignatureVerification {
 export class SignatureService {
   private readonly logger = new Logger(SignatureService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private invoiceService: InvoiceService,
+  ) {}
 
   /**
    * Sign a quote electronically
@@ -142,6 +146,20 @@ export class SignatureService {
       });
 
       this.logger.log(`Quote ${quoteId} accepted and signed by ${signerRole}`);
+
+      // La signature client vaut acceptation : on génère automatiquement la facture
+      // rattachée au devis (createFromQuote bascule le devis en CONVERTED).
+      // Non bloquant : un échec de facturation ne doit pas invalider la signature.
+      try {
+        await this.invoiceService.createFromQuote(quoteId);
+        this.logger.log(`Invoice auto-generated from signed quote ${quoteId}`);
+      } catch (err) {
+        this.logger.error(
+          `Auto-invoice generation failed for signed quote ${quoteId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
     }
 
     return {

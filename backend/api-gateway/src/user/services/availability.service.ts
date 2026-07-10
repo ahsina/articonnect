@@ -60,6 +60,13 @@ export class AvailabilityService {
    * Get artisan's availability for a specific date
    */
   async getDailyAvailability(artisanId: string, date: string): Promise<TimeSlot[]> {
+    // Un congé posé (table TimeOff) rend l'artisan indisponible toute la journée,
+    // quel que soit son planning Redis. Sans cette lecture, un artisan en vacances
+    // restait "disponible" (risque de double-booking).
+    if (await this.hasBlockingTimeOff(artisanId, date)) {
+      return [];
+    }
+
     const key = `availability:${artisanId}:${date}`;
     const cached = await this.redis.get(key);
 
@@ -272,6 +279,40 @@ export class AvailabilityService {
     const keys = await this.getAllAvailabilityKeys(artisanId);
     for (const key of keys) {
       await this.redis.del(key);
+    }
+  }
+
+  /**
+   * Helper: est-ce que l'artisan a un congé (TimeOff non rejeté) couvrant ce jour ?
+   *
+   * NB: `artisanId` reçu ici est l'id User (clé Redis / route publique), alors que
+   * TimeOff.artisanId référence ArtisanProfile.id. On résout donc le profil d'abord.
+   * Défensif (try/catch) pour ne jamais casser la lecture de disponibilité si la
+   * table est indisponible.
+   */
+  private async hasBlockingTimeOff(artisanId: string, date: string): Promise<boolean> {
+    try {
+      const dayStart = new Date(`${date}T00:00:00.000Z`);
+      const dayEnd = new Date(`${date}T23:59:59.999Z`);
+      if (Number.isNaN(dayStart.getTime())) return false;
+
+      const profile = await this.prisma.artisanProfile.findUnique({
+        where: { userId: artisanId },
+        select: { id: true },
+      });
+      const profileId = profile?.id ?? artisanId;
+
+      const count = await this.prisma.timeOff.count({
+        where: {
+          artisanId: profileId,
+          status: { not: 'REJECTED' },
+          startDate: { lte: dayEnd },
+          endDate: { gte: dayStart },
+        },
+      });
+      return count > 0;
+    } catch {
+      return false;
     }
   }
 

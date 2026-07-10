@@ -172,6 +172,15 @@ export class MarketplaceController {
     return this.orderService.findOne(id, req.user.userId);
   }
 
+  @Post('orders/:id/pay')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Pay an order (client checkout): PENDING -> PAID + stock reservation' })
+  @ApiResponse({ status: 201, description: 'Order paid' })
+  async payOrder(@Request() req, @Param('id') id: string) {
+    return this.orderService.payOrder(id, req.user.userId);
+  }
+
   @Patch('orders/:id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

@@ -466,11 +466,46 @@ export class PaymentService {
         data: { status: 'HELD' },
       });
 
-      await this.prisma.mission.update({
-        where: { id: transaction.missionId },
-        data: { status: 'PAID' },
-      });
+      await this.reflectEscrowPaidOnMission(transaction);
     }
+  }
+
+  /**
+   * Reflète un paiement retenu en escrow (Transaction HELD/autorisation carte) sur la mission.
+   * Sans ceci, une charge autorisée (charge.succeeded) laissait la mission bloquée à
+   * PENDING_DEPOSIT / ACCEPTED « non payé à vie » (le statut acompte/paiement n'était jamais écrit).
+   * - Acompte (DEPOSIT)  -> status DEPOSIT_PAID + depositPaidAt
+   * - Paiement total     -> status PAID (+ depositPaidAt = trace « payé en escrow »)
+   * On n'avance JAMAIS un statut déjà plus avancé (IN_TRANSIT, IN_PROGRESS, COMPLETED, ...).
+   */
+  private async reflectEscrowPaidOnMission(transaction: {
+    missionId: string | null;
+    type: string;
+  }) {
+    if (!transaction.missionId) return;
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: transaction.missionId },
+      select: { status: true, depositPaidAt: true },
+    });
+    if (!mission) return;
+
+    // Statuts « en attente de paiement » depuis lesquels on peut refléter le paiement escrow.
+    const reflectable = ['PENDING_DEPOSIT', 'ACCEPTED', 'NEGOTIATING'];
+    const isDeposit = transaction.type === 'DEPOSIT';
+
+    const data: { status?: any; depositPaidAt?: Date } = {};
+    if (!mission.depositPaidAt) {
+      data.depositPaidAt = new Date();
+    }
+    if (reflectable.includes(mission.status as string)) {
+      data.status = isDeposit ? 'DEPOSIT_PAID' : 'PAID';
+    }
+    if (Object.keys(data).length === 0) return;
+
+    await this.prisma.mission.update({
+      where: { id: transaction.missionId },
+      data,
+    });
   }
 
   private async handlePaymentFailed(paymentIntent: { id: string; metadata: Record<string, string> }) {
@@ -563,6 +598,33 @@ export class PaymentService {
       throw new BadRequestException('Acompte non requis pour cette mission');
     }
 
+    // IDEMPOTENCE : 1 seule Transaction par mission (contrainte unique missionId). Sans garde, un 2e
+    // POST /payments/deposit créait un 2e PaymentIntent + une 2e ligne Payment AVANT de crasher en 500
+    // sur la contrainte unique (risque de double encaissement + fuite Prisma). On tranche AVANT Stripe :
+    //  - déjà payé (HELD/COMPLETED) -> rejet propre
+    //  - intent encore payable       -> on renvoie le même clientSecret (idempotent)
+    const existingTx = await this.prisma.transaction.findUnique({ where: { missionId } });
+    if (existingTx) {
+      if (['HELD', 'COMPLETED'].includes(existingTx.status as string)) {
+        throw new BadRequestException('L\'acompte de cette mission est déjà payé');
+      }
+      if (existingTx.stripePaymentIntentId) {
+        const pi = await this.stripeService.retrievePaymentIntent(existingTx.stripePaymentIntentId);
+        const reusable =
+          pi &&
+          ['requires_payment_method', 'requires_confirmation', 'requires_action', 'processing', 'requires_capture'].includes(
+            pi.status,
+          );
+        if (reusable && pi.client_secret) {
+          return {
+            clientSecret: pi.client_secret,
+            amount: Number(existingTx.amount),
+            depositPercentage: mission.depositPercentage,
+          };
+        }
+      }
+    }
+
     // Calculer le montant de l'acompte
     const depositAmount = Number(mission.depositAmount) ||
       this.reputationService.calculateDepositAmount(
@@ -586,33 +648,47 @@ export class PaymentService {
       customerId: mission.client.clientProfile?.stripeCustomerId || undefined,
     });
 
-    // Créer l'enregistrement Payment
-    await this.prisma.payment.create({
-      data: {
-        missionId: mission.id,
-        userId,
-        type: 'DEPOSIT',
-        amount: depositAmount,
-        stripePaymentIntentId: paymentIntent.id,
-      },
+    // Enregistrement Payment (idempotent : réutiliser la ligne DEPOSIT existante plutôt que d'en
+    // empiler une 2e sur retry / PI régénéré).
+    const existingDeposit = await this.prisma.payment.findFirst({
+      where: { missionId: mission.id, type: 'DEPOSIT' },
     });
+    if (existingDeposit) {
+      await this.prisma.payment.update({
+        where: { id: existingDeposit.id },
+        data: { amount: depositAmount, stripePaymentIntentId: paymentIntent.id },
+      });
+    } else {
+      await this.prisma.payment.create({
+        data: {
+          missionId: mission.id,
+          userId,
+          type: 'DEPOSIT',
+          amount: depositAmount,
+          stripePaymentIntentId: paymentIntent.id,
+        },
+      });
+    }
 
     // Get commission rates from platform config
     const feeSettings = await this.platformConfig.getFeeSettings();
     const commissionRate = feeSettings.platformCommissionRate / 100;
     const artisanRate = feeSettings.artisanPayoutPercentage / 100;
 
-    // Créer aussi une transaction (legacy)
-    await this.prisma.transaction.create({
-      data: {
-        type: 'DEPOSIT',
-        missionId: mission.id,
-        amount: depositAmount,
-        commission: depositAmount * commissionRate,
-        artisanAmount: depositAmount * artisanRate,
-        stripePaymentIntentId: paymentIntent.id,
-        status: 'PENDING',
-      },
+    // Transaction (contrainte unique missionId) : upsert pour ne pas violer la contrainte quand un
+    // PaymentIntent mort est régénéré (la Transaction existe déjà).
+    const depositTxData = {
+      type: 'DEPOSIT' as const,
+      amount: depositAmount,
+      commission: depositAmount * commissionRate,
+      artisanAmount: depositAmount * artisanRate,
+      stripePaymentIntentId: paymentIntent.id,
+      status: 'PENDING' as const,
+    };
+    await this.prisma.transaction.upsert({
+      where: { missionId: mission.id },
+      create: { missionId: mission.id, ...depositTxData },
+      update: depositTxData,
     });
 
     return {
@@ -1057,12 +1133,17 @@ export class PaymentService {
 
     // Transférer à l'artisan (le versement Connect est SÉPARÉ de la capture : son échec ne doit pas
     // annuler la capture déjà effectuée).
-    if (mission.artisan.artisanProfile?.stripeAccountId) {
+    // On vérifie stripeAccountId ET stripeOnboarded : un compte créé mais non onboardé n'a pas la
+    // capability `transfers` -> createTransfer échouait côté Stripe. On ne tente donc le versement que
+    // si le compte est réellement prêt ; sinon on lève une erreur (payout DIFFÉRÉ, escrow déjà capturé
+    // = fonds détenus/HELD, versement RÉCUPÉRABLE une fois l'onboarding terminé).
+    const artisanStripe = mission.artisan.artisanProfile;
+    if (artisanStripe?.stripeAccountId && artisanStripe?.stripeOnboarded) {
       const transferAmount = Math.floor(Number(mission.transaction.artisanAmount) * 100);
 
       const transfer = await this.stripeService.createTransfer({
         amount: transferAmount,
-        destination: mission.artisan.artisanProfile.stripeAccountId,
+        destination: artisanStripe.stripeAccountId,
         metadata: {
           missionId,
           transactionId: mission.transaction.id,
@@ -1091,7 +1172,14 @@ export class PaymentService {
       };
     }
 
-    throw new BadRequestException('Artisan sans compte Stripe Connect');
+    // Compte Connect absent ou non onboardé : versement impossible pour l'instant. L'escrow reste
+    // capturé/HELD (fonds sécurisés, transaction NON marquée COMPLETED car aucun euro versé). Le payout
+    // est différé/récupérable et sera retenté une fois le compte prêt.
+    throw new BadRequestException(
+      artisanStripe?.stripeAccountId
+        ? 'Compte de paiement artisan non finalisé (onboarding Stripe Connect requis). Versement différé, fonds sécurisés en escrow.'
+        : 'Artisan sans compte Stripe Connect. Versement différé, fonds sécurisés en escrow.',
+    );
   }
 
   /**
@@ -1318,11 +1406,15 @@ export class PaymentService {
     });
 
     if (transaction) {
-      // Update transaction to HELD (funds received, ready to capture)
+      // Update transaction to HELD (funds received/authorized, ready to capture)
       await this.prisma.transaction.update({
         where: { id: transaction.id },
         data: { status: 'HELD' },
       });
+
+      // charge.succeeded = autorisation carte (escrow) OU encaissement SEPA : dans les deux cas,
+      // le paiement est retenu -> on le reflète sur la mission (DEPOSIT_PAID / PAID + depositPaidAt).
+      await this.reflectEscrowPaidOnMission(transaction);
 
       this.logger.log(
         `SEPA charge success: Transaction ${transaction.id}. Amount: ${charge.amount ? charge.amount / 100 : 'unknown'}€`,
@@ -1388,7 +1480,7 @@ export class PaymentService {
     }
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
-      include: { payments: true },
+      include: { payments: true, transaction: true },
     });
     const payment =
       mission?.payments.find((p) => p.type === 'FULL_PAYMENT') ||
@@ -1399,7 +1491,52 @@ export class PaymentService {
       return { refunded: 0, note: 'aucun paiement capturé à rembourser' };
     }
     const capped = Math.min(refundableAmount, Number(payment.amount));
+    // Part de l'escrow retenue au titre des frais d'annulation (barème) = payé - remboursable.
+    const feeToRetain = Math.round((Number(payment.amount) - capped) * 100) / 100;
+
     try {
+      // Distinguer un escrow NON capturé (capture_method:'manual' -> statut requires_capture) d'un
+      // paiement déjà capturé. Stripe REFUSE refunds.create sur une charge non capturée : il faut
+      // libérer l'AUTORISATION (paymentIntents.cancel), ou n'en capturer que les frais (capture
+      // partielle) et laisser Stripe relâcher le reste. Sinon toute annulation d'une mission avec
+      // acompte retenu était bloquée en 400.
+      const pi = await this.stripeService.retrievePaymentIntent(payment.stripePaymentIntentId);
+      const stripe = this.stripeService['stripe'];
+
+      let refundedTrace = capped;
+
+      if (pi && pi.status === 'requires_capture') {
+        if (feeToRetain > 0) {
+          // Capturer uniquement les frais d'annulation ; Stripe relâche automatiquement le reste
+          // (= le remboursable) vers le client. => frais prélevés ET remboursable libéré, tracés.
+          await stripe.paymentIntents.capture(payment.stripePaymentIntentId, {
+            amount_to_capture: Math.round(feeToRetain * 100),
+          });
+          this.logger.log(
+            `Annulation mission ${missionId} (escrow non capturé): frais ${feeToRetain}€ capturés, ${capped}€ libérés au client.`,
+          );
+        } else {
+          // Aucun frais : on annule le PaymentIntent -> autorisation entièrement libérée.
+          await stripe.paymentIntents.cancel(payment.stripePaymentIntentId);
+          this.logger.log(
+            `Annulation mission ${missionId} (escrow non capturé): autorisation de ${capped}€ libérée intégralement.`,
+          );
+        }
+
+        await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: { refundedAmount: capped, refundedAt: new Date() },
+        });
+        if (mission?.transaction) {
+          await this.prisma.transaction.update({
+            where: { id: mission.transaction.id },
+            data: { status: 'REFUNDED', refundedAt: new Date() },
+          });
+        }
+        return { refunded: refundedTrace };
+      }
+
+      // Paiement déjà capturé (statut succeeded) : remboursement classique du montant remboursable.
       const refund = await this.stripeService.refundPayment(payment.stripePaymentIntentId, capped * 100);
       await this.prisma.payment.update({
         where: { id: payment.id },
@@ -1409,8 +1546,14 @@ export class PaymentService {
           ...(refund?.id ? { stripeRefundId: refund.id } : {}),
         },
       });
+      if (mission?.transaction) {
+        await this.prisma.transaction.update({
+          where: { id: mission.transaction.id },
+          data: { status: 'REFUNDED', refundedAt: new Date() },
+        });
+      }
       this.logger.log(`Remboursement annulation mission ${missionId}: ${capped}€`);
-      return { refunded: capped };
+      return { refunded: refundedTrace };
     } catch (e) {
       this.logger.error(`Échec remboursement annulation mission ${missionId}`, e as any);
       throw new BadRequestException('Le remboursement a échoué. Réessayez ou contactez le support.');

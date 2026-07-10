@@ -39,6 +39,9 @@ export class GdprService {
         clientMissions: true,
         artisanMissions: true,
         notifications: true,
+        // Factures : l'utilisateur peut être émetteur (artisan) et/ou destinataire (client).
+        issuedInvoices: true,
+        receivedInvoices: true,
         refreshTokens: true,
       },
     });
@@ -66,6 +69,7 @@ export class GdprService {
           'Reviews',
           'Missions',
           'Notifications',
+          'Invoices',
           'Preferences',
         ],
         exportFormat: 'JSON',
@@ -99,15 +103,18 @@ export class GdprService {
       return { message: 'Ce compte a déjà été supprimé.' };
     }
 
-    if (user.deletedAt) {
+    if (user.deletionRequestedAt) {
       // Une demande de suppression est déjà en attente : opération idempotente.
-      const scheduledFor = new Date(
-        user.deletedAt.getTime() + this.DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
-      );
+      const scheduledFor =
+        user.deletionScheduledFor ??
+        new Date(
+          user.deletionRequestedAt.getTime() +
+            this.DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+        );
       return {
         message:
           'Une demande de suppression est déjà en cours. Vous pouvez l\'annuler à tout moment avant la date prévue.',
-        requestedAt: user.deletedAt.toISOString(),
+        requestedAt: user.deletionRequestedAt.toISOString(),
         scheduledFor: scheduledFor.toISOString(),
       };
     }
@@ -117,13 +124,17 @@ export class GdprService {
       requestedAt.getTime() + this.DELETION_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    // Marque la demande de façon réversible : le compte est suspendu et la date de demande
-    // enregistrée. Aucune PII n'est détruite ici — le compte peut être restauré via cancel-deletion.
+    // Marque la demande de façon RÉVERSIBLE, sans casser l'authentification :
+    //  - on ne passe PAS le compte à SUSPENDED (sinon jwt.strategy le rejette en 401) ;
+    //  - on n'écrit PAS `deletedAt` (le middleware soft-delete masquerait l'utilisateur de tout
+    //    findUnique/findMany, rendant cancel-deletion et le login impossibles).
+    // On enregistre uniquement l'horodatage de la demande + la date d'effacement programmée.
+    // Aucune PII n'est détruite ici — l'effacement définitif est un job différé / action admin.
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        status: 'SUSPENDED',
-        deletedAt: requestedAt,
+        deletionRequestedAt: requestedAt,
+        deletionScheduledFor: scheduledFor,
       },
     });
 
@@ -157,11 +168,13 @@ export class GdprService {
       );
     }
 
+    // Efface uniquement les marqueurs de demande de suppression. On ne force pas `status`
+    // (la demande ne suspend plus le compte) ni `deletedAt` (jamais écrit à la demande).
     await this.prisma.user.update({
       where: { id: userId },
       data: {
-        status: 'ACTIVE',
-        deletedAt: null,
+        deletionRequestedAt: null,
+        deletionScheduledFor: null,
       },
     });
 

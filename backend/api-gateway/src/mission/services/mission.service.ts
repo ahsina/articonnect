@@ -239,13 +239,16 @@ export class MissionService {
       throw new BadRequestException('Cette mission n\'est plus disponible');
     }
 
-    const updated = await this.prisma.mission.update({
-      where: { id: missionId },
-      data: {
-        artisanId,
-        status: MissionStatus.NEGOTIATING,
-      },
+    // ATOMIQUE (anti-race) : la mission n'est attribuée que si elle est ENCORE PENDING au moment de
+    // l'update. Deux artisans qui acceptent en parallèle -> un seul gagne (count===1), l'autre échoue.
+    const claimed = await this.prisma.mission.updateMany({
+      where: { id: missionId, status: MissionStatus.PENDING },
+      data: { artisanId, status: MissionStatus.NEGOTIATING },
     });
+    if (claimed.count === 0) {
+      throw new BadRequestException('Cette mission n\'est plus disponible');
+    }
+    const updated = await this.prisma.mission.findUnique({ where: { id: missionId } });
 
     // Create history entry
     await this.createHistoryEntry(
@@ -464,15 +467,19 @@ export class MissionService {
   private async createHistoryEntry(
     missionId: string,
     status: MissionStatus,
-    changedBy: string,
+    changedBy: string | null,
     changedByRole: string,
     note?: string,
   ) {
+    // changedById est une FK vers User(id) (nullable). Le sentinel 'SYSTEM' n'est PAS un utilisateur :
+    // l'écrire tel quel violait la contrainte MissionHistory_changedById_fkey (crash auto-validation).
+    // On normalise 'SYSTEM'/valeurs non-UUID système -> null (colonne nullable, changedByRole conserve 'SYSTEM').
+    const changedById = changedBy && changedBy !== 'SYSTEM' ? changedBy : null;
     await this.prisma.missionHistory.create({
       data: {
         missionId,
         status,
-        changedById: changedBy,
+        changedById,
         changedByRole,
         note,
       },
@@ -589,7 +596,7 @@ export class MissionService {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: {
-        payments: true,
+        transaction: true,
       },
     });
 
@@ -601,13 +608,18 @@ export class MissionService {
       throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
     }
 
-    // Vérifier que l'acompte est payé
+    // Vérifier que l'acompte est réellement PAYÉ (fonds retenus en escrow), pas seulement qu'un
+    // Payment/PaymentIntent existe : un Payment est créé dès l'intent (avant paiement réel).
+    // Le succès du paiement = Transaction HELD (autorisation carte) ou COMPLETED (capturé).
+    // On accepte aussi depositPaidAt (posé par le webhook charge.succeeded) comme preuve de paiement.
     if (mission.depositRequired) {
-      const depositPaid = mission.payments.some(
-        (p) => p.type === 'DEPOSIT' && p.amount >= (mission.depositAmount || 0),
-      );
+      const paymentSucceeded =
+        !!mission.depositPaidAt ||
+        (!!mission.transaction &&
+          (mission.transaction.status === 'HELD' ||
+            mission.transaction.status === 'COMPLETED'));
 
-      if (!depositPaid) {
+      if (!paymentSucceeded) {
         throw new BadRequestException(
           'L\'acompte doit être payé avant de commencer le déplacement',
         );
@@ -768,13 +780,22 @@ export class MissionService {
         await this.createHistoryEntry(
           mission.id,
           MissionStatus.AUTO_VALIDATED,
-          'SYSTEM',
+          null, // changement système : pas de User -> changedById null (évite la violation de FK)
           'SYSTEM',
           'Mission auto-validée après 7 jours sans action',
         );
 
-        // Trigger payment to artisan
-        await this.paymentService.triggerArtisanPayment(mission.id);
+        // Déclencher le paiement artisan APRÈS AUTO_VALIDATED. Le payout ne doit PAS faire échouer
+        // l'auto-validation ni empêcher la récompense de réputation (ex: Stripe Connect non onboardé).
+        let payoutStatus: 'done' | 'deferred' = 'done';
+        try {
+          await this.paymentService.triggerArtisanPayment(mission.id);
+        } catch (payoutError) {
+          payoutStatus = 'deferred';
+          console.warn(
+            `[autoValidateStuckMissions] Payout artisan différé pour la mission ${mission.id} : ${(payoutError as any)?.message}`,
+          );
+        }
 
         // Award reputation points to client
         await this.reputationService.applyMissionCompletedReward(
@@ -785,7 +806,11 @@ export class MissionService {
         results.push({
           missionId: mission.id,
           status: 'success',
-          message: 'Auto-validated and payment triggered',
+          payoutStatus,
+          message:
+            payoutStatus === 'done'
+              ? 'Auto-validated and payment triggered'
+              : 'Auto-validated (payout différé)',
         });
       } catch (error) {
         results.push({

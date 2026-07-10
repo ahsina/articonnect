@@ -568,7 +568,10 @@ export class PerformanceReviewService {
       updatedBy: userId,
     };
 
-    if (dto.progress === 100 && !updatedGoalData.status) {
+    // Auto-complete when progress reaches 100% and the caller did not set an
+    // explicit status in this request (a pre-existing goal always carries a
+    // status, so we must test the DTO, not the merged object).
+    if (dto.progress === 100 && !dto.status) {
       updatedGoalData.status = 'COMPLETED';
       updatedGoalData.completedAt = new Date().toISOString();
     }

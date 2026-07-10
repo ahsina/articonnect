@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateNegotiationDto, AcceptNegotiationDto } from '../dto/negotiation.dto';
 import { NotificationService } from '../../notification/services/notification.service';
-import { MissionType } from '@prisma/client';
+import { MissionType, MissionStatus } from '@prisma/client';
 import { PriceAnomalyDetectorService } from '../../fraud/services/price-anomaly-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 
@@ -42,8 +42,27 @@ export class NegotiationService {
     let receiverId: string;
     const missionOpen = ['PENDING', 'NEGOTIATING'].includes(mission.status as string);
     if (mission.clientId === userId) {
-      // Client négocie avec l'artisan assigné (s'il y en a un)
-      receiverId = mission.artisanId;
+      if (mission.artisanId) {
+        // Un artisan est déjà assigné : le client négocie directement avec lui.
+        receiverId = mission.artisanId;
+      } else if (createDto.targetArtisanId) {
+        // Mission multi-offres non assignée : le client CONTRE-PROPOSE à un artisan précis.
+        // On exige que cet artisan ait déjà fait une offre sur la mission (sinon cible invalide).
+        const artisanOffer = await this.prisma.negotiation.findFirst({
+          where: { missionId: mission.id, senderId: createDto.targetArtisanId },
+        });
+        if (!artisanOffer) {
+          throw new BadRequestException(
+            'Cet artisan n\'a pas fait d\'offre sur cette mission : impossible de lui contre-proposer.'
+          );
+        }
+        receiverId = createDto.targetArtisanId;
+      } else {
+        // Multi-offres sans cible : message clair plutôt qu'un 400 générique « aucun artisan assigné ».
+        throw new BadRequestException(
+          'Aucun artisan n\'est encore assigné. Pour contre-proposer, précisez « targetArtisanId » (un artisan ayant déjà fait une offre).'
+        );
+      }
     } else if (mission.artisanId === userId) {
       // Artisan déjà assigné
       receiverId = mission.clientId;
@@ -134,43 +153,83 @@ export class NegotiationService {
       );
     }
 
-    // Update negotiation
-    const updated = await this.prisma.negotiation.update({
-      where: { id: negotiationId },
-      data: {
-        accepted: dto.accepted,
-        ...(dto.rejectedReason && { rejectedReason: dto.rejectedReason }),
-      },
+    // GARDE (client-10) : une offre déjà traitée (acceptée OU refusée) ne peut être re-traitée.
+    // Empêche qu'une offre perdante soit ré-acceptée et écrase agreedPrice / repasse accepted=true.
+    if (negotiation.accepted !== null) {
+      throw new ConflictException(
+        'Cette offre a déjà été traitée (acceptée ou refusée) : elle ne peut plus être modifiée.'
+      );
+    }
+
+    // GARDE (client-10) : on n'attribue/négocie que sur une mission encore OUVERTE.
+    // Une fois ACCEPTED/IN_PROGRESS/…, le prix convenu et l'artisan sont figés.
+    const openStatuses: MissionStatus[] = [MissionStatus.PENDING, MissionStatus.NEGOTIATING];
+    if (!openStatuses.includes(negotiation.mission.status)) {
+      throw new ConflictException(
+        'Cette mission n\'est plus ouverte : elle a déjà été attribuée ou clôturée.'
+      );
+    }
+
+    // L'artisan gagnant = le participant qui n'est pas le client.
+    const artisanParticipant =
+      negotiation.senderId === negotiation.mission.clientId
+        ? negotiation.receiverId
+        : negotiation.senderId;
+
+    // Transaction ATOMIQUE (client-10 + artisan-17 « idem ») : toutes les écritures sont conditionnées
+    // sur l'état lu, via des updateMany gardés. Deux acceptations concurrentes ne peuvent donc pas
+    // toutes deux réussir (le second updateMany renvoie count=0 → 409).
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // 1. Marquer CETTE offre — uniquement si elle est encore en attente (accepted=null).
+      const negResult = await tx.negotiation.updateMany({
+        where: { id: negotiationId, accepted: null },
+        data: {
+          accepted: dto.accepted,
+          ...(dto.rejectedReason && { rejectedReason: dto.rejectedReason }),
+        },
+      });
+      if (negResult.count === 0) {
+        // Une requête concurrente a déjà traité cette offre.
+        throw new ConflictException(
+          'Cette offre a déjà été traitée (acceptée ou refusée) : elle ne peut plus être modifiée.'
+        );
+      }
+
+      if (dto.accepted) {
+        // 2. Attribuer la mission de façon ATOMIQUE : la mise à jour ne s'applique que si la mission
+        //    est TOUJOURS ouverte. Si une autre offre vient d'être acceptée (statut passé à ACCEPTED),
+        //    count=0 → on lève 409 et la transaction est annulée (rollback de l'étape 1).
+        const missionResult = await tx.mission.updateMany({
+          where: { id: negotiation.missionId, status: { in: openStatuses } },
+          data: {
+            agreedPrice: negotiation.proposedPrice,
+            status: MissionStatus.ACCEPTED,
+            // Assigner l'artisan choisi (si pas déjà assigné) — cœur du choix multi-offres.
+            ...(negotiation.mission.artisanId ? {} : { artisanId: artisanParticipant }),
+          },
+        });
+        if (missionResult.count === 0) {
+          throw new ConflictException(
+            'Cette mission n\'est plus disponible : elle vient d\'être attribuée.'
+          );
+        }
+
+        // 3. Rejeter automatiquement les autres offres en attente sur cette mission.
+        await tx.negotiation.updateMany({
+          where: {
+            missionId: negotiation.missionId,
+            id: { not: negotiationId },
+            accepted: null,
+          },
+          data: { accepted: false, rejectedReason: 'Une autre offre a été acceptée par le client.' },
+        });
+      }
+
+      return tx.negotiation.findUnique({ where: { id: negotiationId } });
     });
 
-    // If accepted, update mission and check for price anomalies
+    // If accepted, check for price anomalies (best-effort, hors transaction)
     if (dto.accepted) {
-      // L'artisan gagnant = le participant qui n'est pas le client.
-      const artisanParticipant =
-        negotiation.senderId === negotiation.mission.clientId
-          ? negotiation.receiverId
-          : negotiation.senderId;
-
-      await this.prisma.mission.update({
-        where: { id: negotiation.missionId },
-        data: {
-          agreedPrice: negotiation.proposedPrice,
-          status: 'ACCEPTED',
-          // Assigner l'artisan choisi (si pas déjà assigné) — cœur du choix multi-offres.
-          ...(negotiation.mission.artisanId ? {} : { artisanId: artisanParticipant }),
-        },
-      });
-
-      // Rejeter automatiquement les autres offres en attente sur cette mission.
-      await this.prisma.negotiation.updateMany({
-        where: {
-          missionId: negotiation.missionId,
-          id: { not: negotiationId },
-          accepted: null,
-        },
-        data: { accepted: false, rejectedReason: 'Une autre offre a été acceptée par le client.' },
-      });
-
       // Price Anomaly Detection (if enabled)
       const isPriceAnomalyDetectionEnabled = await this.featureToggle.isPriceAnomalyDetectionEnabled();
       if (isPriceAnomalyDetectionEnabled) {

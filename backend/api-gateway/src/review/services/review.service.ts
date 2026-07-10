@@ -146,6 +146,19 @@ export class ReviewService {
             category: true,
           },
         },
+        // Réponse publique de l'artisan à l'avis (droit de réplique) : sans cet include,
+        // la ReviewResponse existait mais n'apparaissait jamais sous l'avis.
+        ReviewResponse: {
+          include: {
+            responder: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatar: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -160,6 +173,17 @@ export class ReviewService {
             firstName: true,
             lastName: true,
             avatar: true,
+          },
+        },
+        ReviewResponse: {
+          include: {
+            responder: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatar: true,
+              },
+            },
           },
         },
       },

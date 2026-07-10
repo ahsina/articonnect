@@ -1,0 +1,253 @@
+[
+ {
+  "id": "client-05",
+  "title": "Poster une mission planifiee avec date dans le passe",
+  "pass": false,
+  "severity": "medium",
+  "observed": "POST /missions type=SCHEDULED scheduledFor=hier (2026-07-08, J-1) -> HTTP 201 au lieu d'un echec. La mission est creee (id=f1292ca2...) avec status=PENDING et scheduledFor='2026-07-08T23:35:53.250Z' (date passee persistee). Aucun message d'erreur, aucune validation 'date doit etre future'. L'assertion attend un echec propre + aucune mission PENDING creee: NON satisfait -> une mission planifiee dans le passe est acceptee.",
+  "bug": "Absence de validation de date future pour scheduledFor. Le champ n'a que @IsOptional/@IsDateString dans le DTO et mission.service.create() ecrit scheduledFor tel quel sans comparer a Date.now(). Il faudrait rejeter (BadRequest) quand type=SCHEDULED et scheduledFor <= maintenant.",
+  "files": "backend/api-gateway/src/mission/dto/mission.dto.ts (champ scheduledFor, ~l.66-69) ; backend/api-gateway/src/mission/services/mission.service.ts (create(), ~l.23-54, aucune verif de date)"
+ },
+ {
+  "id": "client-09",
+  "title": "Contre-proposer un prix (négocier)",
+  "pass": false,
+  "severity": "medium",
+  "observed": "POST /missions/:id/negotiations {proposedPrice:380} par le CLIENT (Jean) sur sa mission ouverte (NEGOTIATING, aucun artisan assigné) → HTTP 400 'Aucun artisan n'est assigné à cette mission : la négociation n'est pas possible.' AUCUNE entrée côté client créée (reste à 3 offres). Assertion (négo client enregistrée, mission reste NEGOTIATING) NON satisfaite : le client ne peut jamais contre-proposer sur une mission multi-offres, il ne peut qu'accepter en bloc.",
+  "bug": "NegotiationService.create(): branche client (mission.clientId===userId) résout receiverId=mission.artisanId. Sur mission ouverte multi-offres artisanId est null → receiverId null → 400. Le CreateNegotiationDto ne permet pas de cibler l'artisan/offre à contre-proposer. La négociation/contre-offre côté client est donc morte dans le modèle multi-offres (accept-only). Il faudrait un targetArtisanId/negotiationId pour router la contre-offre.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/mission/services/negotiation.service.ts (create, résolution receiverId) ; /home/debian/articonnect/backend/api-gateway/src/mission/dto/negotiation.dto.ts (CreateNegotiationDto sans cible)"
+ },
+ {
+  "id": "client-10",
+  "title": "Accepter une offre sur une mission déjà attribuée",
+  "pass": false,
+  "severity": "high",
+  "observed": "Mission déjà ACCEPTED (artisan=Luc, agreedPrice=400). PUT /missions/negotiations/:pierreNeg/accept {accepted:true} sur l'offre de Pierre (450€, déjà rejetée) → HTTP 200 au lieu d'échouer. Conséquences : (1) agreedPrice ÉCRASÉ 400 → 450 (champ monétaire modifié après attribution) ; (2) l'offre de Pierre repasse accepted=true → DEUX offres accepted=true (Luc 400 ET Pierre 450) ; (3) artisanId reste Luc → mission assignée à Luc mais au prix de Pierre. Assertion (opération doit échouer, artisan+agreedPrice initiaux conservés) VIOLÉE. Données de test restaurées (agreedPrice=400, offre Pierre re-rejetée) après vérification.",
+  "bug": "NegotiationService.accept() ne vérifie ni mission.status (déjà ACCEPTED/IN_PROGRESS) ni l'état de la négo ciblée (accepted déjà !== null). N'importe quelle offre perdante peut être ré-acceptée : l'update mission réécrit agreedPrice=proposedPrice sans condition (le garde ...(mission.artisanId?{}:{artisanId}) protège l'artisanId mais pas le prix). Correctif : rejeter 400/409 si mission.status non ouverte ou negotiation.accepted!==null, en transaction.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/mission/services/negotiation.service.ts (méthode accept : update mission sans garde d'état)"
+ },
+ {
+  "id": "client-12",
+  "title": "Payer l'acompte configure par reputation",
+  "pass": false,
+  "severity": "medium",
+  "observed": "Flux reel: setup-deposit sur M1 (agreedPrice 300, reputation 100) -> depositRequired=true, depositPercentage=50, depositAmount=150, status PENDING_DEPOSIT. POST /payments/deposit -> clientSecret + amount 150 ; PaymentIntent Stripe (test) confirme carte -> status requires_capture (capture manuelle = escrow). Transaction passe bien a HELD (charge.succeeded). MAIS l'ASSERTION n'est PAS satisfaite: la mission NE passe JAMAIS a DEPOSIT_PAID (elle reste PENDING_DEPOSIT), depositPaidAt reste null, et GET /missions/:id/deposit-status renvoie en permanence depositPaid=false meme apres encaissement. start-travel a reussi (->IN_TRANSIT) mais uniquement parce que startTravel verifie l'EXISTENCE d'un Payment (cree des l'intent, avant tout paiement reel), pas le succes du paiement.",
+  "bug": "Aucun chemin de code n'assigne MissionStatus.DEPOSIT_PAID ni n'ecrit depositPaidAt (grep exhaustif: 0 occurrence d'ecriture). Le webhook handlePaymentSuccess (payment_intent.succeeded) met la mission a 'PAID' (statut paiement total, incorrect pour un acompte) et ne se declenche de toute facon qu'apres capture, pas sur l'autorisation/HELD. Consequence: le statut acompte n'est jamais reflete (dashboard client montre 'non paye' a vie) et la transition PENDING_DEPOSIT->DEPOSIT_PAID de la machine a etats est morte. De plus startTravel autorise le deplacement des qu'un Payment existe (cree a l'intent) sans verifier que la Transaction est HELD/reussie.",
+  "files": "backend/api-gateway/src/payment/services/payment.service.ts (handlePaymentSuccess ~L458-474 -> 'PAID' au lieu de DEPOSIT_PAID + depositPaidAt jamais set ; createDepositPayment cree Payment avant paiement), backend/api-gateway/src/mission/services/mission.service.ts (startTravel ~L588-615 verifie existence du Payment et non son statut ; getDepositStatus ~L859-885 depend de depositPaidAt jamais renseigne)"
+ },
+ {
+  "id": "client-13",
+  "title": "Payer le montant total plutot que l'acompte",
+  "pass": false,
+  "severity": "medium",
+  "observed": "M2 agreedPrice 400. POST /payments/create-intent -> clientSecret, Transaction MISSION 400 PENDING. PaymentIntent confirme (pm_card_visa) -> status requires_capture (capture_method=manual), amount 40000. Transaction passe a HELD: la TOTALITE (400) est bien placee en escrow, solde restant = 0. MAIS l'ASSERTION n'est PAS satisfaite: la mission reste ACCEPTED, elle NE passe ni a DEPOSIT_PAID ni a PAID apres l'autorisation. Le client paie 100% d'avance (fonds retenus HELD) mais sa mission n'affiche aucun statut 'paye'. Le seul passage a 'PAID' (handlePaymentSuccess) exige payment_intent.succeeded, qui ne survient qu'apres capture Stripe (payout final admin-only qui SORT les fonds de l'escrow), donc jamais au stade 'paye d'avance en attente de validation'.",
+  "bug": "Meme cause racine que client-12: l'etape d'autorisation/escrow (Transaction HELD via charge.succeeded) n'avance jamais le statut de la mission. Aucun code ne fait passer la mission a PAID/DEPOSIT_PAID sur un paiement retenu ; seul captureMissionPayment (ADMIN, releases escrow -> COMPLETED + transfer artisan) declenche payment_intent.succeeded -> mission 'PAID'. Le suivi d'etat 'paiement en escrow' est absent.",
+  "files": "backend/api-gateway/src/payment/services/payment.service.ts (createPaymentIntent ~L27-183 ne touche pas mission.status ; handlePaymentSuccess ~L458-474 ; handleSepaChargeSucceeded ~L1313 met HELD pour toute charge carte)"
+ },
+ {
+  "id": "client-20",
+  "title": "Auto-validation apres 7 jours sans action client",
+  "pass": false,
+  "severity": "high",
+  "observed": "Mission c20 (9050146c) COMPLETED depuis 8 jours, avec Transaction escrow (artisanAmount=255, HELD). POST /missions/auto-validate (admin) -> HTTP 201 mais results=[{status:'error', message:'Foreign key constraint violated: MissionHistory_changedById_fkey'}]. Etat apres: la mission EST passee AUTO_VALIDATED (autoValidatedAt+validatedAt renseignes) MAIS le payout artisan N'EST PAS declenche (Transaction toujours HELD, stripeTransferId NULL) et aucune reputation creditee. L'assertion exige que le payout soit declenche automatiquement -> NON satisfaite. Pire: la mission etant desormais AUTO_VALIDATED, elle est exclue des prochains passages du CRON (filtre autoValidatedAt IS NULL), donc l'artisan ne sera JAMAIS paye par cette voie -> l'objectif de protection de l'artisan est casse.",
+  "bug": "Dans autoValidateStuckMissions, l'appel createHistoryEntry(mission.id, AUTO_VALIDATED, 'SYSTEM', 'SYSTEM', ...) passe la chaine 'SYSTEM' comme changedById, or ce champ est une FK vers User(id). 'SYSTEM' n'etant pas un utilisateur, l'insert MissionHistory leve une violation de contrainte FK. Comme cet appel precede triggerArtisanPayment() dans le meme bloc try, l'exception saute au catch AVANT le paiement et la recompense de reputation -> payout jamais execute, alors que le status AUTO_VALIDATED a deja ete commite juste avant. Correctif: passer null (colonne nullable) au lieu de 'SYSTEM' pour changedById du systeme (ou mapper 'SYSTEM'->null dans createHistoryEntry), et/ou declencher le payout avant l'ecriture de l'historique / rendre l'historique non bloquant.",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (autoValidateStuckMissions ~L768 appelant createHistoryEntry avec 'SYSTEM' comme changedById ; helper createHistoryEntry ~L464 qui ecrit changedById: changedBy sans normaliser le sentinel SYSTEM)"
+ },
+ {
+  "id": "client-25",
+  "title": "Annuler une mission ACCEPTED (frais 10%)",
+  "pass": false,
+  "severity": "high",
+  "observed": "Bareme OK: GET /cancellation-fees (ACCEPTED, base 200) -> feeRate 0.10, cancellationFee 20, refundable 180. POST /cancel sur mission ACCEPTED SANS paiement (5599b338) -> 201, status CANCELLED, cancellationFee 20, refunded 0, MissionHistory 'frais 20€, remboursé 0€'. MAIS le 'remboursement REEL de (base-frais)' n'est PAS demontrable pour une vraie mission escrow: POST /cancel sur mission 723affe9 (agreedPrice 300, feeRate 0.10 -> fee 30/refundable 270, avec un DEPOSIT carte de 150€ reellement autorise pi_3TrRXu...) -> 400 'Le remboursement a echoue'. Log Stripe: StripeInvalidRequestError 'This uncaptured Charge was created by a PaymentIntent (...). You must cancel the PaymentIntent to reverse the authorization instead of refunding the Charge directly'. Consequence: la mission N'EST PAS annulee (reste IN_TRANSIT), aucun remboursement/liberation de fonds trace, le hold client reste bloque. Le flux nominal d'annulation-remboursement est casse des qu'un escrow carte (capture manuelle) existe — cas exact du scenario 'retract apres acceptation, escrow paye'.",
+  "bug": "refundForCancellation() appelle stripeService.refundPayment() -> stripe.refunds.create({payment_intent}) sur le paiement DEPOSIT/FULL_PAYMENT. Or l'escrow utilise capture_method:'manual' (autorisation non capturee); Stripe refuse refunds.create sur une charge non capturee. Il faut detecter le statut du PaymentIntent (requires_capture/uncaptured) et appeler stripe.paymentIntents.cancel() (liberation de l'autorisation) au lieu de refunds.create — ou capturer la part frais puis rembourser le reste. Comme le remboursement echoue AVANT l'update de statut, l'annulation entiere est bloquee (400).",
+  "files": "backend/api-gateway/src/payment/services/payment.service.ts (refundForCancellation ~L1385-1418), backend/api-gateway/src/payment/services/stripe.service.ts (refundPayment L82-87), backend/api-gateway/src/mission/services/mission.service.ts (cancelMission L915-953)"
+ },
+ {
+  "id": "client-33",
+  "title": "Échanger des messages avec l'artisan de la mission",
+  "pass": false,
+  "severity": "medium",
+  "observed": "Jean envoie POST /chat/conversation/:pierreId/message (avec missionId) → 201, message persisté et déchiffré correctement. Pierre le lit via GET /chat/conversation/:jeanId; Pierre répond; Jean voit les deux messages → visibilité bidirectionnelle et isolation OK. ÉCHEC de l'assertion sur DEUX points: (1) NOTIFICATION: aucune notification de 'nouveau message' n'est créée pour l'artisan. Vérifié: chat.service.createMessage() ne crée AUCUNE Notification et n'envoie aucun push; la liste /notifications de Pierre + la table Notification ne contiennent aucune entrée pour le message (dernière notif non liée à 23:40:48). Seul le gateway WebSocket (event send_message) émet un push FCM, et uniquement si le destinataire est hors-ligne — jamais de notification in-app persistante. Via l'endpoint HTTP (fallback), l'artisan n'est prévenu de rien. (2) FIL DE MISSION: le paramètre missionId est silencieusement ignoré — la table Message n'a pas de colonne missionId (colonnes: read,readAt,createdAt,content,id,attachments,senderId,receiverId). Le 'fil de la mission' n'existe pas: c'est un simple fil user↔user non rattaché à la mission.",
+  "bug": "createMessage ne notifie pas le destinataire (aucune Notification persistante; push FCM seulement via WS si offline) et ne persiste pas missionId (messages non liés à la mission).",
+  "files": "backend/api-gateway/src/chat/services/chat.service.ts (createMessage), backend/api-gateway/src/chat/controllers/chat.controller.ts (sendMessage HTTP), backend/api-gateway/prisma schema (modèle Message sans missionId)"
+ },
+ {
+  "id": "client-37",
+  "title": "Commander un produit sur la marketplace",
+  "pass": false,
+  "severity": "high",
+  "observed": "POST /marketplace/orders (qty=2, produit 59.90€) -> 201 status=PENDING, subtotal=119.80, vat=20.37 (17%), shippingCost=5.99, total=146.16, paidAt=null : la création/calcul est correcte. MAIS la 2e moitié de l'assertion (payer -> PAID avec paidAt + stock décrémenté au paiement) est IMPOSSIBLE : (1) aucun endpoint de paiement client pour une commande marketplace (POST .../pay, .../checkout, .../payment -> 404 ; le PaymentController ne gère que les missions). (2) Le SEUL changement de statut est PATCH /marketplace/orders/:id/status, réservé à l'artisan-vendeur, et il n'écrit QUE status — jamais paidAt/shippedAt/deliveredAt : ces colonnes restent null même en PAID/DELIVERED (vérifié : après passage DELIVERED, deliveredAt=null en base). (3) Le stock est décrémenté à la CRÉATION (PENDING, 99->97) donc AVANT tout paiement ; une commande jamais payée/abandonnée consomme le stock définitivement (aucune ré-incrémentation à l'annulation). La commande ne peut jamais atteindre PAID côté client et paidAt n'est jamais renseigné.",
+  "bug": "Le tunnel d'achat marketplace n'a pas d'étape de paiement : pas d'endpoint checkout/paiement pour Order ; OrderService.create décrémente le stock dès la création (statut PENDING, non payé) ; OrderService.updateStatus ne renseigne jamais paidAt/shippedAt/deliveredAt (colonnes mortes). Donc PENDING->PAID avec paidAt est inatteignable et le stock est réservé sans paiement.",
+  "files": "backend/api-gateway/src/marketplace/services/order.service.ts (create: stock decrement avant paiement ; updateStatus: n'écrit pas paidAt/deliveredAt), backend/api-gateway/src/marketplace/controllers/marketplace.controller.ts (aucune route de paiement de commande)"
+ },
+ {
+  "id": "client-44",
+  "title": "Exporter ses donnees personnelles (RGPD)",
+  "pass": false,
+  "severity": "low",
+  "observed": "GET /users/gdpr/export 200: structure {exportDate, personalData, metadata}. Contient profil (clientProfile), 54 clientMissions (TOUTES clientId=Jean, 0 fuite), 5 givenReviews, 78 notifications. Donnees sensibles bien retirees (password/twoFactorSecret/refreshTokens absents) et isolation parfaite (QUE ses propres donnees). MAIS l'assertion exige explicitement les 'factures': l'export N'INCLUT PAS les factures (Jean en a pourtant 6), et metadata.dataCategories ne liste pas 'Invoices'. Categorie RGPD nommee manquante -> export non 'complet'.",
+  "bug": "exportUserData() ne recupere pas les factures de l'utilisateur; l'include Prisma couvre missions/reviews/notifications/profils mais pas la relation invoices (issuerInvoices/clientInvoices), et dataCategories omet 'Factures'.",
+  "files": "backend/api-gateway/src/user/services/gdpr.service.ts (exportUserData, bloc include + metadata.dataCategories)"
+ },
+ {
+  "id": "client-45",
+  "title": "Demander puis annuler la suppression de compte (RGPD)",
+  "pass": false,
+  "severity": "high",
+  "observed": "POST /users/gdpr/request-deletion 201: message ok, deletedAt + scheduledFor (+30j) renseignes; DB confirme status='SUSPENDED', deletedAt set. PUIS DELETE /users/gdpr/cancel-deletion (meme session) -> 401 Unauthorized 'AUTH_INVALID_CREDENTIALS'. L'annulation est IMPOSSIBLE: le compte reste SUSPENDED/deletedAt en base. Le client est verrouille et NE PEUT PAS annuler sa propre demande via l'API, ce qui defait toute la conception 'reversible avec delai de grace'. (Recuperation faite manuellement en base pour ne pas casser Jean.)",
+  "bug": "requestDeletion() passe le statut a 'SUSPENDED', or jwt.strategy.validate() rejette tout utilisateur dont status !== 'ACTIVE' (UnauthorizedException 'Compte suspendu'). La route cancel-deletion est protegee par JwtAuthGuard -> elle n'est jamais atteignable apres une demande de suppression. Le flux d'annulation RGPD est totalement non fonctionnel (et l'utilisateur est aussi deconnecte de tout le reste). Correctif: ne pas suspendre au moment de la demande (ex: n'utiliser que deletedAt / un statut PENDING_DELETION que la strategy JWT autorise), ou autoriser explicitement cancel-deletion pour les comptes en attente de suppression.",
+  "files": "backend/api-gateway/src/user/services/gdpr.service.ts (requestDeletion: status='SUSPENDED'), backend/api-gateway/src/auth/strategies/jwt.strategy.ts (validate: status !== 'ACTIVE' => 401)"
+ },
+ {
+  "id": "client-48",
+  "title": "Modifier ses preferences de notification",
+  "pass": false,
+  "severity": "medium",
+  "observed": "Persistance et compteur OK: PUT /notifications/preferences (emailNotifications=false, pushNotifications=false, newMessage=false, newMission=false, missionUpdate=false) est persiste et relu a l'identique par GET; GET /notifications/unread-count renvoie un compteur reel (17->20). MAIS les preferences NE SONT PAS respectees a la generation: apres avoir desactive email/push/newMessage/newMission, j'ai declenche un evenement reel (Pierre cree+envoie un devis a Jean via POST /quotes + /quotes/:id/send) et une notification in-app a bien ete creee pour Jean (unread 19->20, type SYSTEM 'Nouveau devis recu'). Cause racine: DEUX tables de preferences deconnectees — l'API ecrit/lit le modele Prisma notificationPreferences (plural, colonnes emailNotifications/newMission/...), tandis que le gating a l'emission lit un AUTRE modele notificationPreference (singular, colonnes inApp/push/email/sms/disabledTypes) via getUserPreferences(), jamais alimente par l'API. La methode shouldNotify() qui lit la bonne table est du code MORT (aucun appelant). Donc aucune preference posee via l'API ne peut supprimer une notification ni couper un canal.",
+  "bug": "Preferences de notification exposees par l'API non branchees sur la logique d'emission: notification-preferences.service.getPreferences/updatePreferences ecrit la table notificationPreferences, mais notification.service.createNotification/sendToChannels lit getUserPreferences() -> table notificationPreference (differente, jamais ecrite par l'API). shouldNotify() (bonne table) n'est jamais appele.",
+  "files": "backend/api-gateway/src/notification/services/notification-preferences.service.ts (shouldNotify inutilise, modele distinct), backend/api-gateway/src/notification/services/notification.service.ts (getUserPreferences lit notificationPreference singular; sendToChannels), backend/api-gateway/src/notification/controllers/notification.controller.ts"
+ },
+ {
+  "id": "client-49",
+  "title": "Changer la langue de l'interface (multilingue)",
+  "pass": false,
+  "severity": "low",
+  "observed": "L'UI change de langue cote client et aucune cle i18n brute n'apparait (le t() de LanguageContext humanise le dernier segment quand une cle manque, ex 'workingHours'->'Working Hours', pas de cle pointee brute). Backend: PUT /i18n/user/locale {locale:'en'} -> 200, GET /i18n/user/locale='en' persiste apres re-login (preferredLocale en base). MAIS le switcher de l'UI (components/shared/LanguageSwitcher.tsx -> LanguageContext.setLanguage) ecrit UNIQUEMENT localStorage['language'] et n'appelle JAMAIS PUT /i18n/user/locale (verifie: aucun code front hors e2e n'appelle cet endpoint). Consequence: le preferredLocale du compte n'est jamais mis a jour depuis l'UI, donc (1) les emails/documents generes cote backend (via getUserLocale -> preferredLocale) ne suivent PAS la langue choisie dans l'interface, et (2) la preference ne persiste pas entre appareils/sessions liees au compte (seulement localStorage du navigateur). L'assertion 'emails et documents rendus dans la langue choisie' n'est donc pas satisfaite. Note: le catalogue de traductions backend (GET /i18n/translations/:locale) est vide {} — l'i18n reelle vit dans les fichiers front lib/i18n/*.",
+  "bug": "Desynchronisation langue UI <-> compte: LanguageContext.setLanguage persiste seulement localStorage et n'appelle pas PUT /i18n/user/locale; preferredLocale (utilise par les emails/PDF backend) reste inchange, donc emails/documents dans la mauvaise langue et pas de persistance cross-device.",
+  "files": "frontend/contexts/LanguageContext.tsx (setLanguage: localStorage seul, pas d'appel API, pas de lecture du preferredLocale au montage), frontend/components/shared/LanguageSwitcher.tsx"
+ },
+ {
+  "id": "client-52",
+  "title": "Payer un acompte deja regle (double paiement)",
+  "pass": false,
+  "severity": "high",
+  "observed": "Sur une mission a depositRequired=true, agreedPrice=200, depositAmount=100 (mission 58b5047b, sans transaction prealable): 1er POST /payments/deposit -> 201 (clientSecret, amount 100). 2e POST /payments/deposit -> HTTP 500 'Internal Server Error' avec fuite du message Prisma brut: \"Unique constraint failed on the fields: (missionId)\". Etat DB apres 2 appels: Transaction=1 (PENDING, non HELD) MAIS Payment=2 et 2 PaymentIntents Stripe distincts crees (pi_...G et pi_...H). Le 2e appel n'est donc NI rejete proprement NI idempotent: il cree un 2e PaymentIntent Stripe + une 2e ligne Payment AVANT de crasher sur la contrainte unique de Transaction. Risque de double encaissement (2 PI ouverts pour le meme acompte) + divulgation d'internes DB via le 500. Assertion (rejet propre ou idempotence, pas de double) NON satisfaite.",
+  "bug": "createDepositPayment n'a aucune garde d'idempotence: il appelle stripe.createPaymentIntent puis prisma.payment.create puis prisma.transaction.create (via .create, pas upsert) a chaque appel. Le seul garde-fou est la contrainte unique Transaction.missionId qui fait echouer le 3e write en 500 non gere, apres avoir deja cree un 2e PaymentIntent et une 2e ligne Payment orphelins. Devrait: verifier l'existence d'un Payment/Transaction PENDING pour la mission et le renvoyer (idempotent) ou rejeter en 409/400 AVANT tout appel Stripe; et le filtre d'exception ne devrait pas fuiter le message Prisma.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/payment/services/payment.service.ts (createDepositPayment ~L542-620)"
+ },
+ {
+  "id": "artisan-02",
+  "title": "Acces /artisan/* sans profil artisan",
+  "pass": false,
+  "severity": "medium",
+  "observed": "Utilisateur sans artisanProfile (Jean CLIENT, et le compte frais avant upgrade). GET /artisan/profile -> 404 NotFound 'Profil artisan introuvable' (PAS 403, PAS le message attendu). GET /artisan/dashboard -> 200 avec des donnees factices a zero (totalMissions:0...) sans AUCUN controle de precondition: un non-artisan obtient un dashboard artisan. Aucun des deux endpoints cites ne renvoie le 403 ForbiddenException 'Cet utilisateur n'a pas de profil artisan' attendu. (Ce message 403 existe bien dans le helper prive profile() utilise par d'autres routes comme updateProfile/toggle/location, mais getMyProfile et getDashboard ne l'utilisent pas.) Assertion NON satisfaite.",
+  "bug": "Incoherence de precondition dans ArtisanService: getMyProfile leve NotFoundException('Profil artisan introuvable') (404) au lieu du ForbiddenException('Cet utilisateur n'a pas de profil artisan') du helper profile(); getDashboard fait un findUnique sans throw et renvoie 200 avec des zeros (aucune garde) => un CLIENT sans profil accede a l'espace dashboard artisan.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/artisan/artisan.service.ts (getMyProfile ~L30-54, getDashboard ~L239-256, helper profile() ~L21-25)"
+ },
+ {
+  "id": "artisan-17",
+  "title": "Accepter une mission deja prise (race condition)",
+  "pass": false,
+  "severity": "high",
+  "observed": "BUG DE CONCURRENCE. Deux artisans verifies (Pierre + Sophie) appellent POST /missions/:id/accept quasi-simultanement (curl paralleles) sur la MEME mission PENDING. Resultat: LES DEUX recoivent HTTP 201, et le corps de chaque reponse affirme que la mission leur est assignee (artisanId=Pierre pour l'un, artisanId=Sophie pour l'autre). Consequences verifiees en DB: 2 entrees MissionHistory 'Artisan a accepte la mission' (Pierre ET Sophie au meme instant) et 2 notifications CONTRADICTOIRES au client ('Menuiserie Carpentier a accepte votre mission' + 'Plomberie Lebon a accepte votre mission'). L'assertion exige que le second recoive 400 'Cette mission n'est plus disponible' — ce 400 n'apparait JAMAIS. Seul le dernier write gagne l'artisanId (Pierre), donc l'artisan perdant (Sophie) a une fausse confirmation de succes sans jamais etre averti de la perte.",
+  "bug": "acceptMission fait un check-then-update NON ATOMIQUE (TOCTOU): il lit `mission.status`, teste `!== PENDING`, PUIS fait un `mission.update` sans garde conditionnelle ni verrou de ligne. Deux requetes concurrentes lisent toutes deux PENDING, passent toutes deux le test, et ecrivent toutes deux (dernier write gagne). Correctif: rendre l'assignation atomique — soit `updateMany({ where: { id, status: PENDING }, data: {...} })` et lever BadRequest 'Cette mission n'est plus disponible' si count===0, soit une transaction avec SELECT ... FOR UPDATE. Idem a auditer pour negotiation.accept qui assigne aussi artisanId.",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (acceptMission, l.229-248 — check l.238 puis update l.242 non atomiques)"
+ },
+ {
+  "id": "artisan-28",
+  "title": "Paiement artisan credite apres validation client",
+  "pass": false,
+  "severity": "medium",
+  "observed": "Client jean POST /validate sur mission COMPLETED 29161a39 (jean=client, Pierre=artisan, agreedPrice=300) -> 200 mais payoutStatus=\"deferred\". Commission BIEN calculée au niveau transaction: artisanAmount=255, commission=45 (255=300-45). MAIS le transfert Stripe ECHOUE: log backend \"[validateCompletion] Payout artisan différé ... Your destination account needs to have ... transfers ... capability enabled\" (compte Connect de Pierre acct_1TlvGQ... non onboardé, stripeOnboarded=false). Résultat: Transaction reste HELD, stripeTransferId=null, completedAt=null; earnings artisan INCHANGÉS (totalEarnings 19206 -> 19206). => le montant net n'atteint jamais l'artisan. Assertion métier NON satisfaite (pas de transfert, pas d'augmentation du solde). En plus, incohérence: /artisan/earnings/summary applique un frais plateforme de 10% (net=270 pour 300) alors que la transaction réelle prélève une commission différente (45=15%, net réel 255); et les earnings comptent la mission dès le passage COMPLETED, pas à la validation client.",
+  "files": "backend/api-gateway/src/payment/services/payment.service.ts (triggerArtisanPayment: tente createTransfer vers un compte Connect non onboardé, ne vérifie que stripeAccountId sans stripeOnboarded); backend/api-gateway/src/artisan/artisan.service.ts (getEarningsSummary: PLATFORM_FEE 10% incohérent avec la commission transaction, earnings comptés au COMPLETED); backend/api-gateway/src/mission/services/mission.service.ts (validateCompletion)"
+ },
+ {
+  "id": "artisan-31",
+  "title": "Payout bloque par le screening anti-fraude (recuperable)",
+  "pass": false,
+  "observed": "L'assertion n'est pas satisfaite. 1) Dans la config deployee fraud_protection_config: payoutFraudScreeningEnabled=FALSE -> le bloc de screening dans triggerArtisanPayment est integralement saute; aucun payout n'est jamais bloque pour fraude dans l'app live. 2) Meme screening active, le 'hold' n'est PAS persiste: triggerArtisanPayment retourne juste un objet {success:false, payoutHeld:true} sans ecrire de motif, ni de file de revue admin, ni d'etat sur la Transaction; il n'existe aucun modele PayoutHold ni endpoint admin de release/recuperation (seuls POST /fraud/payout/screen [score seul] et un toggle existent). 3) GET /artisan/earnings ne peut structurellement PAS exprimer un etat bloque/recuperable: toEarning() code en dur status:'PAID' pour chaque mission COMPLETED et pendingEarnings=0. Preuve concrete: la mission 6f0663c1 (payout DEFERE, transaction HELD, AUCUN transfert vers Sophie qui n'a pas de compte onboarde) est rapportee par GET /artisan/earnings (Sophie) comme {status:'PAID', netAmount:270} et summary {paidEarnings:270, pendingEarnings:0} — le gain est faussement affiche PAYE alors qu'aucun euro n'a ete verse, sans motif ni traçabilite d'un blocage recuperable.",
+  "severity": "high",
+  "bug": "Aucun mecanisme de payout bloque-mais-recuperable cote artisan: (a) screening fraude desactive en prod (payoutFraudScreeningEnabled=false), (b) un hold anti-fraude n'est pas persiste (objet de retour ephemere, pas de PayoutHold ni de queue de revue admin ni d'endpoint de release), (c) GET /artisan/earnings code status='PAID'/pendingEarnings=0 en dur et ne reflete jamais l'etat reel du versement (les payouts deferes ou non transferes sont mal etiquetes PAID).",
+  "files": "backend/api-gateway/src/artisan/artisan.service.ts (toEarning/getEarnings/getEarningsSummary), backend/api-gateway/src/payment/services/payment.service.ts (triggerArtisanPayment: hold non persiste ~L997-L1020), backend/api-gateway/src/mission/services/mission.service.ts (validateCompletion ignore payoutHeld), fraud_protection_config.payoutFraudScreeningEnabled=false"
+ },
+ {
+  "id": "artisan-36",
+  "title": "Le client signe le devis -> devis accepte et facture",
+  "pass": false,
+  "observed": "Signature OK: POST /quotes/:id/sign {signerRole:CLIENT} -> 201, signatureId+documentHash. DB QuoteSignature: status=VALID, ipAddress='::ffff:172.16.16.6', userAgent='curl/8.14.1', consentGiven=t, legalText eIDAS present. Devis relu: status=ACCEPTED, acceptedAt fixe. MAIS la facture N'EST PAS generee/rattachee automatiquement a la signature: liste /invoices client inchangee (6 avant/6 apres, aucune avec quoteId=QB). L'invoice n'existe qu'apres appel manuel separe POST /invoices/quote/:id (qui, lui, cree INV-2026-00078 correctement lie: quoteId=QB, clientId=client, total=585). La partie signature+ACCEPTED est parfaite; la partie 'facture generee' de l'assertion n'est pas satisfaite par le flux de signature.",
+  "severity": "low",
+  "bug": "signQuote() (branche hasClientSignature) passe le devis en ACCEPTED mais n'appelle jamais invoiceService.createFromQuote(); aucune generation/rattachement de facture n'est declenchee a la signature. La facture doit etre creee via un endpoint distinct.",
+  "files": "backend/api-gateway/src/quote/services/signature.service.ts (signQuote, ~l.134-145); backend/api-gateway/src/invoice/services/invoice.service.ts (createFromQuote ~l.569)"
+ },
+ {
+  "id": "artisan-45",
+  "title": "Poser un jour de congé et le supprimer",
+  "pass": false,
+  "observed": "Création OK: POST /artisan/time-off {2026-07-13→2026-07-15} → congé créé (id, status PENDING) et listé dans GET /artisan/time-off. Suppression OK: DELETE /artisan/time-off/:id → 200 'Congé annulé', absent de la liste après coup. MAIS la 2e partie de l'assertion ÉCHOUE: pendant la validité du congé, GET /availability/check/:id?dateTime=2026-07-13T09:00 renvoie {available:TRUE} au lieu de false — l'artisan avait un créneau dispo le 13/07 et le congé posé sur cette date ne le rend PAS indisponible. isAvailableAt ignore totalement les congés.",
+  "severity": "medium",
+  "bug": "Deux systèmes de disponibilité déconnectés: requestTimeOff écrit les congés dans la table Prisma TimeOff (via ArtisanService), mais isAvailableAt/getDailyAvailability/getNextAvailableSlot (AvailabilityService, basé Redis) ne consultent jamais la table TimeOff. Résultat: un artisan en congé reste 'disponible' pour les clients/planification → risque de double-booking pendant les vacances.",
+  "files": "backend/api-gateway/src/user/services/availability.service.ts (isAvailableAt ~L217, getDailyAvailability ~L62, getNextAvailableSlot ~L240 : aucune lecture des TimeOff) ; backend/api-gateway/src/artisan/artisan.service.ts (requestTimeOff ~L174 écrit en Prisma, non relié)"
+ },
+ {
+  "id": "artisan-53",
+  "title": "Répondre à un avis client reçu",
+  "pass": false,
+  "severity": "medium",
+  "observed": "GET /artisan/reviews retourne bien les avis dont Pierre est la cible (reviewedId=userId Pierre). POST /review-responses/78b424bb -> HTTP 201, réponse créée (responderId=reviewedId, contrôle 'You can only respond to reviews about you' OK; double réponse bloquée par 400). La réponse est récupérable via GET /review-responses/review/:reviewId. MAIS l'assertion échoue sur sa 2e partie: GET /reviews/artisan/<userId Pierre> ne fait PAS apparaître la réponse sous l'avis — l'objet review ne contient aucun champ response/responses (response=null/absent) alors qu'une ReviewResponse existe et est liée. La réplique de l'artisan n'est donc jamais surfacée sur la liste publique des avis de l'artisan.",
+  "bug": "review.service.findByArtisan() (endpoint public GET /reviews/artisan/:artisanId) n'inclut pas la relation ReviewResponse dans son prisma.review.findMany({ include: {...} }). La relation existe pourtant au schéma (model Review: 'ReviewResponse ReviewResponse?'). Résultat: la réponse publique de l'artisan est stockée mais invisible sous l'avis correspondant sur sa fiche publique.",
+  "files": "backend/api-gateway/src/review/services/review.service.ts (findByArtisan, ~L132-152 : ajouter ReviewResponse à include, idéalement aussi findByMission); relation définie dans shared/prisma/schema.prisma (model Review / model ReviewResponse)"
+ },
+ {
+  "id": "artisan-55",
+  "title": "Évaluer son client après mission terminée (évaluation réciproque)",
+  "pass": false,
+  "observed": "Aucun endpoint HTTP ne permet de créer un avis ARTISAN_TO_CLIENT. POST /reviews force reviewType=CLIENT_TO_ARTISAN et son DTO rejette paymentPromptness/respectRating/reviewType (400 'property should not exist'); toutes les routes candidates (/reviews/artisan, /reviews/client, /artisan/reviews, /reviews/reverse, /missions/:id/review-client) renvoient 404. La méthode ReviewService.createArtisanReview (qui contient exactement les contrôles attendus et le message 'Vous avez déjà évalué ce client') n'est câblée dans aucun contrôleur. Assertion non satisfaite : impossible de créer un avis ARTISAN_TO_CLIENT, la réputation client alimentée par l'artisan n'est jamais produite.",
+  "severity": "medium",
+  "bug": "Fonctionnalité d'évaluation réciproque (avis artisan→client) implémentée au niveau service mais non exposée : createArtisanReview n'est référencée par aucun controller. Endpoint manquant.",
+  "files": "backend/api-gateway/src/review/controllers/review.controller.ts, backend/api-gateway/src/review/review.module.ts, backend/api-gateway/src/review/services/review.service.ts (createArtisanReview, l.257 — code mort)"
+ },
+ {
+  "id": "artisan-56",
+  "title": "Évaluer une mission qui ne m'est pas assignée",
+  "pass": false,
+  "observed": "Le garde d'isolation attendu (403 'Vous ne pouvez évaluer que vos propres clients') est inatteignable : l'endpoint ARTISAN_TO_CLIENT n'existe pas, donc un artisan tiers reçoit 404 (route absente) et non le 403 métier. L'isolation est trivialement 'sûre' (AUCUN artisan ne peut évaluer AUCUN client), mais le motif asserté n'est pas démontrable : la vérification d'ownership (review.service.ts l.270-272) est du code mort. Bon échec par accident (feature absente), pas par le garde prévu.",
+  "severity": "medium",
+  "bug": "Le contrôle ForbiddenException 'Vous ne pouvez évaluer que vos propres clients' n'est jamais exécuté (méthode non exposée). Même cause racine qu'artisan-55.",
+  "files": "backend/api-gateway/src/review/services/review.service.ts (l.270), backend/api-gateway/src/review/controllers/review.controller.ts (route manquante)"
+ },
+ {
+  "id": "artisan-61",
+  "title": "Annuler une mission en cours et rembourser au bareme",
+  "pass": false,
+  "severity": "high",
+  "observed": "Bareme OK (GET /missions/:id/cancellation-fees: IN_PROGRESS 280€ → feeRate 0.25, fee 70€, refundable 210€ ; IN_TRANSIT 300€ → 0.1, fee 30€). Chemin sans paiement capture OK: annulation d'une mission IN_PROGRESS sans paiement → status CANCELLED, cancelledAt set, historique 'frais 70€, remboursé 0€', reponse {cancellationFee:70, refunded:0}. MAIS le coeur de l'assertion (remboursable REELLEMENT rembourse) ECHOUE pour une vraie mission escrow: mission 723affe9 (IN_TRANSIT, acompte DEPOSIT 150€ avec PaymentIntent reel pi_3TrRXu... en mode test) → POST cancel renvoie 400 'Le remboursement a echoue. Reessayez ou contactez le support.'. Log Stripe: 'This uncaptured Charge was created by a PaymentIntent. You must cancel the PaymentIntent to reverse the authorization instead of refunding the Charge directly.' La mission reste IN_TRANSIT (aucune annulation, refundedAmount NULL). Comme les acomptes utilisent capture_method:'manual' (escrow, fonds seulement AUTORISES/retenus tant que la mission n'est pas validee), TOUTE annulation d'une mission avec acompte paye pendant la phase active (exactement le scenario cible) est bloquee: le client ne peut ni annuler ni recuperer ses fonds retenus.",
+  "bug": "refundForCancellation appelle stripe.refunds.create({payment_intent}) sur un PaymentIntent non capture (capture_method:'manual' → statut requires_capture). Stripe rejette: pour liberer une autorisation il faut paymentIntents.cancel(), pas un refund. Le code ne distingue pas acompte capture (→ refund) vs acompte retenu/non capture (→ cancel du PI). Consequence: l'annulation leve 400 et est totalement bloquee pour les missions escrow avec acompte retenu; le remboursable n'est jamais rembourse.",
+  "files": "backend/api-gateway/src/payment/services/payment.service.ts (refundForCancellation ~L1385-1418 : appelle stripeService.refundPayment), backend/api-gateway/src/payment/services/stripe.service.ts (refundPayment ~L82 refunds.create ; capture_method:'manual' L31/L139 — ajouter branche cancelPaymentIntent pour PI requires_capture), backend/api-gateway/src/mission/services/mission.service.ts (cancelMission ~L915-952)"
+ },
+ {
+  "id": "entreprise-42",
+  "title": "Planification en masse recurrente (bulk)",
+  "pass": false,
+  "severity": "high",
+  "observed": "POST /employee-features/shifts/bulk?companyId=A avec employeeIds=[Luc ACTIVE, Pierre OWNER ACTIVE], repeatPattern WEEKLY, repeatCount 4 (attendu: count=8). Reponse HTTP 500 Internal Server Error. Le message d'erreur Prisma montre le probleme: le service construit les lignes createMany avec le champ 'createdBy' (nom de la RELATION) au lieu de 'createdById' (colonne scalaire requise du modele EmployeeShift). prisma.employeeShift.createMany() rejette car createdById manquant/champ invalide. La planification en masse est TOTALEMENT cassee: aucun shift n'est jamais cree, tout appel bulk renvoie 500. A noter aussi: contrairement a createShift, bulk ne verifie AUCUN conflit d'horaire.",
+  "bug": "Dans bulkScheduleShifts, l'objet pousse dans 'shifts' utilise 'createdBy: requesterId' alors que le schema exige la colonne scalaire 'createdById' (String NON nullable). createMany ne peut pas resoudre une relation via connect, il faut le scalaire. Correction: remplacer 'createdBy: requesterId' par 'createdById: requesterId' (ligne 293).",
+  "files": "backend/api-gateway/src/employee/services/shift-scheduling.service.ts (bulkScheduleShifts, ~ligne 286-294, champ createdBy -> createdById); modele: backend/shared/prisma/schema.prisma (EmployeeShift.createdById requis)"
+ },
+ {
+  "id": "entreprise-69",
+  "title": "Définir un objectif et le marquer atteint (auto-COMPLETED)",
+  "pass": false,
+  "severity": "medium",
+  "observed": "POST /performance-reviews/goals (owner Pierre, employee c90c230f) crée bien le goal en status IN_PROGRESS, progress 0. MAIS PUT /goals/:id avec {\"progress\":100} SANS statut explicite renvoie progress:100 et status:\"IN_PROGRESS\" — le passage automatique à COMPLETED ne se déclenche JAMAIS. Assertion métier violée.",
+  "bug": "Dans updateGoal(), l'objet updatedGoalData est construit d'abord avec `status: dto.status ?? goalData.status` (donc 'IN_PROGRESS' hérité de la création). La garde d'auto-complétion `if (dto.progress === 100 && !updatedGoalData.status)` teste `!updatedGoalData.status` qui vaut toujours false pour un goal existant (status déjà renseigné). Le bloc COMPLETED/completedAt est donc mort. Il faudrait tester l'absence de status EXPLICITE dans le DTO: `if (dto.progress === 100 && !dto.status)` (ou forcer COMPLETED quand progress passe à 100).",
+  "files": "backend/api-gateway/src/employee/services/performance-review.service.ts (updateGoal, ~ligne 560-570)"
+ },
+ {
+  "id": "entreprise-74",
+  "title": "Voir le planning d'un autre employe",
+  "pass": false,
+  "severity": "medium",
+  "observed": "Le volet 403-non-membre fonctionne: Sophie (membre PENDING_INVITATION, donc non ACTIVE) recoit bien 403 'You do not have access to this company'. MAIS l'objectif 'un employe ne peut voir que son planning sauf droit de gestion' n'est PAS respecte: Luc, membre ACTIVE role TECHNICIAN avec permissions ['canViewAssignedMissions'] (aucun droit de gestion), a recupere HTTP 200 le planning complet + PII (nom, email, role) de Jean (employeeId 11111111-...-149, un AUTRE employe). validateCompanyAccess() ne verifie que l'appartenance ACTIVE a l'entreprise, jamais un droit de gestion. Donc tout collegue peut lire le planning et les donnees personnelles de n'importe quel autre employe.",
+  "bug": "getEmployeeSchedule() delegue le controle a validateCompanyAccess() qui ne teste que companyEmployee.status==='ACTIVE' pour ce companyId/userId. Aucune verification de permission de gestion (ex: canManageSchedule / role OWNER/MANAGER) quand requesterId != employee.userId. Resultat: acces horizontal (IDOR) aux plannings et PII entre employes d'une meme entreprise.",
+  "files": "backend/api-gateway/src/employee/services/shift-scheduling.service.ts (validateCompanyAccess L387-401 et getEmployeeSchedule L186-198)"
+ },
+ {
+  "id": "soustraitant-13",
+  "title": "Le sous-traitant accepte l'invitation",
+  "pass": false,
+  "observed": "Le flux nominal demande (Luc accepte l'invitation de Pierre) echoue en HTTP 500: raw Prisma P2002 'Unique constraint failed on the fields: (artisanId, subcontractorUserId)'. Cause: Pierre possede deja un Subcontractor pour Luc (886f6ce7..., ACTIVE) et acceptInvitation fait un update qui pose subcontractorUserId=Luc -> collision de la contrainte unique. Idem avec Jean (Pierre avait deja un enregistrement PENDING userId=Jean). La logique coeur EST correcte quand aucun lien prealable n'existe: prouve avec un utilisateur non-lie (admin) -> 201, status ACTIVE, subcontractorUserId renseigne, acceptedAt renseigne, invitationToken remis a null. Mais l'API renvoie un 500 brut (fuite d'erreur Prisma) au lieu d'un 400/409 'deja sous-traitant de cet artisan'. Le scenario nominal avec l'acteur specifie (Luc) ne passe pas.",
+  "severity": "medium",
+  "bug": "acceptInvitation() pose subcontractorUserId=userId sans verifier qu'un Subcontractor (artisanId,subcontractorUserId) existe deja pour cet artisan; la contrainte unique @@unique([artisanId, subcontractorUserId]) leve un P2002 non gere -> HTTP 500 (et fuite du message Prisma). Devrait detecter le doublon et renvoyer 400/409 explicite (ou lier a l'enregistrement existant).",
+  "files": "backend/api-gateway/src/subcontractor/services/subcontractor.service.ts (acceptInvitation, lignes 161-183) ; contrainte dans prisma/schema.prisma (model Subcontractor @@unique artisanId+subcontractorUserId)"
+ }
+]

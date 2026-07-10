@@ -40,7 +40,7 @@ export class ArtisanService {
         },
       },
     });
-    if (!user?.artisanProfile) throw new NotFoundException('Profil artisan introuvable');
+    if (!user?.artisanProfile) throw new ForbiddenException("Cet utilisateur n'a pas de profil artisan");
     const ap: any = user.artisanProfile;
     return {
       ...ap,
@@ -237,7 +237,9 @@ export class ArtisanService {
 
   // ---------- Dashboard ----------
   async getDashboard(userId: string) {
-    const p = await this.prisma.artisanProfile.findUnique({ where: { userId } });
+    // Précondition : l'espace dashboard artisan n'est accessible qu'avec un profil artisan.
+    // (Sans cette garde, un CLIENT sans profil recevait un dashboard factice à zéro.)
+    const p = await this.profile(userId);
     const [total, completed, active, pending, recent] = await Promise.all([
       this.prisma.mission.count({ where: { artisanId: userId } }),
       this.prisma.mission.count({ where: { artisanId: userId, status: 'COMPLETED' as any } }),

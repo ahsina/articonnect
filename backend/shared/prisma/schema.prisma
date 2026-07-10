@@ -61,6 +61,14 @@ model User {
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
 
+  // GDPR reversible deletion request (grace period).
+  // Distinct from `deletedAt` (real soft-delete, which the Prisma soft-delete middleware uses to
+  // hide the row from ALL findUnique/findMany queries). A pending deletion request must NOT hide
+  // the account nor suspend it, otherwise the user can no longer authenticate to cancel the request.
+  // The actual erasure/anonymisation (setting deletedAt / status=DELETED) is a deferred admin/cron job.
+  deletionRequestedAt  DateTime?
+  deletionScheduledFor DateTime?
+
   // Reputation & Payment Trust System
   reputationScore   Int     @default(100) // Score 0-200 (100 = neutral)
   completedMissions Int     @default(0)

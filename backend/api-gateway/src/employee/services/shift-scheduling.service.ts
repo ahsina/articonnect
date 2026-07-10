@@ -194,7 +194,9 @@ export class ShiftSchedulingService {
     }
 
     if (employee.userId !== requesterId) {
-      await this.validateCompanyAccess(employee.companyId, requesterId);
+      // Viewing another employee's schedule (and their PII) requires
+      // scheduling-management rights, not just company membership.
+      await this.validateSchedulingPermission(employee.companyId, requesterId);
     }
 
     const shifts = await this.prisma.employeeShift.findMany({
@@ -290,7 +292,7 @@ export class ShiftSchedulingService {
           endTime: shiftEndTime,
           shiftType: bulkDto.shiftType,
           status: 'SCHEDULED' as const,
-          createdBy: requesterId,
+          createdById: requesterId,
         });
       }
     }

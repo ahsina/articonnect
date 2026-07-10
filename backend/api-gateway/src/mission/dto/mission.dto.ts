@@ -7,9 +7,45 @@ import {
   IsDateString,
   Min,
   Max,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { MissionType, MissionStatus } from '@prisma/client';
+
+/**
+ * Custom validator: rejects a date that is not strictly in the future.
+ * Applied only when the value is provided (combine with @IsOptional).
+ * Prevents scheduling a mission for a past/current instant (client-05).
+ */
+function IsFutureDate(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isFutureDate',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: unknown) {
+          if (value === undefined || value === null) {
+            // Optionality is handled by @IsOptional; nothing to validate here.
+            return true;
+          }
+          const date = new Date(value as string | number | Date);
+          if (isNaN(date.getTime())) {
+            // Invalid date format is reported by @IsDateString, not here.
+            return true;
+          }
+          return date.getTime() > Date.now();
+        },
+        defaultMessage(args: ValidationArguments) {
+          return `${args.property} doit être une date dans le futur`;
+        },
+      },
+    });
+  };
+}
 
 export class CreateMissionDto {
   @ApiProperty({
@@ -63,9 +99,15 @@ export class CreateMissionDto {
   @Max(180)
   longitude: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description:
+      'Date/heure planifiée (ISO 8601). Doit être strictement dans le futur ' +
+      'lorsqu\'elle est fournie, sinon 400.',
+  })
   @IsOptional()
   @IsDateString()
+  @IsFutureDate()
   scheduledFor?: Date;
 
   @ApiProperty({ required: false })

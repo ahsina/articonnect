@@ -8,6 +8,17 @@ export class CreateNegotiationDto {
   @IsString()
   missionId: string;
 
+  // Multi-offres : permet au CLIENT de contre-proposer à un artisan précis (parmi ceux qui ont
+  // déjà fait une offre) quand aucun artisan n'est encore assigné à la mission. Ignoré côté artisan.
+  @ApiProperty({
+    required: false,
+    example: 'artisan-id-456',
+    description: 'Artisan ciblé par la contre-offre du client (mission multi-offres, non assignée)'
+  })
+  @IsOptional()
+  @IsString()
+  targetArtisanId?: string;
+
   @ApiProperty({ example: 150.50, description: 'Prix total proposé' })
   @IsNumber()
   @Min(0)

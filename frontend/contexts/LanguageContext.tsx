@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { allTranslations, Language } from '@/lib/i18n/translations';
+import apiClient from '@/lib/api/client';
 
 const SUPPORTED_LANGUAGES: Language[] = ['fr', 'en', 'de', 'es', 'it', 'nl', 'pt'];
 
@@ -17,7 +18,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>('fr');
 
   useEffect(() => {
-    // Load language from localStorage or browser
+    // 1) Peinture immédiate : localStorage puis langue du navigateur.
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
       setLanguageState(savedLanguage);
@@ -28,11 +29,35 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setLanguageState(browserLang);
       }
     }
+
+    // 2) Source de vérité côté compte : `preferredLocale` (utilisé par les emails/PDF backend).
+    // Pour un utilisateur connecté, la préférence du compte prime (persistance cross-device).
+    // Best-effort : ignoré silencieusement pour un visiteur non authentifié (401).
+    apiClient
+      .get('/i18n/user/locale')
+      .then((res) => {
+        const serverLocale = (
+          typeof res.data === 'string' ? res.data : res.data?.locale
+        ) as Language;
+        if (serverLocale && SUPPORTED_LANGUAGES.includes(serverLocale)) {
+          setLanguageState(serverLocale);
+          localStorage.setItem('language', serverLocale);
+        }
+      })
+      .catch(() => {
+        /* non connecté ou endpoint indisponible : on garde la préférence locale */
+      });
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
+    // Persiste le choix sur le compte afin que les emails/documents générés côté backend
+    // (via preferredLocale) suivent la langue de l'interface, et que la préférence soit
+    // conservée entre appareils/sessions. Best-effort pour un visiteur non authentifié.
+    apiClient.put('/i18n/user/locale', { locale: lang }).catch(() => {
+      /* non connecté : la préférence reste locale (localStorage) */
+    });
   };
 
   const t = (keyOrCategory: string, key?: string): string => {
