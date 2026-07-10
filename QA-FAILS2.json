@@ -1,0 +1,93 @@
+[
+ {
+  "id": "admin-16",
+  "title": "Re-vérifier un artisan",
+  "pass": false,
+  "severity": "medium",
+  "observed": "POST /verification/artisan/38f26e5f.../reverify returned 200 and the real control result (verified=false → status REJECTED, error 'Format SIRET invalide'), so businessVerificationStatus DOES reflect the real check. But businessVerificationLastCheck was null BEFORE and remained null AFTER (checked via /verification/admin/unverified which exposes the field). The assertion requires businessVerificationLastCheck to be set to 'now' — it is never touched by the reverify path. reverifyArtisan() delegates to verifyArtisan(), which only writes businessVerifiedAt (set to null on a REJECTED result) and businessVerificationStatus, never businessVerificationLastCheck. Net effect: after a re-verification there is NO timestamp anywhere recording that a re-check happened (businessVerifiedAt=null for rejected, businessVerificationLastCheck=null), breaking the audit trail the annual-reverification report is supposed to rely on.",
+  "bug": "POST /verification/artisan/:id/reverify does not update businessVerificationLastCheck. reverifyArtisan → verifyArtisan writes businessVerified/businessVerifiedAt/businessVerificationStatus but never sets businessVerificationLastCheck=new Date(), so the 'last check' timestamp stays stale/null after a re-verification.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/verification/services/business-verification.service.ts (verifyArtisan lines 145-169, reverifyArtisan lines 210-239); /home/debian/articonnect/backend/api-gateway/src/verification/controllers/verification.controller.ts (reverifyArtisan lines 86-96)"
+ },
+ {
+  "id": "admin-27",
+  "title": "Valider un no-show en attente de revue",
+  "pass": false,
+  "severity": "high",
+  "bug": "La validation d'un no-show AUGMENTE la reputation du client fautif au lieu de la baisser (penalite inversee). Observed: client reputationScore 134 -> 154 (+20) et ReputationHistory.pointsChange=+20 apres POST /payments/no-show/validate. L'assertion exige reputationScore -noShowPenalty. Cause racine: incoherence de signe. Le code fait `previousScore + noShowPenalty` avec un defaut `?? -10` (donc il attend une valeur NEGATIVE a additionner), mais la config de prod settings.reputationRules stocke `noShowPenalty: 20` (magnitude POSITIVE). Resultat: on ajoute +20 -> le client no-show est RECOMPENSE. Le reste des consequences est correct (mission -> CANCELLED_NO_SHOW, event -> COMPENSATED, Payment COMPENSATION de 15 EUR cree pour l'artisan avec artisanCompensated=true, noShowCount 0->1), donc la transaction atomique fonctionne mais la penalite de reputation est a l'envers. Meme bug present dans reputation.service.applyNoShowPenalty (memes conventions).",
+  "files": "backend/api-gateway/src/payment/services/no-show.service.ts (applyNoShowConsequences: `const noShowPenalty = reputationRules.noShowPenalty ?? -10;` puis `Math.max(minScore, Math.min(maxScore, previousScore + noShowPenalty))`); PlatformConfig key 'settings.reputationRules' -> noShowPenalty=20 (positif); backend/api-gateway/src/payment/services/reputation.service.ts:159,242 (meme convention `previousScore + pointsChange`, defaut -10)",
+  "observed": "Cloned mission (IN_TRANSIT) + PENDING_REVIEW event (feeAmount 15). Client avant: reputationScore=134, noShowCount=0. POST /api/payments/no-show/validate {noShowEventId} -> HTTP 201 msg 'No-show valide - Client penalise, artisan compense'. DB apres: NoShowEvent status=COMPENSATED,compensationPaid=t,validatedAt set; Mission status=CANCELLED_NO_SHOW,cancelledAt set; Payment type=COMPENSATION amount=15.00 userId=client artisanCompensated=t compensationAmount=15.00 refundReason=CLIENT_NO_SHOW; noShowCount=1. MAIS reputationScore=154 (au lieu de 114 attendu = 134-20) et ReputationHistory action=NO_SHOW pointsChange=+20 previousScore=134 newScore=154. La penalite de reputation est appliquee dans le mauvais sens -> assertion non satisfaite."
+ },
+ {
+  "id": "admin-35",
+  "title": "Déclencher manuellement l'auto-validation des missions",
+  "pass": false,
+  "severity": "medium",
+  "bug": "POST /admin/cron/trigger/auto-validate renvoie un corps VIDE (HTTP 201, size_download=0) : aucun autoValidatedCount, aucune liste missions. Le contrat Swagger du endpoint annonce pourtant {autoValidatedCount:3, missions:[...]}. Cause racine: MissionCronService.autoValidateStuckMissions() (le wrapper CRON, lignes 45-97) appelle bien missionService.autoValidateStuckMissions() (qui retourne {processed, results}) et le stocke dans `result` pour le logger, mais ne fait JAMAIS `return result`. triggerAutoValidationManually() (l.532-535) retourne donc `this.autoValidateStuckMissions()` = undefined, et le contrôleur renvoie undefined → réponse vide. L'admin qui déclenche la tâche n'obtient aucun retour (ni compteur, ni missions débloquées) : impossible de vérifier via l'API combien de paiements >7j ont été débloqués. Le traitement métier sous-jacent s'exécute réellement (mise à jour statut AUTO_VALIDATED + payout), mais l'assertion exige un autoValidatedCount cohérent ET les missions listées, tous deux absents.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/mission/services/mission-cron.service.ts (autoValidateStuckMissions l.45-97 sans return; triggerAutoValidationManually l.532-535); /home/debian/articonnect/backend/api-gateway/src/admin/controllers/cron.controller.ts (l.68-93 documente un {autoValidatedCount, missions} jamais renvoyé)",
+  "observed": "POST /admin/cron/trigger/auto-validate → HTTP 201, corps vide (SIZE=0). Aucun champ autoValidatedCount ni missions dans la réponse. GET /admin/cron/status confirme le job actif. La réponse ne fournit donc aucun compteur (pire qu'un compteur simulé: rien du tout), contrairement au contrat annoncé. Assertion NON satisfaite."
+ },
+ {
+  "id": "admin-39",
+  "title": "Top artisans avec limite respectée",
+  "pass": false,
+  "severity": "medium",
+  "bug": "GET /admin/analytics/top-artisans SANS paramètre limit renvoie HTTP 400 'Validation failed (numeric string is expected)' au lieu d'appliquer le défaut 10. Le ParseIntPipe({optional:true}) sur le query param limit ne gère pas l'absence du paramètre (rejet au lieu de undefined), donc le fallback 'limit || 10' n'est jamais atteint. La borne haute fonctionne (limit=5 -> exactement 5 artisans triés par rating desc 4.97/4.90/4.60/0/0 ; limit=3 -> 3), mais la clause 'un limit absent applique le défaut 10' de l'assertion échoue.",
+  "files": "backend/api-gateway/src/admin/controllers/analytics.controller.ts:65",
+  "observed": "limit=5 -> exactement 5 artisans max, triés par performance (rating) décroissante ; limit=3 -> 3. MAIS GET /admin/analytics/top-artisans (sans limit) -> 400 'Validation failed (numeric string is expected)' (reproduit 2x) au lieu de renvoyer 10 par défaut. La 2e partie de l'assertion (défaut 10 quand limit absent) n'est pas satisfaite."
+ },
+ {
+  "id": "admin-52",
+  "title": "Journal d'audit des actions admin",
+  "pass": false,
+  "severity": "high",
+  "observed": "L'endpoint GET /admin/audit-logs existe et est filtrable (userId/action/resource/dates, pagination). MAIS aucune action sensible n'écrit jamais d'entrée d'audit : avant action total=0, exécution POST /admin/users/:id/unblock-security → 201, après action total=0, et filtre action=UNBLOCK_SECURITY → total=0. Revue du code : AuditLogService.log()/logUserAction() (et prisma.auditLog.create) ne sont invoqués NULLE PART dans le code (grep exhaustif) — seules les lectures findAll/findOne sont câblées. admin.service.suspendUser/activateUser/unblockSecurity et la résolution de litige/refund ne loguent rien. Les actions d'enforcement ne laissent donc AUCUNE trace vérifiable → assertion non satisfaite.",
+  "bug": "Le journal d'audit est en lecture seule et jamais alimenté : aucune écriture d'AuditLog n'est déclenchée par les actions admin sensibles (suspend/activate/unblock-security/résolution litige/refund). La table AuditLog reste vide (total:0) même après une action d'enforcement, rendant impossible toute traçabilité/conformité.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/admin/services/admin.service.ts, /home/debian/articonnect/backend/api-gateway/src/common/services/audit-log.service.ts, /home/debian/articonnect/backend/api-gateway/src/admin/controllers/admin.controller.ts, /home/debian/articonnect/backend/api-gateway/src/dispute/services/dispute-resolution.service.ts"
+ },
+ {
+  "id": "public-07",
+  "title": "Inscription CLIENT nominale avec mot de passe fort",
+  "pass": false,
+  "severity": "critical",
+  "bug": "L'inscription est TOTALEMENT cassée: toute création de compte échoue en HTTP 409 'Création de compte bloquée. Contactez le support...'. Cause racine: dans MultiAccountDetectorService.findSimilarEmails (multi-account-detector.service.ts:143-160) la requête omet le filtre d'auto-exclusion `id: { not: userId }` que toutes les autres requêtes de signaux possèdent. L'utilisateur venant d'être créé (auth.service.ts:52) matche donc sa PROPRE adresse email => signal EMAIL_SIMILARITY confidence 85 => riskScore = 85 + typeBonus 10 = 95 => recommendation 'BLOCK' => l'utilisateur fraîchement créé est supprimé (auth.service.ts:91-97). Seul ce self-match atteint le seuil BLOCK (un match IP seul = 70 => MANUAL_REVIEW), donc c'est bien la cause déterministe. multiAccountDetectionEnabled=true et seuil=70 par défaut (schema.prisma:1761-1762). Testé avec 4 emails uniques distincts (domaines example.com et gmail.com, deviceId/userAgent uniques): 100% bloqués. Aucun compte créé, aucun email de vérification mis en file, aucun cookie httpOnly posé, aucune redirection /client/dashboard possible.",
+  "files": "backend/api-gateway/src/fraud/services/multi-account-detector.service.ts (findSimilarEmails L143-160 + appel L51 sans excludeUserId), backend/api-gateway/src/auth/services/auth.service.ts (bloc détection L63-98), backend/shared/prisma/schema.prisma (L1761-1762 defaults)",
+  "observed": "POST /api/auth/register {role CLIENT, mdp fort 'StrongPass123!', email neuf, deviceId+userAgent uniques} => HTTP 409 message 'Création de compte bloquée. Contactez le support si vous pensez qu'il s'agit d'une erreur.' Aucun Set-Cookie. Le compte n'est pas créé (supprimé immédiatement). Assertion NON satisfaite."
+ },
+ {
+  "id": "public-08",
+  "title": "Inscription ARTISAN via lien pré-typé",
+  "pass": false,
+  "severity": "critical",
+  "bug": "Même bug racine que public-07: l'inscription ARTISAN (role=ARTISAN) est bloquée par le même self-match EMAIL_SIMILARITY dans findSimilarEmails (multi-account-detector.service.ts:143, filtre d'auto-exclusion manquant) => riskScore 95 => BLOCK => utilisateur supprimé (auth.service.ts:91-97). Aucun compte ARTISAN n'est créé, donc aucune redirection vers /artisan/dashboard possible.",
+  "files": "backend/api-gateway/src/fraud/services/multi-account-detector.service.ts (findSimilarEmails L143), backend/api-gateway/src/auth/services/auth.service.ts (L63-98)",
+  "observed": "POST /api/auth/register {role:'ARTISAN', mdp fort, email gmail unique, device unique} => HTTP 409 'Création de compte bloquée...'. Aucun compte ARTISAN créé, aucun cookie, aucune redirection. Assertion NON satisfaite."
+ },
+ {
+  "id": "public-14",
+  "title": "Inscription avec/sans jeton CAPTCHA",
+  "pass": false,
+  "severity": "critical",
+  "title_note": "",
+  "observed": "Testé en réel sur https://krafolt.com/api/auth/register. AVEC captchaToken=\"bogus-token-xyz\" -> HTTP 409 ; SANS captchaToken -> HTTP 409. Le CAPTCHA est bien optionnel (RECAPTCHA_ENABLED non défini côté conteneur -> verifyCaptcha court-circuite/return true, donc un token bidon NE provoque PAS de rejet 400). MAIS l'assertion « sans jeton, l'inscription reste possible » est FAUSSE : les DEUX cas sont rejetés en 409 « Création de compte bloquée. Contactez le support... » par la détection multi-comptes. Impossible de compléter une inscription, avec ou sans jeton. Root cause = bug findSimilarEmails (voir public-16).",
+  "bug": "Registration end-to-end est impossible : toute inscription (avec OU sans captchaToken) est bloquée en 409 par la détection multi-comptes à cause d'un auto-match e-mail. L'objectif « CAPTCHA optionnel, inscription reste possible sans jeton » n'est pas atteignable.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/auth/controllers/auth.controller.ts (L50-56 verifyRegisterCaptcha appelé avant register), /home/debian/articonnect/backend/api-gateway/src/fraud/services/multi-account-detector.service.ts (findSimilarEmails L143-160)"
+ },
+ {
+  "id": "public-16",
+  "title": "Traçabilité du consentement à l'inscription",
+  "pass": false,
+  "severity": "critical",
+  "observed": "Impossible de vérifier une trace de consentement : aucune inscription ne peut aboutir. La création d'UserConsent (auth.service.ts L108-113) se fait APRÈS le contrôle multi-comptes, or ce contrôle rejette systématiquement (409) et soft-delete l'utilisateur AVANT. Vérif DB confirmée : pour les comptes de test bloqués (qa.base.*, solo@uniqdomain*), 0 ligne UserConsent. L'assertion « un UserConsent est enregistré pour le nouvel utilisateur avec l'IP réelle » n'est jamais atteinte.",
+  "bug": "Aucun UserConsent n'est jamais persisté à l'inscription car toute inscription est bloquée en amont (auto-match e-mail dans la détection multi-comptes). Traçabilité RGPD du consentement non fonctionnelle en production.",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/auth/services/auth.service.ts (consent L108-113, après le block L91-97), /home/debian/articonnect/backend/api-gateway/src/fraud/services/multi-account-detector.service.ts (findSimilarEmails L143-160)"
+ },
+ {
+  "id": "public-35",
+  "title": "Envoi public d'un code SMS de vérification",
+  "pass": false,
+  "observed": "La logique métier est correcte (code 6 chiffres généré, ancien token non utilisé invalidé — vérifié en base: seuls les tokens précédents passent used=true, expiresAt = createdAt+10min), MAIS l'envoi réel échoue: POST /auth/phone/send-code renvoie systématiquement 400 {\"message\":\"Échec de l'envoi du SMS\"}. Aucun SMS n'est émis et expiresIn=600 n'est jamais retourné. Twilio est activé (TWILIO_ENABLED=true) avec un numéro d'essai US +19565974697 qui ne peut pas délivrer vers LU/FR (compte trial → destinataires non vérifiés). La vérification téléphone par SMS est donc totalement inutilisable en prod pour un vrai utilisateur.",
+  "severity": "medium",
+  "bug": "phone/send-code échoue toujours en prod: Twilio activé avec un numéro trial non délivrant → 400 'Échec de l'envoi du SMS', aucun SMS reçu, pas de expiresIn. De plus le PhoneVerificationToken est créé en base AVANT sendSMS, donc en cas d'échec d'envoi le token reste (et compte dans le rate-limit) sans rollback transactionnel.",
+  "files": "backend/api-gateway/src/auth/services/phone-verification.service.ts (sendVerificationCode + sendSMS), deploy/.env.deploy (TWILIO_PHONE_NUMBER trial)"
+ }
+]

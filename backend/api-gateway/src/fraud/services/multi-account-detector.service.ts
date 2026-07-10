@@ -48,7 +48,9 @@ export class MultiAccountDetectorService {
     }
 
     // 1. Email similarity check (john+1@gmail.com, john+2@gmail.com)
-    const emailSimilarAccounts = await this.findSimilarEmails(user.email);
+    // On EXCLUT l'utilisateur lui-même, sinon il se matche (EMAIL_SIMILARITY sur soi) -> tout
+    // le monde est flaggé à l'inscription et le compte est bloqué/supprimé (inscription cassée).
+    const emailSimilarAccounts = await this.findSimilarEmails(user.email, userId);
     emailSimilarAccounts.forEach((account) => {
       linkedAccountIds.add(account.id);
       signals.push({
@@ -140,12 +142,13 @@ export class MultiAccountDetectorService {
   /**
    * Find accounts with similar emails (plus addressing)
    */
-  private async findSimilarEmails(email: string) {
+  private async findSimilarEmails(email: string, excludeUserId?: string) {
     const baseEmail = email.split('+')[0].split('@')[0];
     const domain = email.split('@')[1];
 
     return this.prisma.user.findMany({
       where: {
+        ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
         email: {
           startsWith: baseEmail,
           endsWith: `@${domain}`,

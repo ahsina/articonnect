@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -40,7 +40,7 @@ export class AnalyticsController {
     description: 'Time series data retrieved successfully',
   })
   async getTimeSeriesData(
-    @Query('days', new ParseIntPipe({ optional: true })) days?: number,
+    @Query('days', new DefaultValuePipe(30), ParseIntPipe) days: number,
   ) {
     const data = await this.analyticsService.getTimeSeriesData(days || 30);
     return {
@@ -62,7 +62,9 @@ export class AnalyticsController {
     description: 'Top artisans retrieved successfully',
   })
   async getTopArtisans(
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    // DefaultValuePipe applique 10 AVANT ParseIntPipe : un `limit` absent
+    // ne déclenche plus de 400 (le pipe reçoit déjà "10", pas undefined).
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
     const artisans = await this.analyticsService.getTopArtisans(limit || 10);
     return {

@@ -85,6 +85,11 @@ export class MissionCronService {
             this.logger.log(`  - Mission ${r.missionId}: ${r.message}`);
           });
       }
+
+      // Retourner le résultat pour que le déclenchement manuel
+      // (triggerAutoValidationManually -> contrôleur admin) renvoie bien
+      // { processed, results } au lieu d'un corps vide (undefined).
+      return result;
     } catch (error) {
       this.logger.error(
         `❌ Erreur CRON auto-validation: ${error.message}`,
@@ -93,6 +98,8 @@ export class MissionCronService {
 
       // Ne pas propager l'erreur pour éviter de bloquer les prochaines exécutions
       // En production, on enverrait une alerte (Sentry, PagerDuty, etc.)
+      // On renvoie tout de même un résultat cohérent (corps non vide) pour le déclenchement manuel.
+      return { processed: 0, results: [], error: error.message };
     }
   }
 

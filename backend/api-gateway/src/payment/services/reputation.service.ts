@@ -239,7 +239,9 @@ export class ReputationService {
    */
   async applyNoShowPenalty(userId: string, missionId: string): Promise<User> {
     const reputationRules = await this.platformConfig.getReputationRules();
-    const penalty = reputationRules.noShowPenalty ?? -10;
+    // La pénalité doit TOUJOURS soustraire, quel que soit le signe stocké en config
+    // (la prod stocke `noShowPenalty: 20` en magnitude positive).
+    const penalty = -Math.abs(reputationRules.noShowPenalty ?? -10);
 
     return this.addReputationPoints(
       userId,

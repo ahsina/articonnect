@@ -1,10 +1,45 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuditLogService } from '../../common/services/audit-log.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(AdminService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private readonly auditLog?: AuditLogService,
+  ) {}
+
+  /**
+   * Écrit une trace d'audit pour une action admin sensible.
+   * Ne casse jamais le happy-path : une écriture d'audit qui échoue est loguée
+   * mais l'action d'enforcement reste effective.
+   */
+  private async writeAudit(
+    action: string,
+    resourceId: string,
+    details: Record<string, any>,
+    adminId?: string,
+  ): Promise<void> {
+    if (!this.auditLog) {
+      return;
+    }
+    try {
+      await this.auditLog.log({
+        userId: adminId,
+        action,
+        resource: 'User',
+        details: { resourceId, ...details },
+        ipAddress: 'internal',
+      });
+    } catch (e) {
+      this.logger.error(
+        `Échec d'écriture de l'audit ${action} pour ${resourceId}: ${(e as any)?.message}`,
+      );
+    }
+  }
 
   async getDashboardStats() {
     const [
@@ -165,12 +200,14 @@ export class AdminService {
     };
   }
 
-  async suspendUser(userId: string) {
+  async suspendUser(userId: string, adminId?: string) {
     try {
-      return await this.prisma.user.update({
+      const updated = await this.prisma.user.update({
         where: { id: userId },
         data: { status: 'SUSPENDED' },
       });
+      await this.writeAudit('SUSPEND_USER', userId, { status: 'SUSPENDED' }, adminId);
+      return updated;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -182,12 +219,14 @@ export class AdminService {
     }
   }
 
-  async activateUser(userId: string) {
+  async activateUser(userId: string, adminId?: string) {
     try {
-      return await this.prisma.user.update({
+      const updated = await this.prisma.user.update({
         where: { id: userId },
         data: { status: 'ACTIVE' },
       });
+      await this.writeAudit('ACTIVATE_USER', userId, { status: 'ACTIVE' }, adminId);
+      return updated;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -204,9 +243,9 @@ export class AdminService {
    * Réinitialise les flags et scores de fraude sur l'utilisateur cible afin
    * de rétablir un login/usage normal après revue manuelle.
    */
-  async unblockSecurity(userId: string) {
+  async unblockSecurity(userId: string, adminId?: string) {
     try {
-      return await this.prisma.user.update({
+      const updated = await this.prisma.user.update({
         where: { id: userId },
         data: {
           multiAccountFlagged: false,
@@ -216,6 +255,17 @@ export class AdminService {
           refundBlocked: false,
         },
       });
+      await this.writeAudit(
+        'UNBLOCK_SECURITY',
+        userId,
+        {
+          multiAccountFlagged: false,
+          botFlagged: false,
+          refundBlocked: false,
+        },
+        adminId,
+      );
+      return updated;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

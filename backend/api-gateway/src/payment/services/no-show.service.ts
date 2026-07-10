@@ -271,7 +271,9 @@ export class NoShowService {
 
     // Get configurable values
     const reputationRules = await this.platformConfig.getReputationRules();
-    const noShowPenalty = reputationRules.noShowPenalty ?? -10;
+    // La pénalité doit TOUJOURS soustraire, quel que soit le signe stocké en config
+    // (la prod stocke `noShowPenalty: 20` en magnitude positive).
+    const noShowPenalty = -Math.abs(reputationRules.noShowPenalty ?? -10);
     const minScore = reputationRules.minScore ?? 0;
     const maxScore = reputationRules.maxScore ?? 200;
 

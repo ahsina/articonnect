@@ -43,7 +43,15 @@ export class PhoneVerificationService {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
-    // Invalidate any existing unused tokens for this phone
+    // Envoyer le SMS AVANT toute écriture en base : si la livraison échoue
+    // (ex. numéro Twilio trial ne délivrant pas vers LU/FR), on lève l'erreur
+    // sans avoir créé de token. Ainsi une tentative ratée :
+    //   - ne consomme pas le quota de rate-limit (pas de token orphelin) ;
+    //   - n'invalide pas le dernier code valide déjà envoyé.
+    await this.sendSMS(normalizedPhone, code);
+
+    // La livraison a réussi : on invalide les anciens tokens non utilisés puis
+    // on persiste le nouveau (ordre garanti après un envoi effectif).
     await this.prisma.phoneVerificationToken.updateMany({
       where: {
         phone: normalizedPhone,
@@ -63,9 +71,6 @@ export class PhoneVerificationService {
         expiresAt,
       },
     });
-
-    // Send SMS using SMS provider
-    await this.sendSMS(normalizedPhone, code);
 
     return {
       message: 'Code de vérification envoyé par SMS',

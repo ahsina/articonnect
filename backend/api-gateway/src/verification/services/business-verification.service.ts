@@ -156,6 +156,10 @@ export class BusinessVerificationService {
         businessVerified: result.verified,
         businessVerifiedAt: result.verified ? new Date() : null,
         businessVerificationStatus: status,
+        // Trace d'audit : on horodate CHAQUE (re-)contrôle, qu'il soit accepté
+        // ou rejeté, pour que le rapport de re-vérification annuelle dispose
+        // toujours d'un timestamp de dernier contrôle.
+        businessVerificationLastCheck: new Date(),
         businessRegistrationNumber: result.registrationNumber,
         businessCountry: dto.country,
         businessVerificationErrors: result.errors || [],

@@ -384,6 +384,32 @@ export class DisputeService {
       },
     });
 
+    // Trace d'audit de l'action admin sensible (résolution + éventuel remboursement).
+    // Ne casse jamais le happy-path : un échec d'audit est logué mais n'annule pas la résolution.
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId: adminId,
+          action:
+            refund && refund.refunded > 0
+              ? 'RESOLVE_DISPUTE_REFUND'
+              : 'RESOLVE_DISPUTE',
+          resource: 'Dispute',
+          details: {
+            resourceId: disputeId,
+            missionId: dispute.missionId,
+            outcome: resolveDto.outcome,
+            refunded: refund?.refunded ?? 0,
+          },
+          ipAddress: 'internal',
+        },
+      });
+    } catch (e) {
+      this.logger.error(
+        `Échec d'écriture de l'audit de résolution du litige ${disputeId}: ${(e as any)?.message}`,
+      );
+    }
+
     return { ...resolved, refund };
   }
 
