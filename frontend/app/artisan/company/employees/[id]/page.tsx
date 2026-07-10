@@ -304,7 +304,7 @@ export default function EmployeeDetailPage() {
                   <span className="text-muted-foreground">
                     {t('company', 'joinedDate') || 'Joined Date'}
                   </span>
-                  <span>{new Date(employee.joinedAt).toLocaleDateString()}</span>
+                  <span>{(() => { const d = new Date((employee as any).startDate || employee.joinedAt); return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(); })()}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-muted-foreground">{t('company', 'phone') || 'Phone'}</span>

@@ -80,7 +80,7 @@ export default function EmployeeChatPage() {
             {error || t('employeeChat', 'mustBeEmployee')}
           </p>
           <a
-            href="/employee"
+            href="/"
             className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             {t('employeeChat', 'backHome')}

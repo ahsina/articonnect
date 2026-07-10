@@ -278,7 +278,7 @@ export default function CreateCompanyPage() {
 
         {/* Actions */}
         <div className="flex gap-4 justify-end">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button type="button" variant="outline" onClick={() => { if (window.history.length > 1) router.back(); else router.push('/artisan/company/dashboard'); }}>
             {t('common', 'cancel') || 'Cancel'}
           </Button>
           <Button type="submit" disabled={loading}>
