@@ -614,6 +614,7 @@ export class NotificationService {
       },
       data: {
         read: true,
+        readAt: new Date(),
       },
     });
   }
@@ -626,6 +627,7 @@ export class NotificationService {
       },
       data: {
         read: true,
+        readAt: new Date(),
       },
     });
   }

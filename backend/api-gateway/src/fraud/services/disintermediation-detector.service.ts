@@ -379,15 +379,31 @@ export class DisintermediationDetectorService {
     let transition = false;
 
     switch (penalty) {
-      case 'DEACTIVATE':
-        // Gel + désactivation. On ne suspend QUE depuis ACTIVE (ne clobber pas DELETED) et on
-        // ne casse pas un login légitime : seul un score >= 90 (fuite avérée) atteint ce niveau.
+      case 'DEACTIVATE': {
+        // Gel systématique. Mais l'auto-SUSPENSION (blocage du LOGIN) n'est appliquée que sur PREUVE
+        // DURE de partage de coordonnées — jamais sur un score gonflé par le seul signal comportemental
+        // CONTACT_FISHING (beaucoup de conversations peu converties = NORMAL pour un nouveau client qui
+        // compare). Preuve dure = >=3 violations contact réelles (30j) OU >=5 sollicitations avérées.
+        // Sinon : on se limite au gel des mises en relation (réversible, login préservé) + revue admin
+        // → évite de verrouiller un utilisateur légitime sur un faux positif (ex: un nombre à 10 chiffres
+        // innocent lu comme un téléphone).
         data.leakageFlagged = true;
-        if (prior.status === 'ACTIVE') {
+        const hardEvidence =
+          result.signals.some(
+            (s) => s.type === 'CONTACT_SHARING_VIOLATIONS' && ((s.data?.contactViolationCount as number) ?? 0) >= 3,
+          ) ||
+          result.signals.some(
+            (s) => s.type === 'OFF_PLATFORM_SOLICITATION' && ((s.data?.solicitationCount as number) ?? 0) >= 5,
+          );
+        if (prior.status === 'ACTIVE' && hardEvidence) {
           data.status = 'SUSPENDED';
           transition = true;
+        } else {
+          // Score élevé mais sans preuve dure → gel matching uniquement (pas de blocage login).
+          transition = !prior.leakageFlagged;
         }
         break;
+      }
       case 'FREEZE_MATCHING':
       case 'REQUIRE_DEPOSIT':
         // Gel des mises en relation (réversible). On force leakageFlagged=true de façon idempotente
