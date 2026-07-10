@@ -218,11 +218,23 @@ export class MissionService {
         escrowSecured,
       });
 
-    const sanitized: any = { ...mission };
+    let sanitized: any = { ...mission };
     sanitized.client = this.maskUserContact(mission.client, revealClientContact);
     sanitized.artisan = mission.artisan
       ? this.maskUserContact(mission.artisan, revealArtisanContact)
       : mission.artisan;
+
+    // ── LOCALISATION (façon Uber) : l'ADRESSE EXACTE + GPS précis n'est révélée qu'au CLIENT
+    // propriétaire et à l'ARTISAN ASSIGNÉ une fois l'escrow sécurisé. Un artisan candidat (mission
+    // ouverte), un participant à une négociation, ou un ADMIN ne voient que la ville + zone floutée
+    // (~1 km) — sinon un artisan enrôlé gratuitement pouvait moissonner l'adresse exacte de chaque
+    // client via GET /missions/:id avant tout paiement (désintermédiation : se rendre chez le client).
+    const revealExactLocation =
+      escrowSecured && (isClientViewer || isAssignedArtisanViewer);
+    if (!revealExactLocation) {
+      sanitized = this.approximateMissionLocation(sanitized);
+    }
+
     // Ne pas divulguer l'objet transaction (montants/commission) via cet endpoint.
     delete sanitized.transaction;
     return sanitized;
@@ -273,6 +285,11 @@ export class MissionService {
    */
   private hasSecuredFunds(mission: any): boolean {
     const txStatus = mission?.transaction?.status;
+    // Un acompte REMBOURSÉ/ANNULÉ n'est plus « sécurisé » : sinon un client qui paie l'acompte
+    // (contact révélé) puis annule + se fait rembourser garderait le contact déverrouillé à vie.
+    if (txStatus === 'REFUNDED' || txStatus === 'CANCELLED' || txStatus === 'FAILED') {
+      return false;
+    }
     return (
       !!mission?.depositPaidAt || txStatus === 'HELD' || txStatus === 'COMPLETED'
     );

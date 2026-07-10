@@ -17,8 +17,17 @@ export class ContactRevealService {
   /** Délai de grâce après clôture pendant lequel le contact reste visible (SAV / dernier échange). */
   private static readonly GRACE_MS = 72 * 60 * 60 * 1000; // 72h
 
-  /** Statuts terminaux au-delà desquels la mission n'est plus « active ». */
+  /** Statuts terminaux au-delà desquels la mission n'est plus « active » (grâce 72h puis re-masquage). */
   private static readonly TERMINAL_STATUSES = new Set(['COMPLETED', 'AUTO_VALIDATED']);
+
+  /**
+   * Statuts d'ANNULATION / litige : la mise en relation est ROMPUE — on FERME la fenêtre
+   * immédiatement (pas de grâce). Sinon un client peut payer l'acompte (contact révélé),
+   * annuler + se faire rembourser, et garder le numéro de l'artisan à vie → désintermédiation.
+   */
+  private static readonly CANCELLED_STATUSES = new Set([
+    'CANCELLED', 'CANCELLED_NO_SHOW', 'DISPUTED', 'REFUNDED', 'EXPIRED', 'REJECTED',
+  ]);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -30,14 +39,20 @@ export class ContactRevealService {
    */
   isWithinActiveWindow(mission: any): boolean {
     const status = String(mission?.status);
-    if (!ContactRevealService.TERMINAL_STATUSES.has(status)) {
-      return true;
+    // Annulation / litige : mise en relation rompue → fenêtre fermée IMMÉDIATEMENT (aucune grâce).
+    if (ContactRevealService.CANCELLED_STATUSES.has(status)) {
+      return false;
     }
-    const closedAt =
-      mission?.autoValidatedAt || mission?.validatedAt || mission?.completedAt;
-    if (!closedAt) return false;
-    const elapsed = Date.now() - new Date(closedAt).getTime();
-    return elapsed <= ContactRevealService.GRACE_MS;
+    // Mission terminée avec succès : ouverte seulement pendant la grâce 72h après clôture.
+    if (ContactRevealService.TERMINAL_STATUSES.has(status)) {
+      const closedAt =
+        mission?.autoValidatedAt || mission?.validatedAt || mission?.completedAt;
+      if (!closedAt) return false;
+      const elapsed = Date.now() - new Date(closedAt).getTime();
+      return elapsed <= ContactRevealService.GRACE_MS;
+    }
+    // Mission active (en cours) : fenêtre ouverte (happy-path préservé).
+    return true;
   }
 
   /**

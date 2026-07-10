@@ -9,6 +9,7 @@ import { ContentFilterService } from './services/content-filter.service';
 import { ChatController } from './controllers/chat.controller';
 import { InternalChatController } from './controllers/internal-chat.controller';
 import { FcmModule } from '../fcm/fcm.module';
+import { FraudModule } from '../fraud/fraud.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { FcmModule } from '../fcm/fcm.module';
       inject: [ConfigService],
     }),
     FcmModule,
+    FraudModule,
   ],
   providers: [ChatGateway, ChatService, InternalChatService, EncryptionService, ContentFilterService],
   controllers: [ChatController, InternalChatController],

@@ -191,7 +191,10 @@ export class ContentFilterService {
     // donc SEULE une suite de 8+ chiffres CONTIGUS (après retrait des séparateurs) matche.
     {
       name: 'PHONE_LONG_DIGITS',
-      regex: /(?<!\d)\d{8,14}(?!\d)/g,
+      // Borne HAUTE retirée (\d{8,}) : une suite de 15+ chiffres contigus (numéro préfixé d'un
+      // « n° de facture » pour casser les motifs pays) n'avait aucun sous-groupe 8-14 délimité et
+      // passait. Tout run de 8+ chiffres contigus est désormais bloqué.
+      regex: /(?<!\d)\d{8,}(?!\d)/g,
       replacement: '[NUMÉRO BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -205,7 +208,7 @@ export class ContentFilterService {
     {
       name: 'WRITTEN_PHONE',
       regex:
-        /(?:\b(?:z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|et|zero|one|two|three|four|five|six|seven|eight|nine|ten|null|eins|zwei|drei|vier|sechs|eent|zwee|dr[aä]i|v[eé]ier|f[eë]nnef|siwen|aacht|n[eé]ng|z[eé]ng)\b[\s,.\-]*){4,}/gi,
+        /(?:\b(?:z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|et|zero|one|two|three|four|five|six|seven|eight|nine|ten|null|eins|zwei|drei|vier|sechs|eent|zwee|dr[aä]i|v[eé]ier|f[eë]nnef|siwen|aacht|n[eé]ng|z[eé]ng|nul|een|twee|drie|vijf|zes|zeven|acht|negen|uno|due|tre|quattro|cinque|sette|otto|nove)\b[\s,.\-]*){4,}/gi,
       replacement: '[NUMÉRO BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -230,7 +233,7 @@ export class ContentFilterService {
     {
       name: 'EMAIL_OBFUSCATED',
       regex:
-        /[a-zA-Z0-9._%+-]+\s*(?:@|\(at\)|\[at\]|\{at\}|\(a\)|\[a\]|\{a\}|\bat\b|arobas+e?|arobaz[e]?|chez)\s*(?:(?:gmail|hotmail|outlook|yahoo|protonmail|proton|icloud|gmx|aol)(?:\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})?|[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})/gi,
+        /[a-zA-Z0-9._%+-]+[\s,;]*(?:@|\(at\)|\[at\]|\{at\}|\(a\)|\[a\]|\{a\}|\bat\b|arobas+e?|arobaz[e]?|chez)\s*(?:(?:gmail|hotmail|outlook|yahoo|protonmail|proton|icloud|gmx|aol)(?:\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})?|[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})/gi,
       replacement: '[EMAIL BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -384,10 +387,35 @@ export class ContentFilterService {
   //  NORMALISATION
   // ==========================================================================
 
-  /** NFKC + suppression des caractères invisibles / keycap emojis. */
+  /**
+   * Confusables Unicode : lettres CYRILLIQUES / GRECQUES visuellement identiques à des lettres
+   * latines, utilisées pour esquiver le filtre (« jоhn.dое@gmаil.cоm » avec о/а/е cyrilliques →
+   * lisible par un humain mais invisible pour une regex latine). On les REPLIE vers le latin avant
+   * matching (jamais sur le contenu stocké). NFKC ne couvre pas ces confusables, d'où cette table.
+   */
+  private static readonly CONFUSABLES: Record<string, string> = {
+    // Cyrillique → latin
+    'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x', 'і': 'i', 'ѕ': 's',
+    'ј': 'j', 'к': 'k', 'н': 'h', 'в': 'b', 'т': 't', 'м': 'm', 'А': 'A', 'Е': 'E', 'О': 'O',
+    'Р': 'P', 'С': 'C', 'У': 'Y', 'Х': 'X', 'І': 'I', 'К': 'K', 'Н': 'H', 'В': 'B', 'Т': 'T', 'М': 'M',
+    // Grec → latin
+    'α': 'a', 'ο': 'o', 'ρ': 'p', 'ε': 'e', 'ι': 'i', 'ν': 'v', 'τ': 't', 'κ': 'k', 'Α': 'A',
+    'Ο': 'O', 'Ρ': 'P', 'Ε': 'E', 'Τ': 'T', 'Κ': 'K',
+  };
+
+  private foldConfusables(s: string): string {
+    let out = '';
+    for (const ch of s) {
+      out += ContentFilterService.CONFUSABLES[ch] ?? ch;
+    }
+    return out;
+  }
+
+  /** NFKC + repli des confusables Unicode + suppression des caractères invisibles / keycap emojis. */
   private normalize(input: string): string {
     if (!input) return '';
     let s = input.normalize('NFKC');
+    s = this.foldConfusables(s);
     s = s.replace(ContentFilterService.INVISIBLE, '');
     s = s.replace(ContentFilterService.KEYCAP, '');
     return s;

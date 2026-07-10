@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { FcmService } from '../../fcm/services/fcm.service';
 import { EncryptionService } from './encryption.service';
 import { ContentFilterService } from './content-filter.service';
+import { DisintermediationDetectorService } from '../../fraud/services/disintermediation-detector.service';
 
 @Injectable()
 export class ChatService {
@@ -15,6 +16,7 @@ export class ChatService {
     private fcmService: FcmService,
     private encryptionService: EncryptionService,
     private contentFilter: ContentFilterService,
+    private disintermediationDetector: DisintermediationDetectorService,
   ) {}
 
   async validateToken(token: string) {
@@ -42,6 +44,12 @@ export class ChatService {
 
     // Block message if HIGH severity violations detected
     if (filterResult.isBlocked) {
+      // 🛡️ HOOK détecteur leakage : un message bloqué alimente le score anti-désintermédiation
+      // (offPlatformSolicitationCount + enforcement gradué). Sans ce câblage, un fraudeur PATIENT
+      // (sous 5 violations) n'était jamais flaggé. Best-effort : n'empêche jamais le blocage.
+      await this.disintermediationDetector
+        .recordBlockedMessage(data.senderId, { content: data.content, detectedPatterns: filterResult.detectedPatterns })
+        .catch(() => undefined);
       throw new BadRequestException({
         message: 'Votre message contient des informations de contact interdites. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via Krafolt.',
         detectedPatterns: filterResult.detectedPatterns,
@@ -90,6 +98,9 @@ export class ChatService {
         const chrono = [...priorTexts, data.content];
         const split = await this.contentFilter.detectSplitPhone(data.senderId, chrono);
         if (split) {
+          await this.disintermediationDetector
+            .recordBlockedMessage(data.senderId, { content: data.content, detectedPatterns: ['PHONE_SPLIT_MULTIMSG'] })
+            .catch(() => undefined);
           throw new BadRequestException({
             message: 'Votre message complète un numéro de téléphone partagé sur plusieurs messages. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via Krafolt.',
             detectedPatterns: ['PHONE_SPLIT_MULTIMSG'],
@@ -116,6 +127,15 @@ export class ChatService {
           context: 'chat_direct',
         });
       }
+    }
+
+    // 🛡️ Message ACCEPTÉ mais à INTENTION hors-plateforme (« on se voit en direct sans commission »,
+    // sans coordonnées explicites) : le filtre ne bloque pas, mais on ALIMENTE le détecteur leakage
+    // pour qu'un fraudeur évasif accumule un score et finisse flaggé/gelé automatiquement.
+    if (this.disintermediationDetector.scanSolicitation(data.content).matched.length > 0) {
+      await this.disintermediationDetector
+        .recordBlockedMessage(data.senderId, { content: data.content, detectedPatterns: ['OFF_PLATFORM_SOLICITATION'] })
+        .catch(() => undefined);
     }
 
     // Use filtered content (for MEDIUM severity, we allow but filter)

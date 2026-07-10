@@ -280,7 +280,10 @@ export class ReputationService {
     missionId: string,
   ): Promise<User> {
     const reputationRules = await this.platformConfig.getReputationRules();
-    const penalty = reputationRules.cancellationPenalty ?? -5;
+    // La config stocke la pénalité en magnitude POSITIVE (comme noShowPenalty).
+    // On force le SIGNE NÉGATIF : annuler après appariement DOIT baisser la réputation,
+    // jamais la récompenser (sinon match-annule-illimité devient un bonus → désintermédiation).
+    const penalty = -Math.abs(reputationRules.cancellationPenalty ?? -5);
 
     return this.addReputationPoints(
       userId,
@@ -300,8 +303,8 @@ export class ReputationService {
     missionId: string,
   ): Promise<User> {
     const reputationRules = await this.platformConfig.getReputationRules();
-    const excellentReviewBonus = reputationRules.fiveStarReviewBonus ?? 15;
-    const poorReviewPenalty = reputationRules.oneStarReviewPenalty ?? -10;
+    const excellentReviewBonus = Math.abs(reputationRules.fiveStarReviewBonus ?? 15);
+    const poorReviewPenalty = -Math.abs(reputationRules.oneStarReviewPenalty ?? -10);
 
     if (rating >= 5) {
       // Excellent review

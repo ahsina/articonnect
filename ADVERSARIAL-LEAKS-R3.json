@@ -1,0 +1,80 @@
+[
+ {
+  "desc": "Desintermediation via l'adresse exacte des missions. L'annuaire artisans et les LISTES de missions (/users/artisans, /missions/search, /missions/nearby) sont correctement fermes/sanitises : pas de tel/email public, coords arrondies a 2 decimales + addressApproximate:true. MAIS l'endpoint DETAIL GET /missions/:id renvoie address, latitude et longitude BRUTS (non arrondis) a tout viewer autorise, y compris 'isOpen' (n'importe quel artisan peut voir une mission ouverte pour offrir). Un artisan sans aucune relation avec la mission (ni assigne, ni negociateur, avant tout paiement/escrow) recupere ainsi l'adresse exacte du chantier + GPS a ~11m. Flow attaquant scalable : lister les missions ouvertes via /missions/nearby (recupere les UUID, coords floutees), puis GET /missions/:id pour chaque UUID -> moisson des adresses exactes des clients. La logique de reveal 'facon Uber' masque bien phone/email/lastName (contactReveal + maskUserContact) mais OUBLIE d'appliquer l'approximation de localisation (approximateMissionLocation, mission.service.ts:462-470) que les endpoints liste utilisent. findOne spread `...mission` brut (lignes 221-228) sans redaction de address/latitude/longitude. Permet a un artisan (compte auto-enregistrable) de contacter/se rendre chez le client hors plateforme, contournant la commission. Donnees de test ici (rue Test), phone/email non exposes, d'ou severite haute mais non critique.",
+  "severity": "HIGH",
+  "files": "/home/debian/articonnect/backend/api-gateway/src/mission/services/mission.service.ts:221-228 (findOne renvoie address/latitude/longitude bruts sans approximation) ; contraste avec /home/debian/articonnect/backend/api-gateway/src/mission/services/mission.service.ts:462-470 (approximateMissionLocation applique seulement aux listes) et /home/debian/articonnect/backend/api-gateway/src/mission/services/mission-search.service.ts",
+  "vector": "scrape-annuaire"
+ },
+ {
+  "desc": "Évasion téléphone par PRÉFIXE NUMÉRIQUE : préfixer son numéro de chiffres plausibles (n° de facture/référence/dossier) fait passer le contact LISIBLE. Cause racine : le motif filet PHONE_LONG_DIGITS est borné /(?<!\\d)\\d{8,14}(?!\\d)/ — une suite ≥15 chiffres contigus n'a aucun sous-groupe de 8-14 délimité par des non-chiffres, donc rien ne matche ; et les motifs pays (PHONE_LU_CC/MOBILE, PHONE_FR...) exigent (?<!\\d) devant, cassé par le chiffre préfixé. Prouvé en réel : '00352621234567', '621234567' reçus lisibles par le client. HIGH car c'est le contournement de commission direct (partage de n° de tel).",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (PHONE_LONG_DIGITS L192-199 borné {8,14} ; PHONE_LU_CC/MOBILE/FR/BE lookbehind (?<!\\d)) ; detectObfuscatedPhone L438-456 (ne se déclenche pas car pas de bruit alpha) ; enforcement chat.service.ts L41-48",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Évasion EMAIL par domaine connu CAPITALISÉ + ponctuation : 'jeandupont, chez Gmail point com' passe lisible. La virgule après le user casse EMAIL_OBFUSCATED (le \\s* entre user et connecteur ne franchit pas la virgule) et le 'G' majuscule de 'Gmail' esquive URL_DOMAIN qui est volontairement sensible à la casse (label/TLD doivent être minuscules). Le destinataire reconstitue jeandupont@gmail.com.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (EMAIL_OBFUSCATED L231-238 : \\s* ne traverse pas la virgule ; URL_DOMAIN L270-278 : pas de flag i, majuscule = non matché)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Évasion NOMBRES ÉCRITS EN LETTRES dans une langue non couverte : WRITTEN_PHONE ne liste que fr/en/de/luxembourgeois. Le néerlandais (marché BE officiel) 'zes twee een twee drie vier vijf zes zeven' et l'italien 'sei due uno...' passent lisibles = un numéro épelé récupérable par le destinataire.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (WRITTEN_PHONE L205-213 : dictionnaire de mots-nombres sans NL/IT/ES)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "Champ negotiation.rejectedReason NON filtré : negotiation.service.ts n'applique filterContent qu'au champ message (messageToStore), le motif de rejet d'offre est stocké tel quel → canal secondaire pour glisser un contact lors d'un refus d'offre.",
+  "severity": "LOW",
+  "files": "backend/api-gateway/src/mission/services/negotiation.service.ts (filtrage L96-114 sur createDto.message uniquement ; rejectedReason du dto L72-74 non filtré)",
+  "vector": "evasion-chat"
+ },
+ {
+  "desc": "BYPASS du time-box par annulation: le re-masquage (isWithinActiveWindow) ne couvre QUE COMPLETED/AUTO_VALIDATED. Tout autre statut (CANCELLED, CANCELLED_NO_SHOW, DISPUTED, PAID, IN_PROGRESS...) court-circuite a 'return true' -> fenetre ouverte a vie. Combine avec hasSecuredFunds qui considere depositPaidAt comme 'securise' meme apres remboursement (REFUNDED non exclu), un client peut: creer mission -> payer acompte (tel revele) -> annuler -> etre REMBOURSE -> et garder le telephone reel de l'artisan visible INDEFINIMENT via GET /missions/:id, gratuitement. Prouve en reel: 723affe9 (CANCELLED_NO_SHOW, tx HELD) revele le tel meme backdate 1000h; 22b5abbd (CANCELLED, tx REFUNDED, depositPaidAt pose) revele aussi le tel. Desintermediation complete sans cout.",
+  "severity": "high",
+  "files": "backend/api-gateway/src/mission/services/contact-reveal.service.ts (TERMINAL_STATUSES limite a COMPLETED/AUTO_VALIDATED, lignes 20-41: isWithinActiveWindow renvoie true pour tout autre statut); backend/api-gateway/src/mission/services/mission.service.ts (hasSecuredFunds lignes 274-278: depositPaidAt traite comme securise meme apres REFUNDED)",
+  "vector": "reutiliser-contact-apres"
+ },
+ {
+  "desc": "Penalite de reputation d'annulation INVERSEE en bonus: applyMissionCancelledPenalty (reputation.service.ts:283) lit reputationRules.cancellationPenalty (stocke en magnitude POSITIVE = +5 dans platform-config.service.ts:95) et le passe tel quel a addReputationPoints, ou newScore=previousScore+pointsChange (ligne 159). Le chemin no-show (ligne 244) applique correctement -Math.abs(), mais le chemin annulation a oublie la negation. Resultat prouve en reel: le client qui matche-puis-annule GAGNE +5 reputation a chaque fois (Jean 94→99→104). La seule friction reelle censee dissuader la desintermediation par match-annule-illimite est donc non seulement absente mais RECOMPENSEE. Le meme bug affecte potentiellement les autres 'penalites' positives passees additivement (2/1-star, dispute) — mais seule l'annulation est prouvee ici; noShow lui est correct.",
+  "severity": "high",
+  "files": "backend/api-gateway/src/payment/services/reputation.service.ts:278-292 (penalite non negativee, comparer a applyNoShowPenalty:240-244); backend/api-gateway/src/config/services/platform-config.service.ts:95 et admin/services/platform-config.service.ts:95 (cancellationPenalty:5 positif); reputation.service.ts:159 (newScore additif)",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "Frais d'annulation apres appariement purement nominaux quand la mission n'est pas encore payee: a ACCEPTED cancelMission calcule cancellationFee=90 mais refunded=0 et aucun montant n'est reellement preleve (pas d'escrow avant paiement). Combine au bug de reputation ci-dessus, annuler apres mise en relation coute 0€ et rapporte +5 reputation, de facon illimitee. Rempart residuel: le contact reel n'est revele qu'apres paiement, ce qui empeche l'extraction directe de coordonnees par simple match-annule — la severite est donc contenue mais la friction voulue est defaite.",
+  "severity": "medium",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts:1142-1197 (cancelMission, refundForCancellation ne preleve rien si non paye); computeCancellationFeeRate:1229-1248",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "Commission de sous-traitance purement declarative + montant facade accepte: createAssignment impose bien un taux >=5% (bon, et flagge les tentatives sous-plancher), mais (a) la commission n'est jamais reellement prelevee (paymentStatus/paidAt poses manuellement par l'artisan via updateAssignment, aucun Stripe/payout) et (b) agreedAmount=1 avec 5% est accepte. Un artisan peut donc router du travail vers un contact externe en sous-declarant l'assiette (facade 1€) et regler le reste en cash hors plateforme, le plancher 5% ne portant que sur un taux applique a une assiette fictive. Impact limite car la mission d'origine reste monetisee on-platform (le marketplace garde sa commission client→artisan).",
+  "severity": "low",
+  "files": "backend/api-gateway/src/subcontractor/services/subcontractor.service.ts:254-304 (createAssignment: pas de plancher sur agreedAmount), 378-411 (updateAssignment: paymentStatus sans prelevement reel)",
+  "vector": "sous-traitance-annulation"
+ },
+ {
+  "desc": "Contournement du content-filter par HOMOGLYPHES: un email écrit avec des lettres cyrilliques (jоhn.dое@gmаil.cоm — о/а/е cyrilliques U+043E/U+0430/U+0435) passe en HTTP 201, est livré INTACT et non-redacté au destinataire (vérifié dans GET /chat/conversations de Pierre), sans créer de ContentViolation. Un humain lit et retape 'john.doe@gmail.com'. Canal de désintermédiation direct qui n'incrémente aucun compteur et n'est jamais flaggé.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (filterContent: EMAIL/EMAIL_OBFUSCATED ne normalise pas les homoglyphes Unicode avant match)",
+  "vector": "evasion-detecteur"
+ },
+ {
+  "desc": "Détection WRITTEN_PHONE incohérente: un numéro épelé 'zero six / douze / trente quatre / cinquante six / soixante dix huit' (=0612345678) passe en 201 et est livré, alors que 'zero six quatre vingt douze zero zero' est bloqué. La couverture des nombres en toutes lettres/segmentés est partielle → téléphone exfiltrable.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (patterns WRITTEN_PHONE)",
+  "vector": "evasion-detecteur"
+ },
+ {
+  "desc": "Enforcement leakage automatique NON câblé au chat: DisintermediationDetectorService.recordBlockedMessage() (documenté comme le hook 'à appeler quand le content-filter BLOQUE un message', qui incrémente offPlatformSolicitationCount et recalcule/enforce le risque) n'a AUCUN appelant. Le flux chat ne fait que logViolation()+auto-suspend à 5 HIGH. Résultat: un fraudeur qui reste sous 5 messages bloqués (ou qui évade le filtre) n'est JAMAIS flaggé leakage automatiquement; offPlatformSolicitationCount reste 0 malgré des sollicitations hors-plateforme répétées. Le flag leakage ne survient que via admin manuel ou report OFF_PLATFORM.",
+  "severity": "HIGH",
+  "files": "backend/api-gateway/src/fraud/services/disintermediation-detector.service.ts (recordBlockedMessage — code mort côté chat), backend/api-gateway/src/chat/services/chat.service.ts (createMessage n'appelle pas recordBlockedMessage/enforce), backend/api-gateway/src/chat/services/content-filter.service.ts (logViolation n'alimente pas le détecteur leakage)",
+  "vector": "evasion-detecteur"
+ },
+ {
+  "desc": "Sollicitation pure hors-plateforme non comptée: un message d'intention 'on se voit en direct hors plateforme sans commission' (sans coordonnées) passe en 201 et n'est ni bloqué ni compté. scanSolicitation existe mais n'est appliqué qu'au contenu des ContentViolation déjà loggées — un message ACCEPTÉ contenant l'intention n'est jamais scanné, donc n'alimente pas Signal 2/3 du détecteur.",
+  "severity": "MEDIUM",
+  "files": "backend/api-gateway/src/chat/services/chat.service.ts (createMessage: pas de scanSolicitation sur message accepté), backend/api-gateway/src/fraud/services/disintermediation-detector.service.ts (Signal 3 lit seulement contentViolations)",
+  "vector": "evasion-detecteur"
+ }
+]

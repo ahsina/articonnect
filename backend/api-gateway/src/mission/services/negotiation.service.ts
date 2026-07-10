@@ -197,6 +197,20 @@ export class NegotiationService {
       );
     }
 
+    // 🛡️ Anti-désintermédiation : le motif de REFUS est aussi un canal texte libre où glisser un
+    // contact (« je refuse, appelle-moi au … »). On le filtre comme le champ `message` de l'offre.
+    if (dto.rejectedReason) {
+      const filtered = await this.contentFilter.filterContent(dto.rejectedReason, userId);
+      if (filtered.isBlocked) {
+        throw new BadRequestException({
+          message: 'Votre motif de refus contient des coordonnées interdites. Communiquez uniquement via Krafolt.',
+          code: 'CONTACT_INFO_BLOCKED',
+        });
+      }
+      dto.rejectedReason =
+        filtered.detectedPatterns.length > 0 ? filtered.filteredContent : dto.rejectedReason;
+    }
+
     // L'artisan gagnant = le participant qui n'est pas le client.
     const artisanParticipant =
       negotiation.senderId === negotiation.mission.clientId
