@@ -300,7 +300,10 @@ export class ArtisanService {
               id: true,
               title: true,
               category: true,
-              client: { select: { firstName: true, lastName: true, email: true } },
+              // Anti-désintermédiation : pas d'email/téléphone du client sur une simple offre
+              // (l'artisan n'a rien payé ni gagné). Le contact n'est révélé qu'après paiement
+              // escrow, via le canal mission dédié — jamais sur la liste des devis/offres.
+              client: { select: { firstName: true, lastName: true } },
             },
           },
         },

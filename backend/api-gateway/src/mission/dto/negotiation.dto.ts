@@ -19,9 +19,12 @@ export class CreateNegotiationDto {
   @IsString()
   targetArtisanId?: string;
 
-  @ApiProperty({ example: 150.50, description: 'Prix total proposé' })
+  @ApiProperty({ example: 150.50, description: 'Prix total proposé (minimum 1€)' })
   @IsNumber()
-  @Min(0)
+  // Intégrité commission : un prix >= 1€ (jamais 0) empêche un "prix de façade" à 0 qui
+  // produirait une commission nulle (0 * taux = 0) tout en réglant le vrai montant en cash
+  // hors plateforme. Le plancher de prix garantit une assiette de commission strictement positive.
+  @Min(1)
   proposedPrice: number;
 
   @ApiProperty({

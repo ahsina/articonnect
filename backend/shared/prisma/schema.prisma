@@ -178,6 +178,11 @@ model User {
   botFlagged        Boolean @default(false)
   captchaRequired   Boolean @default(false)
 
+  // Disintermediation / Leakage Detection (anti-désintermédiation façon Uber)
+  leakageRiskScore             Int     @default(0) // 0-100
+  leakageFlagged               Boolean @default(false) // true = mises en relation gelées (la couche de révélation DOIT l'honorer)
+  offPlatformSolicitationCount Int     @default(0) // incrémenté à chaque message bloqué / signalement OFF_PLATFORM_SOLICITATION
+
   // Badges
   badges UserBadge[]
 
@@ -2173,6 +2178,7 @@ enum ReportReason {
   FAKE_REVIEW
   COUNTERFEIT_PRODUCT
   FRAUD
+  OFF_PLATFORM_SOLICITATION // sollicitation de sortie hors-plateforme (anti-désintermédiation)
   OTHER
 }
 

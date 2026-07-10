@@ -12,7 +12,10 @@ export class MissionSearchController {
   constructor(private readonly searchService: MissionSearchService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Search missions with advanced filters' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Search missions with advanced filters (artisan)' })
   @ApiQuery({ name: 'query', required: false, description: 'Text search query' })
   @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
   @ApiQuery({ name: 'city', required: false, description: 'Filter by city' })
@@ -28,7 +31,7 @@ export class MissionSearchController {
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], description: 'Sort order' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
-  async search(@Query() query: any) {
+  async search(@Request() req, @Query() query: any) {
     const filters: MissionSearchFilters = {
       query: query.query,
       category: query.category,
@@ -47,7 +50,7 @@ export class MissionSearchController {
       limit: query.limit ? parseInt(query.limit, 10) : 20,
     };
 
-    return this.searchService.searchMissions(filters);
+    return this.searchService.searchMissions(filters, req.user.userId);
   }
 
   @Get('recommendations')
@@ -66,28 +69,36 @@ export class MissionSearchController {
   }
 
   @Get('similar/:missionId')
-  @ApiOperation({ summary: 'Get similar missions' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get similar missions (artisan)' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of similar missions (default: 5)' })
   async getSimilar(
+    @Request() req,
     @Param('missionId') missionId: string,
     @Query('limit') limit?: string,
   ) {
     const similar = await this.searchService.getSimilarMissions(
       missionId,
       limit ? parseInt(limit, 10) : 5,
+      req.user.userId,
     );
 
     return { similar };
   }
 
   @Get('nearby')
-  @ApiOperation({ summary: 'Search missions near a location' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Search missions near a location (artisan)' })
   @ApiQuery({ name: 'latitude', required: true, type: Number, description: 'Latitude' })
   @ApiQuery({ name: 'longitude', required: true, type: Number, description: 'Longitude' })
   @ApiQuery({ name: 'maxDistance', required: false, type: Number, description: 'Maximum distance in km (default: 50)' })
   @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of results (default: 20)' })
-  async searchNearby(@Query() query: any) {
+  async searchNearby(@Request() req, @Query() query: any) {
     const filters: MissionSearchFilters = {
       latitude: parseFloat(query.latitude),
       longitude: parseFloat(query.longitude),
@@ -99,15 +110,18 @@ export class MissionSearchController {
       status: MissionStatus.PENDING,
     };
 
-    return this.searchService.searchMissions(filters);
+    return this.searchService.searchMissions(filters, req.user.userId);
   }
 
   @Get('urgent')
-  @ApiOperation({ summary: 'Get all urgent missions' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all urgent missions (artisan)' })
   @ApiQuery({ name: 'category', required: false, description: 'Filter by category' })
   @ApiQuery({ name: 'city', required: false, description: 'Filter by city' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of results (default: 20)' })
-  async getUrgentMissions(@Query() query: any) {
+  async getUrgentMissions(@Request() req, @Query() query: any) {
     const filters: MissionSearchFilters = {
       isUrgent: true,
       status: MissionStatus.PENDING,
@@ -118,6 +132,6 @@ export class MissionSearchController {
       limit: query.limit ? parseInt(query.limit, 10) : 20,
     };
 
-    return this.searchService.searchMissions(filters);
+    return this.searchService.searchMissions(filters, req.user.userId);
   }
 }

@@ -141,7 +141,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     const { receiverId, content, missionId } = payload;
 
     try {
-      // Save message to database
+      // Save message to database. createMessage applique le content-filter et
+      // renvoie `message.content` = contenu FILTRÉ en clair (jamais le brut).
       const message = await this.chatService.createMessage({
         senderId,
         receiverId,
@@ -149,11 +150,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         missionId,
       });
 
+      // ⚠️ Anti-désintermédiation : on diffuse le contenu FILTRÉ (message.content),
+      // JAMAIS le `content` brut du payload, sinon le masquage ne s'applique pas en
+      // temps réel côté destinataire.
+      const safeContent = message.content;
+
       // Send to receiver
       this.server.to(`user:${receiverId}`).emit('new_message', {
         id: message.id,
         senderId,
-        content,
+        content: safeContent,
         missionId,
         createdAt: message.createdAt,
         read: false,
@@ -163,15 +169,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.emit('message_sent', {
         id: message.id,
         tempId: payload.tempId,
+        content: safeContent,
         createdAt: message.createdAt,
       });
 
-      // Send push notification if user is offline
+      // Send push notification if user is offline (contenu filtré uniquement)
       const isOnline = await this.chatService.isUserOnline(receiverId);
       if (!isOnline) {
         await this.chatService.sendPushNotification(receiverId, {
           title: 'Nouveau message',
-          body: content.substring(0, 50),
+          body: safeContent.substring(0, 50),
         });
       }
     } catch (error) {

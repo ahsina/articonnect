@@ -64,11 +64,31 @@ export class InvoiceService {
   /**
    * Calculate tax amount and total
    * @param platformCommissionRate - Commission rate from PlatformConfigService (defaults to 12 if not provided)
+   * @param minCommissionAmount - Plancher de commission EN CENTIMES (cf. FeeSettingsDto). 0 = pas de plancher.
+   * @param maxCommissionAmount - Plafond de commission EN CENTIMES (cf. FeeSettingsDto). 0 = pas de plafond.
+   *
+   * Intégrité commission : la commission facturée applique réellement le plancher/plafond configurés
+   * (jusqu'ici code mort) et n'est JAMAIS nulle. Elle ne peut pas dépasser le sous-total (net artisan >= 0).
    */
-  private calculateAmounts(subtotal: number, taxRate: number, platformCommissionRate: number) {
+  private calculateAmounts(
+    subtotal: number,
+    taxRate: number,
+    platformCommissionRate: number,
+    minCommissionAmount = 0,
+    maxCommissionAmount = 0,
+  ) {
     const taxAmount = (subtotal * taxRate) / 100;
     const totalAmount = subtotal + taxAmount;
-    const platformCommission = (subtotal * platformCommissionRate) / 100;
+
+    const floorEuros = (Number(minCommissionAmount) || 0) / 100; // centimes -> euros
+    const capEuros = (Number(maxCommissionAmount) || 0) / 100; // centimes -> euros
+    let platformCommission = (subtotal * platformCommissionRate) / 100;
+    if (floorEuros > 0) platformCommission = Math.max(platformCommission, floorEuros);
+    if (capEuros > 0) platformCommission = Math.min(platformCommission, capEuros);
+    // Jamais <= 0 ; jamais > sous-total (sinon net artisan négatif).
+    platformCommission = Math.max(platformCommission, 0.01);
+    platformCommission = Math.min(platformCommission, subtotal);
+
     const artisanNetAmount = subtotal - platformCommission;
 
     return {
@@ -90,11 +110,13 @@ export class InvoiceService {
     const feeSettings = await this.platformConfig.getFeeSettings();
     const platformCommissionRate = feeSettings.platformCommissionRate; // Default 12%
 
-    // Calculate amounts with configurable commission rate
+    // Calculate amounts with configurable commission rate + plancher/plafond appliqués.
     const amounts = this.calculateAmounts(
       createInvoiceDto.subtotal,
       createInvoiceDto.taxRate,
       platformCommissionRate,
+      feeSettings.minCommissionAmount,
+      feeSettings.maxCommissionAmount,
     );
 
     // Create invoice
@@ -251,9 +273,58 @@ export class InvoiceService {
   }
 
   /**
-   * Mark invoice as paid
+   * Marquer une facture PAYÉE.
+   *
+   * INTÉGRITÉ COMMISSION (anti-désintermédiation façon Uber) : une facture ne peut PLUS être
+   * auto-déclarée « payée » par l'artisan. Le passage à PAID exige la PREUVE d'un encaissement
+   * réel par la plateforme (escrow) — c.-à-d. une Transaction liée à la mission (ou à la commande)
+   * dont le statut prouve la détention/capture des fonds (HELD ou COMPLETED). Sans cela, l'artisan
+   * pourrait se faire régler en direct (cash/virement) puis marquer la facture payée dans l'app,
+   * la plateforme ne touchant jamais sa commission. Ceci ferme aussi la piste devis -> facture
+   * 100 % hors escrow : une facture issue d'un devis reste NON payable tant que le paiement n'a pas
+   * transité par la plateforme.
+   *
+   * @param requester (optionnel) émetteur/admin — vérification d'ownership quand disponible.
    */
-  async markAsPaid(invoiceId: string) {
+  async markAsPaid(invoiceId: string, requester?: { userId: string; isAdmin: boolean }) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: {
+        mission: { include: { transaction: true } },
+        order: { include: { transaction: true } },
+      },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    // Ownership : seul l'émetteur (artisan) ou un admin peut agir sur la facture.
+    if (requester && !requester.isAdmin && invoice.issuerId !== requester.userId) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    // Idempotence : déjà payée -> renvoyer tel quel.
+    if (invoice.status === 'PAID') {
+      return invoice;
+    }
+
+    if (invoice.status === 'CANCELLED' || invoice.status === 'REFUNDED') {
+      throw new BadRequestException('Une facture annulée ou remboursée ne peut pas être marquée payée.');
+    }
+
+    // Preuve d'encaissement plateforme (escrow) : fonds détenus (HELD) ou versés (COMPLETED).
+    const settlementTx = invoice.mission?.transaction ?? invoice.order?.transaction ?? null;
+    const platformCollected =
+      !!settlementTx && ['HELD', 'COMPLETED'].includes(settlementTx.status as string);
+
+    if (!platformCollected) {
+      throw new ForbiddenException(
+        "Cette facture ne peut être marquée payée qu'une fois le paiement encaissé via la plateforme (escrow). " +
+          "Le règlement hors plateforme (cash / virement direct) n'est pas autorisé : le paiement doit passer par Krafolt pour que la commission soit prélevée.",
+      );
+    }
+
     return this.prisma.invoice.update({
       where: { id: invoiceId },
       data: {
@@ -438,7 +509,15 @@ export class InvoiceService {
       const taxRate = updateInvoiceDto.taxRate ?? parseFloat(invoice.taxRate.toString());
       // Use existing invoice's commission rate when recalculating
       const commissionRate = parseFloat(invoice.platformCommissionRate.toString());
-      const amounts = this.calculateAmounts(subtotal, taxRate, commissionRate);
+      // Plancher/plafond appliqués aussi au recalcul (intégrité commission).
+      const feeSettings = await this.platformConfig.getFeeSettings();
+      const amounts = this.calculateAmounts(
+        subtotal,
+        taxRate,
+        commissionRate,
+        feeSettings.minCommissionAmount,
+        feeSettings.maxCommissionAmount,
+      );
 
       updateData = {
         ...updateData,

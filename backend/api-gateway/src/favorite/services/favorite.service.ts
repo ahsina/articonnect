@@ -122,8 +122,9 @@ export class FavoriteService {
             firstName: true,
             lastName: true,
             avatar: true,
-            email: true,
-            phone: true,
+            // Anti-désintermédiation : un favori ne doit PAS servir de carnet d'adresses.
+            // On ne renvoie jamais l'email/téléphone de l'artisan favori — le contact réel
+            // n'est révélé qu'après paiement escrow d'une mission (politique « à la Uber »).
             artisanProfile: {
               select: {
                 companyName: true,

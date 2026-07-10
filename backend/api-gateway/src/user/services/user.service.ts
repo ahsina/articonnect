@@ -210,6 +210,86 @@ export class UserService {
     return artisanProfile;
   }
 
+  /**
+   * WHITELIST stricte des champs artisan exposables AVANT paiement escrow (annuaire / fiche
+   * publique). Politique « à la Uber » : on ne révèle JAMAIS les coordonnées réelles
+   * (phone/email/website + adresse exacte lat/lng) tant qu'une mission n'est pas payée en escrow
+   * entre ce client et cet artisan. Approche liste blanche (et non liste noire) : tout nouveau
+   * champ ajouté au modèle User reste masqué par défaut au lieu de fuiter.
+   *
+   * `baseAddress` est sélectionné UNIQUEMENT pour en dériver une ville approximative
+   * (cf. toPublicArtisan) et n'est jamais renvoyé tel quel.
+   */
+  private static readonly ARTISAN_PUBLIC_SELECT = {
+    id: true,
+    firstName: true,
+    avatar: true,
+    role: true,
+    createdAt: true,
+    artisanProfile: {
+      select: {
+        id: true,
+        companyName: true,
+        description: true,
+        rating: true,
+        reviewCount: true,
+        missionCount: true,
+        serviceRadius: true,
+        available: true,
+        hourlyRate: true,
+        emergencyRate: true,
+        businessVerified: true,
+        businessVerificationStatus: true,
+        baseAddress: true, // -> converti en ville approximative, retiré du payload public
+        specialties: true,
+      },
+    },
+  } satisfies Prisma.UserSelect;
+
+  /**
+   * Dérive une ville approximative à partir d'une adresse libre, sans jamais exposer la rue.
+   * Retourne null si aucune ville ne peut être extraite de façon fiable.
+   */
+  private approximateCity(baseAddress?: string | null): string | null {
+    if (!baseAddress) return null;
+    const parts = baseAddress
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    // Une adresse d'un seul segment est probablement une rue seule -> on ne renvoie rien
+    // pour éviter de fuiter l'adresse exacte.
+    if (parts.length < 2) return null;
+    // Format « 75002 Paris » / « L-1855 Luxembourg » -> on garde la partie ville.
+    for (const seg of parts) {
+      const m = seg.match(/^[A-Z]?-?\s*\d{4,5}\s+(.+)$/);
+      if (m) return m[1].trim();
+    }
+    // Sinon la ville est généralement l'avant-dernier segment (le dernier étant le pays).
+    return parts[parts.length - 2] || null;
+  }
+
+  /**
+   * Transforme un User artisan sélectionné via ARTISAN_PUBLIC_SELECT en payload public :
+   * remplace l'adresse de base exacte par une ville approximative.
+   */
+  private toPublicArtisan<T extends { artisanProfile?: { baseAddress?: string | null } | null }>(
+    user: T,
+  ) {
+    if (!user) return user;
+    const profile = user.artisanProfile;
+    if (!profile) return user;
+    const { baseAddress, ...restProfile } = profile as Record<string, unknown> & {
+      baseAddress?: string | null;
+    };
+    return {
+      ...user,
+      artisanProfile: {
+        ...restProfile,
+        city: this.approximateCity(baseAddress),
+      },
+    };
+  }
+
   async getArtisans(_filters?: {
     specialtyId?: string;
     city?: string;
@@ -222,51 +302,39 @@ export class UserService {
 
     const artisans = await this.prisma.user.findMany({
       where,
-      include: {
-        artisanProfile: {
-          include: {
-            specialties: true,
-          },
-        },
-      },
+      select: UserService.ARTISAN_PUBLIC_SELECT,
       take: 50,
     });
 
-    return artisans.map((user) => this.stripSensitiveUserFields(user));
-  }
-
-  /** Retire les champs internes/sensibles d'un objet User avant exposition publique. */
-  private stripSensitiveUserFields(user: Record<string, unknown>) {
-    const SENSITIVE = [
-      'password', 'twoFactorSecret', 'outlookAccessToken', 'outlookRefreshToken',
-      'outlookTokenExpiry', 'fcmTokens', 'deviceFingerprints', 'lastUserAgent',
-      'lastIpAddress', 'lastSessionId', 'lastSessionLocation', 'multiAccountRiskScore',
-      'multiAccountFlagged', 'multiAccountReviewedAt', 'kycSessionId', 'kycProvider',
-      'stripeIdentitySessionId', 'refundCount', 'refundRate', 'refundAbuseScore',
-      'refundBlocked', 'sessionAnomalyCount', 'botDetectionScore', 'botFlagged',
-      'captchaRequired',
-    ];
-    const clone: Record<string, unknown> = { ...user };
-    for (const k of SENSITIVE) delete clone[k];
-    return clone;
+    return artisans.map((user) => this.toPublicArtisan(user));
   }
 
   async getArtisan(artisanId: string) {
+    const profileSelect = UserService.ARTISAN_PUBLIC_SELECT.artisanProfile.select;
+
     const user = await this.prisma.user.findUnique({
       where: { id: artisanId, role: 'ARTISAN' },
-      include: {
+      select: {
+        ...UserService.ARTISAN_PUBLIC_SELECT,
         artisanProfile: {
-          include: {
-            specialties: true,
+          select: {
+            ...profileSelect,
             certifications: true,
           },
         },
         receivedReviews: {
-          include: {
+          select: {
+            id: true,
+            overallRating: true,
+            comment: true,
+            photos: true,
+            helpful: true,
+            verified: true,
+            createdAt: true,
+            // Auteur de l'avis : prénom + avatar uniquement (pas de nom complet ni de contact).
             reviewer: {
               select: {
                 firstName: true,
-                lastName: true,
                 avatar: true,
               },
             },
@@ -283,37 +351,9 @@ export class UserService {
       throw new NotFoundException('Artisan introuvable');
     }
 
-    // SÉCURITÉ : ne jamais exposer les champs internes (tokens OAuth/push, IP, empreintes,
-    // scores anti-fraude, session/KYC) d'un autre utilisateur sur cet endpoint public.
-    const {
-      password: _password,
-      twoFactorSecret: _twoFactorSecret,
-      outlookAccessToken: _oat,
-      outlookRefreshToken: _ort,
-      outlookTokenExpiry: _ote,
-      fcmTokens: _fcm,
-      deviceFingerprints: _df,
-      lastUserAgent: _lua,
-      lastIpAddress: _lip,
-      lastSessionId: _lsid,
-      lastSessionLocation: _lsl,
-      multiAccountRiskScore: _mars,
-      multiAccountFlagged: _maf,
-      multiAccountReviewedAt: _mara,
-      kycSessionId: _ksid,
-      kycProvider: _kp,
-      stripeIdentitySessionId: _sis,
-      refundCount: _rc,
-      refundRate: _rr,
-      refundAbuseScore: _ras,
-      refundBlocked: _rb,
-      sessionAnomalyCount: _sac,
-      botDetectionScore: _bds,
-      botFlagged: _bf,
-      captchaRequired: _cr,
-      ...sanitized
-    } = user as Record<string, unknown>;
-    return sanitized;
+    // Whitelist stricte : aucun champ de contact réel (phone/email/website/adresse exacte) n'est
+    // sélectionné ; on ne renvoie qu'une ville approximative.
+    return this.toPublicArtisan(user);
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File) {

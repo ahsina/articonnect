@@ -68,6 +68,7 @@ export class MissionSearchService {
    */
   async searchMissions(
     filters: MissionSearchFilters,
+    viewerId?: string,
   ): Promise<MissionSearchResult> {
     const page = filters.page || 1;
     const limit = filters.limit || 20;
@@ -87,12 +88,12 @@ export class MissionSearchService {
         skip,
         take: limit,
         include: {
+          // Select WHITELIST — jamais email/phone (anti-désintermédiation / RGPD).
           client: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              email: true,
               avatar: true,
             },
           },
@@ -101,11 +102,12 @@ export class MissionSearchService {
               id: true,
               firstName: true,
               lastName: true,
-              email: true,
               avatar: true,
               artisanProfile: true,
             },
           },
+          // Statut escrow pour décider de la révélation de l'adresse exacte à l'artisan assigné.
+          transaction: { select: { status: true } },
         },
       }),
       this.prisma.mission.count({ where }),
@@ -131,11 +133,64 @@ export class MissionSearchService {
     }
 
     return {
-      missions: enrichedMissions,
+      // Adresse exacte masquée (zone approximative) sauf pour l'artisan assigné après escrow.
+      missions: enrichedMissions.map((m) => this.redactMissionLocation(m, viewerId)),
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * « Payée en escrow » : Transaction HELD/COMPLETED OU mission.status avancé (post-paiement) OU
+   * depositPaidAt posé.
+   */
+  private isMissionPaidInEscrow(mission: any): boolean {
+    const paidStatuses = [
+      'PAID',
+      'DEPOSIT_PAID',
+      'IN_TRANSIT',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'AUTO_VALIDATED',
+    ];
+    const txStatus = mission?.transaction?.status;
+    return (
+      !!mission?.depositPaidAt ||
+      txStatus === 'HELD' ||
+      txStatus === 'COMPLETED' ||
+      paidStatuses.includes(String(mission?.status))
+    );
+  }
+
+  /**
+   * Adresse exacte (rue + code postal + lat/lng précis) révélée UNIQUEMENT à l'artisan assigné après
+   * escrow sécurisé. Sinon : seulement ville + lat/lng arrondis (~1 km) + drapeau approximatif.
+   */
+  private redactMissionLocation(mission: any, viewerId?: string) {
+    if (!mission) return mission;
+    const isAssignedArtisan =
+      !!viewerId && !!mission.artisanId && mission.artisanId === viewerId;
+    if (isAssignedArtisan && this.isMissionPaidInEscrow(mission)) {
+      // Ne pas divulguer l'objet transaction (montants) même dans ce cas.
+      const { transaction: _t, ...full } = mission;
+      return full;
+    }
+    const {
+      address: _address,
+      postalCode: _postalCode,
+      latitude,
+      longitude,
+      transaction: _transaction,
+      ...rest
+    } = mission;
+    return {
+      ...rest,
+      city: mission.city,
+      latitude: latitude != null ? Math.round(latitude * 100) / 100 : latitude,
+      longitude: longitude != null ? Math.round(longitude * 100) / 100 : longitude,
+      addressApproximate: true,
     };
   }
 
@@ -187,13 +242,18 @@ export class MissionSearchService {
       },
     });
 
-    return recommendations;
+    // Missions PENDING ouvertes : zone approximative (jamais l'adresse exacte avant escrow).
+    return recommendations.map((m) => this.redactMissionLocation(m, artisanId));
   }
 
   /**
    * Get similar missions based on a reference mission
    */
-  async getSimilarMissions(missionId: string, limit: number = 5): Promise<any[]> {
+  async getSimilarMissions(
+    missionId: string,
+    limit: number = 5,
+    viewerId?: string,
+  ): Promise<any[]> {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
     });
@@ -225,7 +285,8 @@ export class MissionSearchService {
       },
     });
 
-    return similar;
+    // Missions PENDING ouvertes : zone approximative (jamais l'adresse exacte avant escrow).
+    return similar.map((m) => this.redactMissionLocation(m, viewerId));
   }
 
   /**

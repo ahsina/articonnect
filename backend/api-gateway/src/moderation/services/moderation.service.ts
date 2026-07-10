@@ -3,7 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateReportDto } from '../dto/create-report.dto';
 import { ResolveReportDto } from '../dto/resolve-report.dto';
 import { QueryReportDto } from '../dto/query-report.dto';
-import { ReportType, ReportStatus, UserRole, Prisma } from '@prisma/client';
+import { ReportType, ReportStatus, ReportReason, UserRole, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ModerationService {
@@ -40,6 +40,18 @@ export class ModerationService {
 
     if (existingReport) {
       throw new BadRequestException('You have already reported this entity');
+    }
+
+    // Anti-désintermédiation : un signalement « sollicitation hors-plateforme » nourrit
+    // directement le détecteur de leakage (compteur cumulé par utilisateur reporté).
+    if (dto.reason === ReportReason.OFF_PLATFORM_SOLICITATION && dto.reportedUserId) {
+      await this.prisma.user.update({
+        where: { id: dto.reportedUserId },
+        data: { offPlatformSolicitationCount: { increment: 1 } },
+      });
+      this.logger.warn(
+        `Signalement OFF_PLATFORM_SOLICITATION contre ${dto.reportedUserId} (reporter ${reporterId}).`,
+      );
     }
 
     return this.prisma.report.create({
@@ -403,6 +415,31 @@ export class ModerationService {
             where: { id: report.reportedUserId },
             data: { status: 'SUSPENDED' },
           });
+        }
+        break;
+
+      // --- Pénalités graduées anti-désintermédiation (façon Uber) ---
+      // Échelle : USER_WARNED → DEPOSIT_REQUIRED → MATCHING_FROZEN → USER_SUSPENDED.
+      case 'DEPOSIT_REQUIRED':
+        if (report.reportedUserId) {
+          // Escalade : le compte est flaggé leakage → l'escrow/dépôt devient exigible.
+          await this.prisma.user.update({
+            where: { id: report.reportedUserId },
+            data: { leakageFlagged: true, offPlatformSolicitationCount: { increment: 1 } },
+          });
+          this.logger.warn(`Dépôt rendu exigible (leakage) pour ${report.reportedUserId} (report ${report.id}).`);
+        }
+        break;
+
+      case 'MATCHING_FROZEN':
+        if (report.reportedUserId) {
+          // Gel des mises en relation : la couche de révélation de contact honore leakageFlagged.
+          // Réversible : ne suspend PAS le compte, ne casse pas la révélation post-escrow déjà acquise.
+          await this.prisma.user.update({
+            where: { id: report.reportedUserId },
+            data: { leakageFlagged: true },
+          });
+          this.logger.warn(`Mises en relation GELÉES (leakage) pour ${report.reportedUserId} (report ${report.id}).`);
         }
         break;
 

@@ -8,6 +8,10 @@ import { ReviewFraudDetectorService } from '../services/review-fraud-detector.se
 import { PayoutFraudDetectorService } from '../services/payout-fraud-detector.service';
 import { PriceAnomalyDetectorService } from '../services/price-anomaly-detector.service';
 import { RefundAbuseDetectorService } from '../services/refund-abuse-detector.service';
+import {
+  DisintermediationDetectorService,
+  LeakagePenalty,
+} from '../services/disintermediation-detector.service';
 
 @Controller('fraud')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -18,6 +22,7 @@ export class FraudController {
     private payoutFraudDetector: PayoutFraudDetectorService,
     private priceAnomalyDetector: PriceAnomalyDetectorService,
     private refundAbuseDetector: RefundAbuseDetectorService,
+    private disintermediationDetector: DisintermediationDetectorService,
   ) {}
 
   /**
@@ -84,5 +89,41 @@ export class FraudController {
   @Roles(UserRole.ADMIN)
   async detectRefundAbuse(@Body() body: { userId: string; missionId: string }) {
     return this.refundAbuseDetector.detectRefundAbuse(body.userId, body.missionId);
+  }
+
+  /**
+   * GET /fraud/disintermediation/flagged
+   * Liste des comptes flaggés pour risque de désintermédiation (leakage).
+   * Admin only.
+   */
+  @Get('disintermediation/flagged')
+  @Roles(UserRole.ADMIN)
+  async getLeakageFlaggedUsers(@Query('limit') limit?: string) {
+    return this.disintermediationDetector.getFlaggedUsers(parseInt(limit || '100'));
+  }
+
+  /**
+   * POST /fraud/disintermediation/detect/:userId
+   * Recalcule le leakageRiskScore d'un utilisateur et renvoie signaux + pénalité recommandée.
+   * Admin only.
+   */
+  @Post('disintermediation/detect/:userId')
+  @Roles(UserRole.ADMIN)
+  async detectDisintermediation(@Param('userId') userId: string) {
+    return this.disintermediationDetector.computeLeakageRisk(userId);
+  }
+
+  /**
+   * POST /fraud/disintermediation/flag/:userId
+   * Applique une pénalité graduée (WARNING → REQUIRE_DEPOSIT → FREEZE_MATCHING → DEACTIVATE).
+   * Admin only.
+   */
+  @Post('disintermediation/flag/:userId')
+  @Roles(UserRole.ADMIN)
+  async flagDisintermediation(
+    @Param('userId') userId: string,
+    @Body() body: { penalty: LeakagePenalty; reason?: string },
+  ) {
+    return this.disintermediationDetector.flagUser(userId, body.penalty, body.reason);
   }
 }

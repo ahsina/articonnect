@@ -6,6 +6,8 @@ import {
   IsNumber,
   IsUUID,
   IsEnum,
+  Min,
+  Max,
 } from 'class-validator';
 
 export enum ClientStatus {
@@ -171,10 +173,16 @@ export class ClientFilterDto {
   search?: string;
 
   @IsNumber()
+  @Min(1)
   @IsOptional()
   page?: number;
 
+  // Plafond strict anti-exfiltration : le CRM sert au suivi, pas à exporter le carnet
+  // d'adresses en un appel. Le service clamp aussi défensivement (Math.min) au cas où
+  // la validation serait contournée.
   @IsNumber()
+  @Min(1)
+  @Max(50)
   @IsOptional()
   limit?: number;
 }

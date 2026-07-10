@@ -8,6 +8,7 @@ import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-de
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { KycService } from '../../compliance/services/kyc.service';
 import { PlatformConfigService } from '../../config/services/platform-config.service';
+import { FeeSettingsDto } from '../../config/dto/platform-config.dto';
 
 @Injectable()
 export class PaymentService {
@@ -23,6 +24,35 @@ export class PaymentService {
     private kycService: KycService,
     private platformConfig: PlatformConfigService,
   ) {}
+
+  /**
+   * Calcule la commission plateforme prélevée sur un montant encaissé, avec APPLICATION RÉELLE du
+   * plancher/plafond configurés (minCommissionAmount/maxCommissionAmount) — jusqu'ici code mort.
+   *
+   * Intégrité commission (façon Uber) : la commission n'est JAMAIS nulle ni contournable.
+   *  - base * taux, puis clampée au plancher (min) et au plafond (max) ;
+   *  - min/maxCommissionAmount sont stockés EN CENTIMES (cf. DTO) -> conversion /100 en euros ;
+   *  - backstop absolu : commission strictement > 0 (>= 0,01 €) même si la config est à 0/incohérente ;
+   *  - jamais supérieure au montant réellement encaissé (base) pour ne pas produire un net artisan négatif.
+   */
+  private computeCommission(base: number, fee: FeeSettingsDto): number {
+    const safeBase = Number(base) || 0;
+    if (safeBase <= 0) {
+      // Aucun encaissement possible : refuser plutôt que d'enregistrer une commission fantôme.
+      throw new BadRequestException('Montant invalide : la commission plateforme ne peut pas être calculée sur un prix nul.');
+    }
+    const rate = (Number(fee.platformCommissionRate) || 0) / 100;
+    const floorEuros = (Number(fee.minCommissionAmount) || 0) / 100; // config en centimes -> euros
+    const capEuros = (Number(fee.maxCommissionAmount) || 0) / 100; // config en centimes -> euros
+
+    let commission = safeBase * rate;
+    if (floorEuros > 0) commission = Math.max(commission, floorEuros);
+    if (capEuros > 0) commission = Math.min(commission, capEuros);
+    // Intégrité : jamais <= 0, jamais > montant encaissé.
+    commission = Math.max(commission, 0.01);
+    commission = Math.min(commission, safeBase);
+    return Math.round(commission * 100) / 100;
+  }
 
   async createPaymentIntent(missionId: string, userId: string) {
     const mission = await this.prisma.mission.findUnique({
@@ -160,15 +190,16 @@ export class PaymentService {
 
     // Get commission rates from platform config
     const feeSettings = await this.platformConfig.getFeeSettings();
-    const commissionRate = feeSettings.platformCommissionRate / 100; // Convert percentage to decimal
     const artisanRate = feeSettings.artisanPayoutPercentage / 100;
+    // Commission avec plancher/plafond appliqués (jamais nulle / contournable).
+    const commission = this.computeCommission(Number(mission.agreedPrice), feeSettings);
 
     // Upsert : si une Transaction existait déjà (PI mort régénéré), on la met à jour au lieu de
     // violer la contrainte unique sur missionId.
     const txData = {
       type: 'MISSION' as const,
       amount: mission.agreedPrice,
-      commission: Number(mission.agreedPrice) * commissionRate,
+      commission,
       artisanAmount: Number(mission.agreedPrice) * artisanRate,
       stripePaymentIntentId: paymentIntent.id,
       status: 'PENDING' as const,
@@ -672,15 +703,16 @@ export class PaymentService {
 
     // Get commission rates from platform config
     const feeSettings = await this.platformConfig.getFeeSettings();
-    const commissionRate = feeSettings.platformCommissionRate / 100;
     const artisanRate = feeSettings.artisanPayoutPercentage / 100;
+    // Commission avec plancher/plafond appliqués (jamais nulle / contournable).
+    const commission = this.computeCommission(depositAmount, feeSettings);
 
     // Transaction (contrainte unique missionId) : upsert pour ne pas violer la contrainte quand un
     // PaymentIntent mort est régénéré (la Transaction existe déjà).
     const depositTxData = {
       type: 'DEPOSIT' as const,
       amount: depositAmount,
-      commission: depositAmount * commissionRate,
+      commission,
       artisanAmount: depositAmount * artisanRate,
       stripePaymentIntentId: paymentIntent.id,
       status: 'PENDING' as const,

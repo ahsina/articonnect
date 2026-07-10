@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
+import { ContentFilterService } from './content-filter.service';
 
 type ChatRoomType = 'DIRECT' | 'GROUP' | 'TEAM' | 'MISSION' | 'ANNOUNCEMENT';
 type ChatMemberRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
@@ -46,7 +47,35 @@ export class InternalChatService {
   constructor(
     private prisma: PrismaService,
     private redis: RedisService,
+    private contentFilter: ContentFilterService,
   ) {}
+
+  /**
+   * Applique le content-filter à un texte de message (rooms MISSION/GROUP/TEAM
+   * n'étaient PAS filtrées jusqu'ici → canal libre de désintermédiation).
+   * Bloque (HIGH) ou masque (MEDIUM) puis renvoie le contenu à stocker.
+   */
+  private async enforceContentFilter(
+    content: string,
+    userId: string,
+    type: ChatMessageType,
+  ): Promise<string> {
+    // Les messages système ne transitent pas par les utilisateurs : on n'y touche pas.
+    if (type === 'SYSTEM') return content;
+    if (!content || content.trim().length === 0) return content;
+
+    const result = await this.contentFilter.filterContent(content, userId, 'chat_interne');
+    if (result.isBlocked) {
+      throw new BadRequestException({
+        message:
+          'Votre message contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
+        detectedPatterns: result.detectedPatterns,
+        violationType: result.violationType,
+        code: 'CONTACT_INFO_BLOCKED',
+      });
+    }
+    return result.filteredContent;
+  }
 
   /**
    * Create a new chat room
@@ -282,13 +311,16 @@ export class InternalChatService {
       throw new ForbiddenException('Vous ne pouvez pas envoyer de messages dans cette conversation');
     }
 
+    // 🛡️ Anti-désintermédiation : filtre les coordonnées (bloque HIGH, masque MEDIUM).
+    const filteredContent = await this.enforceContentFilter(content, userId, type);
+
     // Create message
     const message = await this.prisma.chatMessage.create({
       data: {
         roomId,
         senderId: userId,
         type,
-        content,
+        content: filteredContent,
         replyToId,
         mentions,
       },
@@ -358,10 +390,13 @@ export class InternalChatService {
       throw new BadRequestException('Le message ne peut plus être modifié');
     }
 
+    // 🛡️ Anti-désintermédiation : le contenu édité passe aussi par le filtre.
+    const filteredContent = await this.enforceContentFilter(newContent, userId, message.type as ChatMessageType);
+
     const updated = await this.prisma.chatMessage.update({
       where: { id: messageId },
       data: {
-        content: newContent,
+        content: filteredContent,
         isEdited: true,
         editedAt: new Date(),
       },

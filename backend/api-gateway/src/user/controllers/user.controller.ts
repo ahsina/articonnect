@@ -71,6 +71,8 @@ export class UserController {
   }
 
   @Get('artisans')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list of artisans' })
   async getArtisans(
     @Query('specialtyId') specialtyId?: string,
@@ -85,6 +87,8 @@ export class UserController {
   }
 
   @Get('artisans/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get artisan details' })
   async getArtisan(@Param('id') id: string) {
     return this.userService.getArtisan(id);

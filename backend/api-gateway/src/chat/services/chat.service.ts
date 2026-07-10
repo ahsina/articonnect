@@ -63,13 +63,17 @@ export class ChatService {
       conversationKey
     );
 
-    return this.prisma.message.create({
+    const created = await this.prisma.message.create({
       data: {
         senderId: data.senderId,
         receiverId: data.receiverId,
         content: encryptedContent,
       },
     });
+
+    // On renvoie le contenu FILTRÉ en clair (jamais le brut, jamais le chiffré) :
+    // le gateway diffuse `message.content` au destinataire / à la push notif.
+    return { ...created, content: contentToSend };
   }
 
   async getMessage(messageId: string) {

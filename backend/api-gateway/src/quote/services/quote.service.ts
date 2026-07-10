@@ -198,6 +198,20 @@ export class QuoteService {
     };
   }
 
+  /**
+   * Statuts de mission qui prouvent qu'un paiement escrow a bien été engagé (fonds bloqués
+   * ou mission déjà en cours/terminée). Utilisé, avec Transaction.status HELD/COMPLETED, pour
+   * décider si les coordonnées réelles peuvent être révélées (politique « à la Uber »).
+   */
+  private static readonly PAID_MISSION_STATUSES = [
+    'PAID',
+    'DEPOSIT_PAID',
+    'IN_TRANSIT',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'AUTO_VALIDATED',
+  ];
+
   async findOne(id: string, userId: string) {
     const quote = await this.prisma.quote.findUnique({
       where: { id },
@@ -210,11 +224,17 @@ export class QuoteService {
           select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
         artisan: {
-          select: { id: true, firstName: true, lastName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
         },
         template: true,
         mission: {
-          select: { id: true, title: true, status: true },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            artisanId: true,
+            transaction: { select: { status: true } },
+          },
         },
       },
     });
@@ -225,6 +245,33 @@ export class QuoteService {
 
     if (quote.artisanId !== userId && quote.clientId !== userId) {
       throw new ForbiddenException('Access denied');
+    }
+
+    // Révélation des coordonnées conditionnée au paiement escrow (anti-désintermédiation).
+    // Avant paiement : ni le client ni l'artisan ne voient l'email/téléphone de l'autre partie.
+    const txStatus = quote.mission?.transaction?.status;
+    const isPaid =
+      txStatus === 'HELD' ||
+      txStatus === 'COMPLETED' ||
+      (quote.mission != null &&
+        QuoteService.PAID_MISSION_STATUSES.includes(quote.mission.status as string));
+
+    // Le contact n'est révélé qu'au client et à l'artisan effectivement assigné à la mission
+    // (celui qui exécute la prestation payée), jamais aux autres soumissionnaires.
+    const isClient = userId === quote.clientId;
+    const isAssignedArtisan =
+      userId === quote.artisanId &&
+      (quote.mission?.artisanId == null || quote.mission.artisanId === userId);
+
+    if (!isPaid || !(isClient || isAssignedArtisan)) {
+      if (quote.client) {
+        (quote.client as { email?: string | null }).email = null;
+        (quote.client as { phone?: string | null }).phone = null;
+      }
+      if (quote.artisan) {
+        (quote.artisan as { email?: string | null }).email = null;
+        (quote.artisan as { phone?: string | null }).phone = null;
+      }
     }
 
     return quote;

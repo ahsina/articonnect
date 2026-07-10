@@ -6,7 +6,16 @@ export class GdprService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Export all user data (GDPR compliance)
+   * Export all user data (GDPR compliance).
+   *
+   * RÈGLE ANTI-EXFILTRATION : un export RGPD ne doit contenir que la PII du DEMANDEUR.
+   * On ne doit JAMAIS embarquer les coordonnées exactes (email / téléphone / adresse
+   * précise / géoloc) d'une CONTREPARTIE (artisan favori, client d'une mission, partie
+   * d'une facture). Sinon /users/gdpr/export devient un exfiltrateur de carnet d'adresses
+   * légitime en un clic (poaching / désintermédiation). Les tiers sont donc pseudonymisés :
+   * on garde l'identifiant + le prénom, jamais l'email/tel, et on remplace les adresses de
+   * chantier de la contrepartie par une zone approximative (ville uniquement, pas de rue ni
+   * de latitude/longitude).
    */
   async exportUserData(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -18,10 +27,10 @@ export class GdprService {
             savedArtisans: {
               include: {
                 artisan: {
+                  // Contrepartie : jamais d'email/téléphone. Prénom + id seulement.
                   select: {
+                    id: true,
                     firstName: true,
-                    lastName: true,
-                    email: true,
                   },
                 },
               },
@@ -55,12 +64,37 @@ export class GdprService {
       password: _password,
       twoFactorSecret: _twoFactorSecret,
       refreshTokens: _refreshTokens,
+      clientMissions,
+      artisanMissions,
+      issuedInvoices,
+      receivedInvoices,
       ...userWithoutSensitiveData
     } = user;
 
+    const sanitized = {
+      ...userWithoutSensitiveData,
+      // clientMissions : missions où le demandeur est le CLIENT → l'adresse du chantier est
+      // la SIENNE, on la conserve. La contrepartie artisan n'est qu'un artisanId (pseudonyme).
+      clientMissions,
+      // artisanMissions : missions où le demandeur est l'ARTISAN → l'adresse/géoloc du chantier
+      // appartient au CLIENT (contrepartie). On la réduit à une zone approximative.
+      artisanMissions: (artisanMissions as any[]).map((m) =>
+        this.redactCounterpartyMissionLocation(m),
+      ),
+      // Factures : on retire l'adresse de la contrepartie (bloc JSON {name, address, ...}).
+      // issuedInvoices → l'émetteur est le demandeur, le client est la contrepartie.
+      issuedInvoices: (issuedInvoices as any[]).map((inv) =>
+        this.redactInvoiceCounterparty(inv, 'clientAddress'),
+      ),
+      // receivedInvoices → le destinataire est le demandeur, l'émetteur est la contrepartie.
+      receivedInvoices: (receivedInvoices as any[]).map((inv) =>
+        this.redactInvoiceCounterparty(inv, 'issuerAddress'),
+      ),
+    };
+
     return {
       exportDate: new Date().toISOString(),
-      personalData: userWithoutSensitiveData,
+      personalData: sanitized,
       metadata: {
         dataCategories: [
           'Account Information',
@@ -74,7 +108,54 @@ export class GdprService {
         ],
         exportFormat: 'JSON',
         gdprCompliant: true,
+        // Les coordonnées exactes des tiers (contreparties) sont volontairement omises :
+        // un export RGPD ne restitue que la PII du demandeur, pas celle d'autrui.
+        thirdPartyDataPseudonymized: true,
       },
+    };
+  }
+
+  /**
+   * Réduit une mission où la contrepartie est le CLIENT : on supprime l'adresse exacte
+   * (rue), le code postal et la géolocalisation du chantier ; on ne garde que la ville
+   * comme zone approximative. La contrepartie reste identifiée par son clientId (pseudonyme).
+   */
+  private redactCounterpartyMissionLocation(mission: any) {
+    if (!mission || typeof mission !== 'object') return mission;
+    const {
+      address: _address,
+      postalCode: _postalCode,
+      latitude: _latitude,
+      longitude: _longitude,
+      billingAddress: _billingAddress,
+      billingCompanyName: _billingCompanyName,
+      ...rest
+    } = mission;
+    return {
+      ...rest,
+      // Zone approximative uniquement (ville), jamais l'adresse précise du client.
+      approximateArea: mission.city ?? null,
+    };
+  }
+
+  /**
+   * Retire le bloc adresse de la CONTREPARTIE d'une facture (JSON {name, address, city,
+   * postalCode, country, siret, vat}). On ne garde qu'une localisation grossière
+   * (ville/pays) pour la valeur probante, jamais le nom/rue/SIRET du tiers.
+   */
+  private redactInvoiceCounterparty(
+    invoice: any,
+    counterpartyField: 'clientAddress' | 'issuerAddress',
+  ) {
+    if (!invoice || typeof invoice !== 'object') return invoice;
+    const raw = invoice[counterpartyField];
+    const coarse =
+      raw && typeof raw === 'object'
+        ? { city: (raw as any).city ?? null, country: (raw as any).country ?? null }
+        : null;
+    return {
+      ...invoice,
+      [counterpartyField]: coarse,
     };
   }
 

@@ -1,0 +1,622 @@
+[
+ {
+  "title": "GET /users/artisans/:id est PUBLIC (aucun guard) et renvoie téléphone + email + adresse de base exacte de l'artisan",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "user.controller.ts:87 `@Get('artisans/:id')` n'a AUCUN `@UseGuards(JwtAuthGuard)` (contrairement à tous les autres endpoints du même contrôleur). user.service.getArtisan() (l.254-317) fait un `findUnique` SANS `select` puis retire seulement les champs anti-fraude/tokens dans la déstructuration — `phone`, `email` et `website` NE SONT PAS retirés, et `artisanProfile` inclut `baseAddress`, `latitude`, `longitude` en clair. Exploitation : un visiteur anonyme (curl, scraper) appelle GET /users/artisans/<uuid> et récupère le tel direct, l'email et l'adresse de chaque artisan. Il court-circuite entièrement la plateforme : il appelle l'artisan en direct, négocie en cash, Krafolt ne touche jamais sa commission. Chez Uber le chauffeur n'a jamais de numéro direct exposé.",
+  "recommendation": "Ajouter une projection `select` explicite en whitelist (jamais l'objet User brut) : n'exposer que id, firstName, avatar, companyName, rating, reviewCount, specialties, city approximative. Retirer phone, email, website, baseAddress, latitude/longitude exacts du payload public. Ne révéler tel/email QUE via un endpoint authentifié conditionné à une mission PAID + transaction HELD entre ce client et cet artisan.",
+  "enforcement": "Masquer par défaut (whitelist select) + protéger la route par JwtAuthGuard + révélation conditionnée à l'escrow HELD",
+  "files": "backend/api-gateway/src/user/controllers/user.controller.ts (l.87-90), backend/api-gateway/src/user/services/user.service.ts (getArtisan l.254-317)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "GET /users/artisans (liste) PUBLIC — annuaire scrapable de tel+email de tous les artisans",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "user.controller.ts:73 `@Get('artisans')` sans guard. user.service.getArtisans() (l.213-236) renvoie jusqu'à 50 artisans via `stripSensitiveUserFields()` (l.239-252) qui supprime les champs anti-fraude mais PAS `phone`, `email`, `website`. Un scraper anonyme itère la liste et exfiltre l'annuaire complet des coordonnées directes des artisans → prospection hors-plateforme massive, désintermédiation industrialisée. C'est le contraire du modèle Uber où aucun coordonnée directe n'est jamais listée.",
+  "recommendation": "Remplacer stripSensitiveUserFields (approche blacklist, fragile — tout nouveau champ fuite par défaut) par une whitelist `select` stricte côté Prisma. Bannir phone/email/website/adresse exacte du listing. Ajouter pagination + rate-limit anti-scraping.",
+  "enforcement": "Masquer (whitelist select) + rate-limit + éventuel guard auth léger",
+  "files": "backend/api-gateway/src/user/controllers/user.controller.ts (l.73-84), backend/api-gateway/src/user/services/user.service.ts (getArtisans l.213-236, stripSensitiveUserFields l.239-252)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "GET /missions/search, /search/nearby, /search/urgent, /search/similar PUBLICS — exposent l'email du client + l'adresse EXACTE de chaque mission ouverte",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "mission-search.controller.ts : `search`, `searchNearby`, `getUrgentMissions`, `getSimilar` n'ont AUCUN guard (seul `/recommendations` est protégé). mission-search.service.searchMissions() (l.84-110) inclut `client { email }` ET `artisan { email }`, et l'objet mission est renvoyé sans `select` donc `address`, `city`, `postalCode`, `latitude`, `longitude`, `clientBudget` sont exposés. Exploitation : un anonyme scrape toutes les missions PENDING avec l'EMAIL du client + son adresse postale exacte + son budget, puis contacte directement chaque client pour lui proposer le job hors-plateforme (undercut de la commission). Fuite RGPD (email+adresse de particuliers, non authentifié) doublée d'une désintermédiation totale du carnet de commandes. Uber ne montre qu'un point de départ approximatif tant que la course n'est pas acceptée.",
+  "recommendation": "1) Protéger toutes les routes de recherche par JwtAuthGuard + rôle ARTISAN. 2) Retirer client.email/artisan.email du select. 3) Ne PAS renvoyer address/postalCode exacts tant que la mission n'est pas attribuée+payée : n'exposer que city + zone approximative (arrondir lat/lng, ex 2 décimales / rayon flou) avant escrow HELD, révéler l'adresse précise seulement à l'artisan assigné après paiement.",
+  "enforcement": "Bloquer (guard+rôle) + masquer email + adresse approximative avant escrow, adresse exacte après HELD",
+  "files": "backend/api-gateway/src/mission/controllers/mission-search.controller.ts (l.14-107), backend/api-gateway/src/mission/services/mission-search.service.ts (l.84-110, calculateDistances l.330+)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "mission.findOne renvoie tel+email du client ET de l'artisan AVANT tout paiement escrow (dès NEGOTIATING / simple offre)",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "mission.service.findOne() (l.122-180) inclut `client { phone, email }` et `artisan { phone, email }`. Le contrôle d'accès (l.163-177) autorise l'accès non seulement au client/artisan assigné, mais aussi à TOUT artisan si la mission est `isOpen` (PENDING/NEGOTIATING sans artisanId) OU à tout `isNegotiationParticipant`. Conséquence : un artisan fait une offre bidon (negotiation.create) sur une mission ouverte, devient participant, puis GET /missions/:id lui renvoie le TÉLÉPHONE + EMAIL du client — au statut NEGOTIATING, donc AVANT ACCEPTED/PAID et avant que la transaction ne soit HELD en escrow. Exploit : offre à 1€ → récupère le contact → appelle le client → réalise le chantier en cash. La plateforme ne voit jamais la mission se conclure et ne perçoit aucune commission. Symétriquement, dès qu'une offre existe, le client obtient le tel/email de l'artisan.",
+  "recommendation": "Ne JAMAIS inclure phone/email dans findOne par défaut. Construire le payload en fonction du statut+rôle : coordonnées révélées uniquement si (mission.status ∈ {PAID, IN_TRANSIT, IN_PROGRESS, COMPLETED} OU transaction.status='HELD'/'COMPLETED') ET que le demandeur est le client ou l'artisan ASSIGNÉ. Pour un artisan simplement en négociation, renvoyer seulement prénom + note/rating, jamais tel/email.",
+  "enforcement": "Masquer conditionnellement (fonction de status+escrow+rôle) — révélation post-HELD uniquement",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (findOne l.122-180)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "artisan.getQuotations expose l'email du client à l'artisan pour chaque offre, même PENDING/REJECTED (avant paiement)",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "artisan.service.getQuotations() (l.303) inclut `mission { client { firstName, lastName, email } }`. Un artisan voit donc l'email de chaque client sur lequel il a fait une offre, y compris pour des offres non acceptées et sans aucun paiement escrow. Même exploit de désintermédiation que findOne : soumissionner en masse → collecter les emails clients → démarcher hors-plateforme.",
+  "recommendation": "Retirer `email` du select de getQuotations. Ne montrer à l'artisan que le prénom du client tant qu'aucune de ses offres n'est acceptée+payée sur cette mission.",
+  "enforcement": "Masquer (retirer email du select) + révélation post-escrow",
+  "files": "backend/api-gateway/src/artisan/artisan.service.ts (getQuotations l.291-319, spécifiquement l.303)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "Le champ `message` des offres/négociations n'est PAS filtré — contournement total du content-filter du chat",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Le ContentFilterService (détection tel/email/URL/réseaux sociaux) n'est appliqué QUE dans chat.service.createMessage(). negotiation.service.create() (l.93-105) stocke `createDto.message` tel quel, et findByMission()/getQuotations le renvoient à la contrepartie. Un artisan écrit son numéro dans le message de son offre (« Appelez-moi, dispo tout de suite ») : il est livré au client sans aucun filtrage. Idem pour la description de mission, le titre, le champ website du profil artisan et baseAddress. Le canal 'chat' est verrouillé mais tous les autres canaux texte inter-utilisateurs sont ouverts → la protection anti-partage de contact est trivialement contournable.",
+  "recommendation": "Passer par contentFilter.filterContent() tout texte libre échangé entre parties : negotiation.message (create), mission.description/title à la création, artisanProfile.description/website, avis. Bloquer/masquer en HIGH severity comme dans le chat, et compter les violations (auto-suspension existante).",
+  "enforcement": "Filtrer/bloquer + flag violations sur tous les champs texte inter-utilisateurs, pas seulement le chat",
+  "files": "backend/api-gateway/src/mission/services/negotiation.service.ts (create l.93-115), backend/api-gateway/src/chat/services/chat.service.ts (createMessage l.30-73 seul point filtré), backend/api-gateway/src/chat/services/content-filter.service.ts",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "Aucune révélation conditionnée à l'escrow : les coordonnées ne sont jamais gatées par le statut de paiement",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Il n'existe nulle part de logique « révéler le contact seulement après que les fonds sont HELD ». mission.service a bien la notion d'escrow (startTravel vérifie transaction.status HELD/COMPLETED, l.615-627) mais AUCUN endpoint de contact ne s'appuie dessus : phone/email/adresse sont renvoyés selon le rôle/statut de mission, jamais selon l'état du paiement. Le modèle Uber = contact (relais) débloqué uniquement une fois la course engagée/payée. Ici un client et un artisan peuvent obtenir mutuellement leurs coordonnées dès la phase de négociation gratuite, donc conclure hors-plateforme sans jamais déclencher l'escrow.",
+  "recommendation": "Centraliser une fonction canRevealContact(mission, viewer) = mission attribuée à cet artisan ET (transaction.status ∈ {HELD, COMPLETED} OU mission.status ∈ {PAID, IN_TRANSIT, IN_PROGRESS, COMPLETED}). Tous les points d'exposition (findOne, search, getArtisan, getQuotations, favoris, chat header) passent par cette porte unique.",
+  "enforcement": "Masquer par défaut + gate unique conditionné à l'escrow HELD (fail-closed)",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts, backend/api-gateway/src/user/services/user.service.ts, backend/api-gateway/src/mission/services/mission-search.service.ts, backend/api-gateway/src/artisan/artisan.service.ts",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "Adresse exacte de la mission (rue + code postal + lat/lng) exposée avant acceptation/paiement",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "mission.service.getNearbyMissions() (l.290-314) et mission-search renvoient l'objet mission complet, incluant `address`, `postalCode`, `latitude`, `longitude` exacts, sur des missions ouvertes non attribuées. N'importe quel artisan (voire anonyme via /missions/search) connaît l'adresse précise du domicile du client avant tout engagement. Uber ne dévoile l'adresse exacte de prise en charge qu'une fois la course acceptée ; avant, seule une zone approximative est montrée. Ici : risque désintermédiation (se présenter au domicile hors-plateforme) + risque sécurité/RGPD.",
+  "recommendation": "Avant attribution+escrow : n'exposer que city + un point flouté (arrondir lat/lng à ~1-2 km, ou ne donner qu'un rayon). Révéler l'adresse complète uniquement à l'artisan assigné après transaction HELD (au moment startTravel/IN_TRANSIT).",
+  "enforcement": "Masquer/approximer l'adresse avant escrow, révéler l'adresse exacte à l'assigné après HELD",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (getNearbyMissions l.282-314), backend/api-gateway/src/mission/services/mission-search.service.ts (l.84-110)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "Aucun numéro-relais / proxy d'appel (Twilio-like) — les vrais numéros sont échangés, permettant la fuite pour les missions suivantes",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "Recherche exhaustive : les seuls 'mask' du code sont maskPhone (affichage du propre numéro lors de la vérif OTP) et le masquage d'IBAN. Aucun système de numéro virtuel/relais entre client et artisan. Même une fois le paiement fait, les deux parties se transmettent leur VRAI numéro, donc pour tout chantier RÉCURRENT ultérieur elles s'appellent en direct et Krafolt perd la relation. Uber/Airbnb utilisent des numéros relais éphémères précisément pour empêcher cette fuite de la relation client.",
+  "recommendation": "Introduire un relais téléphonique/SMS (Twilio Proxy ou équivalent) : chaque partie ne voit qu'un numéro de plateforme routé, actif seulement pendant la mission et coupé après COMPLETED. Combiné au filtrage de contenu, cela empêche l'échange du vrai numéro. (Nécessite clés Twilio payantes — cf. Phase B.)",
+  "enforcement": "Masquer (numéro relais éphémère) au lieu d'exposer le vrai numéro, désactivation post-mission",
+  "files": "backend/api-gateway/src/chat/ (nouveau service relais à créer), backend/api-gateway/src/mission/services/mission.service.ts (points de révélation de contact)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "Content-filter : couverture partielle (LU/BE non couverts, obfuscations, canaux hors-chat) et aucune détection dans les fuites d'endpoints ci-dessus",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "content-filter.service.ts ne cible que des formats FR (PHONE_FR_*). Les numéros luxembourgeois (+352) et belges (+32) — cœur de cible Krafolt LU/FR/BE — ne sont pas détectés, donc un artisan luxembourgeois partage son +352 en clair dans le chat. Obfuscations non couvertes (« zero six » anglais, chiffres espacés atypiques, tel dans une image/photo de mission uploadée). De plus le filtre ne sert à rien face aux fuites structurelles (endpoints qui renvoient déjà phone/email en JSON) : filtrer le texte libre est inutile si l'API livre le tel en clair par ailleurs.",
+  "recommendation": "Ajouter patterns +352 / +32 et variantes; envisager OCR/refus des photos contenant du texte type carte de visite; surtout, traiter d'abord les fuites structurelles (findings critiques) car le filtre de texte est le dernier rempart, pas le premier.",
+  "enforcement": "Filtrer/bloquer (patterns LU/BE + obfuscations) — en complément, pas en remplacement, du masquage structurel",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (patterns l.31-141)",
+  "dimension": "Exposition des coordonnées (masquage type Uber) — anti-désintermédiation / revenue integrity"
+ },
+ {
+  "title": "Les numéros LUXEMBOURG (+352 / 621-661-691) — LE marché réel — ne sont PAS filtrés",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "content-filter.service.ts ne connaît que les formats FRANÇAIS. PHONE_FR_INTERNATIONAL = /(?:\\+33|0033).../ (lignes 34-39) ne matche que +33/0033. PHONE_FR_MOBILE = /(?:06|07).../ (48-53) ne matche que 06/07. Or Krafolt opère LU/FR/BE : un mobile luxembourgeois '+352 621 12 34 56', '621 123 456' ou '00352 621...' ne déclenche AUCUN pattern → passe en clair, non bloqué, non loggé, non compté vers la suspension. Idem fixe LU '26 12 34 56' (8 chiffres sans 0 initial). Exploitation triviale : l'artisan écrit 'appelez le 621 12 34 56' au premier échange, le client appelle, le chantier + le paiement + la commission Krafolt sortent de la plateforme dès le premier message. C'est la fuite la plus grave car elle vise précisément le marché domicile.",
+  "recommendation": "Ajouter des patterns +352 / 0[026]xx et surtout mobiles LU 6[2679]1 XX XX XX, +32 / 04xx BE, et un pattern générique 'toute séquence de 6+ chiffres avec séparateurs variés' calibré par pays. Normaliser (retirer espaces/points/tirets) AVANT de matcher pour attraper 8 à 12 chiffres consécutifs quel que soit le format. Traiter comme SEVERITY HIGH.",
+  "enforcement": "bloquer + flag + compter vers suspension",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (lignes 31-53)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Le WebSocket diffuse le message BRUT non filtré au destinataire (le masquage ne s'applique jamais en temps réel)",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "chat.gateway.ts handleMessage() appelle createMessage() (qui filtre et stocke le contenu masqué), MAIS ré-émet ensuite `content` — la variable BRUTE du payload — au destinataire : `this.server.to(user:receiverId).emit('new_message', { ... content ... })` (lignes 153-160), et la notification push utilise aussi `content.substring(0,50)` (172-175). Le front (useSocket.ts l.39-47) affiche `message.content` verbatim. Conséquence : tout contenu MEDIUM (URL, @instagram, lien Telegram/Facebook) est masqué en base mais LIVRÉ EN CLAIR en temps réel au destinataire. Le masquage est purement cosmétique/rétroactif. Exploitation : envoyer 'mon insta @jean_artisan' ou 'monsite.lu' — le destinataire le lit intégralement dans la notif et dans le fil live ; seul un rechargement depuis la base montrerait la version masquée.",
+  "recommendation": "Faire retourner par createMessage() le contenu à diffuser (filteredContent) et l'ID, puis émettre CE contenu — jamais le payload brut. Idem pour le body de la notification push. Pour HIGH, ne rien émettre.",
+  "enforcement": "masquer (diffuser filteredContent) + bloquer",
+  "files": "backend/api-gateway/src/chat/gateways/chat.gateway.ts (145-176), chat/services/chat.service.ts (37-72), frontend/lib/hooks/useSocket.ts (39-47)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Réseaux sociaux, URLs et handles = MEDIUM : masqués mais jamais bloqués, jamais loggés, jamais escaladés",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "Seul HIGH bloque et logge (filterContent l.174-180 : `if (highestSeverity === 'HIGH')`). Or INSTAGRAM, FACEBOOK, TWITTER, TELEGRAM, URL_HTTP, URL_WWW sont tous MEDIUM (lignes 71-122). Résultat : partager une URL ou un handle Instagram/Facebook/Telegram n'incrémente JAMAIS contentViolation, ne compte JAMAIS vers l'auto-suspension (seuil de 5), et n'est même pas masqué en live (cf. bug WS ci-dessus). Un utilisateur peut poster 'suis-moi @jean.artisan.lu' 100 fois sans aucune trace ni sanction. Les handles sociaux sont pourtant un vecteur de désintermédiation aussi efficace qu'un numéro : le contact continue sur Insta/Telegram, hors commission.",
+  "recommendation": "Passer WHATSAPP/INSTAGRAM/TELEGRAM/SNAP/SIGNAL et les invitations à contacter en HIGH, ou faire logger+compter TOUTES les violations (MEDIUM inclus) et escalader sur répétition. Uber bloque net tout identifiant de contact tiers.",
+  "enforcement": "bloquer + flag + compter vers suspension",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (71-141, 174-180)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Aucune détection des intentions de sortie hors-plateforme (paiement cash, sans commission, appelle-moi, on se voit direct)",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "CONTACT_KEYWORDS (l.124-131) n'attrape que 'appelle/contacte/écris + moi + au/sur + [chaîne de contact]'. Rien pour l'intention pure : 'paiement cash', 'en espèces', 'sans commission', 'sans passer par le site', 'appelle-moi' (sans numéro), 'on se voit direct', 'de la main à la main', 'réglez-moi directement', 'on s'arrange en dehors'. Ce sont exactement les phrases par lesquelles un artisan propose de contourner l'escrow et la commission Krafolt SANS jamais écrire de numéro (échangé ensuite par téléphone / lors de la visite). La plateforme perd la transaction sans qu'aucun pattern ne se déclenche.",
+  "recommendation": "Ajouter un lexique d'intention (HIGH) : espèces/cash/liquide, 'sans commission', 'hors plateforme/site/appli', 'directement', 'de la main à la main', 'on s'arrange', combiné à un rappel UX 'payez via Krafolt pour être protégé'. Flag pour revue humaine même si non bloquant, car ambigu.",
+  "enforcement": "flag + avertissement + bloquer si combiné à un contact",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (124-131)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Contournements triviaux des numéros écrits en lettres et par obfuscation",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "WRITTEN_PHONE (l.133-140) exige le préfixe 'zéro/zero' suivi d'UN seul mot-chiffre. Donc : (1) un mobile LU '621' dit 'six deux un ...' ou 'six-vingt-et-un' n'est PAS attrapé (ne commence pas par zéro) ; (2) 'o six' avec la lettre O n'est pas attrapé ; (3) espacement chiffre-à-chiffre '0 6 1 2 3 4 5 6 7 8' échappe aux patterns FR qui attendent des paires \\d{2} ; (4) séparateurs textuels '06 point 12 point...' non couverts (l'obfuscation email 'at/point' existe mais pas l'équivalent téléphone) ; (5) chiffres pleine-largeur/unicode. Tous ces canaux transmettent un numéro complet en clair.",
+  "recommendation": "Normaliser le texte avant matching : mapper les mots-nombres (zéro..neuf en FR/EN/DE/LU) et 'o'→0 en chiffres, supprimer séparateurs/points/mots 'point/tiret', puis appliquer les patterns numériques sur la forme normalisée. Détecter toute densité anormale de chiffres/mots-chiffres.",
+  "enforcement": "bloquer + flag",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (133-140, 55-69)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Signal, Snapchat, WeChat et handles Telegram/WhatsApp sans lien ne sont pas couverts",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "TELEGRAM ne matche que t.me/telegram.me/... (l.116-122), WHATSAPP que wa.me/whatsapp:+num (109-115). Rien pour Signal, Snapchat, WeChat, Viber, Messenger. 'ajoute-moi sur Signal, pseudo jean_lu' ou 'mon snap: jeanartisan' passe (le générique @handle n'attrape que la forme @xxx ; 'snap: jeanartisan' sans @ passe). Ces apps chiffrées sont le canal privilégié pour finaliser un deal hors-plateforme.",
+  "recommendation": "Ajouter les noms d'apps (signal/snap/snapchat/wechat/viber/messenger/telegram/whatsapp) suivis d'un pseudo ou numéro comme pattern HIGH, avec la même normalisation d'obfuscation.",
+  "enforcement": "bloquer + flag",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (87-122)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "La messagerie interne (internal-chat) et les messages IMAGE/FILE échappent totalement au filtre",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "internal-chat.service.ts sendMessage() (l.271-333) et editMessage() (338-376) écrivent `content` directement en base sans jamais appeler ContentFilterService — aucune importation du filtre dans ce service. Les rooms de type MISSION peuvent réunir plusieurs parties liées à un chantier. De plus le type IMAGE/FILE (l.13, DTO l.51) permet d'envoyer une PHOTO d'une carte de visite / d'un post-it avec le numéro : aucun OCR, aucun filtre. Même sur le chat principal, editMessage n'existe pas mais l'absence de re-filtrage à l'édition côté internal-chat permet d'envoyer un texte anodin puis de l'éditer en numéro dans les 15 min.",
+  "recommendation": "Router sendMessage/editMessage de internal-chat par le même ContentFilterService (re-filtrer à l'édition). Pour les pièces jointes, exécuter un OCR (ou au minimum bloquer/étiqueter) et filtrer les légendes. Uber/Airbnb filtrent aussi les images.",
+  "enforcement": "bloquer/masquer + flag + OCR sur pièces jointes",
+  "files": "backend/api-gateway/src/chat/services/internal-chat.service.ts (271-333, 338-376)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Le filtre est cantonné au chat : descriptions de mission, devis, avis et profils ne sont pas filtrés",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "filterContent() n'est appelé QUE depuis chat.service.createMessage() et l'endpoint admin de test (grep confirmé). Les autres champs libres — description de mission, message/commentaire de devis, bio de profil entreprise, texte d'avis — stockent le texte brut. Un artisan met 'Contactez-moi au 621 12 34 56' dans sa bio ou dans le message de son devis ; le client l'a AVANT même d'ouvrir le chat. Toute l'emprise du filtre chat est contournée par un autre champ.",
+  "recommendation": "Centraliser le filtre en pipe/intercepteur réutilisable et l'appliquer à TOUT champ texte visible par l'autre partie avant la fin de la transaction (mission.description, devis.message, review.comment, company.bio/description). C'est la couverture 'partout' qu'a Uber.",
+  "enforcement": "bloquer/masquer à l'écriture sur tous les champs libres + flag",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (148, seul point d'appel), chat/services/chat.service.ts (37)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Bug de statefulness des regex globales : test() sur des RegExp /g avec lastIndex persistant",
+  "severity": "medium",
+  "kind": "fuite-existante",
+  "leak": "isContentSafe() (l.193-202) et detectPatterns() (207-219) appellent `pattern.regex.test(content)` sur des RegExp déclarées avec le flag `g` (partagées, instances uniques réutilisées). `.test()` sur une regex globale AVANCE lastIndex et retourne alternativement true/false d'un appel à l'autre pour la même entrée → faux négatifs intermittents. Ces méthodes ne sont pas sur le chemin d'écriture principal (createMessage utilise .match/.replace, corrects), mais tout appelant futur de isContentSafe/detectPatterns aura des ratés non déterministes de détection de contact.",
+  "recommendation": "Retirer le flag g pour les tests booléens ou réinitialiser regex.lastIndex=0 avant chaque .test(), ou reconstruire une RegExp locale. Ajouter un test unitaire appelant deux fois de suite avec la même entrée piégée.",
+  "enforcement": "correctif technique (fiabiliser la détection)",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (193-219, 31-141)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Les patterns de filtre sont désactivables en mémoire, sans persistance ni audit — kill-switch silencieux",
+  "severity": "low",
+  "kind": "protection-manquante",
+  "leak": "togglePattern() (l.349-355) modifie `pattern.enabled` sur l'instance en mémoire : non persisté (réinitialisé au redémarrage → comportement incohérent entre instances/replicas), et surtout aucun log d'audit horodaté/attribué. Un admin (ou un compte admin compromis) peut désactiver PHONE_FR_MOBILE ou EMAIL via POST /moderation/content/patterns/:name/toggle et ouvrir un boulevard de désintermédiation sans trace. En multi-instances, un toggle n'affecte qu'un pod.",
+  "recommendation": "Persister l'état des patterns (DB/config), exiger un log d'audit (qui, quand, quel pattern) et idéalement une double validation pour désactiver un pattern HIGH. Recharger la config de façon cohérente sur toutes les instances.",
+  "enforcement": "audit + persistance + garde-fou sur désactivation",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (349-355), moderation/controllers/content-moderation.controller.ts (83-98)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "Le seuil d'auto-suspension (5 violations / 30 j) ne compte que les violations HIGH loggées et se contourne facilement",
+  "severity": "medium",
+  "kind": "fuite-existante",
+  "leak": "logViolation() (l.224-277) n'est appelé que pour HIGH (depuis filterContent l.174-179), donc le compteur `contentViolation.count` (242-249) n'agrège que les tentatives HIGH DÉJÀ bloquées. Un utilisateur qui passe par des vecteurs non-HIGH (URL/handle MEDIUM, numéro LU non détecté, intention 'cash' non couverte) n'accumule AUCUNE violation → n'atteint jamais le seuil de 5 → jamais suspendu. L'escalade existe (bon point, style Uber) mais ne mord que sur ce qui est déjà attrapé, laissant intacts tous les canaux des findings ci-dessus. Aucune notification à la victime/à l'autre partie, et le contenu bloqué de la 1re tentative réussie ailleurs n'est pas rejouable.",
+  "recommendation": "Compter TOUTES les tentatives détectées (y compris MEDIUM et intentions), pondérer par sévérité, et déclencher une revue humaine + avertissement progressif avant suspension. Corréler par paire d'utilisateurs (répétition ciblée sur un même interlocuteur = signal fort de désintermédiation).",
+  "enforcement": "flag + escalade graduée + suspension pondérée",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts (174-180, 224-277)",
+  "dimension": "Filtrage chat / anti-partage de contact (anti-désintermédiation)"
+ },
+ {
+  "title": "markCompleted et markArrival n'ont AUCUNE garde de paiement : mission terminée sans escrow, donc sans commission",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "mission.service.markArrival() (l.651) et markCompleted() (l.834) ne vérifient QUE que l'artisan est assigné (mission.artisanId === artisanId). Aucune vérification de paiement escrow, aucune précondition de statut, et ces méthodes NE passent PAS par validateStatusTransition. Exploitation : un artisan qui a gagné une offre (mission NEGOTIATING/ACCEPTED, artisanId posé) appelle directement POST /missions/:id/arrive (=> IN_PROGRESS + startedAt) puis POST /missions/:id/complete (=> COMPLETED + completedAt), sans qu'un seul euro ne transite par la plateforme. Le client et l'artisan conviennent d'un règlement cash/virement hors app. Chez Uber la course est structurellement impossible sans CB in-app ; ici le travail avance et se clôture entièrement hors paiement plateforme. Le seul contrôle escrow (startTravel) est trivialement shunté puisque /arrive fait passer à IN_PROGRESS sans passer par /start-travel.",
+  "recommendation": "Faire de l'escrow un GATE dur : markArrival et markCompleted doivent exiger que la mission ait un paiement retenu (transaction.status HELD/COMPLETED OU depositPaidAt) et un statut aval de paiement (PAID/DEPOSIT_PAID/IN_TRANSIT). Router toutes les transitions par la même machine à états (validateStatusTransition) qui interdit d'atteindre IN_PROGRESS/COMPLETED sans passer par PAID/DEPOSIT_PAID.",
+  "enforcement": "bloquer (400 'Paiement plateforme requis avant de démarrer/terminer') + flag anti-désintermédiation sur la mission si tentative de complétion sans escrow",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (markArrival l.651-682, markCompleted l.834-879, startTravel l.595-646, validateStatusTransition l.387-439), backend/api-gateway/src/mission/controllers/mission.controller.ts (/arrive l.251, /complete l.271)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "depositRequired défaut=false + escrow contrôlé uniquement dans startTravel : le paiement plateforme n'est jamais obligatoire",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "Le champ Mission.depositRequired vaut @default(false) (shared/prisma/schema.prisma l.927). Le SEUL point qui vérifie le paiement est startTravel (mission.service l.615 : 'if (mission.depositRequired) {...}'). Donc pour toute mission où setupDepositRequirements n'a pas été appelée (notamment tout le flux 'classique' updateStatus PENDING->NEGOTIATING->ACCEPTED->...), depositRequired reste false et startTravel ne vérifie RIEN. Combiné au fait que /arrive et /complete ignorent totalement le paiement, il n'existe aucun chemin où le paiement in-app est une condition nécessaire à l'avancement du travail. Le paiement est de facto optionnel.",
+  "recommendation": "Rendre l'escrow obligatoire par défaut pour toute mission de service (depositRequired implicite = true, ou gate de paiement indépendant du flag). Le flag ne doit pouvoir que MONTER le pourcentage exigé, jamais désactiver l'obligation de paiement. Vérifier l'état de paiement dans TOUTES les transitions vers IN_TRANSIT/IN_PROGRESS/COMPLETED, pas seulement startTravel.",
+  "enforcement": "bloquer par défaut ; escrow = précondition non désactivable de toute transition de travail",
+  "files": "backend/shared/prisma/schema.prisma (depositRequired l.927), backend/api-gateway/src/mission/services/mission.service.ts (startTravel l.615, setupDepositRequirements l.534-590)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "Piste devis -> facture 100% hors escrow : commission jamais prélevée, désintermédiation B2B totale",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "Quand le client signe un devis (signature.service.signQuote), le devis passe ACCEPTED et createFromQuote() génère automatiquement une Invoice avec paymentDueDate = +30 jours (invoice.service l.636) et une platformCommission calculée... qui n'est qu'un CHIFFRE sur le PDF, jamais débité à personne. Aucun PaymentIntent/escrow n'est créé sur ce flux. Le client règle l'artisan EN DIRECT (virement 30j). markAsPaid() (invoice.service l.256) se contente de flipper status='PAID' sans vérifier le moindre paiement Stripe et est appelable par l'artisan lui-même (@Roles ARTISAN, invoice.controller l.44-48). Résultat : tout le canal devis/facture permet à l'artisan et au client de contractualiser et se payer hors plateforme ; la commission (platformCommission) n'est jamais encaissée. C'est une porte de sortie complète du modèle économique.",
+  "recommendation": "Lier la facture à un encaissement plateforme : émission d'un devis accepté doit déclencher un PaymentIntent/escrow, et markAsPaid ne doit passer PAID que sur réception d'un webhook Stripe (charge/transfer) prouvant que la commission a été prélevée. Interdire le paiement 'off-platform 30 jours' pour le canal marketplace, ou au minimum prélever la commission par débit séparé (SEPA) avant de marquer payé.",
+  "enforcement": "bloquer markAsPaid sans preuve de paiement ; capture de la commission via Stripe obligatoire ; flag facture 'payée hors plateforme' -> pénalité / suspension",
+  "files": "backend/api-gateway/src/quote/services/signature.service.ts (signQuote l.135-165), backend/api-gateway/src/invoice/services/invoice.service.ts (createFromQuote l.569-655, markAsPaid l.256-264, createFromMission l.489-555), backend/api-gateway/src/invoice/controllers/invoice.controller.ts (l.44-69)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "Aucun plancher de commission : minCommissionAmount/maxCommissionAmount sont du code mort",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "DEFAULT_FEE_SETTINGS définit minCommissionAmount:100 et maxCommissionAmount:50000 (platform-config.service l.24-40), mais un grep prouve qu'ils ne sont référencés NULLE PART hors DTO/config. Le calcul réel est partout commission = Number(agreedPrice) * commissionRate SANS clamp (payment.service l.171, l.683 ; invoice.service l.71). Donc une mission à petit prix produit une commission proportionnellement minuscule, et rien ne garantit une commission plancher. Aucune garde 'commission jamais < min'.",
+  "recommendation": "Appliquer réellement le plancher : commission = clamp(agreedPrice*rate, minCommissionAmount, maxCommissionAmount) dans createPaymentIntent, createDepositPayment et invoice.calculateAmounts. Rejeter toute transaction dont la commission calculée serait < plancher.",
+  "enforcement": "bloquer (transaction refusée si commission < plancher) ; forcer commission = plancher minimum",
+  "files": "backend/api-gateway/src/payment/services/payment.service.ts (l.161-180, l.673-692), backend/api-gateway/src/invoice/services/invoice.service.ts (calculateAmounts l.68-80), backend/api-gateway/src/config/services/platform-config.service.ts (l.24-40)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "agreedPrice peut valoir 0 (Min(0)) : commission nulle par prix de façade + règlement réel hors app",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "SetupDepositDto.agreedPrice est @IsNumber @Min(0) (mission-workflow.dto l.13-15), et negotiation proposedPrice n'a aucun minimum de prix contrôlé côté intégrité commission. agreedPrice=0 => commission = 0*rate = 0 (payment.service l.171). Exploitation : artisan et client affichent un prix dérisoire (0/1€) sur la plateforme pour 'valider' le flux, puis règlent le vrai montant en cash. La plateforme enregistre COMPLETED avec 0€ de commission. Aucune garde 'commission jamais 0/négative' n'existe.",
+  "recommendation": "Interdire agreedPrice <= 0 (et en dessous d'un plancher métier) ; recouper agreedPrice avec clientBudget et le prix attendu (priceAnomaly déjà présent) et bloquer/flagger les prix anormalement bas ; garantir commission > 0 strict avant toute transition de paiement.",
+  "enforcement": "bloquer (agreedPrice sous plancher rejeté) ; flag prix anormalement bas -> revue anti-fraude",
+  "files": "backend/api-gateway/src/mission/dto/mission-workflow.dto.ts (SetupDepositDto l.7-16), backend/api-gateway/src/mission/services/negotiation.service.ts (accept l.202-210), backend/api-gateway/src/payment/services/payment.service.ts (l.171)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "validateCompletion et triggerArtisanPayment avalent silencieusement l'absence de transaction : validation sans commission",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "validateCompletion (mission.service l.687-737) exige seulement status===COMPLETED, puis appelle triggerArtisanPayment dans un try/catch qui, en cas d'erreur, met payoutStatus='deferred' et POURSUIT la validation (l.726-734). Or si aucun escrow n'a été payé, il n'existe pas de Transaction et triggerArtisanPayment throw 'Aucune transaction trouvée' (payment.service l.1052-1054) — capté et ignoré. La mission est donc VALIDÉE avec zéro euro encaissé et zéro commission. Idem dans autoValidateStuckMissions (l.788-798) : auto-validation à J+7 sans paiement. Le 'deferred' est conçu pour l'onboarding Connect incomplet mais masque aussi l'absence totale de paiement.",
+  "recommendation": "Distinguer 'payout différé (escrow bien capturé, Connect à finaliser)' de 'aucun escrow payé' : ce dernier cas doit EMPÊCHER la validation/complétion (la mission n'aurait jamais dû atteindre COMPLETED). Exiger transaction.status HELD/COMPLETED avant d'autoriser validateCompletion et l'auto-validation.",
+  "enforcement": "bloquer la validation si pas de transaction escrow ; ne jamais auto-valider une mission sans paiement retenu",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (validateCompletion l.687-737, autoValidateStuckMissions l.743-828), backend/api-gateway/src/payment/services/payment.service.ts (triggerArtisanPayment l.1035-1057)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "COMPLETED n'exige aucun état de paiement : découplage total entre fin de travail et encaissement",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Aucun invariant ne lie le statut COMPLETED à un paiement. validateStatusTransition autorise IN_PROGRESS->COMPLETED sans condition de paiement (mission.service l.408-412), et les méthodes workflow (markArrival/markCompleted) court-circuitent même cette machine. Contrairement à Uber où l'état 'course terminée' implique nécessairement un paiement capturé, ici une mission peut être COMPLETED/AUTO_VALIDATED avec transaction absente ou PENDING/FAILED.",
+  "recommendation": "Ajouter un invariant : impossible d'entrer en COMPLETED/AUTO_VALIDATED si la mission n'a pas de paiement retenu (HELD) ou capturé. Idéalement capturer l'escrow au moment du markCompleted (fin de travail), pas seulement à la validation, pour garantir la commission avant la fenêtre de rétractation.",
+  "enforcement": "bloquer transition -> COMPLETED sans escrow HELD/COMPLETED",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (validateStatusTransition l.387-439, markCompleted l.834-879)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "Endpoint setup-deposit sans garde de rôle ni ownership : réécriture de agreedPrice/totalAmount/statut par un tiers",
+  "severity": "medium",
+  "kind": "fuite-existante",
+  "leak": "POST /missions/:id/setup-deposit n'a que @UseGuards(JwtAuthGuard) — pas de RolesGuard (mission.controller l.207-225) — et setupDepositRequirements ne vérifie pas que l'appelant est le client de la mission (mission.service l.534-590). N'importe quel utilisateur authentifié peut donc fixer agreedPrice (Min 0), écraser totalAmount et forcer status=PENDING_DEPOSIT sur une mission qui n'est pas la sienne, court-circuitant le prix issu de la négociation acceptée et donc l'assiette de commission.",
+  "recommendation": "Restreindre à @Roles('CLIENT') propriétaire de la mission (vérifier mission.clientId === userId) ; interdire de réécrire agreedPrice une fois issu d'une négociation ACCEPTED ; refuser tout appel qui abaisserait le prix convenu.",
+  "enforcement": "bloquer (403 si non-propriétaire) ; verrouiller agreedPrice après acceptation d'offre",
+  "files": "backend/api-gateway/src/mission/controllers/mission.controller.ts (setup-deposit l.207-225), backend/api-gateway/src/mission/services/mission.service.ts (setupDepositRequirements l.534-590)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "markAsPaid facture : auto-déclaration de paiement par l'artisan sans encaissement ni prélèvement de commission",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "POST /invoices/:id/paid est ouvert @Roles('ARTISAN','ADMIN') (invoice.controller l.44-48) et markAsPaid (invoice.service l.256-264) passe simplement status='PAID', paidAt=now, sans aucune vérification d'un paiement Stripe ni prélèvement de la platformCommission. Un artisan peut donc encaisser son client en direct (cash/virement) puis marquer la facture 'payée' dans l'app : la plateforme croit la transaction réglée alors qu'elle n'a jamais touché sa commission.",
+  "recommendation": "markAsPaid ne doit être déclenché QUE par webhook Stripe confirmant l'encaissement (et le prélèvement de commission via application_fee/transfer séparé). Retirer la capacité pour l'artisan de s'auto-déclarer payé.",
+  "enforcement": "bloquer markAsPaid manuel ; statut PAID uniquement via preuve de paiement + commission prélevée",
+  "files": "backend/api-gateway/src/invoice/services/invoice.service.ts (markAsPaid l.256-264), backend/api-gateway/src/invoice/controllers/invoice.controller.ts (l.44-48)",
+  "dimension": "Contournement paiement / Intégrité commission (revenue integrity, anti-désintermédiation façon Uber)"
+ },
+ {
+  "title": "Contact client complet (téléphone + email + adresse exacte) exposé à TOUT artisan sur une mission ouverte, avant tout paiement/escrow",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "GET /missions/:id (mission.controller.ts ligne 82-87, seulement JwtAuthGuard) appelle MissionService.findOne. Le contrôle d'accès (mission.service.ts l.163-177) autorise l'accès dès que `isOpen = !artisanId && status in [PENDING,NEGOTIATING]` : n'importe quel artisan authentifié peut ouvrir le détail. Le include renvoie client.phone + client.email (l.127-133) et findUnique renvoie tous les scalaires => address, city, postalCode. Exploit : l'artisan liste les missions via GET /missions/nearby, ouvre chaque détail, récupère nom+tel+email+adresse du client et l'appelle directement. Aucune offre, aucun escrow, aucune commission. C'est la fuite de désintermédiation centrale : le pont client<->artisan est fourni gratuitement avant tout engagement.",
+  "recommendation": "Ne JAMAIS renvoyer les coordonnées réelles avant que l'escrow soit financé (status >= PAID/DEPOSIT_PAID) ET seulement à l'artisan assigné. Masquer client.phone/email/address pour les missions ouvertes ; ne montrer que ville + zone approximative (rayon) jusqu'au paiement. Après paiement, ne fournir qu'un numéro proxy masqué (relais type Twilio/Uber), jamais l'email/le vrai numéro.",
+  "enforcement": "masquer (proxy number après escrow) + bloquer l'exposition des champs avant financement",
+  "files": "mission/services/mission.service.ts (findOne l.122-180), mission/controllers/mission.controller.ts (l.82-87)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Annulation GRATUITE en PENDING/NEGOTIATING : matcher un artisan puis annuler pour conclure hors plateforme ne coûte rien",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "cancelMission (mission.service.ts l.940-978) et getCancellationFees (l.980-1001) mettent feeRate=0 pour PENDING/NEGOTIATING (10% seulement à ACCEPTED/IN_TRANSIT, 25% à IN_PROGRESS). Or c'est précisément en NEGOTIATING que les deux parties se sont déjà découvertes (voir fuite contact). Scénario : client poste, un artisan fait une offre (status -> NEGOTIATING), les deux voient leurs coordonnées, le client annule (0€, aucune pénalité, aucun escrow financé) et le deal se fait en direct. La plateforme perd 100% de la commission sans aucune friction.",
+  "recommendation": "Introduire un frais/verrou dès qu'un match nominatif a eu lieu (première offre acceptée OU coordonnées révélées) : soit exiger que l'escrow soit financé pour révéler le contact (cf. finding contact), soit appliquer un frais d'annulation forfaitaire + pénalité de réputation dès NEGOTIATING si une contrepartie a été identifiée. Tracer les couples (client, artisan) qui matchent puis annulent de façon répétée.",
+  "enforcement": "pénalité (frais d'annulation + malus réputation dès NEGOTIATING) + flag récidive",
+  "files": "mission/services/mission.service.ts (cancelMission l.940-978, getCancellationFees l.980-1001)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Récolte de contact par accept-puis-decline : l'artisan s'auto-assigne, lit les coordonnées, puis se désiste sans coût",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "acceptMission (l.229-280) passe la mission en NEGOTIATING et pose artisanId=self de façon atomique. L'artisan devient alors 'artisan assigné' et findOne lui donne client.phone+email. declineMission (l.920-938) remet ensuite status=PENDING, artisanId=null, SANS pénalité ni limite de récidive. L'artisan a donc harvesté le contact du client à coût nul et peut recommencer sur toutes les missions. La mission repart en PENDING et sera re-notifiée (re-post implicite), permettant de recommencer la boucle.",
+  "recommendation": "Compteur de désistements par artisan (decline rate à la Uber) avec suspension/baisse de matching au-delà d'un seuil ; ne pas exposer le contact tant que l'escrow n'est pas financé (règle unique) ; journaliser accept->decline rapides comme signal de désintermédiation.",
+  "enforcement": "flag + pénalité (decline rate, suspension matching) + masquer contact avant escrow",
+  "files": "mission/services/mission.service.ts (acceptMission l.229-280, declineMission l.920-938)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Filtre anti-coordonnées limité au chat : négociation, litige, description mission et notes sous-traitance sont des canaux libres non filtrés",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "ContentFilterService n'est appelé que par ChatService.createMessage (chat.service.ts l.37) — WS et REST. MAIS les champs texte libres suivants ne passent PAS par le filtre : negotiation.message (negotiation.service.ts create l.102), dispute.reason/description (dispute.service.ts l.108-112), mission.title/description (mission.service.ts create l.31-43) et subcontractor notes/description. Un artisan met son 06/email dans le message d'offre ou la description : livré en clair au client. De plus le filtre lui-même est faible : patterns FR uniquement (pas de formats LU +352 ni BE +32 — marché déclaré LU/FR/BE), pas de chiffres écrits complets au-delà de 'zéro six', séparateurs unicode/emoji contournables.",
+  "recommendation": "Appliquer ContentFilterService à TOUT champ texte libre inter-utilisateurs (message de négociation, description de litige, notes de progression sous-traitance, et idéalement description de mission). Étendre les patterns aux formats LU (+352) et BE (+32/04xx), chiffres écrits complets, et séparateurs unicode. Bloquer en HIGH, journaliser en ContentViolation (le seuil d'auto-suspension à 5 existe déjà).",
+  "enforcement": "bloquer (HIGH) + flag/journal ContentViolation sur tous les canaux texte",
+  "files": "chat/services/content-filter.service.ts (patterns l.31-141), mission/services/negotiation.service.ts (l.93-105), dispute/services/dispute.service.ts (l.106-112), mission/services/mission.service.ts (create l.27-54)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Sous-traitance : canal parallèle sans commission plateforme, avec sous-traitants externes non enregistrés et exposition du contact client",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "SubcontractorService permet à un artisan d'enrôler des sous-traitants EXTERNES (externalEmail/Phone/Siret, sans compte plateforme — service l.22-92) et de leur assigner des missions (createAssignment l.212-245) avec agreedAmount + commissionRate qui est la marge ARTISAN, PAS la commission plateforme. Le paiement du sous-traitant est marqué PAID à la main (updateAssignment l.298, paidAt) : aucun escrow, aucun Stripe, ZÉRO commission plateforme sur le travail réellement exécuté. Pire, le portail sous-traitant expose au sous-traitant (potentiellement externe) l'adresse complète + nom + téléphone du client (subcontractor-portal.service.ts getMyAssignments l.201, getPendingOffers l.99-110). Un artisan peut donc router un volume illimité de travail et de clients vers de la main-d'œuvre hors plateforme, qui repart avec les coordonnées client.",
+  "recommendation": "Traiter la sous-traitance comme un événement à risque de désintermédiation : soit interdire l'assignation à des externes non-onboardés, soit prélever la commission plateforme sur le montant sous-traité (escrow du leg sous-traitant), et masquer le contact client dans le portail sous-traitant (proxy). Plafonner le % d'une mission qui peut être sous-traité et flagger les artisans dont l'essentiel des missions part en sous-traitance.",
+  "enforcement": "bloquer externes non-onboardés / prélever commission sur le leg sous-traité + masquer contact client + flag artisan",
+  "files": "subcontractor/services/subcontractor.service.ts (create l.22-92, createAssignment l.212-245, updateAssignment l.288-308), subcontractor/services/subcontractor-portal.service.ts (getMyAssignments l.180-212, getPendingOffers l.89-120)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Aucune obligation/verrou de financement de l'escrow après accord de prix : le deal peut se conclure hors escrow",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "negotiation.accept (negotiation.service.ts l.134-276) pose agreedPrice et status=ACCEPTED, mais rien n'oblige ni ne borne dans le temps le financement de l'escrow (setupDepositRequirements/paiement). Une mission peut rester ACCEPTED indéfiniment : les deux parties ont convenu d'un prix ON-platform (preuve d'intention) puis exécutent et paient OFF-platform. Combiné à l'annulation gratuite (feeRate=0 avant paiement) et au contact déjà révélé, il n'existe aucune force qui pousse l'argent dans l'escrow. Uber capture le paiement à l'acceptation ; ici le paiement est optionnel et différable sans conséquence.",
+  "recommendation": "Après acceptation d'une offre, exiger le financement de l'escrow (pré-autorisation carte) sous un délai court, sinon expirer l'accord et libérer la mission. Ne débloquer le contact réel et le démarrage (startTravel) qu'après pré-autorisation. Mesurer le taux 'accepté mais jamais payé' par utilisateur comme signal fort de désintermédiation.",
+  "enforcement": "bloquer (démarrage/contact gated sur escrow financé) + expiration auto de l'accord + flag 'accepté-jamais-payé'",
+  "files": "mission/services/negotiation.service.ts (accept l.134-276), mission/services/mission.service.ts (setupDepositRequirements l.534-590, startTravel l.595-646)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Aucune détection de couples récurrents ni de pattern annuler/re-poster pour le même artisan",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "Rien ne trace qu'un même client re-poste des missions systématiquement 'gagnées' puis annulées par le même artisan (signature d'une relation devenue hors plateforme). cleanupExpiredMissions (mission-cron.service.ts l.117) ne fait qu'annuler les PENDING >30j, et declineMission renvoie en PENDING sans historiser un compteur de récidive par couple. Il n'existe pas de métrique de 'taux de complétion' ni de détection de re-appariement client<->artisan hors flux payant, alors qu'Uber flagge précisément les couples chauffeur/passager qui matchent puis annulent de façon répétée.",
+  "recommendation": "Ajouter un moteur de détection de désintermédiation : compter par couple (clientId, artisanId) les cycles match/négociation/annulation sans paiement ; au-delà d'un seuil, flag admin + friction (dépôt obligatoire, matching réduit). Suivre un completion-rate par utilisateur et pénaliser les faibles taux.",
+  "enforcement": "flag (couples à risque) + pénalité (dépôt obligatoire / matching réduit) + revue admin",
+  "files": "mission/services/mission-cron.service.ts (l.107-173, 251-290), mission/services/mission.service.ts (declineMission l.920-938)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Le litige/annulation permet de vider l'escrow puis de refaire le deal en direct, sans blocage de ré-appariement",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "dispute.resolve (dispute.service.ts l.307-414) peut rembourser le client (REFUND_CLIENT/PARTIAL_REFUND) et no-show.applyNoShowConsequences (no-show.service.ts l.269-371) passe la mission en CANCELLED_NO_SHOW. Dans les deux cas, une fois l'argent sorti de l'escrow et les coordonnées déjà échangées, rien n'empêche client et artisan de refaire immédiatement le même travail en direct. Le RefundAbuseDetector existe côté client (dispute.create l.59-95) mais il n'y a aucune détection symétrique 'litige/no-show puis exécution off-platform' ni cooldown sur le couple.",
+  "recommendation": "Après un remboursement de litige ou un no-show validé, marquer le couple (client, artisan) et surveiller/limiter une ré-collaboration directe rapprochée ; intégrer ces événements au score de désintermédiation. Exiger escrow pré-financé pour toute nouvelle mission entre un couple ayant récemment 'annulé/remboursé'.",
+  "enforcement": "flag + friction (escrow obligatoire) sur ré-appariement post-litige/no-show",
+  "files": "dispute/services/dispute.service.ts (resolve l.307-414), payment/services/no-show.service.ts (applyNoShowConsequences l.269-371)",
+  "dimension": "Flux de circonvention de frais (anti-désintermédiation / revenue integrity)"
+ },
+ {
+  "title": "Le module CRM est une machine a poaching integree : liste exportable nom+email+telephone de tous les clients de l'artisan",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "GET /crm/clients (crm.controller.ts) appelle CrmService.findAllClients qui retourne pour CHAQUE client le bloc { id, firstName, lastName, email, phone } (crm.service.ts:51-97). L'artisan dispose donc d'un carnet d'adresses permanent, cherchable (filtre search sur email/nom) et trie par derniere activite, de TOUS ses clients plateforme, avec coordonnees directes. Exploitation : l'artisan ouvre 'Mes clients', exporte les emails/telephones et demarche tout le monde hors Krafolt (devis direct, cash, 0% commission). C'est exactement ce qu'Uber interdit : un chauffeur n'a jamais la liste ni les coordonnees de ses passagers. Pire, createRelationship (crm.service.ts:16-49) accepte n'importe quel clientId (UUID) SANS verifier qu'une mission/relation reelle a existe : l'artisan peut rattacher a son CRM des clients croises via missions ouvertes ou chat et enrichir sa base.",
+  "recommendation": "Repenser le CRM facon Uber : ne JAMAIS exposer email/phone bruts. Retirer email+phone des select client de findAllClients/getRelationship/getFollowUps ; n'afficher que prenom + initiale (ou un alias). Tout contact passe par un relais masque plateforme (email proxy + telephone masque). Exiger une preuve de relation reelle (au moins une mission COMPLETED entre artisanId et clientId) avant de creer une ClientRelationship, cote serveur.",
+  "enforcement": "Masquer (supprimer email/phone des reponses CRM) + bloquer la creation de relation sans mission verifiee + journaliser/plafonner les acces en masse (flag anti-scraping au-dela d'un seuil).",
+  "files": "crm/services/crm.service.ts (findAllClients:51-97, getRelationship:99-139, getFollowUps:220-242, createRelationship:16-49), crm/controllers/crm.controller.ts",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Export de masse des coordonnees clients en un seul appel : ClientFilterDto.limit sans plafond (@Max)",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "ClientFilterDto (crm/dto/crm.dto.ts:160-180) declare limit avec @IsNumber @IsOptional mais AUCUN @Max ni borne serveur ; findAllClients fait take: limit tel quel (crm.service.ts:52,83). Un artisan appelle GET /crm/clients?limit=100000 et exfiltre en UNE requete la totalite de sa base clients (nom+email+telephone), ce qui contourne aussi le throttler global (1000 req/h) puisqu'un seul appel suffit. Meme faille de pagination ouverte cote confort de scraping.",
+  "recommendation": "Borner limit cote serveur : @Max(50) sur le DTO ET clamp defensif Math.min(limit, 50) dans le service. Ajouter un plafond dur au nombre total de fiches contact renvoyables et un compteur d'acces (detection d'aspiration).",
+  "enforcement": "Bloquer (clamp du take) + flag anti-scraping au-dela d'un volume horaire de fiches consultees.",
+  "files": "crm/dto/crm.dto.ts:160-180, crm/services/crm.service.ts:52,83",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Email + telephone du client reveles a TOUT artisan sur une mission ouverte, avant toute reservation ou paiement",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "MissionService.findOne (mission/services/mission.service.ts:122-179) inclut client { phone: true, email: true } (lignes 126-134). Le controle d'acces (163-177) autorise explicitement isOpen (mission PENDING/NEGOTIATING non assignee => 'tout artisan peut la voir pour offrir') ET tout isNegotiationParticipant. Donc n'importe quel artisan qui ouvre le detail d'une mission ouverte recupere immediatement l'email ET le telephone reel du client, AVANT tout devis accepte, tout escrow, toute commission. De plus un artisan dont l'offre est REJETEE reste negotiation participant et conserve l'acces au contact a vie. Exploitation : parcourir /missions/nearby (liste), ouvrir chaque mission, aspirer email+telephone+adresse (la mission expose aussi latitude/longitude/adresse) puis contacter le client hors plateforme pour court-circuiter la commission. Uber ne devoile qu'un numero MASQUE et uniquement pendant une course acceptee.",
+  "recommendation": "Ne jamais renvoyer client.email/client.phone tant que la mission n'est pas ATTRIBUEE + payee (escrow finance). Pour les missions ouvertes et les negociations, ne renvoyer que prenom + initiale et une zone approximative (pas l'adresse exacte ni les coordonnees GPS precises). Apres attribution, passer par un relais masque (email proxy / numero anonymise) plutot que le vrai contact.",
+  "enforcement": "Masquer conditionnellement (email/phone/adresse exacte uniquement pour l'artisan assigne apres paiement) + relais masque au lieu du vrai numero.",
+  "files": "mission/services/mission.service.ts:122-179 (select client email/phone + regle isOpen/isNegotiationParticipant)",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Annuaire artisans public et non authentifie : email + telephone exposes, scrapables en masse",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "GET /users/artisans et GET /users/artisans/:id (user/controllers/user.controller.ts:73-91) n'ont AUCUN @UseGuards(JwtAuthGuard) : endpoints publics. getArtisans (user.service.ts:213-236) retourne jusqu'a 50 artisans passes par stripSensitiveUserFields, et getArtisan (254-317) passe par un pick 'sanitized' ; or ni l'un ni l'autre ne retirent email ni phone (stripSensitiveUserFields liste 26 champs internes mais PAS email/phone). Resultat : n'importe qui, sans compte, peut aspirer l'annuaire des artisans avec leurs email/telephone reels. Un client (ou un concurrent, ou un agregateur) recupere les contacts de tous les artisans et les demarche/recrute hors Krafolt. C'est la desintermediation cote offre.",
+  "recommendation": "Retirer email et phone des reponses getArtisans/getArtisan (ajouter aux champs strippes / passer par un select explicite sans PII de contact). Exiger l'authentification sur ces endpoints. Le contact d'un artisan ne doit se faire que via un formulaire/chat plateforme ou un relais masque, jamais via l'email/telephone brut affiche sur une fiche.",
+  "enforcement": "Masquer (supprimer email/phone du DTO public) + exiger auth + relais masque pour tout contact.",
+  "files": "user/controllers/user.controller.ts:73-91 (pas de guard), user/services/user.service.ts:213-236 (getArtisans), :238-252 (stripSensitiveUserFields n'enleve pas email/phone), :254-317 (getArtisan)",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Export RGPD : dump JSON en un clic des coordonnees des contreparties et des adresses de tous les chantiers",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "GdprService.exportUserData (user/services/gdpr.service.ts:11-79) inclut savedArtisans -> artisan { firstName, lastName, email } (16-30) : un client exporte l'email de tous ses artisans favoris. Cote artisan, artisanMissions/clientMissions sont inclus en brut (true, lignes 39-40) : chaque mission porte l'adresse + latitude/longitude du chantier client ; issuedInvoices/receivedInvoices en brut (43-44) portent les identifiants de la contrepartie. L'endpoint /users/gdpr/export devient un exfiltrateur legitime : un clic => JSON avec l'email des favoris et l'adresse de chaque client servi. Le RGPD impose de restituer les donnees du DEMANDEUR, pas les coordonnees de contact des tiers.",
+  "recommendation": "Un export RGPD ne doit contenir que la PII du demandeur. Pour les relations (favoris, missions, factures), n'exposer que des identifiants pseudonymises ou le prenom, jamais l'email/telephone/adresse exacte de la contrepartie. Retirer le select email des savedArtisans ; remplacer les adresses de mission par une zone approximative ; ne pas embarquer les coordonnees de la contrepartie dans les factures exportees.",
+  "enforcement": "Masquer (pseudonymiser les tiers dans l'export) + retirer email/adresse exacte des contreparties.",
+  "files": "user/services/gdpr.service.ts:11-79 (savedArtisans email 16-30, clientMissions/artisanMissions 39-40, issued/receivedInvoices 43-44)",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Aucun masquage/relais des contacts : Krafolt stocke et affiche les vrais emails et telephones partout (pas de numero anonymise a la Uber)",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Sur toute la plateforme (CRM, mission detail, fiche artisan, factures invoice.service.ts:129-402 qui select email des deux parties, company.service getCompanyById owner.email) le contact expose est l'email/telephone REEL de la contrepartie. Il n'existe aucune couche de relais masque (email proxy type xxx@relay.krafolt.com, telephone anonymise). Des qu'une des deux parties voit le vrai contact de l'autre (ce qui arrive des la mise en relation), la desintermediation est triviale et definitive : le contact est memorise hors plateforme et les transactions suivantes echappent a la commission. Uber/Airbnb reposent entierement sur le masquage des coordonnees pour retenir la valeur.",
+  "recommendation": "Introduire une couche de communication masquee : email relay et telephone anonymise generes par mission, actifs seulement pendant la fenetre de service et revoques ensuite. Ne jamais transmettre le vrai email/telephone dans les payloads API cote contrepartie. Router appels/emails via la plateforme (tracabilite + preuve en cas de contournement).",
+  "enforcement": "Masquer par defaut + relais plateforme temporaire + revocation post-mission ; penalite si contournement detecte.",
+  "files": "mission/services/mission.service.ts:126-134, crm/services/crm.service.ts (selects client), invoice/services/invoice.service.ts:129-402, company/company.service.ts (owner.email), user/services/user.service.ts:254-317",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Le filtre anti-contact n'est cable que dans le chat : devis, avis, descriptions de mission et profils entreprise ne sont pas filtres",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "ContentFilterService (chat/services/content-filter.service.ts) est une vraie protection anti-desintermediation (detecte tel/email/URL/reseaux, bloque en HIGH, auto-suspend a 5 violations/30j). MAIS filterContent n'est appele QUE dans chat.service.ts (ligne 37). Aucun autre champ libre ne passe par le filtre : notes/description des devis (quote), texte des avis (review), description de mission, description/profil entreprise, champs CRM notes. Un artisan (ou client) glisse donc son telephone/email/site dans un devis, un avis, une description de mission ou sa fiche entreprise pour donner rendez-vous hors plateforme sans jamais declencher le filtre. Les regex laissent aussi passer des formats espaces/obfusques hors patterns prevus.",
+  "recommendation": "Appliquer ContentFilterService a TOUS les champs texte libre exposes a la contrepartie : creation/maj de devis, avis, description de mission, profil/description entreprise, notes partagees. Journaliser et compter ces violations dans le meme compteur d'auto-suspension. Renforcer les patterns (chiffres espaces, mots-nombres complets, TLD/pays LU/BE).",
+  "enforcement": "Bloquer/filtrer au niveau de chaque champ libre + flag/violation comptabilisee + auto-suspension partagee.",
+  "files": "chat/services/content-filter.service.ts (seul appelant: chat/services/chat.service.ts:37), non applique dans quote/*, review/*, mission/*, company/*",
+  "dimension": "ANTI-POACHING / EXFILTRATION DE DONNEES (revenue integrity / anti-desintermediation)"
+ },
+ {
+  "title": "Le profil artisan public livre téléphone + email + adresse en clair (endpoint sans garde)",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "GET /user/artisans/:id (user.controller.ts l.87-91, AUCUN @UseGuards) appelle getArtisan() qui, après un mission (l.288-315) retire seulement les champs internes de sécurité (password, tokens, scores fraude) mais LAISSE passer phone et email dans le spread `...sanitized`. Le front /client/artisans/[id]/page.tsx affiche directement artisan.phone (l.428), artisan.email (l.432) et l'adresse complète (l.423). Exploitation : n'importe qui (client OU scraper non authentifié) ouvre une fiche artisan, récupère tel+email+adresse, puis contacte l'artisan en direct pour TOUTES les missions futures. La plateforme perd 100% de la commission sur le ré-engagement dès le 1er contact. C'est LA fuite centrale du re-booking.",
+  "recommendation": "Ne jamais renvoyer phone/email/adresse exacte sur un endpoint de profil consultable par un tiers. Ajouter phone, email, baseAddress/address à la liste de champs supprimés (stripSensitiveUserFields ET getArtisan). Exposer seulement ville + rayon approximatif. Le contact réel ne doit être révélé qu'APRÈS une mission payée/escrow active, et via un canal proxifié (chat filtré, tel masqué type Uber).",
+  "enforcement": "Bloquer : retirer phone/email/adresse du payload API ; masquer côté front ; ne dé-masquer qu'après booking commissionné confirmé.",
+  "files": "backend/api-gateway/src/user/services/user.service.ts (getArtisan l.254-317, stripSensitiveUserFields l.239-252, getArtisans l.213-236) ; backend/api-gateway/src/user/controllers/user.controller.ts (l.73-91) ; frontend/app/client/artisans/[id]/page.tsx (l.419-433)",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "La liste publique des artisans permet le scraping en masse des coordonnées",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "GET /user/artisans (user.controller.ts l.73-85, sans garde) -> getArtisans() renvoie jusqu'à 50 users via stripSensitiveUserFields() qui NE retire PAS phone ni email (user.service.ts l.239-252). Exploitation : un concurrent ou un artisan malveillant pagine/scrape tout l'annuaire et récupère la base complète tel+email de tous les artisans (et par symétrie les mêmes fuites existent côté clients dans les autres flux), pour les débaucher hors plateforme ou monter un annuaire concurrent. Désintermédiation industrielle.",
+  "recommendation": "Retirer phone/email/baseAddress de stripSensitiveUserFields (donc de la liste et de getArtisan). Rate-limiter + paginer l'annuaire. Ne jamais exposer de coordonnées de contact sur un endpoint de listing.",
+  "enforcement": "Bloquer : champs contact absents du payload ; rate-limit/anti-bot sur l'annuaire.",
+  "files": "backend/api-gateway/src/user/services/user.service.ts (getArtisans l.213-236, stripSensitiveUserFields l.239-252) ; backend/api-gateway/src/user/controllers/user.controller.ts (l.73-85)",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "La liste de favoris renvoie elle-même email + téléphone de l'artisan favori",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "favorite/services/favorite.service.ts getFavorites() (l.106-146) inclut explicitement `email: true, phone: true` (l.124-125) dans le select de l'artisan. Le favori — qui devrait être le crochet de rétention qui ramène le client vers une NOUVELLE mission commissionnée — devient au contraire un carnet d'adresses privé : le client met l'artisan en favori une fois (après 1 seule mission payée), puis l'API de favoris lui ressert tel+email à volonté. Il l'appelle en direct pour les 10 missions suivantes. La feature de fidélisation est retournée en outil de désintermédiation.",
+  "recommendation": "Supprimer email/phone du select de getFavorites. Un favori ne doit exposer QUE nom commercial, note, spécialités, et un bouton 'Re-réserver' qui ouvre une mission commissionnée (voir finding suivant). Le contact réel reste masqué tant qu'il n'y a pas de mission payée en cours.",
+  "enforcement": "Bloquer : retirer les champs contact ; remplacer par une CTA de re-booking on-platform.",
+  "files": "backend/api-gateway/src/favorite/services/favorite.service.ts (getFavorites l.116-145, en particulier l.124-125)",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "Aucun vrai flux 'Re-réserver cet artisan' : le favori ne débouche pas sur une mission ciblée commissionnée",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Le bouton 'Créer une mission' de la fiche favori pointe vers /client/missions/new?artisanId=X (frontend .../artisans/[id]/page.tsx l.197-198), MAIS la page /client/missions/new/page.tsx ne lit jamais le param artisanId (grep: aucune occurrence de artisanId/searchParams), et le backend mission.service.ts create() (l.23-69) + CreateMissionDto n'ont ni artisanId ni preferredArtisan : la mission part en pool OUVERT (status PENDING, findAndNotifyNearbyArtisans). Conséquence : même un client qui VEUT rester sur la plateforme et re-embaucher son artisan de confiance ne peut pas le faire directement — sa demande est remise aux enchères auprès de concurrents, l'artisan favori n'est même pas garanti d'être notifié. Le chemin le plus simple pour re-travailler ensemble redevient l'appel direct (dont le numéro est justement affiché). Fuite structurelle du ré-engagement.",
+  "recommendation": "Implémenter un vrai re-booking façon Uber/Airbnb : CreateMissionDto.preferredArtisanId ; si présent, créer la mission en offre DIRECTE réservée à cet artisan (statut type DIRECT_OFFER, TTL court) avant tout fallback pool. La page new doit lire artisanId, préremplir et verrouiller le destinataire. Historique de missions -> bouton 'Refaire avec {artisan}' en 1 clic, entièrement dans le funnel commissionné (escrow + facture).",
+  "enforcement": "Ajouter le chemin commissionné ciblé ; rendre le re-booking direct plus facile que l'appel hors-plateforme (1-tap reorder).",
+  "files": "frontend/app/client/missions/new/page.tsx (ne lit pas artisanId) ; frontend/app/client/artisans/[id]/page.tsx (l.197-198) ; backend/api-gateway/src/mission/services/mission.service.ts (create l.23-69) ; backend/api-gateway/src/mission/dto/mission.dto.ts (CreateMissionDto sans preferredArtisanId)",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "Les missions ouvertes exposent tel + email du client à tout artisan avant tout paiement",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "mission.service.ts findOne() (l.122-180) inclut client { phone, email } (l.131-132) et le contrôle d'accès (l.163-177) autorise la lecture dès que `isOpen` (mission non assignée en PENDING/NEGOTIATING, l.165) OU que l'appelant est 'participant à une négociation' (l.166-168). Donc TOUT artisan qui parcourt le pool ouvert, ou dont l'offre a été refusée, obtient le téléphone + email du client AVANT toute commission/escrow. Exploitation : l'artisan appelle le client, propose de faire le job en direct (moins cher car sans commission), la mission n'est jamais bookée sur la plateforme. Le ré-engagement futur se fait aussi hors-plateforme.",
+  "recommendation": "Ne jamais exposer les coordonnées client tant que la mission n'est pas attribuée ET payée (escrow financé). Sur mission ouverte, renvoyer seulement titre/description/zone approx. Révéler le contact réel uniquement à l'artisan retenu, après financement, via canal proxifié. Retirer l'accès contact aux 'participants négociation' non retenus.",
+  "enforcement": "Masquer client.phone/email dans findOne selon (statut, rôle de l'appelant, escrow financé) ; contact proxifié seulement post-paiement.",
+  "files": "backend/api-gateway/src/mission/services/mission.service.ts (findOne l.122-180, select client l.126-134, ACL l.163-177)",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "Le flux 'requests' du marketplace fuit aussi email + téléphone du client",
+  "severity": "medium",
+  "kind": "fuite-existante",
+  "leak": "marketplace/services/request.service.ts renvoie systématiquement client { email:true, phone:true } dans create (l.126-127), findAll (l.181-182) et findOne (l.217-218). Ce funnel parallèle de demandes directes rejoue exactement la même désintermédiation que les missions : l'artisan destinataire récupère les coordonnées du client et bascule la relation (et toutes les futures) hors plateforme.",
+  "recommendation": "Aligner ce flux sur la règle unique 'contact réel uniquement post-booking payé'. Retirer email/phone client des payloads de request tant qu'aucune mission commissionnée n'est financée.",
+  "enforcement": "Masquer/retirer les champs contact ; centraliser la règle de révélation de contact dans un seul serializer partagé.",
+  "files": "backend/api-gateway/src/marketplace/services/request.service.ts (l.126-127, 181-182, 217-218, 409)",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "Le filtre anti-contact du chat est rendu inutile par la fuite des coordonnées sur les profils",
+  "severity": "medium",
+  "kind": "fuite-existante",
+  "leak": "La plateforme investit dans un vrai content-filter (chat/services/content-filter.service.ts : regex tel FR/LU, email, URLs, handles -> remplacés par [NUMÉRO BLOQUÉ]/[EMAIL BLOQUÉ], appliqué dans chat.service.ts l.37) pour empêcher l'échange de coordonnées in-app. Mais cet effort est totalement contourné : les mêmes tel+email sont servis en clair par getArtisan (finding 1), la liste favoris (finding 3) et la mission ouverte (finding 5). Enforcement incohérent = protection nulle : inutile de masser le numéro dans le chat si la fiche de l'artisan l'affiche à côté.",
+  "recommendation": "Traiter la révélation de contact comme UNE seule politique cohérente : si le chat masque, les endpoints profil/favori/mission doivent masquer aussi. Le seul canal de contact avant booking payé doit être le chat filtré ; le numéro réel n'apparaît nulle part ailleurs.",
+  "enforcement": "Uniformiser : aucun endpoint ne dé-masque un contact que le chat masquerait ; un seul point de décision de révélation.",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts ; backend/api-gateway/src/chat/services/chat.service.ts (l.37) ; à mettre en cohérence avec user.service.ts / favorite.service.ts / mission.service.ts",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "Aucun mécanisme de fidélisation / lock-in incitant à re-booker sur la plateforme",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Recherche exhaustive : aucune brique de rétention économique (grep loyalty/fidélité/reward/points/credit/parrainage/referral -> zéro implémentation côté produit ; seulement des pages admin de réputation/fees). Il manque tout ce qui, chez Uber/Airbnb, rend le retour on-platform plus avantageux que le hors-plateforme : pas de crédits/cashback de fidélité, pas de parrainage, pas de 'garantie travaux' conditionnée à une réservation sur la plateforme, pas de re-booking 1-clic depuis l'historique, pas de paiement enregistré réutilisable, pas de programme de récompense artisan pour missions répétées via la plateforme. Résultat : une fois le premier job fait, le client et l'artisan n'ont AUCUNE raison économique de repasser par Krafolt — seulement des raisons de ne pas le faire (la commission). C'est la faille stratégique qui amplifie toutes les fuites précédentes.",
+  "recommendation": "Construire un lock-in positif façon Uber/Airbnb : (1) garantie/assurance travaux + résolution de litige valables UNIQUEMENT si la mission a été bookée et payée on-platform (déjà un atout : dispute/escrow existants -> le marketer explicitement) ; (2) crédits de fidélité client + statut/badges artisan débloqués par volume de missions commissionnées ; (3) re-booking 1-clic depuis l'historique et depuis les favoris (finding 4) ; (4) parrainage rémunéré ; (5) paiement enregistré. L'objectif : rendre le retour sur plateforme plus pratique ET moins risqué que l'accord de gré à gré.",
+  "enforcement": "Flag/pénalité : conditionner garantie, litige, avis vérifiés et badges de réputation à un historique de missions payées sur la plateforme ; récompenser (crédits/statut) le re-booking on-platform.",
+  "files": "Aucun module dédié (à créer) — s'appuyer sur mission (historique), payment (escrow/garantie), dispute (litige), badges, review pour conditionner les avantages au booking commissionné",
+  "dimension": "RÉTENTION / RE-BOOKING SUR PLATEFORME (anti-désintermédiation du ré-engagement)"
+ },
+ {
+  "title": "Le profil artisan PUBLIC expose téléphone + email en clair (endpoint non authentifié) — désintermédiation en 1 clic",
+  "severity": "critical",
+  "kind": "fuite-existante",
+  "leak": "GET /users/artisans/:id (user.controller.ts ligne 87-90) n'a AUCUN @UseGuards : il est totalement public (non authentifié). Le service getArtisan() (user.service.ts l.254-315) 'sanitise' par LISTE NOIRE : il destructure et retire ~25 champs internes (tokens, scores fraude, IP…) puis renvoie `...sanitized` — mais ni `phone` ni `email` ne sont dans la liste, donc ils passent. Idem getArtisans() (liste, l.213-236) via stripSensitiveUserFields() qui ne retire pas phone/email. Le front l'affiche littéralement : app/client/artisans/[id]/page.tsx l.428 `{artisan.phone}` et l.432 `{artisan.email}`. Exploitation : n'importe qui (même un bot non connecté) lit la fiche d'un artisan, récupère son 06 et son email, l'appelle en direct = 0 commission. Pire, c'est du HARVESTING de masse : un concurrent scrape tout l'annuaire artisans (phone+email) sans compte. Tout le filtre de contenu du chat devient cosmétique puisque le contact est publié en façade.",
+  "recommendation": "Ne JAMAIS renvoyer phone/email sur un endpoint public/annuaire. Remplacer la sanitisation par LISTE BLANCHE (select Prisma explicite des seuls champs publics : id, firstName, avatar, note, spécialités, ville) au lieu de la liste noire (qui fuit tout nouveau champ PII ajouté au modèle). Le téléphone/email ne doit être révélé qu'après paiement de l'escrow d'une mission liant précisément ce client et cet artisan (concept 'reveal contact after payment' aujourd'hui totalement absent : grep revealContact/unlockContact = 0). Ajouter aussi une auth sur la route.",
+  "enforcement": "masquer (liste blanche stricte) + gater la révélation contact derrière un paiement escrow confirmé + authentifier la route + rate-limit anti-scraping de l'annuaire",
+  "files": "backend/api-gateway/src/user/controllers/user.controller.ts (l.73-90), backend/api-gateway/src/user/services/user.service.ts (getArtisan l.254-315, getArtisans l.213-236, stripSensitiveUserFields l.238-252), frontend/app/client/artisans/[id]/page.tsx (l.428, l.432)",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Aucun détecteur de désintermédiation / leakage dans fraud/* — lacune structurelle",
+  "severity": "critical",
+  "kind": "protection-manquante",
+  "leak": "Le module fraud (fraud.module.ts) contient 7 détecteurs : multi-account, review, payout, price-anomaly, refund-abuse, session-anomaly, bot. AUCUN détecteur 'disintermediation/leakage/off-platform'. Il n'existe nulle part de score de risque de contournement par utilisateur, ni d'agrégation des signaux (violations contenu + annulations + ratio contact/conversion). Résultat : la plateforme ne 'voit' pas un artisan qui pousse systématiquement au hors-plateforme, ni un client qui pêche des contacts. Uber/Airbnb en font le cœur de leur revenue integrity ; ici c'est un angle mort complet.",
+  "recommendation": "Créer fraud/services/disintermediation-detector.service.ts qui calcule un leakageRiskScore par user en agrégeant : (a) nb de ContentViolation contact/30j (déjà stocké), (b) ratio 'conversations initiées → missions payées' anormalement bas, (c) pattern 'échange N messages puis annule/abandonne sans paiement', (d) mots-clés de sollicitation off-platform ('on se fait ça direct', 'sans la commission', 'en direct', 'de la main à la main', 'hors site'), (e) demande répétée de coordonnées. Exposer un flag leakageFlagged + endpoint admin + job automatique (comme les autres, mais AUTO). Champs à ajouter au modèle User : leakageRiskScore, leakageFlagged, offPlatformSolicitationCount.",
+  "enforcement": "flag automatique + score + palier de pénalités (avertissement → masquage coordonnées renforcé → suspension mise en relation → désactivation compte façon Uber deactivation)",
+  "files": "backend/api-gateway/src/fraud/fraud.module.ts, backend/api-gateway/src/fraud/services/ (nouveau disintermediation-detector.service.ts), backend/api-gateway/src/fraud/controllers/fraud.controller.ts",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Le filtre anti-contact n'est branché QUE sur le chat DIRECT peer-to-peer — mission/devis/avis/portfolio non filtrés",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "ContentFilterService.filterContent() n'est appelé qu'à un seul endroit métier : chat.service.createMessage() (l.37). InternalChatService.sendMessage() (internal-chat.service.ts l.271-333), qui gère les rooms type 'MISSION' (conversation client↔artisan liée à une mission), n'appelle AUCUN filtre : le content est stocké brut. De même, aucun filtrage sur : messages de négociation de mission (mission/dto/negotiation.dto.ts `message`), devis (quote.dto description/notes/message), description de mission, commentaires d'avis (review.dto comment), descriptions portfolio. Exploitation : un artisan met son 06 dans la description de son devis ou dans le fil de négociation de mission — canaux vus par le client, jamais filtrés. Le filtre du chat direct est contournable en changeant simplement de canal.",
+  "recommendation": "Centraliser le filtrage : intercepter TOUT champ texte libre user-généré visible par l'autre partie (internal-chat MISSION, négociation, devis description/notes/message, avis, portfolio) via un pipe/interceptor commun appelant ContentFilterService. Au minimum, brancher filterContent() dans InternalChatService.sendMessage() et editMessage(), et dans la création de devis/négociation.",
+  "enforcement": "bloquer (HIGH) / masquer (MEDIUM) + logViolation sur TOUS les canaux, pas seulement le chat direct",
+  "files": "backend/api-gateway/src/chat/services/internal-chat.service.ts (sendMessage l.271, editMessage l.338), backend/api-gateway/src/quote/services/quote.service.ts, backend/api-gateway/src/mission/services/ (négociation), backend/api-gateway/src/review/, backend/api-gateway/src/chat/services/content-filter.service.ts",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "La WebSocket gateway ré-émet le contenu BRUT du payload au destinataire — bypass temps réel du filtre",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "chat.gateway.ts handleMessage() appelle bien createMessage() (qui filtre/bloque HIGH), mais ensuite émet au destinataire `content` = le payload ORIGINAL non filtré (l.153-160 : `content` provient de `payload`, pas du message filtré retourné). Deux conséquences : (1) pour les patterns MEDIUM (Instagram @handle, URL, Facebook, Telegram — qui NE bloquent PAS, seulement remplacés en base), le destinataire reçoit en direct le texte brut avec le contact intact ; seul l'historique relu plus tard est masqué. (2) La push notif (l.174) envoie aussi `content.substring(0,50)` brut. Le lecteur voyant le message live capte le contact avant tout masquage.",
+  "recommendation": "N'émettre et ne notifier QUE le contenu retourné/filtré par createMessage (message.content déchiffré côté filtré), jamais le payload brut. Faire renvoyer par createMessage le filteredContent en clair pour diffusion, et l'utiliser dans server.emit('new_message', {content: filtered}) et dans la push notif.",
+  "enforcement": "masquer — la diffusion temps réel doit utiliser le contenu filtré, jamais le payload d'origine",
+  "files": "backend/api-gateway/src/chat/gateways/chat.gateway.ts (l.145-176), backend/api-gateway/src/chat/services/chat.service.ts (createMessage l.30-73)",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Pattern 'pêche aux contacts puis annulation' (contacte 5 artisans, annule tout) non détecté ni pénalisé",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "Le seul détecteur proche, RefundAbuseDetectorService, ne se déclenche que si ratio annulations/litiges ≥30% ET ≥5 missions (refund-abuse-detector.service.ts l.28), il est admin-only en trigger MANUEL (fraud.controller.ts l.83), il ne renvoie qu'une 'recommendation' (aucune action appliquée), et il n'a AUCUN lien avec le partage de contact. Le scénario 'fishing' typique passe totalement sous le radar : un client ouvre des conversations avec 5 artisans, obtient un contact hors-plateforme (via un des canaux non filtrés ci-dessus ou via la fiche publique), puis annule / n'engage jamais de paiement. Rien ne mesure le ratio 'contacts pris / missions payées', rien ne pénalise l'abandon systématique post-mise-en-relation.",
+  "recommendation": "Ajouter au futur disintermediation-detector un signal 'contact-fishing' : nb de conversations/négociations initiées sur fenêtre glissante vs nb de missions effectivement payées ; si beaucoup de mises en relation et ~0 conversion + présence de ContentViolation → flag. Coupler avec un dépôt/consigne remboursable (deposit) exigé des clients à haut leakageRiskScore avant d'ouvrir de nouvelles mises en relation (le refund-abuse detector propose déjà 'REQUIRE_DEPOSIT' mais rien ne l'applique).",
+  "enforcement": "flag + REQUIRE_DEPOSIT appliqué automatiquement + throttling du nombre de mises en relation simultanées pour un compte flaggé + suspension si récidive",
+  "files": "backend/api-gateway/src/fraud/services/refund-abuse-detector.service.ts, backend/api-gateway/src/fraud/controllers/fraud.controller.ts, backend/api-gateway/src/fraud/services/ (nouveau détecteur)",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Tous les détecteurs de fraude sont des endpoints admin manuels, sans enforcement automatique",
+  "severity": "high",
+  "kind": "protection-manquante",
+  "leak": "fraud.controller.ts n'expose que des POST manuels @Roles(ADMIN) (detect/screen). Aucun n'est câblé à un cron ou à un hook d'événement, et aucun n'applique de sanction : ils retournent un score/recommendation qu'un humain doit lire. La SEULE enforcement automatique de toute la dimension anti-désintermédiation est l'auto-suspension du ContentFilterService après 5 violations/30j (content-filter.service.ts l.252-273). Façon Uber, la sollicitation off-platform prouvée entraîne une désactivation quasi automatique ; ici, hors le seuil de 5, un artisan peut solliciter à répétition sans conséquence tant qu'aucun admin ne lance manuellement une détection.",
+  "recommendation": "Rendre les détecteurs déclenchés par événements (nouvelle mission annulée, nouveau message bloqué, nouvelle conversation) et appliquer des actions graduées automatiquement (avertissement in-app, exigence de dépôt, gel des mises en relation, suspension). Journaliser chaque action dans un registre auditable. Abaisser/rendre configurable le seuil d'auto-suspension et ajouter un palier 'avertissement' avant suspension.",
+  "enforcement": "pénalité automatique graduée (avertissement → dépôt → gel mise en relation → désactivation) sur événement, pas sur trigger admin manuel",
+  "files": "backend/api-gateway/src/fraud/controllers/fraud.controller.ts, backend/api-gateway/src/fraud/services/*.ts, backend/api-gateway/src/chat/services/content-filter.service.ts (l.252-273)",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Filtre de contact contournable : lacunes d'obfuscation, pas d'OCR sur images, pièces jointes non filtrées",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "content-filter.service.ts repose sur des regex. Contournements triviaux : chiffres en toutes lettres seulement gérés par paires 'zéro six' (WRITTEN_PHONE) mais pas 'zéro-six-douze…' complet ni chiffres unicode/pleine-largeur ; séparateurs exotiques (points médians, emojis entre chiffres) ; épellation ('mon numéro : o six espace…'). Surtout : aucun filtrage des IMAGES (un artisan envoie une photo de carte de visite / capture avec son 06 — type IMAGE/FILE non analysé, pas d'OCR), et les pièces jointes (attachments) du chat interne ne passent par aucun filtre. Le filtre attrape le débutant, pas l'utilisateur déterminé.",
+  "recommendation": "Renforcer les patterns (normaliser unicode→ASCII, retirer séparateurs avant matching, couvrir séquences de chiffres écrits longues), analyser les uploads via OCR pour numéros/emails, refuser/mettre en quarantaine les images contenant des coordonnées, et compter ces tentatives dans le leakageRiskScore. Normaliser le texte (NFKC + strip séparateurs) avant d'appliquer les regex.",
+  "enforcement": "bloquer/quarantaine des pièces jointes suspectes + flag + incrément du score de risque",
+  "files": "backend/api-gateway/src/chat/services/content-filter.service.ts, backend/api-gateway/src/chat/services/internal-chat.service.ts (attachments), backend/api-gateway/src/upload/",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Le devis expose téléphone + email du client à l'artisan (avant tout paiement)",
+  "severity": "high",
+  "kind": "fuite-existante",
+  "leak": "quote.service.ts findOne() (l.209-211) inclut `client: { select: { … email: true, phone: true } }`. Dès qu'un artisan consulte un devis lié à un client, il obtient son email ET son téléphone — avant tout escrow, donc avant toute commission garantie. Combiné à l'absence de gating 'reveal after payment', l'artisan peut contacter le client en direct et finaliser hors plateforme. Symétrique du leak fiche artisan : ici c'est le client qui est exposé.",
+  "recommendation": "Retirer phone (et idéalement email) des includes de devis tant que l'escrow n'est pas payé ; ne révéler les coordonnées client qu'une fois la mission engagée et payée. Utiliser un select minimal (prénom + initiale) pour la phase pré-paiement.",
+  "enforcement": "masquer les coordonnées client jusqu'au paiement escrow confirmé",
+  "files": "backend/api-gateway/src/quote/services/quote.service.ts (l.205-215 et autres select client email/phone : l.210), backend/api-gateway/src/mission/services/mission-assignment.service.ts",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ },
+ {
+  "title": "Aucun mécanisme de signalement 'sollicitation hors-plateforme' ni échelle de désactivation façon Uber",
+  "severity": "medium",
+  "kind": "protection-manquante",
+  "leak": "Le module moderation gère des reports génériques mais il n'existe pas de motif dédié 'l'autre partie m'a demandé de traiter hors plateforme / m'a donné son numéro pour éviter la commission', ni de traitement spécifique (le contournement est un délit économique, pas juste du contenu offensant). Résultat : aucun canal pour capitaliser sur le meilleur signal qui soit — la victime qui dénonce. Uber s'appuie fortement là-dessus. Aucune échelle de sanction documentée (warning → deactivation) n'est implémentée pour la désintermédiation.",
+  "recommendation": "Ajouter un type de report 'OFF_PLATFORM_SOLICITATION' (avec upload de preuve/capture), l'acheminer vers le disintermediation-detector, et définir une échelle de pénalités explicite : 1er signalement confirmé = avertissement + rappel CGU ; 2e = exigence de dépôt / gel temporaire des mises en relation ; 3e ou preuve flagrante = désactivation du compte (deactivation Uber-style) avec blocage des payouts en cours si mission détournée.",
+  "enforcement": "flag + échelle de pénalités graduée jusqu'à désactivation, alimentée par les signalements utilisateurs",
+  "files": "backend/api-gateway/src/moderation/ (dto/create-report.dto.ts, services/moderation.service.ts), backend/api-gateway/src/fraud/services/ (nouveau détecteur)",
+  "dimension": "Détection & pénalités anti-désintermédiation (revenue integrity / anti-leakage façon Uber)"
+ }
+]

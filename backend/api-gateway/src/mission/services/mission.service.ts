@@ -123,11 +123,14 @@ export class MissionService {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: {
+        // Select WHITELIST (jamais l'objet User brut). phone/email sont chargés mais NE SONT PAS
+        // renvoyés par défaut : ils sont masqués plus bas selon statut+rôle (révélation façon Uber).
         client: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
+            avatar: true,
             phone: true,
             email: true,
           },
@@ -137,6 +140,7 @@ export class MissionService {
             id: true,
             firstName: true,
             lastName: true,
+            avatar: true,
             phone: true,
             email: true,
             artisanProfile: {
@@ -148,6 +152,8 @@ export class MissionService {
             },
           },
         },
+        // Statut escrow nécessaire pour décider de la révélation des coordonnées.
+        transaction: { select: { status: true } },
         negotiations: {
           orderBy: {
             createdAt: 'desc',
@@ -176,7 +182,79 @@ export class MissionService {
       throw new ForbiddenException('Accès non autorisé');
     }
 
-    return mission;
+    // ── RÉVÉLATION DES COORDONNÉES (façon Uber) ────────────────────────────────
+    // Les COORDONNÉES réelles (phone/email) ne sont JAMAIS exposées tant que la mission n'est pas
+    // PAYÉE en escrow, et uniquement au CLIENT et à l'ARTISAN ASSIGNÉ. Un simple participant à la
+    // négociation (offre bidon à 1€) ne voit que prénom + initiale + note — jamais tel/email.
+    const isAdmin = role === 'ADMIN';
+    const isClientViewer = mission.clientId === userId;
+    const isAssignedArtisanViewer = !!mission.artisanId && mission.artisanId === userId;
+    const escrowSecured = this.isMissionPaidInEscrow(mission);
+
+    const revealClientContact =
+      isAdmin || isClientViewer || (isAssignedArtisanViewer && escrowSecured);
+    const revealArtisanContact =
+      isAdmin || isAssignedArtisanViewer || (isClientViewer && escrowSecured);
+
+    const sanitized: any = { ...mission };
+    sanitized.client = this.maskUserContact(mission.client, revealClientContact);
+    sanitized.artisan = mission.artisan
+      ? this.maskUserContact(mission.artisan, revealArtisanContact)
+      : mission.artisan;
+    // Ne pas divulguer l'objet transaction (montants/commission) via cet endpoint.
+    delete sanitized.transaction;
+    return sanitized;
+  }
+
+  /**
+   * Masque les coordonnées réelles d'un utilisateur (phone/email) et son nom de famille tant que la
+   * révélation n'est pas autorisée. Avant révélation : prénom + initiale du nom + note (via profil).
+   */
+  private maskUserContact(user: any, reveal: boolean) {
+    if (!user) return user;
+    if (reveal) return user;
+    const { phone: _phone, email: _email, lastName, ...rest } = user;
+    return {
+      ...rest,
+      lastName: lastName ? `${String(lastName).charAt(0)}.` : null,
+      phone: null,
+      email: null,
+    };
+  }
+
+  /**
+   * « Payée en escrow » au sens révélation (façon Uber) :
+   *   Transaction.status ∈ {HELD, COMPLETED}  OU
+   *   mission.status ∈ {PAID, DEPOSIT_PAID, IN_TRANSIT, IN_PROGRESS, COMPLETED, AUTO_VALIDATED} OU
+   *   depositPaidAt posé.
+   * Ces statuts avancés ne sont atteignables qu'après sécurisation réelle des fonds (cf. gardes
+   * paiement de startTravel/markArrival/markCompleted), donc le critère de statut reste fiable.
+   */
+  private isMissionPaidInEscrow(mission: any): boolean {
+    const paidStatuses = [
+      'PAID',
+      'DEPOSIT_PAID',
+      'IN_TRANSIT',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'AUTO_VALIDATED',
+    ];
+    return (
+      this.hasSecuredFunds(mission) ||
+      paidStatuses.includes(String(mission?.status))
+    );
+  }
+
+  /**
+   * Garde PAIEMENT stricte (money gate) : la plateforme a-t-elle réellement sécurisé l'argent ?
+   * On ne se fie PAS au seul mission.status (qui peut être avancé par erreur), mais à la preuve
+   * financière : Transaction HELD/COMPLETED (autorisation/capture) OU depositPaidAt (webhook Stripe).
+   */
+  private hasSecuredFunds(mission: any): boolean {
+    const txStatus = mission?.transaction?.status;
+    return (
+      !!mission?.depositPaidAt || txStatus === 'HELD' || txStatus === 'COMPLETED'
+    );
   }
 
   async updateStatus(
@@ -310,7 +388,26 @@ export class MissionService {
     });
 
     // Fallback : si le rayon exclut tout, on renvoie quand même les missions ouvertes récentes.
-    return filtered.length > 0 ? filtered : missions;
+    const result = filtered.length > 0 ? filtered : missions;
+    // Ces missions sont OUVERTES (non attribuées, non payées) : on n'expose que la zone approximative
+    // (ville + lat/lng arrondis). L'adresse exacte n'est révélée à l'artisan assigné qu'après escrow.
+    return result.map((m) => this.approximateMissionLocation(m));
+  }
+
+  /**
+   * Floute la localisation d'une mission tant qu'elle n'est pas payée+attribuée : retire l'adresse
+   * exacte / le code postal et arrondit lat/lng (~1 km). Ne conserve que la ville et une zone floue.
+   */
+  private approximateMissionLocation(mission: any) {
+    if (!mission) return mission;
+    const { address: _address, postalCode: _postalCode, latitude, longitude, ...rest } = mission;
+    return {
+      ...rest,
+      city: mission.city,
+      latitude: latitude != null ? Math.round(latitude * 100) / 100 : latitude,
+      longitude: longitude != null ? Math.round(longitude * 100) / 100 : longitude,
+      addressApproximate: true,
+    };
   }
 
   async findAndNotifyNearbyArtisans(mission: { id: string; category: string; latitude: number; longitude: number; title: string }) {
@@ -608,22 +705,15 @@ export class MissionService {
       throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
     }
 
-    // Vérifier que l'acompte est réellement PAYÉ (fonds retenus en escrow), pas seulement qu'un
-    // Payment/PaymentIntent existe : un Payment est créé dès l'intent (avant paiement réel).
-    // Le succès du paiement = Transaction HELD (autorisation carte) ou COMPLETED (capturé).
-    // On accepte aussi depositPaidAt (posé par le webhook charge.succeeded) comme preuve de paiement.
-    if (mission.depositRequired) {
-      const paymentSucceeded =
-        !!mission.depositPaidAt ||
-        (!!mission.transaction &&
-          (mission.transaction.status === 'HELD' ||
-            mission.transaction.status === 'COMPLETED'));
-
-      if (!paymentSucceeded) {
-        throw new BadRequestException(
-          'L\'acompte doit être payé avant de commencer le déplacement',
-        );
-      }
+    // GARDE PAIEMENT (money gate, façon Uber) : l'artisan ne peut PAS se mettre en route tant que la
+    // plateforme n'a pas sécurisé l'argent. On exige la PREUVE FINANCIÈRE (Transaction HELD/COMPLETED
+    // ou depositPaidAt posé par le webhook), pas un simple Payment/PaymentIntent créé à l'intent, et
+    // PAS le seul mission.status (qui pourrait être avancé sans paiement). Vaut même sans acompte :
+    // une mission sans fonds sécurisés ne doit jamais progresser vers IN_TRANSIT/IN_PROGRESS.
+    if (!this.hasSecuredFunds(mission)) {
+      throw new BadRequestException(
+        'Paiement plateforme requis avant de commencer le déplacement (escrow non sécurisé).',
+      );
     }
 
     // Mettre à jour le statut
@@ -651,6 +741,7 @@ export class MissionService {
   async markArrival(missionId: string, artisanId: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
+      include: { transaction: { select: { status: true } } },
     });
 
     if (!mission) {
@@ -659,6 +750,14 @@ export class MissionService {
 
     if (mission.artisanId !== artisanId) {
       throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
+    }
+
+    // GARDE PAIEMENT : impossible de démarrer le travail (IN_PROGRESS) sans que la plateforme ait
+    // sécurisé l'argent. Ferme le contournement /arrive qui court-circuitait /start-travel.
+    if (!this.hasSecuredFunds(mission)) {
+      throw new BadRequestException(
+        'Paiement plateforme requis avant de démarrer la mission (escrow non sécurisé).',
+      );
     }
 
     const updated = await this.prisma.mission.update({
@@ -687,6 +786,7 @@ export class MissionService {
   async validateCompletion(missionId: string, userId: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
+      include: { transaction: { select: { status: true } } },
     });
 
     if (!mission) {
@@ -699,6 +799,21 @@ export class MissionService {
 
     if (mission.status !== MissionStatus.COMPLETED) {
       throw new BadRequestException('La mission doit être terminée pour être validée');
+    }
+
+    // GARDE PAIEMENT : ne PAS valider (donc ne pas déclencher un payout / clore) une mission dont
+    // l'escrow n'a jamais été financé. Ce cas ne doit plus exister (markCompleted gate désormais),
+    // mais on refuse explicitement au lieu d'avaler silencieusement l'absence de transaction —
+    // sinon la mission serait validée sans qu'aucun euro (ni commission) ne soit encaissé.
+    if (!this.hasSecuredFunds(mission)) {
+      console.error(
+        `[validateCompletion] BLOQUÉ : mission ${missionId} COMPLETED sans escrow sécurisé ` +
+          `(transaction.status=${mission.transaction?.status ?? 'ABSENTE'}, depositPaidAt=${mission.depositPaidAt ?? 'null'}). ` +
+          `Validation refusée pour préserver l'intégrité du paiement/commission.`,
+      );
+      throw new BadRequestException(
+        'Aucun paiement sécurisé (escrow) pour cette mission : validation impossible.',
+      );
     }
 
     // Check if within retraction period
@@ -760,6 +875,7 @@ export class MissionService {
       include: {
         client: true,
         artisan: true,
+        transaction: { select: { status: true } },
       },
     });
 
@@ -767,6 +883,21 @@ export class MissionService {
 
     for (const mission of stuckMissions) {
       try {
+        // GARDE PAIEMENT : ne JAMAIS auto-valider une mission sans escrow sécurisé (pas de commission).
+        // Ce cas ne devrait plus survenir (markCompleted gate), mais on le trace au lieu de le clore.
+        if (!this.hasSecuredFunds(mission)) {
+          console.error(
+            `[autoValidateStuckMissions] IGNORÉE : mission ${mission.id} COMPLETED sans escrow sécurisé ` +
+              `(transaction.status=${mission.transaction?.status ?? 'ABSENTE'}). Auto-validation refusée.`,
+          );
+          results.push({
+            missionId: mission.id,
+            status: 'skipped_no_escrow',
+            message: 'Auto-validation refusée : aucun paiement sécurisé (escrow) pour cette mission',
+          });
+          continue;
+        }
+
         // Auto-validate
         const _updated = await this.prisma.mission.update({
           where: { id: mission.id },
@@ -834,6 +965,7 @@ export class MissionService {
   async markCompleted(missionId: string, artisanId: string) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
+      include: { transaction: { select: { status: true } } },
     });
 
     if (!mission) {
@@ -842,6 +974,15 @@ export class MissionService {
 
     if (mission.artisanId !== artisanId) {
       throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
+    }
+
+    // GARDE PAIEMENT : une mission ne peut PAS être terminée (COMPLETED) sans que la plateforme ait
+    // sécurisé l'argent en escrow. Sans ce gate, l'artisan clôturait le chantier hors-plateforme
+    // (règlement cash) et la commission n'était jamais perçue.
+    if (!this.hasSecuredFunds(mission)) {
+      throw new BadRequestException(
+        'Paiement plateforme requis avant de terminer la mission (escrow non sécurisé).',
+      );
     }
 
     // Calculate retraction expiry (48h from now)

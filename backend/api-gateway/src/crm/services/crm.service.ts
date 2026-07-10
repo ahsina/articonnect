@@ -9,6 +9,18 @@ import {
   FollowUpStatus,
 } from '../dto/crm.dto';
 
+// Plafond dur de fiches renvoyées par page (anti-export de masse / anti-poaching).
+const MAX_CLIENT_PAGE_SIZE = 50;
+
+// Projection client "suivi only" façon Uber : JAMAIS d'email ni de téléphone en clair.
+// Le CRM sert au suivi de la relation, pas à exfiltrer un carnet d'adresses. Tout contact
+// doit passer par la plateforme (mission → chat/relais), pas par des coordonnées dumpées.
+const CLIENT_CRM_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+} as const;
+
 @Injectable()
 export class CrmService {
   constructor(private prisma: PrismaService) {}
@@ -42,14 +54,22 @@ export class CrmService {
       },
       include: {
         client: {
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+          select: CLIENT_CRM_SELECT,
         },
       },
     });
   }
 
   async findAllClients(artisanId: string, filters: ClientFilterDto) {
-    const { status, clientType, search, page = 1, limit = 20 } = filters;
+    const { status, clientType, search } = filters;
+
+    // Clamp défensif : même si le @Max(50) du DTO était contourné (validation désactivée,
+    // appel interne, etc.), on ne renvoie jamais plus de MAX_CLIENT_PAGE_SIZE fiches par page.
+    const page = Math.max(1, Math.floor(filters.page ?? 1));
+    const limit = Math.min(
+      Math.max(1, Math.floor(filters.limit ?? 20)),
+      MAX_CLIENT_PAGE_SIZE,
+    );
 
     const where: any = { artisanId };
 
@@ -70,7 +90,7 @@ export class CrmService {
         where,
         include: {
           client: {
-            select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+            select: CLIENT_CRM_SELECT,
           },
           followUps: {
             where: { status: 'PENDING' },
@@ -101,7 +121,7 @@ export class CrmService {
       where: { id },
       include: {
         client: {
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+          select: CLIENT_CRM_SELECT,
         },
         followUps: {
           orderBy: { dueDate: 'asc' },
@@ -164,7 +184,7 @@ export class CrmService {
       },
       include: {
         client: {
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+          select: CLIENT_CRM_SELECT,
         },
       },
     });
@@ -232,7 +252,7 @@ export class CrmService {
         relationship: {
           include: {
             client: {
-              select: { id: true, firstName: true, lastName: true, email: true },
+              select: CLIENT_CRM_SELECT,
             },
           },
         },
