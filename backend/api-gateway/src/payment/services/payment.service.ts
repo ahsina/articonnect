@@ -70,8 +70,8 @@ export class PaymentService {
       throw new UnauthorizedException('Non autorisé');
     }
 
-    if (!mission.agreedPrice) {
-      throw new BadRequestException('Prix non défini');
+    if (!(Number(mission.agreedPrice) >= 1)) {
+      throw new BadRequestException('Prix non défini ou sous le plancher (1€)');
     }
 
     // IDEMPOTENCE : 1 seule Transaction par mission. Si elle existe déjà, on réutilise l'intent
@@ -621,8 +621,8 @@ export class PaymentService {
       throw new BadRequestException('Non autorisé');
     }
 
-    if (!mission.agreedPrice) {
-      throw new BadRequestException('Prix non défini');
+    if (!(Number(mission.agreedPrice) >= 1)) {
+      throw new BadRequestException('Prix non défini ou sous le plancher (1€)');
     }
 
     if (!mission.depositRequired) {

@@ -208,7 +208,7 @@ export class ContentFilterService {
     {
       name: 'WRITTEN_PHONE',
       regex:
-        /(?:\b(?:z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|et|zero|one|two|three|four|five|six|seven|eight|nine|ten|null|eins|zwei|drei|vier|sechs|eent|zwee|dr[aä]i|v[eé]ier|f[eë]nnef|siwen|aacht|n[eé]ng|z[eé]ng|nul|een|twee|drie|vijf|zes|zeven|acht|negen|uno|due|tre|quattro|cinque|sette|otto|nove)\b[\s,.\-]*){4,}/gi,
+        /(?:\b(?:z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|et|zero|one|two|three|four|five|six|seven|eight|nine|ten|null|eins|zwei|drei|vier|sechs|eent|zwee|dr[aä]i|v[eé]ier|f[eë]nnef|siwen|aacht|n[eé]ng|z[eé]ng|nul|een|twee|drie|vijf|zes|zeven|acht|negen|uno|due|tre|quattro|cinque|sette|otto|nove)\b[\s,.\-]*(?:\b(?:alors|ensuite|puis|donc|apr[eè]s|enfin|voil[aà]|then|next|et)\b[\s,.\-]*)?){4,}/gi,
       replacement: '[NUMÉRO BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -233,7 +233,7 @@ export class ContentFilterService {
     {
       name: 'EMAIL_OBFUSCATED',
       regex:
-        /[a-zA-Z0-9._%+-]+[\s,;]*(?:@|\(at\)|\[at\]|\{at\}|\(a\)|\[a\]|\{a\}|\bat\b|arobas+e?|arobaz[e]?|chez)\s*(?:(?:gmail|hotmail|outlook|yahoo|protonmail|proton|icloud|gmx|aol)(?:\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})?|[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})/gi,
+        /[a-zA-Z0-9._%+-]+[\s,;]*(?:@|\(at\)|\[at\]|\{at\}|\(a\)|\[a\]|\{a\}|\(arobas+e?\)|\[arobas+e?\]|\bat\b|arobas+e?|arobaz[e]?|\bchez\b|\bsur\b)\s*(?:(?:gmail|hotmail|outlook|yahoo|protonmail|proton|icloud|gmx|aol)(?:\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\(point\)|\[point\]|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})?|[a-zA-Z0-9.-]+\s*(?:\.|\(dot\)|\[dot\]|\{dot\}|\(\.\)|\[\.\]|\{\.\}|\(point\)|\[point\]|\bdot\b|point|punkt)\s*[a-zA-Z]{2,})/gi,
       replacement: '[EMAIL BLOQUÉ]',
       severity: 'HIGH',
       enabled: true,
@@ -471,16 +471,16 @@ export class ContentFilterService {
     //  - {…,40} capture le bruit LONG (« 621 (indicatif interne) 123 456 »).
     // Un intervalle > 40 caractères entre deux chiffres n'est PAS retiré : il sert de
     // frontière et évite de recoller deux nombres réellement distincts d'une phrase.
-    const phoneish = mappedCompact.replace(/(?<=\d)[^\d]{1,40}(?=\d)/g, '');
+    const phoneish = mappedCompact.replace(/(?<=\d)[^\d]{1,80}(?=\d)/g, '');
     if (phoneish === compact) return false; // aucune obfuscation réelle → laissé aux motifs standard
     // Une fois nettoyé : ≥8 chiffres consécutifs couvrent LU (6/8/9) / FR / BE.
     const run = /(?<!\d)(\d{8,})(?!\d)/.exec(phoneish);
     if (!run) return false;
     // Garde-fou « chiffres majoritaires » : le bruit retiré entre les chiffres ne doit pas
-    // excéder 3× la longueur du numéro révélé — écarte les phrases où de rares chiffres épars
-    // sont noyés dans beaucoup de texte, tout en conservant un vrai numéro coupé par du bruit.
+    // excéder 5× la longueur du numéro révélé — écarte les phrases où de rares chiffres épars
+    // sont noyés dans beaucoup de texte, tout en attrapant un numéro coupé par un long bourrage.
     const removed = mappedCompact.length - phoneish.length;
-    return removed <= run[1].length * 3;
+    return removed <= run[1].length * 5;
   }
 
   /** Chiffres « téléphone » d'un fragment : homoglyphes appliqués puis compactage. */

@@ -6,12 +6,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  */
 export class SetupDepositDto {
   @ApiProperty({
-    description: 'Prix négocié et accepté',
+    description: 'Prix négocié et accepté (plancher 1€)',
     example: 150.0,
-    minimum: 0,
+    minimum: 1,
   })
   @IsNumber()
-  @Min(0)
+  // Intégrité commission : même plancher (1€) que CreateNegotiationDto — sinon setup-deposit
+  // permettait un « prix de façade » à 0,5€ / 0€ contournant le plancher de prix, avec le vrai
+  // montant réglé en cash hors plateforme (désintermédiation, commission au backstop 0,01€).
+  @Min(1)
   agreedPrice: number;
 }
 

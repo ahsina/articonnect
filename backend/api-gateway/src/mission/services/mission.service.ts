@@ -718,6 +718,12 @@ export class MissionService {
       throw new NotFoundException('Mission introuvable');
     }
 
+    // Défense en profondeur (intégrité commission) : plancher de prix 1€, même sans validation DTO.
+    // Empêche un « prix de façade » à 0,5€/0€ contournant le plancher (désintermédiation en cash).
+    if (!(Number(agreedPrice) >= 1)) {
+      throw new BadRequestException('Le prix convenu doit être au minimum de 1€.');
+    }
+
     // Determine payment model based on client reputation
     const paymentModel = await this.reputationService.determinePaymentModel(
       mission.client,
