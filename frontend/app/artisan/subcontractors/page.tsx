@@ -257,7 +257,7 @@ export default function SubcontractorsPage() {
   return (
     <div className="p-6">
       {/* Page Header */}
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             {t('subcontractor', 'title') || 'My subcontractors'}
@@ -267,7 +267,7 @@ export default function SubcontractorsPage() {
               'Invite trusted partners and delegate missions'}
           </p>
         </div>
-        <Button onClick={() => setInviteOpen(true)}>
+        <Button className="w-full sm:w-auto shrink-0" onClick={() => setInviteOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           {t('subcontractor', 'invite') || 'Invite a subcontractor'}
         </Button>
