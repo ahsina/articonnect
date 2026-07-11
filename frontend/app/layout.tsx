@@ -64,8 +64,11 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} ${manrope.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground">
-        <Providers>{children}</Providers>
-        <CookieConsent />
+        <Providers>
+          {children}
+          {/* Dans les Providers pour accéder au contexte de langue (bandeau i18n). */}
+          <CookieConsent />
+        </Providers>
       </body>
     </html>
   );

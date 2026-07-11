@@ -25,17 +25,16 @@ export default function HomePage() {
     { n: '3', title: t('landing', 'step3Title'), desc: t('landing', 'step3Desc') },
   ];
 
-  // Copy marketing spécifique landing (FR — à internationaliser ultérieurement)
   const PERKS = [
-    ['Des clients près de chez vous', 'Missions géolocalisées, filtrées par métier.'],
-    ['Zéro impayé', 'Paiement sous séquestre, versé à la validation.'],
-    ['Devis & factures intégrés', 'Créez, envoyez, signez — tout est automatisé.'],
-    ['Gérez votre équipe', 'Salariés, pointeuse, répartition des missions.'],
+    [t('landing', 'proFeature1Title'), t('landing', 'proFeature1Desc')],
+    [t('landing', 'proFeature2Title'), t('landing', 'proFeature2Desc')],
+    [t('landing', 'proFeature3Title'), t('landing', 'proFeature3Desc')],
+    [t('landing', 'proFeature4Title'), t('landing', 'proFeature4Desc')],
   ];
   const TESTIMONIALS = [
-    { s: 'SL', name: 'Sophie L.', role: 'Cliente · Luxembourg', text: 'Fuite réglée le jour même. L’artisan était vérifié, le prix affiché à l’avance, zéro mauvaise surprise.' },
-    { s: 'PL', name: 'Pierre L.', role: 'Plombier · Esch', text: 'Depuis Krafolt je remplis mon agenda sans démarcher. Et surtout : je suis payé à tous les coups.' },
-    { s: 'MK', name: 'Marc K.', role: 'Client · Metz', text: 'Devis clairs, paiement sécurisé, suivi de la mission en temps réel. Exactement ce qu’il me fallait.' },
+    { s: 'SL', name: 'Sophie L.', role: t('landing', 'testimonial1Role'), text: t('landing', 'testimonial1Text') },
+    { s: 'PL', name: 'Pierre L.', role: t('landing', 'testimonial2Role'), text: t('landing', 'testimonial2Text') },
+    { s: 'MK', name: 'Marc K.', role: t('landing', 'testimonial3Role'), text: t('landing', 'testimonial3Text') },
   ];
   const HERO_CARDS = [
     { av: 'P', name: 'Pierre Plomberie', trade: 'Plombier · Luxembourg', rating: '4,9', reviews: '128', pos: 'left-0 top-2 z-30' },
@@ -88,7 +87,7 @@ export default function HomePage() {
           <div className="mt-6 flex max-w-lg gap-2 rounded-2xl bg-muted p-2">
             <input
               className="w-full rounded-xl bg-card px-4 py-3.5 text-sm font-semibold outline-none placeholder:text-muted-foreground"
-              placeholder="Ex. : réparer une fuite, refaire l'électricité…"
+              placeholder={t('landing', 'searchPlaceholder')}
             />
             <Link href="/auth/register?role=client" className="flex items-center rounded-xl bg-primary px-5 font-display font-bold text-primary-foreground transition-colors hover:bg-primary/90">
               {t('common', 'search') || 'Rechercher'}
@@ -122,8 +121,8 @@ export default function HomePage() {
               </div>
               <div className="mt-3 flex items-center gap-3 font-display text-[13px] font-bold">
                 <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-foreground text-foreground" />{c.rating}</span>
-                <span className="text-muted-foreground">{c.reviews} avis</span>
-                <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-foreground"><Check className="h-3 w-3" />Vérifié</span>
+                <span className="text-muted-foreground">{c.reviews} {t('landing', 'reviewsLabel')}</span>
+                <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-foreground"><Check className="h-3 w-3" />{t('landing', 'verified')}</span>
               </div>
             </div>
           ))}
@@ -149,15 +148,15 @@ export default function HomePage() {
 
       {/* CATEGORIES */}
       <section id="categories" className="container mx-auto px-4 py-20">
-        <div className="font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">Catégories</div>
-        <h2 className="font-display mt-2 text-4xl font-extrabold tracking-tight">Tous les métiers, un seul endroit.</h2>
-        <p className="mt-2 text-lg text-muted-foreground">Du dépannage urgent à la rénovation complète.</p>
+        <div className="font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">{t('landing', 'categoriesEyebrow')}</div>
+        <h2 className="font-display mt-2 text-4xl font-extrabold tracking-tight">{t('landing', 'categoriesTitle')}</h2>
+        <p className="mt-2 text-lg text-muted-foreground">{t('landing', 'categoriesSubtitle')}</p>
         <div className="mt-8 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
           {CATEGORIES.map((c) => (
             <Link href="/auth/register?role=client" key={c.label} className="group rounded-2xl border border-border p-5 transition-all hover:-translate-y-0.5 hover:border-foreground">
               <c.Icon className="h-6 w-6 text-foreground" strokeWidth={1.75} />
               <div className="font-display mt-3 font-extrabold">{c.label}</div>
-              <div className="text-[13px] font-semibold text-muted-foreground">{c.count} artisans</div>
+              <div className="text-[13px] font-semibold text-muted-foreground">{c.count} {t('landing', 'artisansLabel')}</div>
             </Link>
           ))}
         </div>
@@ -185,11 +184,11 @@ export default function HomePage() {
         <div className="grid items-center gap-10 rounded-[28px] bg-foreground p-8 text-background sm:p-14 lg:grid-cols-[1.1fr_.9fr]">
           <div>
             <div className="font-display text-sm font-bold uppercase tracking-wider text-background/50">{t('landing', 'ctaIamArtisan')}</div>
-            <h2 className="font-display mt-2 text-4xl font-extrabold leading-tight tracking-tight">Développez votre activité.<br />Soyez payé, à coup sûr.</h2>
-            <p className="mt-3.5 max-w-md text-background/70">Recevez des demandes qualifiées près de chez vous, envoyez vos devis en un clic, et encaissez sans impayés grâce au paiement sécurisé.</p>
+            <h2 className="font-display mt-2 text-4xl font-extrabold leading-tight tracking-tight">{t('landing', 'proTitleLine1')}<br />{t('landing', 'proTitleLine2')}</h2>
+            <p className="mt-3.5 max-w-md text-background/70">{t('landing', 'proSubtitle')}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/auth/register?role=artisan" className="rounded-xl bg-background px-6 py-3.5 font-display font-bold text-foreground transition-opacity hover:opacity-90">Devenir artisan </Link>
-              <a href="#how" className="rounded-xl border border-background/25 px-6 py-3.5 font-display font-bold text-background transition-colors hover:bg-background/10">Comment ça marche</a>
+              <Link href="/auth/register?role=artisan" className="rounded-xl bg-background px-6 py-3.5 font-display font-bold text-foreground transition-opacity hover:opacity-90">{t('landing', 'becomeArtisan')}</Link>
+              <a href="#how" className="rounded-xl border border-background/25 px-6 py-3.5 font-display font-bold text-background transition-colors hover:bg-background/10">{t('landing', 'howItWorksTitle')}</a>
             </div>
           </div>
           <div className="flex flex-col gap-4">
@@ -208,8 +207,8 @@ export default function HomePage() {
 
       {/* TÉMOIGNAGES */}
       <section className="container mx-auto px-4 py-10">
-        <div className="font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">Ils nous font confiance</div>
-        <h2 className="font-display mt-2 text-4xl font-extrabold tracking-tight">Des projets réussis, des deux côtés.</h2>
+        <div className="font-display text-sm font-bold uppercase tracking-wider text-muted-foreground">{t('landing', 'testimonialsEyebrow')}</div>
+        <h2 className="font-display mt-2 text-4xl font-extrabold tracking-tight">{t('landing', 'testimonialsTitle')}</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {TESTIMONIALS.map((tm) => (
             <div key={tm.name} className="rounded-2xl border border-border p-6">
@@ -255,18 +254,18 @@ export default function HomePage() {
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-lg font-extrabold text-primary-foreground">K</span>
               <span className="font-display text-xl font-extrabold">Krafolt</span>
             </div>
-            <p className="mt-3 max-w-[260px] text-sm text-muted-foreground">{t('landing', 'footerTagline')} La marketplace des artisans de confiance — LU · FR · BE.</p>
+            <p className="mt-3 max-w-[260px] text-sm text-muted-foreground">{t('landing', 'footerTagline')} {t('landing', 'footerDesc')}</p>
           </div>
           <div>
-            <h4 className="font-display text-[13px] font-extrabold">Clients</h4>
+            <h4 className="font-display text-[13px] font-extrabold">{t('landing', 'footerClients')}</h4>
             <div className="mt-3 flex flex-col gap-1.5 text-sm text-muted-foreground">
-              <Link href="/auth/register?role=client" className="transition-colors hover:text-foreground">Publier un projet</Link>
-              <a href="#categories" className="transition-colors hover:text-foreground">Trouver un artisan</a>
+              <Link href="/auth/register?role=client" className="transition-colors hover:text-foreground">{t('landing', 'footerPostProject')}</Link>
+              <a href="#categories" className="transition-colors hover:text-foreground">{t('landing', 'ctaFindArtisan')}</a>
               <a href="#how" className="transition-colors hover:text-foreground">{t('landing', 'howItWorksTitle')}</a>
             </div>
           </div>
           <div>
-            <h4 className="font-display text-[13px] font-extrabold">Artisans</h4>
+            <h4 className="font-display text-[13px] font-extrabold">{t('landing', 'footerArtisans')}</h4>
             <div className="mt-3 flex flex-col gap-1.5 text-sm text-muted-foreground">
               <Link href="/auth/register?role=artisan" className="transition-colors hover:text-foreground">{t('landing', 'ctaIamArtisan')}</Link>
               <Link href="/auth/login" className="transition-colors hover:text-foreground">{t('landing', 'footerLogin')}</Link>
@@ -275,17 +274,17 @@ export default function HomePage() {
           <div>
             <h4 className="font-display text-[13px] font-extrabold">Krafolt</h4>
             <div className="mt-3 flex flex-col gap-1.5 text-sm text-muted-foreground">
-              <Link href="/legal/mentions" className="transition-colors hover:text-foreground">Mentions légales</Link>
-              <Link href="/legal/terms" className="transition-colors hover:text-foreground">CGU/CGV</Link>
-              <Link href="/legal/privacy" className="transition-colors hover:text-foreground">Confidentialité</Link>
-              <Link href="/legal/cookies" className="transition-colors hover:text-foreground">Cookies</Link>
+              <Link href="/legal/mentions" className="transition-colors hover:text-foreground">{t('landing', 'footerLegal')}</Link>
+              <Link href="/legal/terms" className="transition-colors hover:text-foreground">{t('landing', 'footerTerms')}</Link>
+              <Link href="/legal/privacy" className="transition-colors hover:text-foreground">{t('landing', 'footerPrivacy')}</Link>
+              <Link href="/legal/cookies" className="transition-colors hover:text-foreground">{t('landing', 'footerCookies')}</Link>
             </div>
           </div>
         </div>
         <div className="border-t border-border">
           <div className="container mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-6 text-[13px] font-semibold text-muted-foreground">
             <span>© 2026 Krafolt · LU · FR · BE</span>
-            <span>Paiements sécurisés par Stripe</span>
+            <span>{t('landing', 'footerStripe')}</span>
           </div>
         </div>
       </footer>
