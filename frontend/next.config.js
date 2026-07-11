@@ -13,6 +13,15 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
+  // Consolidation auth : les anciennes pages /login et /register (dir (auth)) ont été supprimées
+  // au profit de /auth/login et /auth/register (canoniques). On redirige les anciens liens/bookmarks.
+  async redirects() {
+    return [
+      { source: '/login', destination: '/auth/login', permanent: true },
+      { source: '/register', destination: '/auth/register', permanent: true },
+    ];
+  },
+
   // Enable static export for Capacitor builds
   ...(isMobileBuild && {
     output: 'export',

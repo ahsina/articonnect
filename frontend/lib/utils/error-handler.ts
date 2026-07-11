@@ -156,7 +156,7 @@ export function handleApiError(
       onAuthError();
     } else {
       // Default: redirect to login
-      window.location.href = '/login?session=expired';
+      window.location.href = '/auth/login?session=expired';
     }
     return;
   }
