@@ -19,6 +19,10 @@ const nextConfig = {
     return [
       { source: '/login', destination: '/auth/login', permanent: true },
       { source: '/register', destination: '/auth/register', permanent: true },
+      // Les pages admin vivent sous /admin/admin/* (structure app/admin/admin). Les URLs
+      // « naturelles » /admin et /admin/dashboard tombaient en 404 -> on les redirige.
+      { source: '/admin', destination: '/admin/admin/dashboard', permanent: false },
+      { source: '/admin/dashboard', destination: '/admin/admin/dashboard', permanent: false },
     ];
   },
 
