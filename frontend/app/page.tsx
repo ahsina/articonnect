@@ -2,11 +2,13 @@
 
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import Link from 'next/link';
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Wrench, Zap, Paintbrush, Hammer, Blocks, Snowflake, Sprout, KeyRound, Star, Check } from 'lucide-react';
+import { Wrench, Zap, Paintbrush, Hammer, Blocks, Snowflake, Sprout, KeyRound, Star, Check, Menu, X } from 'lucide-react';
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const CATEGORIES = [
     { Icon: Wrench, label: t('landing', 'categoryPlumbing'), count: '320' },
@@ -66,8 +68,32 @@ export default function HomePage() {
             <Link href="/auth/register" className="rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
               {t('landing', 'register')}
             </Link>
+            {/* Hamburger (mobile/tablette) : surface la nav + langue + connexion cachées sous lg */}
+            <button
+              type="button"
+              aria-label="Menu"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="inline-flex items-center rounded-lg p-2 text-foreground hover:bg-muted lg:hidden"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </nav>
+        {/* Menu mobile déroulant */}
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 top-[68px] z-40 bg-black/40 lg:hidden" onClick={() => setMenuOpen(false)} />
+            <div className="absolute inset-x-0 top-[68px] z-50 border-t border-border bg-background shadow-lg lg:hidden">
+              <div className="container mx-auto flex flex-col gap-1 px-4 py-3">
+                <a href="#how" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">{t('landing', 'howItWorksTitle')}</a>
+                <a href="#categories" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">{t('nav', 'artisans') || 'Catégories'}</a>
+                <Link href="/auth/register?role=artisan" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">{t('landing', 'ctaIamArtisan')}</Link>
+                <Link href="/auth/login" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">{t('landing', 'login')}</Link>
+                <div className="mt-1 border-t border-border px-3 pt-3"><LanguageSwitcher /></div>
+              </div>
+            </div>
+          </>
+        )}
       </header>
 
       {/* HERO */}
