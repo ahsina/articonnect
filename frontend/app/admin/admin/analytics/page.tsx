@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
               {t('admin', 'detailedAnalytics')}
@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setDays(7)}
               className={`px-4 py-2 rounded-lg ${

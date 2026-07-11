@@ -217,7 +217,7 @@ export default function MarketplacePage() {
           </div>
 
           {/* Category Filters */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 min-w-0 max-w-full">
             {CATEGORIES.map((category) => (
               <button
                 key={category.id}

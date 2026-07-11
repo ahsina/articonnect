@@ -1,6 +1,6 @@
 'use client';
 
-import { Send } from 'lucide-react';
+import { Send, ArrowLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -211,7 +211,7 @@ export default function ArtisanMessagesPage() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Conversations Sidebar */}
-        <div className="w-80 bg-card border-r border-border flex flex-col">
+        <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 bg-card border-r border-border flex-col`}>
           {/* Search */}
           <div className="p-4 border-b">
             <Input
@@ -289,12 +289,20 @@ export default function ArtisanMessagesPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-background">
+        <div className={`${selectedConversation ? 'flex' : 'hidden lg:flex'} flex-1 flex-col bg-background`}>
           {selectedConv ? (
             <>
               {/* Chat Header */}
               <div className="bg-card border-b border-border p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedConversation(null)}
+                    className="lg:hidden -ml-1 mr-1 p-1 rounded-md hover:bg-accent"
+                    aria-label={t('common', 'back') || 'Retour'}
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
                   <img
                     src={selectedConv.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConv.user?.id}`}
                     alt={selectedConv.user?.firstName}
