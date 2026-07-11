@@ -267,7 +267,7 @@ export default function MarketplacePage() {
                   <label className="text-sm font-medium text-foreground mb-3 block">
                     {t('clientMarketplace', 'minRating')}
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {[0, 1, 2, 3, 4, 5].map((rating) => (
                       <button
                         key={rating}

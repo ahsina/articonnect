@@ -347,7 +347,7 @@ export default function ClientDisputesPage() {
                         {DISPUTE_TYPES.find((t) => t.id === dispute.type)?.label || dispute.type}
                       </span>
                     </div>
-                    <p className="text-foreground">{dispute.description}</p>
+                    <p className="text-foreground break-words">{dispute.description}</p>
                   </div>
 
                   {dispute.resolution && (
@@ -355,7 +355,7 @@ export default function ClientDisputesPage() {
                       <div className="text-sm font-medium text-green-700 mb-1">
                         {t('disputes', 'resolution')}
                       </div>
-                      <p className="text-green-700">{dispute.resolution}</p>
+                      <p className="text-green-700 break-words">{dispute.resolution}</p>
                       {dispute.resolvedAt && (
                         <p className="text-xs text-muted-foreground mt-2">
                           {t('disputes', 'resolvedOn')} {formatDate(dispute.resolvedAt)}

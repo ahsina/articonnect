@@ -153,7 +153,7 @@ export default function ModerationPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex gap-2">
+        <div className="mb-6 flex flex-wrap gap-2">
           {['all', 'pending', 'reviewing', 'resolved', 'dismissed'].map(
             (status) => (
               <button

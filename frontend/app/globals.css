@@ -39,6 +39,13 @@
   * {
     @apply border-border;
   }
+  html, body {
+    /* Garde-fou responsive : aucun élément rogue (badge/UUID non sécable, overlay large…) ne peut
+       créer un scroll horizontal de PAGE ni déclencher le dézoom mobile. Les conteneurs internes en
+       overflow-x-auto (tables admin, bandes d'onglets/catégories) continuent de défiler normalement. */
+    overflow-x: hidden;
+    max-width: 100%;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     color-scheme: light; /* contrôles natifs (select, date, scrollbar) en clair */

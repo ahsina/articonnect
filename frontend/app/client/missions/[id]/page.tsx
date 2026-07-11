@@ -1141,7 +1141,7 @@ export default function MissionDetailsPage() {
       {/* Cancellation Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 {t('cancellation', 'cancelMission') || 'Annuler la mission'}

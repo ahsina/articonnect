@@ -35,7 +35,7 @@ export default function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] p-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 p-4">
       <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
         <p className="min-w-0 text-sm text-muted-foreground">
           Nous utilisons des cookies essentiels au fonctionnement du site et, avec votre accord, des cookies de
