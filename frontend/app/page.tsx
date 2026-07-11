@@ -109,17 +109,7 @@ export default function HomePage() {
           <p className="mt-5 max-w-md text-lg text-muted-foreground">
             {t('landing', 'heroSubtitle')}
           </p>
-          {/* Barre de recherche */}
-          <div className="mt-6 flex max-w-lg gap-2 rounded-2xl bg-muted p-2">
-            <input
-              className="w-full rounded-xl bg-card px-4 py-3.5 text-sm font-semibold outline-none placeholder:text-muted-foreground"
-              placeholder={t('landing', 'searchPlaceholder')}
-            />
-            <Link href="/auth/register?role=client" className="flex items-center rounded-xl bg-primary px-5 font-display font-bold text-primary-foreground transition-colors hover:bg-primary/90">
-              {t('common', 'search') || 'Rechercher'}
-            </Link>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/auth/register?role=client" className="rounded-xl bg-primary px-6 py-3.5 font-display font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]">
               {t('landing', 'ctaFindArtisan')} 
             </Link>
