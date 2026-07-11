@@ -200,8 +200,8 @@ export default function ClientMissionsPage() {
                 onClick={() => router.push(`/client/missions/${mission.id}`)}
               >
                 <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold text-foreground">{mission.title}</h3>
                         <Badge className={STATUS_COLORS[mission.status]}>
@@ -236,7 +236,7 @@ export default function ClientMissionsPage() {
                       )}
                     </div>
 
-                    <div className="text-right ml-4">
+                    <div className="ml-auto flex-shrink-0 text-right">
                       {mission.agreedPrice ? (
                         <div className="text-xl font-bold text-foreground">{mission.agreedPrice}€</div>
                       ) : mission.clientBudget ? (

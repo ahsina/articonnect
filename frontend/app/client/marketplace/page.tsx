@@ -190,8 +190,8 @@ export default function MarketplacePage() {
         {/* Filters */}
         <div className="mb-8 space-y-4">
           {/* Search Bar & Sort */}
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="flex flex-wrap gap-4">
+            <div className="min-w-0 flex-1 basis-full sm:basis-0">
               <Input
                 placeholder={t('clientMarketplace', 'searchPlaceholder')}
                 value={searchQuery}

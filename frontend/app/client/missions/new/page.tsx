@@ -241,12 +241,12 @@ export default function NewMissionPage() {
           <div className="font-display mt-6 mb-2.5 px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
             {t('missions', 'howToProceed') || 'Comment voulez-vous procéder ?'}
           </div>
-          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1">
+          <div className="-mx-4 flex flex-wrap gap-2.5 px-4 pb-1 sm:flex-nowrap sm:overflow-x-auto">
             {INTERVENTIONS.map((it) => {
               const on = interventionType === it.key;
               return (
                 <button key={it.key} onClick={() => setInterventionType(it.key)}
-                  className={`w-[150px] flex-shrink-0 rounded-2xl border p-3.5 text-left ${on ? 'border-foreground bg-muted' : 'border-border bg-card'}`}>
+                  className={`w-full flex-shrink-0 rounded-2xl border p-3.5 text-left sm:w-[150px] ${on ? 'border-foreground bg-muted' : 'border-border bg-card'}`}>
                   <div className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${on ? 'bg-foreground' : 'bg-muted'}`}>
                     <it.Icon className={`h-[18px] w-[18px] ${on ? 'text-background' : 'text-foreground'}`} strokeWidth={1.9} />
                   </div>

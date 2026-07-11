@@ -1,6 +1,6 @@
 'use client';
 
-import { Send } from 'lucide-react';
+import { Send, ArrowLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -193,7 +193,11 @@ export default function MessagesPage() {
     <div className="h-screen bg-background flex flex-col">
       <div className="flex-1 flex overflow-hidden">
         {/* Conversations List */}
-        <div className="w-80 bg-card border-r border-border flex flex-col">
+        <div
+          className={`${
+            selectedConversation ? 'hidden lg:flex' : 'flex'
+          } w-full lg:w-80 bg-card border-r border-border flex-col`}
+        >
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-bold text-foreground">{t('common', 'messages')}</h1>
@@ -261,11 +265,22 @@ export default function MessagesPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-background">
+        <div
+          className={`${
+            selectedConversation ? 'flex' : 'hidden lg:flex'
+          } flex-1 flex-col bg-background`}
+        >
           {selectedConv ? (
             <>
               {/* Chat Header */}
               <div className="bg-card border-b border-border p-4 flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedConversation(null)}
+                  aria-label={t('common', 'back')}
+                  className="lg:hidden flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full hover:bg-accent"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <img
                   src={selectedConv.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
                   alt={selectedConv.user?.firstName}

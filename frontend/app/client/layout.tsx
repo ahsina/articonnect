@@ -12,7 +12,7 @@ import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Hammer, Heart, Receipt, Scale,
-  Bell, Settings, Building2, type LucideIcon,
+  Bell, Settings, Building2, Menu, X, LogOut, type LucideIcon,
 } from 'lucide-react';
 
 interface ClientProfile {
@@ -25,10 +25,16 @@ function ClientHeader() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Close the mobile menu whenever the route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   const loadProfile = async () => {
     try {
@@ -58,23 +64,23 @@ function ClientHeader() {
   return (
     <header className="bg-card shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center gap-2 h-16 min-w-0">
           {/* Logo & Company Name */}
-          <div className="flex items-center gap-4">
-            <Link href="/client/dashboard" className="text-2xl font-bold text-primary">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link href="/client/dashboard" className="text-2xl font-bold text-primary shrink-0">
               Krafolt
             </Link>
             {isProfessional && clientProfile?.companyName && (
-              <div className="hidden md:flex items-center gap-2 pl-4 border-l">
-                <Badge variant="outline" className="gap-1 text-primary">
-                  <Building2 className="h-3.5 w-3.5" /> {clientProfile.companyName}
+              <div className="hidden lg:flex items-center gap-2 pl-4 border-l min-w-0">
+                <Badge variant="outline" className="gap-1 text-primary truncate">
+                  <Building2 className="h-3.5 w-3.5 shrink-0" /> {clientProfile.companyName}
                 </Badge>
               </div>
             )}
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Navigation (lg+) */}
+          <nav className="hidden lg:flex items-center gap-1 min-w-0">
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
@@ -92,7 +98,7 @@ function ClientHeader() {
           </nav>
 
           {/* User Info & Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
             <LanguageSwitcher />
             <Link href="/client/notifications" aria-label="Notifications">
               <Button variant="ghost" size="icon">
@@ -104,24 +110,98 @@ function ClientHeader() {
                 <Settings className="h-5 w-5" />
               </Button>
             </Link>
-            <div className="hidden md:block text-sm text-muted-foreground">
+            <div className="hidden lg:block text-sm text-muted-foreground">
               {user?.firstName}
             </div>
-            <Button variant="outline" size="sm" onClick={() => logout()}>
+            {/* Desktop logout (lg+) */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden lg:inline-flex"
+              onClick={() => logout()}
+            >
               {t('common', 'logout') || 'Déconnexion'}
+            </Button>
+            {/* Mobile hamburger (below lg) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              aria-label="Menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((v) => !v)}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
 
         {/* Mobile Company Badge */}
         {isProfessional && clientProfile?.companyName && (
-          <div className="md:hidden pb-2">
-            <Badge variant="outline" className="gap-1 text-primary">
-              <Building2 className="h-3.5 w-3.5" /> {clientProfile.companyName}
+          <div className="lg:hidden pb-2">
+            <Badge variant="outline" className="gap-1 text-primary max-w-full truncate">
+              <Building2 className="h-3.5 w-3.5 shrink-0" /> {clientProfile.companyName}
             </Badge>
           </div>
         )}
       </div>
+
+      {/* Mobile menu overlay + drawer (below lg) */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden">
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 top-16 z-40 bg-black/40"
+            aria-hidden="true"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          {/* Slide-down panel */}
+          <nav className="absolute inset-x-0 top-16 z-50 bg-card border-b shadow-lg max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="px-4 py-3 flex flex-col gap-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const active = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium min-w-0 ${
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    <span className="truncate">{link.label}</span>
+                  </Link>
+                );
+              })}
+
+              <div className="my-2 border-t" />
+
+              <div className="flex items-center justify-between gap-2 px-3 py-1">
+                <span className="text-sm text-muted-foreground truncate">
+                  {user?.firstName}
+                </span>
+                <LanguageSwitcher />
+              </div>
+
+              <Button
+                variant="outline"
+                className="mt-2 w-full justify-center"
+                leftIcon={<LogOut className="h-4 w-4" />}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+              >
+                {t('common', 'logout') || 'Déconnexion'}
+              </Button>
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

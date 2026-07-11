@@ -36,8 +36,8 @@ export default function CookieConsent() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] p-4">
-      <div className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
+        <p className="min-w-0 text-sm text-muted-foreground">
           Nous utilisons des cookies essentiels au fonctionnement du site et, avec votre accord, des cookies de
           mesure d&apos;audience. En savoir plus dans notre{' '}
           <Link href="/legal/cookies" className="text-primary underline">
@@ -45,16 +45,16 @@ export default function CookieConsent() {
           </Link>
           .
         </p>
-        <div className="flex flex-shrink-0 gap-2">
+        <div className="flex flex-shrink-0 flex-wrap gap-2">
           <button
             onClick={() => choose('rejected')}
-            className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent"
+            className="flex-1 whitespace-nowrap rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent sm:flex-none"
           >
             Refuser
           </button>
           <button
             onClick={() => choose('accepted')}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+            className="flex-1 whitespace-nowrap rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 sm:flex-none"
           >
             Accepter
           </button>

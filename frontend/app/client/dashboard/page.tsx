@@ -12,7 +12,7 @@ import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mission, MissionStatus } from '@/types/mission';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ClipboardList, Hammer, ShoppingCart, LogOut, Wrench, HardHat, Building2 } from 'lucide-react';
+import { ClipboardList, Hammer, ShoppingCart, LogOut, Wrench, HardHat, Building2, Menu, X } from 'lucide-react';
 
 interface ClientProfile {
   clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
@@ -38,6 +38,7 @@ export default function ClientDashboard() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -80,15 +81,16 @@ export default function ClientDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-card shadow">
+      <nav className="bg-card shadow relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
+          <div className="flex justify-between items-center h-16 gap-2 min-w-0">
+            <div className="flex items-center shrink-0">
               <Link href="/" className="text-2xl font-bold text-primary">
                 Krafolt
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+            {/* Nav desktop (>= lg) */}
+            <div className="hidden lg:flex items-center space-x-4">
               <Link href="/client/missions">
                 <Button variant="ghost" leftIcon={<ClipboardList className="h-4 w-4" />}>{t('missions', 'myMissions')}</Button>
               </Link>
@@ -107,17 +109,46 @@ export default function ClientDashboard() {
                 {t('common', 'logout')}
               </Button>
             </div>
+            {/* Hamburger (< lg) */}
+            <div className="flex lg:hidden items-center gap-2 shrink-0">
+              <LanguageSwitcher />
+              <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMobileMenuOpen((v) => !v)}>
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
           </div>
         </div>
+        {/* Menu mobile déroulant */}
+        {mobileMenuOpen && (
+          <>
+            <div className="fixed inset-0 top-16 z-40 bg-black/40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+            <div className="absolute left-0 right-0 top-16 z-50 bg-card border-t border-border shadow-lg lg:hidden">
+              <div className="flex flex-col p-2">
+                <Link href="/client/missions" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start" leftIcon={<ClipboardList className="h-4 w-4" />}>{t('missions', 'myMissions')}</Button>
+                </Link>
+                <Link href="/client/artisans" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start" leftIcon={<Hammer className="h-4 w-4" />}>{t('missions', 'findArtisan')}</Button>
+                </Link>
+                <Link href="/client/marketplace" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start" leftIcon={<ShoppingCart className="h-4 w-4" />}>{t('marketplace', 'title')}</Button>
+                </Link>
+                <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileMenuOpen(false); handleLogout(); }} leftIcon={<LogOut className="h-4 w-4" />}>
+                  {t('common', 'logout')}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Welcome Section */}
         <div className="bg-card shadow rounded-lg p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold text-foreground">
                   {t('missions', 'welcomeClient')}, {user?.firstName || 'Client'} !
                 </h1>

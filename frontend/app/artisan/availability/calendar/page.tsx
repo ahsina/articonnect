@@ -157,7 +157,7 @@ export default function AvailabilityCalendarPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">
@@ -183,19 +183,19 @@ export default function AvailabilityCalendarPage() {
         </CardHeader>
         <CardContent>
           {/* Days of week header */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2">
             {DAYS_OF_WEEK.map((day) => (
-              <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+              <div key={day} className="text-center text-xs sm:text-sm font-medium text-muted-foreground py-1 sm:py-2 truncate">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {getDaysInMonth().map((date, index) => {
               if (!date) {
-                return <div key={`empty-${index}`} className="h-24 bg-background rounded-lg" />;
+                return <div key={`empty-${index}`} className="h-16 sm:h-24 bg-background rounded-lg" />;
               }
 
               const daySlots = getSlotsForDate(date);
@@ -206,7 +206,7 @@ export default function AvailabilityCalendarPage() {
                 <div
                   key={date.toISOString()}
                   onClick={() => !isPast(date) && handleDateClick(date)}
-                  className={`h-24 p-2 rounded-lg border transition-colors ${
+                  className={`h-16 sm:h-24 p-1 sm:p-2 rounded-lg border transition-colors overflow-hidden ${
                     isPast(date)
                       ? 'bg-muted text-muted-foreground cursor-not-allowed'
                       : isToday(date)
@@ -214,7 +214,7 @@ export default function AvailabilityCalendarPage() {
                         : 'border-border bg-card cursor-pointer hover:bg-accent'
                   }`}
                 >
-                  <div className={`text-sm font-medium ${isToday(date) ? 'text-primary' : ''}`}>
+                  <div className={`text-xs sm:text-sm font-medium ${isToday(date) ? 'text-primary' : ''}`}>
                     {date.getDate()}
                   </div>
                   <div className="mt-1 space-y-1">
@@ -225,7 +225,9 @@ export default function AvailabilityCalendarPage() {
                       <div className="w-full h-1 bg-red-400 rounded" title="Unavailable" />
                     )}
                     {daySlots.length > 0 && (
-                      <div className="text-xs text-muted-foreground">{daySlots.length} slot(s)</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                        {daySlots.length} <span className="hidden sm:inline">slot(s)</span>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -12,7 +12,7 @@ import {
   Clock, Plane, User, FileText, Award, Star, FileSignature, Store, Building2,
   Users, ClipboardCheck, BarChart3, Settings, CreditCard, LogOut,
   Network,
-  ChevronLeft, ChevronRight, ChevronDown, type LucideIcon,
+  ChevronLeft, ChevronRight, ChevronDown, Menu, X, type LucideIcon,
 } from 'lucide-react';
 
 interface NavChild {
@@ -48,7 +48,13 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [hasCompany, setHasCompany] = useState<boolean | null>(null);
+
+  // Close the mobile drawer whenever the route changes
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     checkCompanyStatus();
@@ -130,6 +136,11 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
 
   const hasActiveChild = (children: NavChild[]): boolean => children.some((c) => isActive(c.href));
 
+  const navigate = (href: string) => {
+    router.push(href);
+    setMobileOpen(false);
+  };
+
   const handleLogout = () => {
     logout();
     router.push('/');
@@ -138,25 +149,47 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   const linkBase = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium';
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background lg:flex">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-card border-r border-border text-foreground flex-shrink-0 transition-all duration-300 flex flex-col`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border text-foreground flex flex-col transition-transform duration-300 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:static lg:z-auto lg:translate-x-0 lg:flex-shrink-0 lg:transition-all ${
+          sidebarOpen ? 'lg:w-64' : 'lg:w-16'
+        }`}
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {sidebarOpen && (
-            <button onClick={() => router.push('/artisan/dashboard')} className="flex items-center gap-2">
+            <button onClick={() => navigate('/artisan/dashboard')} className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
               <span className="font-display font-bold">Krafolt Pro</span>
             </button>
           )}
+          {/* Collapse toggle (desktop only) */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="hidden lg:inline-flex p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             aria-label={sidebarOpen ? 'Réduire' : 'Étendre'}
           >
             {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+          {/* Close drawer (mobile only) */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Fermer le menu"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -207,7 +240,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                           return (
                             <li key={child.href}>
                               <button
-                                onClick={() => router.push(child.href)}
+                                onClick={() => navigate(child.href)}
                                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                   isActive(child.href)
                                     ? 'bg-primary text-primary-foreground'
@@ -231,7 +264,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
               return (
                 <li key={linkItem.href || index}>
                   <button
-                    onClick={() => router.push(linkItem.href)}
+                    onClick={() => navigate(linkItem.href)}
                     className={`${linkBase} ${
                       isActive(linkItem.href)
                         ? 'bg-primary text-primary-foreground'
@@ -275,7 +308,23 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar with hamburger (below lg) */}
+        <div className="lg:hidden sticky top-0 z-30 h-14 flex items-center gap-3 px-4 border-b border-border bg-card">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label="Ouvrir le menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <button onClick={() => navigate('/artisan/dashboard')} className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
+            <span className="font-display font-bold">Krafolt Pro</span>
+          </button>
+        </div>
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
     </div>
   );
 }
