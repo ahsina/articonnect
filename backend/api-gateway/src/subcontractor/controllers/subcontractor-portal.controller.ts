@@ -36,6 +36,26 @@ export class SubcontractorPortalController {
     return this.portalService.getDashboard(req.user.id);
   }
 
+  // ============ INVITATIONS EN ATTENTE (GAP 1) ============
+
+  @Get('invitations')
+  @ApiOperation({ summary: 'List my pending subcontracting invitations (in-app, no token)' })
+  async getPendingInvitations(@Request() req: any) {
+    return this.portalService.getPendingInvitations(req.user.id);
+  }
+
+  @Post('invitations/:id/accept')
+  @ApiOperation({ summary: 'Accept a pending subcontracting invitation (in-app, by id)' })
+  async acceptInvitation(@Request() req: any, @Param('id') id: string) {
+    return this.portalService.acceptInvitationInApp(req.user.id, id);
+  }
+
+  @Post('invitations/:id/decline')
+  @ApiOperation({ summary: 'Decline a pending subcontracting invitation (by id)' })
+  async declineInvitation(@Request() req: any, @Param('id') id: string) {
+    return this.portalService.declineInvitation(req.user.id, id);
+  }
+
   // ============ OFFERS ============
 
   @Get('offers')

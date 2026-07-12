@@ -38,24 +38,27 @@ export default function CartPage() {
         variantId: item.variantId,
       }));
 
-      // Create order
+      // Create order (statut PENDING) — le paiement se fait à l'étape suivante.
       const order = await marketplaceApi.createOrder({
         items: orderItems,
         shippingAddress,
       });
 
-      // Clear cart
+      // Clear cart (les articles sont désormais portés par la commande PENDING).
       clearCart();
 
-      // Show success message
-      toast({
-        title: t('cart', 'orderPlaced'),
-        description: t('cart', 'orderPlacedDescription'),
-        variant: 'success',
-      });
-
-      // Redirect to orders page
-      router.push('/client/orders');
+      // Direction l'étape de PAIEMENT de la commande (Stripe). Si l'ID est absent
+      // (réponse inattendue), repli sur la liste des commandes.
+      if (order?.id) {
+        router.push(`/client/orders/${order.id}/pay`);
+      } else {
+        toast({
+          title: t('cart', 'orderPlaced'),
+          description: t('cart', 'orderPlacedDescription'),
+          variant: 'success',
+        });
+        router.push('/client/orders');
+      }
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast({

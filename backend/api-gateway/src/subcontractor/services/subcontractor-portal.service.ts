@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NotificationType } from '@prisma/client';
 import { SubcontractorService } from './subcontractor.service';
@@ -134,6 +134,181 @@ export class SubcontractorPortalService {
       },
       currentAssignments: activeAssignments,
     };
+  }
+
+  // ============ INVITATIONS EN ATTENTE (GAP 1 — visibilité in-app) ============
+  //
+  // Une invitation de sous-traitance est une ligne Subcontractor au statut PENDING_INVITATION.
+  // Jusqu'ici son SEUL canal de découverte était l'email d'invitation (le token bearer part par
+  // email et est masqué de toute réponse API). L'artisan connecté n'avait donc AUCUN moyen de voir
+  // « qui l'a invité » in-app. Ces trois méthodes exposent en LECTURE les invitations qui le ciblent
+  // (par compte OU par email) et permettent de les accepter/refuser SANS le token email : on passe
+  // par l'id de la relation + une vérification d'ownership (subcontractorUserId === userId, ou
+  // externalEmail === email de l'utilisateur). Le token invitationToken n'est JAMAIS sélectionné ni
+  // renvoyé (secret bearer, anti-désintermédiation) — l'acceptation in-app le neutralise (→ null).
+
+  /**
+   * Liste les invitations de sous-traitance EN ATTENTE (PENDING_INVITATION) ciblant l'utilisateur
+   * courant, matchées par compte (subcontractorUserId) OU par email (externalEmail, insensible à la
+   * casse). Lecture seule, sans token en clair. Retourne le donneur d'ordre (nom + société) et les
+   * termes proposés pour permettre une décision éclairée.
+   */
+  async getPendingInvitations(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    const email = user?.email || null;
+
+    // `where: any` (même pattern que getMyAssignments) pour composer le OR compte/email sans friction
+    // de typage. invitationToken n'est volontairement PAS dans le select.
+    const where: any = {
+      status: 'PENDING_INVITATION',
+      OR: [{ subcontractorUserId: userId }],
+    };
+    if (email) {
+      where.OR.push({ externalEmail: { equals: email, mode: 'insensitive' } });
+    }
+
+    const invitations = await this.prisma.subcontractor.findMany({
+      where,
+      select: {
+        id: true,
+        status: true,
+        specialties: true,
+        defaultCommissionRate: true,
+        invitedAt: true,
+        notes: true,
+        subcontractorUserId: true,
+        artisan: {
+          select: {
+            firstName: true,
+            lastName: true,
+            artisanProfile: { select: { companyName: true } },
+          },
+        },
+      },
+      orderBy: { invitedAt: 'desc' },
+    });
+
+    return invitations.map((inv) => ({
+      id: inv.id,
+      status: inv.status,
+      specialties: inv.specialties,
+      defaultCommissionRate: inv.defaultCommissionRate,
+      invitedAt: inv.invitedAt,
+      notes: inv.notes || null,
+      artisanName: `${inv.artisan.firstName} ${inv.artisan.lastName}`.trim(),
+      artisanCompany: inv.artisan.artisanProfile?.companyName || null,
+      // 'account' = invité via son compte plateforme ; 'email' = invité par email (rattaché ici).
+      matchedBy: inv.subcontractorUserId === userId ? 'account' : 'email',
+    }));
+  }
+
+  /**
+   * Charge une invitation par id et vérifie qu'elle CIBLE bien l'utilisateur courant (par compte ou
+   * par email). Factorise l'ownership pour accept/decline. NE sélectionne pas le token.
+   */
+  private async getInvitationForUser(invitationId: string, userId: string) {
+    const inv = await this.prisma.subcontractor.findUnique({
+      where: { id: invitationId },
+      select: {
+        id: true,
+        status: true,
+        artisanId: true,
+        subcontractorUserId: true,
+        externalEmail: true,
+      },
+    });
+    if (!inv) {
+      throw new NotFoundException('Invitation introuvable');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    const email = (user?.email || '').toLowerCase();
+    const targetsUser =
+      inv.subcontractorUserId === userId ||
+      (!!inv.externalEmail && inv.externalEmail.toLowerCase() === email);
+    if (!targetsUser) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return inv;
+  }
+
+  /**
+   * Acceptation IN-APP d'une invitation (par id, sans token email). Rattache l'utilisateur courant à
+   * la relation (subcontractorUserId), passe le statut à ACTIVE, neutralise le token. Reproduit les
+   * gardes de SubcontractorService.acceptInvitation : statut PENDING requis, et refus propre si
+   * l'utilisateur est DÉJÀ lié à ce donneur d'ordre (contrainte unique artisanId+subcontractorUserId).
+   */
+  async acceptInvitationInApp(userId: string, invitationId: string) {
+    const inv = await this.getInvitationForUser(invitationId, userId);
+
+    if (inv.status !== 'PENDING_INVITATION') {
+      throw new BadRequestException('Invitation déjà traitée');
+    }
+
+    // Contrainte unique (artisanId, subcontractorUserId) : une autre relation déjà liée provoquerait
+    // un P2002 (500). On la détecte pour renvoyer un 409 lisible (même approche que le service).
+    const existingLink = await this.prisma.subcontractor.findFirst({
+      where: {
+        artisanId: inv.artisanId,
+        subcontractorUserId: userId,
+        id: { not: inv.id },
+      },
+      select: { id: true },
+    });
+    if (existingLink) {
+      throw new ConflictException("Vous êtes déjà sous-traitant de ce donneur d'ordre");
+    }
+
+    const updated = await this.prisma.subcontractor.update({
+      where: { id: inv.id },
+      data: {
+        subcontractorUserId: userId,
+        status: 'ACTIVE',
+        acceptedAt: new Date(),
+        invitationToken: null,
+      },
+      select: { id: true, status: true, artisanId: true },
+    });
+
+    await this.createNotification(
+      updated.artisanId,
+      'Invitation acceptée',
+      'Votre invitation de sous-traitance a été acceptée.',
+    );
+
+    return { success: true, id: updated.id, status: updated.status };
+  }
+
+  /**
+   * Refus IN-APP d'une invitation (par id). Passe la relation à TERMINATED et neutralise le token.
+   * Notifie le donneur d'ordre.
+   */
+  async declineInvitation(userId: string, invitationId: string) {
+    const inv = await this.getInvitationForUser(invitationId, userId);
+
+    if (inv.status !== 'PENDING_INVITATION') {
+      throw new BadRequestException('Invitation déjà traitée');
+    }
+
+    await this.prisma.subcontractor.update({
+      where: { id: inv.id },
+      data: { status: 'TERMINATED', invitationToken: null },
+    });
+
+    await this.createNotification(
+      inv.artisanId,
+      'Invitation refusée',
+      'Votre invitation de sous-traitance a été refusée.',
+    );
+
+    return { success: true, id: inv.id, status: 'TERMINATED' };
   }
 
   // ============ OFFERS MANAGEMENT ============

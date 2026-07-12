@@ -188,6 +188,31 @@ export interface PortalRelationship {
   [key: string]: any;
 }
 
+/**
+ * Invitation de sous-traitance EN ATTENTE vue par l'invité (portail).
+ * Forme réelle du back (GET /subcontractor-portal/invitations) :
+ * { id, status:'PENDING_INVITATION', specialties, defaultCommissionRate, invitedAt, notes,
+ *   artisanName, artisanCompany, matchedBy:'account'|'email' }.
+ * `id` est le subcontractorId à passer à accept/declineInvitation. AUCUN token n'est exposé.
+ */
+export interface PortalInvitation {
+  /** subcontractorId (clé de la relation) — cible de accept / decline. */
+  id: string;
+  status?: SubcontractorStatus;
+  specialties?: string[];
+  /** Part convenue du sous-traitant (%) proposée par le donneur d'ordre. */
+  defaultCommissionRate?: number | null;
+  invitedAt?: string;
+  notes?: string | null;
+  /** Nom du donneur d'ordre (artisan) qui a émis l'invitation. */
+  artisanName?: string;
+  /** Raison sociale du donneur d'ordre (peut être null). */
+  artisanCompany?: string | null;
+  /** 'account' = invité via son compte ; 'email' = invité par email (rattaché ici). */
+  matchedBy?: 'account' | 'email' | string;
+  [key: string]: any;
+}
+
 /** Résultat d'un changement de disponibilité. */
 export interface SetAvailabilityResult {
   updated: number;
@@ -396,6 +421,22 @@ function normalizeRelationship(raw: any): PortalRelationship {
   };
 }
 
+function normalizeInvitation(raw: any): PortalInvitation {
+  return {
+    ...raw,
+    id: raw?.id,
+    status: raw?.status,
+    specialties: Array.isArray(raw?.specialties) ? raw.specialties : [],
+    defaultCommissionRate:
+      raw?.defaultCommissionRate != null ? toNum(raw.defaultCommissionRate) : null,
+    invitedAt: raw?.invitedAt,
+    notes: raw?.notes ?? null,
+    artisanName: raw?.artisanName ?? undefined,
+    artisanCompany: raw?.artisanCompany ?? null,
+    matchedBy: raw?.matchedBy,
+  };
+}
+
 function normalizeDashboard(raw: any): PortalDashboard {
   if (!raw || raw.isSubcontractor === false) {
     return {
@@ -545,18 +586,39 @@ export const subcontractorApi = {
 
     // RECOURS / LITIGE : ouvre un ticket support (module support existant, non modifié).
     // Le ticket remonte dans l'inbox admin support. category DISPUTE ou PAYMENT_ISSUE.
+    //
+    // GAP 2 — RATTACHEMENT À L'ATTRIBUTION : le recours d'un sous-traitant part TOUJOURS d'une
+    // attribution précise. On rattache donc le ticket au contexte disponible pour que l'admin puisse
+    // relier le litige à la mission :
+    //   - `missionId` (champ natif du SupportTicket → relation Mission, lien admin cliquable), fourni
+    //     seulement s'il est un UUID valide (le DTO back valide @IsUUID → sinon 400) ;
+    //   - `assignmentId` référencé de façon STRUCTURÉE dans le sujet, un en-tête machine-lisible de la
+    //     description, et un tag `assignment:<id>` (le modèle SupportTicket n'a pas de champ
+    //     assignmentId dédié — on reste donc dans les champs existants subject/description/tags).
     reportIssue: async (dto: {
       assignmentId: string;
       description: string;
       category?: 'DISPUTE' | 'PAYMENT_ISSUE' | 'MISSION_ISSUE';
       missionId?: string;
     }): Promise<{ id: string; ticketNumber?: string; [k: string]: any }> => {
+      const UUID_RE =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      const missionId =
+        dto.missionId && UUID_RE.test(dto.missionId) ? dto.missionId : undefined;
+
+      // En-tête structuré, machine-lisible, prépendu à la description saisie par le sous-traitant.
+      const contextHeader =
+        `[Sous-traitance] Attribution: ${dto.assignmentId}` +
+        (missionId ? ` | Mission: ${missionId}` : '') +
+        '\n\n';
+
       const response = await apiClient.post('/support/tickets', {
-        subject: `Recours sous-traitance #${dto.assignmentId}`,
-        description: dto.description,
+        subject: `Recours sous-traitance — attribution ${dto.assignmentId}`,
+        description: `${contextHeader}${dto.description}`,
         category: dto.category || 'DISPUTE',
         priority: 'HIGH',
-        ...(dto.missionId ? { missionId: dto.missionId } : {}),
+        tags: ['sous-traitance', `assignment:${dto.assignmentId}`],
+        ...(missionId ? { missionId } : {}),
       });
       return response.data;
     },
@@ -579,6 +641,39 @@ export const subcontractorApi = {
     getEarnings: async (): Promise<SubcontractorEarnings> => {
       const response = await apiClient.get('/subcontractor-portal/earnings');
       return normalizeEarnings(response.data);
+    },
+
+    // --- Invitations en attente (visibilité in-app, GAP 1) --------------
+
+    // Lister les invitations de sous-traitance EN ATTENTE ciblant l'utilisateur
+    // courant (par compte ou par email). Aucun token n'est exposé par le back.
+    getInvitations: async (): Promise<PortalInvitation[]> => {
+      const response = await apiClient.get('/subcontractor-portal/invitations');
+      const list = Array.isArray(response.data) ? response.data : [];
+      return list.map(normalizeInvitation);
+    },
+
+    // Accepter une invitation IN-APP (par id de relation, sans token email).
+    // Rattache l'utilisateur au donneur d'ordre et passe la relation à ACTIVE.
+    acceptInvitation: async (
+      id: string,
+    ): Promise<{ success: boolean; id?: string; status?: string; [k: string]: any }> => {
+      const response = await apiClient.post(
+        `/subcontractor-portal/invitations/${id}/accept`,
+        {},
+      );
+      return response.data;
+    },
+
+    // Refuser une invitation (par id) — passe la relation à TERMINATED.
+    declineInvitation: async (
+      id: string,
+    ): Promise<{ success: boolean; id?: string; status?: string; [k: string]: any }> => {
+      const response = await apiClient.post(
+        `/subcontractor-portal/invitations/${id}/decline`,
+        {},
+      );
+      return response.data;
     },
 
     // --- Disponibilité & relations (self-service) ------------------------

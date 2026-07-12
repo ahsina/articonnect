@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { OrderItemDto } from '../dto/order.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -15,6 +15,8 @@ const LOW_STOCK_THRESHOLD = 5;
 
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
+
   constructor(
     private prisma: PrismaService,
     private platformConfig: PlatformConfigService,
@@ -365,6 +367,175 @@ export class OrderService {
     return order;
   }
 
+  /**
+   * REMBOURSEMENT d'une commande PAYÉE (annulation client ou vendeur, ou passage REFUNDED).
+   *
+   * Réutilise le pattern PROUVÉ de remboursement (return.service.executeRefund / payment.service.refund*) :
+   * `stripe.refunds.create` sur le PaymentIntent de la Transaction de la commande, via le stripeService
+   * DÉJÀ injecté (pas de dépendance sur return.service / payment/*). Le montant remboursé = montant
+   * encaissé de la Transaction (TVA + port inclus, l'acheteur est intégralement remboursé).
+   *
+   * IDEMPOTENT — deux garde-fous :
+   *   1) Transaction.status === 'REFUNDED' -> déjà remboursée, on ne renvoie PAS un 2e refund Stripe.
+   *   2) l'appelant ne déclenche ce remboursement que depuis un statut PAYÉ (PAID/PROCESSING/...),
+   *      donc une commande déjà CANCELLED/REFUNDED ne repasse jamais ici.
+   *
+   * Le Stripe refund est émis AVANT toute écriture de statut de commande (comme payment.service) : si
+   * Stripe échoue, la commande reste PAYÉE (aucun stock relâché, l'acheteur peut réessayer) plutôt que
+   * de laisser une commande « annulée mais non remboursée ».
+   */
+  private async refundPaidOrder(orderId: string): Promise<boolean> {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { orderId },
+    });
+
+    // Aucune Transaction : rien n'a été encaissé via Stripe pour cette commande -> rien à rembourser.
+    if (!transaction) {
+      this.logger.warn(
+        `Annulation commande ${orderId} sans Transaction associée : aucun remboursement Stripe à émettre.`,
+      );
+      return false;
+    }
+
+    // GARDE IDEMPOTENCE : déjà remboursée -> on n'émet pas un second refund.
+    if (transaction.status === 'REFUNDED') {
+      return false;
+    }
+
+    if (transaction.paymentMethod === 'STRIPE' && transaction.stripePaymentIntentId) {
+      // Refund total de l'encaissement (Transaction.amount = total commande payé par l'acheteur).
+      await this.stripeService.refundPayment(
+        transaction.stripePaymentIntentId,
+        Math.round(Number(transaction.amount) * 100),
+      );
+    } else {
+      // Autres moyens de paiement (PayPal / virement / SEPA) : pas d'intégration de refund automatique
+      // ici (traité manuellement par l'admin, cf. return.service). On trace tout de même le REFUND.
+      this.logger.warn(
+        `Remboursement commande ${orderId} (moyen ${transaction.paymentMethod}) : pas de refund Stripe ` +
+          `automatique, à traiter manuellement. Transaction marquée REFUNDED.`,
+      );
+    }
+
+    // TRACE : la Transaction de la commande passe REFUNDED (type PRODUCT conservé). orderId étant @unique
+    // sur Transaction, c'est CETTE ligne qui matérialise le remboursement (pas de 2e ligne possible).
+    await this.prisma.transaction.update({
+      where: { id: transaction.id },
+      data: { status: 'REFUNDED' },
+    });
+
+    this.logger.log(`Commande ${orderId} remboursée (Transaction ${transaction.id} -> REFUNDED).`);
+    return true;
+  }
+
+  /**
+   * Écrit le changement de statut d'une commande en restaurant le stock réservé si c'est une annulation
+   * (CANCELLED/REFUNDED). Logique de restauration PARTAGÉE entre la mise à jour vendeur (updateStatus)
+   * et l'annulation client (cancelByClient). Voir updateStatus pour le détail des deux réservoirs de
+   * stock (produit réservé au paiement / variante réservée à la création).
+   */
+  private async persistStatusChange(
+    orderId: string,
+    orderItems: Array<{ productId: string; quantity: number; variantId?: string | null }>,
+    opts: {
+      cancelling: boolean;
+      productStockReserved: boolean;
+      variantStockReserved: boolean;
+      data: Record<string, unknown>;
+    },
+  ) {
+    const { cancelling, productStockReserved, variantStockReserved, data } = opts;
+    if (cancelling && (productStockReserved || variantStockReserved)) {
+      return this.prisma.$transaction(async (tx) => {
+        for (const it of orderItems) {
+          if (productStockReserved) {
+            await tx.product.update({
+              where: { id: it.productId },
+              data: { stock: { increment: it.quantity } },
+            });
+          }
+          if (variantStockReserved && it.variantId) {
+            await tx.productVariant.update({
+              where: { id: it.variantId },
+              data: { stock: { increment: it.quantity } },
+            });
+          }
+        }
+        return tx.order.update({
+          where: { id: orderId },
+          data: data as any,
+          include: { items: { include: { product: true, variant: true } } },
+        });
+      });
+    }
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: data as any,
+      include: { items: { include: { product: true, variant: true } } },
+    });
+  }
+
+  /**
+   * ANNULATION PAR LE CLIENT de SA propre commande (bouton « Annuler ma commande »).
+   *
+   * Gardé par JwtAuthGuard seul (pas @Roles ARTISAN) côté contrôleur : ownership vérifiée ICI
+   * (order.clientId === clientId). Le client peut annuler TANT que la commande n'est pas préparée
+   * ni expédiée — donc uniquement depuis PENDING ou PAID (jamais PROCESSING/SHIPPED/DELIVERED, où
+   * la voie normale devient la demande de RETOUR après réception).
+   *
+   * - PENDING (jamais encaissée) -> CANCELLED, restauration du stock de variante réservé à la création.
+   * - PAID (encaissée) -> REFUNDED : remboursement Stripe réel + Transaction REFUNDED + restauration
+   *   du stock produit et variante. Idempotent (voir refundPaidOrder + garde statut ci-dessous).
+   */
+  async cancelByClient(orderId: string, clientId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: { include: { product: { select: { artisanId: true } } } } },
+    });
+
+    // Ownership : on ne révèle pas l'existence d'une commande d'autrui (404, pas 403).
+    if (!order || order.clientId !== clientId) {
+      throw new NotFoundException('Commande introuvable');
+    }
+
+    // IDEMPOTENCE : déjà annulée / remboursée -> pas de double remboursement, on renvoie l'état courant.
+    if (order.status === 'CANCELLED' || order.status === 'REFUNDED') {
+      return this.findOne(orderId, clientId);
+    }
+
+    // Le client ne peut annuler que TANT que la commande n'est pas en préparation / expédiée / livrée.
+    const cancellable = ['PENDING', 'PAID'];
+    if (!cancellable.includes(order.status as string)) {
+      throw new BadRequestException(
+        'Cette commande est déjà en cours de préparation ou expédiée : elle ne peut plus être annulée. ' +
+          'Après réception, vous pouvez demander un retour.',
+      );
+    }
+
+    const wasPaid = PAID_STATUSES.includes(order.status as string);
+    const targetStatus = wasPaid ? 'REFUNDED' : 'CANCELLED';
+
+    // 1) REMBOURSEMENT d'abord (si payée) : Stripe avant la BDD, échec Stripe = commande inchangée.
+    if (wasPaid) {
+      await this.refundPaidOrder(orderId);
+    }
+
+    // 2) Restauration du stock + écriture du statut (logique partagée avec updateStatus).
+    const orderItems = ((order as any).items || []) as Array<{
+      productId: string;
+      quantity: number;
+      variantId?: string | null;
+    }>;
+    const productStockReserved = wasPaid; // stock produit réservé uniquement si payée
+    const variantStockReserved = orderItems.some((it) => it.variantId); // variante réservée dès création
+    return this.persistStatusChange(orderId, orderItems, {
+      cancelling: true,
+      productStockReserved,
+      variantStockReserved,
+      data: { status: targetStatus },
+    });
+  }
+
   async updateStatus(orderId: string, artisanId: string, status: string, trackingNumber?: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -439,38 +610,20 @@ export class OrderService {
     // porte une variantId.
     const variantStockReserved = !alreadyReleased && orderItems.some((it) => it.variantId);
 
-    let result;
-    if (cancelling && (productStockReserved || variantStockReserved)) {
-      result = await this.prisma.$transaction(async (tx) => {
-        for (const it of orderItems) {
-          if (productStockReserved) {
-            await tx.product.update({
-              where: { id: it.productId },
-              data: { stock: { increment: it.quantity } },
-            });
-          }
-          // Ré-incrémente le stock de la DÉCLINAISON commandée (décrémentée à la création), une seule
-          // fois (guard variantStockReserved + statut non déjà relâché).
-          if (variantStockReserved && it.variantId) {
-            await tx.productVariant.update({
-              where: { id: it.variantId },
-              data: { stock: { increment: it.quantity } },
-            });
-          }
-        }
-        return tx.order.update({
-          where: { id: orderId },
-          data: data as any,
-          include: { items: { include: { product: true, variant: true } } },
-        });
-      });
-    } else {
-      result = await this.prisma.order.update({
-        where: { id: orderId },
-        data: data as any,
-        include: { items: { include: { product: true, variant: true } } },
-      });
+    // REMBOURSEMENT (faille argent) : une commande PAYÉE (productStockReserved = statut encaissé) qui
+    // passe CANCELLED/REFUNDED doit rembourser réellement l'acheteur — Stripe refund + Transaction
+    // REFUNDED, IDEMPOTENT (refundPaidOrder ne renvoie rien si déjà remboursée). Émis AVANT l'écriture
+    // du statut : si Stripe échoue, la commande reste inchangée (pas d'annulation « sans remboursement »).
+    if (cancelling && productStockReserved) {
+      await this.refundPaidOrder(orderId);
     }
+
+    const result = await this.persistStatusChange(orderId, orderItems, {
+      cancelling,
+      productStockReserved,
+      variantStockReserved,
+      data,
+    });
 
     // FACTURE DE VENTE : dès qu'une commande est (ou passe) payée, on garantit qu'une facture par
     // vendeur existe (idempotent). Best-effort : la génération de facture ne doit jamais faire

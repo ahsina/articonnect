@@ -148,11 +148,14 @@ export default function ClientOrdersPage() {
     if (!confirm(t('orders', 'cancelConfirm'))) return;
 
     try {
-      await marketplaceApi.updateOrderStatus(orderId, 'CANCELLED');
+      // Endpoint client dédié (POST /marketplace/orders/:id/cancel). L'ancien /status
+      // était réservé au vendeur (@Roles('ARTISAN')) et renvoyait un 403 au client.
+      const updated = await marketplaceApi.cancelOrder(orderId);
+      const nextStatus = (updated?.status as OrderStatus) || 'CANCELLED';
 
       setOrders(
         orders.map((o) =>
-          o.id === orderId ? { ...o, status: 'CANCELLED' as const } : o
+          o.id === orderId ? { ...o, status: nextStatus } : o
         )
       );
     } catch (error) {
@@ -381,14 +384,23 @@ export default function ClientOrdersPage() {
                     )}
 
                     {order.status === 'PENDING' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCancelOrder(order.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        {t('orders', 'cancelOrder')}
-                      </Button>
+                      <>
+                        {/* Commande créée mais non payée : bouton de paiement (Stripe). */}
+                        <Button
+                          size="sm"
+                          onClick={() => router.push(`/client/orders/${order.id}/pay`)}
+                        >
+                          Payer
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelOrder(order.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          {t('orders', 'cancelOrder')}
+                        </Button>
+                      </>
                     )}
 
                   </div>

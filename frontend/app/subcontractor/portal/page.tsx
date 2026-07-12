@@ -17,6 +17,7 @@ import {
   Star,
   MessageSquare,
   AlertTriangle,
+  UserPlus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import {
   type SubcontractorOffer,
   type SubcontractorAssignment,
   type PortalRelationship,
+  type PortalInvitation,
 } from '@/lib/api/subcontractor';
 
 type TabKey = 'dashboard' | 'offers' | 'assignments' | 'earnings';
@@ -107,6 +109,7 @@ export default function SubcontractorPortalPage() {
   const [offers, setOffers] = useState<SubcontractorOffer[]>([]);
   const [assignments, setAssignments] = useState<SubcontractorAssignment[]>([]);
   const [relationships, setRelationships] = useState<PortalRelationship[]>([]);
+  const [invitations, setInvitations] = useState<PortalInvitation[]>([]);
   const [availabilityBusy, setAvailabilityBusy] = useState(false);
 
   useEffect(() => {
@@ -118,18 +121,20 @@ export default function SubcontractorPortalPage() {
     setLoading(true);
     setError(null);
     try {
-      const [dash, earn, offs, assigns, rels] = await Promise.all([
+      const [dash, earn, offs, assigns, rels, invs] = await Promise.all([
         subcontractorApi.portal.getDashboard().catch(() => null),
         subcontractorApi.portal.getEarnings().catch(() => null),
         subcontractorApi.portal.getOffers().catch(() => []),
         subcontractorApi.portal.getAssignments().catch(() => []),
         subcontractorApi.portal.listRelationships().catch(() => []),
+        subcontractorApi.portal.getInvitations().catch(() => []),
       ]);
       setDashboard(dash);
       setEarnings(earn);
       setOffers(Array.isArray(offs) ? offs : []);
       setAssignments(Array.isArray(assigns) ? assigns : []);
       setRelationships(Array.isArray(rels) ? rels : []);
+      setInvitations(Array.isArray(invs) ? invs : []);
     } catch (e) {
       console.error('Error loading subcontractor portal:', e);
       setError(t('subcontractor', 'loadError') || 'Unable to load the portal. Please retry.');
@@ -449,6 +454,67 @@ export default function SubcontractorPortalPage() {
     }
   };
 
+  // Accepter une invitation de sous-traitance en attente (in-app, par id).
+  const handleAcceptInvitation = async (id?: string) => {
+    if (!id) return;
+    setActionId(id);
+    try {
+      await subcontractorApi.portal.acceptInvitation(id);
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description:
+          t('subcontractor', 'invitationAccepted') ||
+          'Invitation acceptée. Vous êtes désormais partenaire.',
+        variant: 'success',
+      });
+      await loadAll();
+    } catch (e) {
+      console.error('Error accepting invitation:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'invitationAcceptError') ||
+          "Impossible d'accepter cette invitation.",
+        variant: 'destructive',
+      });
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // Refuser une invitation de sous-traitance en attente (in-app, par id).
+  const handleDeclineInvitation = async (id?: string, label?: string) => {
+    if (!id) return;
+    const confirmed =
+      typeof window === 'undefined' ||
+      window.confirm(
+        (t('subcontractor', 'invitationDeclineConfirm') ||
+          "Refuser l'invitation de") + ` ${label || "ce donneur d'ordre"} ?`,
+      );
+    if (!confirmed) return;
+    setActionId(id);
+    try {
+      await subcontractorApi.portal.declineInvitation(id);
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'invitationDeclined') || 'Invitation refusée.',
+        variant: 'success',
+      });
+      await loadAll();
+    } catch (e) {
+      console.error('Error declining invitation:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'invitationDeclineError') ||
+          "Impossible de refuser cette invitation.",
+        variant: 'destructive',
+      });
+    } finally {
+      setActionId(null);
+    }
+  };
+
   // --- Derived KPIs (tolerant, anti-NaN) ---------------------------------
   // Une offre "à traiter" a le statut back ASSIGNED (ou PENDING en repli).
   const isActionableOffer = (s?: string) => {
@@ -583,6 +649,96 @@ export default function SubcontractorPortalPage() {
       {/* ---------------- Dashboard ---------------- */}
       {tab === 'dashboard' && (
         <div className="space-y-6">
+          {/* Invitations en attente (visibilité in-app) — n'apparaît que s'il y en a. */}
+          {invitations.length > 0 && (
+            <Card className="rounded-2xl border-[#EDEDED]">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" />
+                  {t('subcontractor', 'pendingInvitations') || 'Invitations en attente'}
+                  <Badge variant="warning">{invitations.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {invitations.map((inv) => {
+                    const name =
+                      inv?.artisanCompany ||
+                      inv?.artisanName ||
+                      (t('subcontractor', 'contractor') || "Donneur d'ordre");
+                    const busy = actionId === inv?.id;
+                    return (
+                      <div
+                        key={inv?.id}
+                        className="flex flex-col gap-3 p-4 border border-[#EDEDED] rounded-2xl sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-foreground truncate">
+                              {name}
+                            </span>
+                            {inv?.matchedBy === 'email' && (
+                              <Badge variant="outline" className="gap-1">
+                                <Mail className="h-3 w-3" />
+                                {t('subcontractor', 'invitedByEmail') || 'Par email'}
+                              </Badge>
+                            )}
+                          </div>
+                          {inv?.artisanCompany && inv?.artisanName && (
+                            <div className="text-sm text-muted-foreground truncate">
+                              {inv.artisanName}
+                            </div>
+                          )}
+                          {typeof inv?.defaultCommissionRate === 'number' &&
+                            inv.defaultCommissionRate > 0 && (
+                              <div className="mt-1 text-sm text-muted-foreground">
+                                {t('subcontractor', 'proposedCommission') ||
+                                  'Commission proposée'}
+                                {` : ${inv.defaultCommissionRate}%`}
+                              </div>
+                            )}
+                          {Array.isArray(inv?.specialties) && inv.specialties.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {inv.specialties.map((s) => (
+                                <Badge key={s} variant="outline">
+                                  {s}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {inv?.notes && (
+                            <p className="mt-2 text-sm text-muted-foreground italic">
+                              &laquo; {inv.notes} &raquo;
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => handleDeclineInvitation(inv?.id, name)}
+                          >
+                            {t('subcontractor', 'decline') || 'Refuser'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => handleAcceptInvitation(inv?.id)}
+                            className="gap-2"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            {t('subcontractor', 'accept') || 'Accepter'}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiCard
               label={t('subcontractor', 'kpiPendingOffers') || 'Offres en attente'}

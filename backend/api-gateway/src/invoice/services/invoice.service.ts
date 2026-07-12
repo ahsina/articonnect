@@ -794,19 +794,46 @@ export class InvoiceService {
       throw new BadRequestException('Order has no artisan');
     }
 
-    // Factures déjà émises pour cette commande (idempotence par vendeur).
+    // STATUT FINAL DE LA FACTURE DE VENTE (conformité fiscale) : une facture de vente ne doit JAMAIS
+    // rester en DRAFT une fois la commande encaissée. Quand la commande est réellement réglée
+    // (PAID/PROCESSING/SHIPPED/DELIVERED, cf. paidStatuses), la facture est émise ET marquée payée
+    // (statut PAID + paidAt) puisque les fonds ont bien transité par la plateforme (escrow) — l'ordre
+    // « ISSUED puis PAID » est court-circuité vers PAID car l'encaissement est déjà prouvé par le
+    // statut de la commande. GARDE : on n'émet PAID que si la commande est réellement encaissée ;
+    // sinon (émission manuelle anticipée via createFromOrder, requirePaid:false) la facture reste en
+    // brouillon jusqu'au règlement.
+    const orderPaid = paidStatuses.includes(order.status as string);
+    const finalizeData = orderPaid
+      ? { status: 'PAID' as const, paidAt: new Date() }
+      : null;
+
+    // Factures déjà émises pour cette commande (idempotence par vendeur). On récupère aussi le statut
+    // pour pouvoir FINALISER une facture laissée en DRAFT sur une commande depuis encaissée (rattrapage),
+    // tout en ne retouchant jamais une facture déjà finalisée (ISSUED/PAID/OVERDUE/REFUNDED).
     const existing = await this.prisma.invoice.findMany({
       where: { orderId: order.id, status: { not: 'CANCELLED' } },
-      select: { issuerId: true },
+      select: { id: true, issuerId: true, status: true },
     });
-    const alreadyIssued = new Set(existing.map((e) => e.issuerId));
+    const existingBySeller = new Map(existing.map((e) => [e.issuerId, e]));
 
     const created: any[] = [];
     const skipped: string[] = [];
 
     for (const [artisanId, items] of bySeller.entries()) {
-      if (alreadyIssued.has(artisanId)) {
-        skipped.push(artisanId);
+      const prior = existingBySeller.get(artisanId);
+      if (prior) {
+        // Une facture non annulée existe déjà pour ce vendeur.
+        if (prior.status === 'DRAFT' && finalizeData) {
+          // Rattrapage : brouillon sur commande encaissée -> on la finalise (émise + payée).
+          const finalized = await this.prisma.invoice.update({
+            where: { id: prior.id },
+            data: finalizeData,
+          });
+          created.push(finalized);
+        } else {
+          // Déjà finalisée (ou commande non encore encaissée) : idempotent, on ne retouche rien.
+          skipped.push(artisanId);
+        }
         continue;
       }
 
@@ -865,7 +892,18 @@ export class InvoiceService {
         clientAddress: clientAddress as any,
         paymentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
-      created.push(invoice);
+
+      // create() pose toujours le défaut DRAFT : on finalise immédiatement (émise + payée) quand la
+      // commande est encaissée, pour ne jamais laisser une facture de vente en brouillon.
+      if (finalizeData) {
+        const finalized = await this.prisma.invoice.update({
+          where: { id: invoice.id },
+          data: finalizeData,
+        });
+        created.push(finalized);
+      } else {
+        created.push(invoice);
+      }
     }
 
     return { created, skipped };

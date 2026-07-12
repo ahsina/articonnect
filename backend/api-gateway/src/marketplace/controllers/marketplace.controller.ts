@@ -316,6 +316,20 @@ export class MarketplaceController {
     return this.orderService.payOrder(id, req.user.userId);
   }
 
+  @Post('orders/:id/cancel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Annuler MA commande (client) — remboursement Stripe si déjà payée, tant qu’elle n’est pas expédiée',
+  })
+  @ApiResponse({ status: 200, description: 'Commande annulée (PENDING) ou remboursée (PAID -> REFUNDED)' })
+  @ApiResponse({ status: 400, description: 'Commande déjà en préparation / expédiée : annulation impossible' })
+  @ApiResponse({ status: 404, description: 'Commande introuvable (ou n’appartenant pas au client)' })
+  async cancelOrder(@Request() req, @Param('id') id: string) {
+    return this.orderService.cancelByClient(id, req.user.userId);
+  }
+
   @Patch('orders/:id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ARTISAN')

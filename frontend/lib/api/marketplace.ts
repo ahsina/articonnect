@@ -350,6 +350,46 @@ export const marketplaceApi = {
   },
 
   /**
+   * Paiement d'une commande produit (checkout client).
+   * Route backend : POST `/marketplace/orders/:id/pay` (même pattern que l'escrow mission).
+   * Renvoie un `clientSecret` Stripe à confirmer côté client via Stripe.js.
+   * Cas idempotent : si la commande est déjà payée, le backend renvoie `{ alreadyPaid: true, ... }`
+   * SANS clientSecret — l'appelant doit alors simplement rediriger vers la commande.
+   * NB : la réponse backend peut contenir des champs internes (répartition/commission plateforme) ;
+   * ne JAMAIS les exposer au client (anti-désintermédiation) — seul `clientSecret` est utilisé.
+   */
+  payOrder: async (
+    id: string,
+  ): Promise<{
+    clientSecret?: string;
+    orderId: string;
+    amount?: number;
+    status?: string;
+    alreadyPaid?: boolean;
+  }> => {
+    const response = await apiClient.post(`/marketplace/orders/${id}/pay`);
+    const d = response.data || {};
+    // On ne relaie QUE les champs sûrs (pas de commission/répartition vendeur).
+    return {
+      clientSecret: d.clientSecret,
+      orderId: d.orderId ?? id,
+      amount: d.amount,
+      status: d.status,
+      alreadyPaid: d.alreadyPaid,
+    };
+  },
+
+  /**
+   * Annulation d'une commande PAR LE CLIENT.
+   * Route backend dédiée : POST `/marketplace/orders/:id/cancel` (renvoie la commande annulée).
+   * (L'endpoint `/status` est réservé au vendeur — @Roles('ARTISAN') — d'où le 403 côté client.)
+   */
+  cancelOrder: async (id: string): Promise<Order> => {
+    const response = await apiClient.post(`/marketplace/orders/${id}/cancel`);
+    return response.data;
+  },
+
+  /**
    * Expédie une commande : pose le numéro de suivi et passe le statut à SHIPPED.
    * Route dédiée `/marketplace/orders/:id/ship` (ajoutée côté backend, expédition).
    * Repli : si l'endpoint n'existe pas encore, on avance au moins le statut à SHIPPED
