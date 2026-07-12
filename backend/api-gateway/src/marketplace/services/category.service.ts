@@ -132,31 +132,43 @@ export class CategoryService {
   async delete(id: string) {
     const category = await this.findById(id);
 
-    // Check if category has children
-    const childrenCount = await this.prisma.category.count({
-      where: { parentId: id },
+    // Une catégorie qui contient des sous-catégories actives ne peut pas être
+    // supprimée : on force l'admin à traiter d'abord la hiérarchie.
+    const activeChildrenCount = await this.prisma.category.count({
+      where: { parentId: id, active: true },
     });
 
-    if (childrenCount > 0) {
+    if (activeChildrenCount > 0) {
       throw new ConflictException(
-        'Impossible de supprimer une catégorie qui contient des sous-catégories'
+        'Impossible de supprimer une catégorie qui contient des sous-catégories actives'
       );
     }
 
-    // Check if category has products
+    // Suppression non destructive : si des produits référencent la catégorie,
+    // on la DÉSACTIVE (active=false) au lieu de la supprimer physiquement — sinon
+    // on romprait la relation Product.categoryId et l'historique des ventes.
     const productsCount = await this.prisma.product.count({
       where: { categoryId: id },
     });
 
     if (productsCount > 0) {
-      throw new ConflictException(
-        'Impossible de supprimer une catégorie qui contient des produits'
-      );
+      const deactivated = await this.prisma.category.update({
+        where: { id },
+        data: { active: false },
+      });
+      return {
+        ...deactivated,
+        softDeleted: true,
+        productsCount,
+        message:
+          'Catégorie désactivée (elle contient des produits) plutôt que supprimée.',
+      };
     }
 
-    return this.prisma.category.delete({
+    await this.prisma.category.delete({
       where: { id },
     });
+    return { id, softDeleted: false, message: 'Catégorie supprimée.' };
   }
 
   /**

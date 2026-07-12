@@ -9,6 +9,7 @@ import {
   ValidateNested,
   Min,
   IsUUID,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -204,6 +205,22 @@ export class RespondToQuoteDto {
   @IsString()
   @IsOptional()
   rejectionReason?: string;
+}
+
+// Signature électronique d'un devis. Body validé par class-validator (le contrôleur utilisait
+// auparavant une interface TS effacée au runtime → un champ manquant, ex. signerRole, provoquait
+// un 500 Prisma « Argument signerRole is missing »). Désormais : 400 propre si champ manquant/invalide.
+export class SignQuoteDto {
+  @IsString()
+  signatureImage: string;
+
+  @IsString()
+  @IsIn(['DRAWN', 'TYPED', 'CHECKBOX'])
+  signatureType: 'DRAWN' | 'TYPED' | 'CHECKBOX';
+
+  @IsString()
+  @IsIn(['ARTISAN', 'CLIENT'])
+  signerRole: 'ARTISAN' | 'CLIENT';
 }
 
 export class CreateQuoteTemplateDto {

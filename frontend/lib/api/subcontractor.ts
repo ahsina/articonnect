@@ -258,23 +258,32 @@ export interface SubcontractorEarnings {
 // DTOs — volontairement tolérants ; le back renvoie 400 avec les champs requis.
 // ---------------------------------------------------------------------------
 
+// Aligné sur le DTO backend RÉEL `CreateSubcontractorDto` (source de vérité,
+// ValidationPipe { whitelist, forbidNonWhitelisted } → tout champ inconnu = 400).
+// Le back attend `externalEmail` / `externalCompany` / `externalName` / `notes`,
+// PAS `email` / `companyName` / `message`.
 export interface InviteSubcontractorDto {
-  email: string;
-  companyName?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  message?: string;
+  externalEmail: string;
+  externalCompany?: string;
+  externalName?: string;
+  externalPhone?: string;
+  defaultCommissionRate?: number;
+  specialties?: string[];
+  /** Message libre au partenaire → persisté sur `notes` côté back. */
+  notes?: string;
   [key: string]: any;
 }
 
+// Aligné sur le DTO backend RÉEL `CreateSubcontractorAssignmentDto` : le montant
+// s'appelle `agreedAmount` (requis) et `commissionRate` (requis, plancher 5 %).
+// `amount` / `notes` / `currency` / `scheduledAt` n'existent PAS côté back → 400.
 export interface CreateSubcontractorAssignmentDto {
   subcontractorId: string;
   missionId: string;
-  amount?: number;
-  currency?: string;
-  notes?: string;
-  scheduledAt?: string;
+  role?: string;
+  description?: string;
+  agreedAmount: number;
+  commissionRate: number;
   [key: string]: any;
 }
 

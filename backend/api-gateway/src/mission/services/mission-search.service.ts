@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MissionStatus, Prisma } from '@prisma/client';
 
@@ -70,6 +70,36 @@ export class MissionSearchService {
     filters: MissionSearchFilters,
     viewerId?: string,
   ): Promise<MissionSearchResult> {
+    // Robustesse : valider les enums de query AVANT de les passer à Prisma, sinon un statut
+    // invalide (ex. « OPEN ») ou un sortOrder invalide provoque un 500 Prisma
+    // (« Expected MissionStatus » / valeur de tri invalide). On renvoie un 400 propre à la place.
+    const validStatuses = Object.values(MissionStatus) as string[];
+    if (
+      filters.status !== undefined &&
+      !validStatuses.includes(filters.status as unknown as string)
+    ) {
+      throw new BadRequestException(
+        `Statut de mission invalide : « ${filters.status} ». Valeurs acceptées : ${validStatuses.join(', ')}.`,
+      );
+    }
+    if (
+      filters.statuses &&
+      filters.statuses.some((s) => !validStatuses.includes(s as unknown as string))
+    ) {
+      throw new BadRequestException(
+        `Un ou plusieurs statuts de mission sont invalides. Valeurs acceptées : ${validStatuses.join(', ')}.`,
+      );
+    }
+    if (
+      filters.sortOrder !== undefined &&
+      filters.sortOrder !== 'asc' &&
+      filters.sortOrder !== 'desc'
+    ) {
+      throw new BadRequestException(
+        `Ordre de tri invalide : « ${filters.sortOrder} » (valeurs acceptées : asc, desc).`,
+      );
+    }
+
     const page = filters.page || 1;
     const limit = filters.limit || 20;
     const skip = (page - 1) * limit;

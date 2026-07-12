@@ -12,6 +12,7 @@ import {
   subcontractorApi,
   Subcontractor,
   SubcontractorAssignment,
+  COMMISSION_FLOOR_RATE,
 } from '@/lib/api/subcontractor';
 import { Loader2, Plus, Star, Users, ClipboardList } from 'lucide-react';
 
@@ -57,6 +58,7 @@ export default function SubcontractorsPage() {
   const [assignTarget, setAssignTarget] = useState<Subcontractor | null>(null);
   const [assignMissionId, setAssignMissionId] = useState('');
   const [assignAmount, setAssignAmount] = useState('');
+  const [assignCommission, setAssignCommission] = useState('');
   const [assignNotes, setAssignNotes] = useState('');
   const [assigning, setAssigning] = useState(false);
 
@@ -115,10 +117,11 @@ export default function SubcontractorsPage() {
     }
     setInviting(true);
     try {
+      // Noms de champs alignés sur le DTO backend réel (externalEmail / externalCompany / notes).
       await subcontractorApi.manage.invite({
-        email: inviteEmail.trim(),
-        companyName: inviteCompany.trim() || undefined,
-        message: inviteMessage.trim() || undefined,
+        externalEmail: inviteEmail.trim(),
+        externalCompany: inviteCompany.trim() || undefined,
+        notes: inviteMessage.trim() || undefined,
       });
       toast({
         title: t('common', 'success') || 'Success',
@@ -149,6 +152,13 @@ export default function SubcontractorsPage() {
     setAssignTarget(sub);
     setAssignMissionId('');
     setAssignAmount('');
+    // Taux de commission par défaut : celui négocié avec ce sous-traitant s'il est
+    // défini, sinon le plancher plateforme. Jamais sous le plancher (le back rejette < 5 %).
+    const subDefault = Number((sub as any)?.defaultCommissionRate);
+    const seed = Number.isFinite(subDefault) && subDefault >= COMMISSION_FLOOR_RATE
+      ? subDefault
+      : COMMISSION_FLOOR_RATE;
+    setAssignCommission(String(seed));
     setAssignNotes('');
     if (missions.length === 0) loadMissions();
   };
@@ -163,14 +173,41 @@ export default function SubcontractorsPage() {
       });
       return;
     }
+    // Le back exige `agreedAmount` (>= 0) : le montant est obligatoire.
+    const amount = Number(assignAmount);
+    if (!assignAmount.trim() || !Number.isFinite(amount) || amount < 0) {
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('subcontractor', 'amountRequired') || 'Please enter a valid amount',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Le back exige `commissionRate` (0-100, plancher plateforme 5 %).
+    const commission = Number(assignCommission);
+    if (!Number.isFinite(commission) || commission < COMMISSION_FLOOR_RATE || commission > 100) {
+      toast({
+        title: t('common', 'error') || 'Error',
+        description:
+          (t('subcontractor', 'commissionInvalid') ||
+            'Commission rate must be between {min} and 100%').replace(
+            '{min}',
+            String(COMMISSION_FLOOR_RATE),
+          ),
+        variant: 'destructive',
+      });
+      return;
+    }
     setAssigning(true);
     try {
-      const amount = Number(assignAmount);
+      // Champs alignés sur le DTO backend : agreedAmount + commissionRate (requis),
+      // description (note libre). PAS amount / notes (→ 400 forbidNonWhitelisted).
       await subcontractorApi.manage.createAssignment({
         subcontractorId: assignTarget.id,
         missionId: assignMissionId,
-        amount: assignAmount && !Number.isNaN(amount) ? amount : undefined,
-        notes: assignNotes.trim() || undefined,
+        agreedAmount: amount,
+        commissionRate: commission,
+        description: assignNotes.trim() || undefined,
       });
       toast({
         title: t('common', 'success') || 'Success',
@@ -533,14 +570,36 @@ export default function SubcontractorsPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">
-                  {t('subcontractor', 'amount') || 'Amount (€)'}
+                  {t('subcontractor', 'amount') || 'Amount (€)'} *
                 </label>
                 <Input
                   type="number"
+                  min={0}
                   value={assignAmount}
                   onChange={(e) => setAssignAmount(e.target.value)}
-                  placeholder={t('subcontractor', 'optional') || 'Optional'}
+                  placeholder="0.00"
                 />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {t('subcontractor', 'commissionRate') || 'Platform commission (%)'} *
+                </label>
+                <Input
+                  type="number"
+                  min={COMMISSION_FLOOR_RATE}
+                  max={100}
+                  step={0.5}
+                  value={assignCommission}
+                  onChange={(e) => setAssignCommission(e.target.value)}
+                  placeholder={String(COMMISSION_FLOOR_RATE)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {(t('subcontractor', 'commissionHint') ||
+                    'Minimum {min}% (platform floor).').replace(
+                    '{min}',
+                    String(COMMISSION_FLOOR_RATE),
+                  )}
+                </p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">

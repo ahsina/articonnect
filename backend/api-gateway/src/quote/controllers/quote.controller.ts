@@ -30,13 +30,8 @@ import {
   QuoteFilterDto,
   CreateQuoteTemplateDto,
   CreateMaterialCatalogItemDto,
+  SignQuoteDto,
 } from '../dto/quote.dto';
-
-interface SignQuoteDto {
-  signatureImage?: string;
-  signatureType: 'DRAWN' | 'TYPED' | 'CHECKBOX';
-  signerRole: 'CLIENT' | 'ARTISAN';
-}
 
 interface RequestSignatureDto {
   message?: string;

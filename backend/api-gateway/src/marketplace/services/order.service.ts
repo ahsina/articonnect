@@ -137,6 +137,9 @@ export class OrderService {
               quantity: it.quantity,
               unitPrice: new Decimal(it.unitPrice),
               totalPrice: new Decimal(it.totalPrice),
+              // PERSISTE la déclinaison commandée : le vendeur saura quelle variante expédier et le
+              // stock de variante pourra être ré-incrémenté à l'annulation/refund.
+              variantId: it.variantId ?? null,
             })),
           },
         },
@@ -144,6 +147,7 @@ export class OrderService {
           items: {
             include: {
               product: true,
+              variant: true,
             },
           },
         },
@@ -419,29 +423,52 @@ export class OrderService {
       if (!order.deliveredAt) data.deliveredAt = now;
     }
 
-    // Ré-incrémente le stock si on annule/rembourse une commande dont le stock avait été
-    // décrémenté au paiement (statuts >= PAID). Une commande PENDING n'a pas consommé de stock.
-    const stockWasReserved = PAID_STATUSES.includes(order.status);
+    // RESTAURATION DU STOCK à l'annulation / remboursement. Deux réservoirs de stock distincts, avec
+    // des moments de réservation différents :
+    //   - PRODUIT (ligne globale) : stock décrémenté au PAIEMENT (settleOrderPayment). Réservé
+    //     uniquement pour les statuts payés -> à restaurer seulement si la commande était payée.
+    //   - VARIANTE : stock décrémenté dès la CRÉATION de la commande (immédiat). Réservé tant que la
+    //     commande n'est pas déjà annulée/remboursée -> à restaurer MÊME depuis PENDING (jamais payée).
+    // Idempotence : une commande déjà CANCELLED/REFUNDED n'a plus de stock réservé, donc un 2e passage
+    // ne re-restaure rien (ni produit ni variante).
+    const cancelling = status === 'CANCELLED' || status === 'REFUNDED';
+    const alreadyReleased = order.status === 'CANCELLED' || order.status === 'REFUNDED';
+    const productStockReserved = PAID_STATUSES.includes(order.status);
+    const orderItems = ((order as any).items || []) as Array<{ productId: string; quantity: number; variantId?: string | null }>;
+    // La variante n'est à restaurer que si la commande la réservait encore ET qu'au moins un item
+    // porte une variantId.
+    const variantStockReserved = !alreadyReleased && orderItems.some((it) => it.variantId);
+
     let result;
-    if ((status === 'CANCELLED' || status === 'REFUNDED') && stockWasReserved) {
+    if (cancelling && (productStockReserved || variantStockReserved)) {
       result = await this.prisma.$transaction(async (tx) => {
-        for (const it of (order as any).items || []) {
-          await tx.product.update({
-            where: { id: it.productId },
-            data: { stock: { increment: it.quantity } },
-          });
+        for (const it of orderItems) {
+          if (productStockReserved) {
+            await tx.product.update({
+              where: { id: it.productId },
+              data: { stock: { increment: it.quantity } },
+            });
+          }
+          // Ré-incrémente le stock de la DÉCLINAISON commandée (décrémentée à la création), une seule
+          // fois (guard variantStockReserved + statut non déjà relâché).
+          if (variantStockReserved && it.variantId) {
+            await tx.productVariant.update({
+              where: { id: it.variantId },
+              data: { stock: { increment: it.quantity } },
+            });
+          }
         }
         return tx.order.update({
           where: { id: orderId },
           data: data as any,
-          include: { items: { include: { product: true } } },
+          include: { items: { include: { product: true, variant: true } } },
         });
       });
     } else {
       result = await this.prisma.order.update({
         where: { id: orderId },
         data: data as any,
-        include: { items: { include: { product: true } } },
+        include: { items: { include: { product: true, variant: true } } },
       });
     }
 
@@ -479,7 +506,8 @@ export class OrderService {
     const orders = await this.prisma.order.findMany({
       where: { items: { some: { product: { artisanId } } } },
       include: {
-        items: { include: { product: true } },
+        // La DÉCLINAISON commandée est incluse pour que le vendeur voie quelle variante expédier.
+        items: { include: { product: true, variant: true } },
         client: { select: { id: true, firstName: true, lastName: true } },
         transaction: { select: { status: true, commission: true, artisanAmount: true, amount: true } },
       },

@@ -408,18 +408,22 @@ export class ProductService {
       throw new NotFoundException('Produit introuvable');
     }
 
-    // L'utilisateur doit avoir commandé ce produit (une de ses commandes contient cet article)
-    const hasOrdered = await this.prisma.order.findFirst({
+    // L'utilisateur doit avoir une commande RÉGLÉE de ce produit : la simple
+    // existence d'une commande ne suffit pas (une commande PENDING non payée ou
+    // CANCELLED ne donne pas droit à un avis). On exige un statut prouvant que
+    // l'achat a bien été honoré (payé, en préparation, expédié ou livré).
+    const hasPurchased = await this.prisma.order.findFirst({
       where: {
         clientId: userId,
+        status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as any },
         items: { some: { productId } },
       },
       select: { id: true },
     });
 
-    if (!hasOrdered) {
+    if (!hasPurchased) {
       throw new ForbiddenException(
-        'Vous ne pouvez noter qu\'un produit que vous avez commandé',
+        'Vous ne pouvez noter qu\'un produit issu d\'une commande payée',
       );
     }
 

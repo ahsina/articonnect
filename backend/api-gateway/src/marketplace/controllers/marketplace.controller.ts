@@ -9,6 +9,7 @@ import { CategoryService } from '../services/category.service';
 import { CreateProductDto, UpdateProductDto, CreateProductReviewDto, ReplyProductReviewDto } from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { CreateOrderDto, UpdateOrderStatusDto, ShipOrderDto } from '../dto/order.dto';
+import { CreateCategoryDto, UpdateCategoryDto } from '../dto/category.dto';
 
 @ApiTags('Marketplace')
 @Controller('marketplace')
@@ -25,6 +26,58 @@ export class MarketplaceController {
     return tree === 'true'
       ? this.categoryService.getTree()
       : this.categoryService.findAll();
+  }
+
+  // ==================== CATEGORIES (ADMIN) ====================
+  // Gestion CRUD réservée aux administrateurs. Le GET public ci-dessus ne renvoie
+  // que les catégories actives ; l'admin a besoin de voir aussi les désactivées.
+
+  @Get('admin/categories')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lister toutes les catégories (actives + désactivées) — admin' })
+  @ApiResponse({ status: 200, description: 'Liste complète des catégories' })
+  async getAllCategoriesAdmin() {
+    return this.categoryService.findAll(true);
+  }
+
+  @Post('admin/categories')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Créer une catégorie produit — admin' })
+  @ApiResponse({ status: 201, description: 'Catégorie créée' })
+  @ApiResponse({ status: 409, description: 'Slug déjà utilisé' })
+  async createCategory(@Body() data: CreateCategoryDto) {
+    return this.categoryService.create(data);
+  }
+
+  @Patch('admin/categories/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Modifier une catégorie (dont activer/désactiver) — admin' })
+  @ApiResponse({ status: 200, description: 'Catégorie mise à jour' })
+  @ApiResponse({ status: 404, description: 'Catégorie introuvable' })
+  @ApiResponse({ status: 409, description: 'Slug déjà utilisé' })
+  async updateCategory(@Param('id') id: string, @Body() data: UpdateCategoryDto) {
+    return this.categoryService.update(id, data);
+  }
+
+  @Delete('admin/categories/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Supprimer une catégorie — admin (désactivation si elle contient des produits)',
+  })
+  @ApiResponse({ status: 200, description: 'Catégorie supprimée ou désactivée' })
+  @ApiResponse({ status: 404, description: 'Catégorie introuvable' })
+  @ApiResponse({ status: 409, description: 'Contient des sous-catégories actives' })
+  async deleteCategory(@Param('id') id: string) {
+    return this.categoryService.delete(id);
   }
 
   @Get('products')

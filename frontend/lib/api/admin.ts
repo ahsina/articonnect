@@ -1404,7 +1404,8 @@ export const adminApi = {
   ): Promise<UserReputation> => {
     const response = await apiClient.post('/reputation/adjust', {
       userId,
-      adjustment,
+      // Le DTO backend (AdjustReputationDto) attend `pointsChange`, pas `adjustment`.
+      pointsChange: adjustment,
       reason,
     });
     return response.data;
