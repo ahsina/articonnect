@@ -252,6 +252,68 @@ export class EmployeeEarningsService {
     };
   }
 
+  /**
+   * Gains de l'artisan COURANT (route legacy /earnings/me).
+   * Renvoie uniquement les EmployeeEarnings rattachés aux fiches employé de l'utilisateur
+   * (scope strict : on ne peut voir que ses propres gains). Ne lève jamais 404 :
+   * un artisan sans gains obtient une liste vide (200), pas une erreur.
+   */
+  async getMyEarnings(requesterId: string, queryDto: EmployeeEarningsQueryDto) {
+    const { status, startDate, endDate, page = 1, limit = 20 } = queryDto;
+    const skip = (page - 1) * limit;
+
+    const myEmployeeRecords = await this.prisma.companyEmployee.findMany({
+      where: { userId: requesterId },
+      select: { id: true },
+    });
+    const employeeIds = myEmployeeRecords.map((e) => e.id);
+
+    const where: any = { employeeId: { in: employeeIds } };
+    if (status) {
+      where.status = status;
+    }
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.createdAt.lte = new Date(endDate);
+      }
+    }
+
+    if (employeeIds.length === 0) {
+      return { data: [], meta: { total: 0, page, limit, totalPages: 0 } };
+    }
+
+    const [earnings, total] = await Promise.all([
+      this.prisma.employeeEarnings.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          employee: {
+            include: {
+              user: {
+                select: { id: true, firstName: true, lastName: true, email: true },
+              },
+            },
+          },
+          mission: {
+            select: { id: true, title: true, finalPrice: true, status: true },
+          },
+        },
+      }),
+      this.prisma.employeeEarnings.count({ where }),
+    ]);
+
+    return {
+      data: earnings,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
   async getEarningsById(earningsId: string, requesterId: string) {
     const earnings = await this.prisma.employeeEarnings.findUnique({
       where: { id: earningsId },

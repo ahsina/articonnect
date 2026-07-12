@@ -241,6 +241,18 @@ export class ProductService {
     }
     delete updateData.images;
 
+    // STOCK -> STATUT : quand le vendeur met le stock à 0, le produit passe automatiquement en
+    // SOLD_OUT ; s'il réapprovisionne un produit épuisé (SOLD_OUT), il redevient ACTIVE. On ne
+    // surcharge pas un statut explicitement fourni par le vendeur (ex : passage manuel en INACTIVE).
+    if (updateData.stock !== undefined && updateData.status === undefined) {
+      const currentStatus = (product as any).status;
+      if (Number(updateData.stock) <= 0) {
+        updateData.status = 'SOLD_OUT';
+      } else if (currentStatus === 'SOLD_OUT') {
+        updateData.status = 'ACTIVE';
+      }
+    }
+
     return this.prisma.product.update({
       where: { id },
       data: updateData,
@@ -496,6 +508,31 @@ export class ProductService {
    * au catalogue public qui ne montre que ACTIVE. Sert le tableau de bord vendeur.
    */
   async getMyProducts(artisanId: string) {
+    // RÉCONCILIATION SOLD_OUT : le décrément de stock au règlement (webhook Stripe, hors de ce
+    // service) ne change pas le statut. On aligne ici le statut sur le stock réel avant de renvoyer
+    // la liste : stock <= 0 & ACTIVE -> SOLD_OUT ; stock > 0 & SOLD_OUT -> ACTIVE (réappro).
+    const toSoldOut = await this.prisma.product.findMany({
+      where: { artisanId, status: 'ACTIVE', stock: { lte: 0 } },
+      select: { id: true },
+    });
+    if (toSoldOut.length) {
+      await this.prisma.product.updateMany({
+        where: { id: { in: toSoldOut.map((p) => p.id) } },
+        data: { status: 'SOLD_OUT' },
+      });
+    }
+    const toActive = await this.prisma.product.findMany({
+      where: { artisanId, status: 'SOLD_OUT', stock: { gt: 0 } },
+      select: { id: true },
+    });
+    if (toActive.length) {
+      await this.prisma.product.updateMany({
+        where: { id: { in: toActive.map((p) => p.id) } },
+        data: { status: 'ACTIVE' },
+      });
+    }
+
+    const LOW_STOCK_THRESHOLD = 5;
     const products = await this.prisma.product.findMany({
       where: { artisanId },
       include: {
@@ -504,6 +541,12 @@ export class ProductService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return products;
+
+    // Annote chaque produit d'un drapeau d'alerte de stock (consommé par le tableau de bord vendeur).
+    return products.map((p) => ({
+      ...p,
+      lowStock: p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD,
+      outOfStock: p.stock <= 0 || p.status === 'SOLD_OUT',
+    }));
   }
 }

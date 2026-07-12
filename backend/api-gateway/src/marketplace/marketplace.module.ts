@@ -12,10 +12,12 @@ import { CategoryService } from './services/category.service';
 import { PrismaModule } from '../common/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { PaymentModule } from '../payment/payment.module';
+import { InvoiceModule } from '../invoice/invoice.module';
 
 @Module({
   // PaymentModule fournit StripeService (encaissement des commandes marketplace via OrderService).
-  imports: [PrismaModule, AuthModule, PaymentModule],
+  // InvoiceModule fournit InvoiceService (facture de vente auto au règlement d'une commande).
+  imports: [PrismaModule, AuthModule, PaymentModule, InvoiceModule],
   controllers: [
     MarketplaceController,
     FavoriteController,

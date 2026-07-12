@@ -85,7 +85,7 @@ export function Navbar({ user }: NavbarProps) {
     ],
     ARTISAN: [
       { href: '/artisan/missions', label: t('nav', 'missions') || 'Missions' },
-      { href: '/artisan/shop', label: t('nav', 'myShop') || 'Ma Boutique' },
+      { href: '/artisan/products', label: t('nav', 'myShop') || 'Ma Boutique' },
       { href: '/artisan/profile', label: t('nav', 'profile') || 'Profil' },
     ],
     ADMIN: [

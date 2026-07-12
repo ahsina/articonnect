@@ -10,6 +10,10 @@ import {
   Clock,
   MapPin,
   Calendar,
+  Phone,
+  Mail,
+  LogOut,
+  Users,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +26,7 @@ import {
   type SubcontractorEarnings,
   type SubcontractorOffer,
   type SubcontractorAssignment,
+  type PortalRelationship,
 } from '@/lib/api/subcontractor';
 
 type TabKey = 'dashboard' | 'offers' | 'assignments' | 'earnings';
@@ -98,6 +103,8 @@ export default function SubcontractorPortalPage() {
   const [earnings, setEarnings] = useState<SubcontractorEarnings | null>(null);
   const [offers, setOffers] = useState<SubcontractorOffer[]>([]);
   const [assignments, setAssignments] = useState<SubcontractorAssignment[]>([]);
+  const [relationships, setRelationships] = useState<PortalRelationship[]>([]);
+  const [availabilityBusy, setAvailabilityBusy] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -108,16 +115,18 @@ export default function SubcontractorPortalPage() {
     setLoading(true);
     setError(null);
     try {
-      const [dash, earn, offs, assigns] = await Promise.all([
+      const [dash, earn, offs, assigns, rels] = await Promise.all([
         subcontractorApi.portal.getDashboard().catch(() => null),
         subcontractorApi.portal.getEarnings().catch(() => null),
         subcontractorApi.portal.getOffers().catch(() => []),
         subcontractorApi.portal.getAssignments().catch(() => []),
+        subcontractorApi.portal.listRelationships().catch(() => []),
       ]);
       setDashboard(dash);
       setEarnings(earn);
       setOffers(Array.isArray(offs) ? offs : []);
       setAssignments(Array.isArray(assigns) ? assigns : []);
+      setRelationships(Array.isArray(rels) ? rels : []);
     } catch (e) {
       console.error('Error loading subcontractor portal:', e);
       setError(t('subcontractor', 'loadError') || 'Unable to load the portal. Please retry.');
@@ -251,6 +260,66 @@ export default function SubcontractorPortalPage() {
     }
   };
 
+  // Basculer sa disponibilité globale (Disponible <-> En pause). Reflète l'état
+  // courant renvoyé par le dashboard (available) et recharge après écriture.
+  const handleToggleAvailability = async () => {
+    if (!dashboard?.isSubcontractor || availabilityBusy) return;
+    const next = !(dashboard.available ?? true);
+    setAvailabilityBusy(true);
+    try {
+      await subcontractorApi.portal.setAvailability({ active: next });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: next
+          ? t('subcontractor', 'nowAvailable') || 'Vous êtes de nouveau disponible.'
+          : t('subcontractor', 'nowPaused') || 'Vous êtes en pause : plus de nouvelles offres.',
+        variant: 'success',
+      });
+      await loadAll();
+    } catch (e) {
+      console.error('Error setting availability:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description: t('subcontractor', 'availabilityError') || 'Impossible de changer votre disponibilité.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAvailabilityBusy(false);
+    }
+  };
+
+  // Quitter définitivement une relation (donneur d'ordre).
+  const handleLeaveRelationship = async (subcontractorId?: string, label?: string) => {
+    if (!subcontractorId) return;
+    const confirmed =
+      typeof window === 'undefined' ||
+      window.confirm(
+        (t('subcontractor', 'leaveConfirm') ||
+          'Quitter définitivement cette relation ? Vous ne recevrez plus d\'offres de') +
+          ` ${label || 'ce donneur d\'ordre'}.`,
+      );
+    if (!confirmed) return;
+    setActionId(subcontractorId);
+    try {
+      await subcontractorApi.portal.leaveRelationship({ subcontractorId });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'relationshipLeft') || 'Vous avez quitté cette relation.',
+        variant: 'success',
+      });
+      await loadAll();
+    } catch (e) {
+      console.error('Error leaving relationship:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description: t('subcontractor', 'leaveError') || 'Impossible de quitter cette relation.',
+        variant: 'destructive',
+      });
+    } finally {
+      setActionId(null);
+    }
+  };
+
   // --- Derived KPIs (tolerant, anti-NaN) ---------------------------------
   // Une offre "à traiter" a le statut back ASSIGNED (ou PENDING en repli).
   const isActionableOffer = (s?: string) => {
@@ -273,11 +342,18 @@ export default function SubcontractorPortalPage() {
   const earningsCurrency = earnings?.currency || 'EUR';
 
   // "Missions en cours" du tableau de bord = uniquement IN_PROGRESS
-  // (les offres ASSIGNED ne sont pas encore acceptées).
+  // (les offres ASSIGNED ne sont pas encore acceptées). On privilégie la liste
+  // issue de getAssignments : elle porte le donneur d'ordre + coordonnées
+  // (subcontractor.artisan), contrairement à dashboard.currentAssignments.
+  const inProgressAssignments = assignments.filter(
+    (a) => (a?.status || '').toUpperCase() === 'IN_PROGRESS',
+  );
   const activeAssignments =
-    dashboard?.currentAssignments && dashboard.currentAssignments.length > 0
-      ? dashboard.currentAssignments
-      : assignments.filter((a) => (a?.status || '').toUpperCase() === 'IN_PROGRESS');
+    inProgressAssignments.length > 0
+      ? inProgressAssignments
+      : dashboard?.currentAssignments || [];
+
+  const available = dashboard?.available ?? true;
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'dashboard', label: t('subcontractor', 'tabDashboard') || 'Tableau de bord', icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -297,14 +373,55 @@ export default function SubcontractorPortalPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">
-          {t('subcontractor', 'portalTitle') || 'Portail sous-traitant'}
-        </h1>
-        <p className="text-muted-foreground">
-          {t('subcontractor', 'portalSubtitle') ||
-            'Suivez vos offres, vos missions et vos gains.'}
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            {t('subcontractor', 'portalTitle') || 'Portail sous-traitant'}
+          </h1>
+          <p className="text-muted-foreground">
+            {t('subcontractor', 'portalSubtitle') ||
+              'Suivez vos offres, vos missions et vos gains.'}
+          </p>
+        </div>
+
+        {/* Toggle disponibilité (Disponible / En pause) */}
+        {dashboard?.isSubcontractor && (
+          <button
+            type="button"
+            onClick={handleToggleAvailability}
+            disabled={availabilityBusy}
+            aria-pressed={available}
+            title={
+              available
+                ? t('subcontractor', 'availableHint') || 'Cliquez pour vous mettre en pause'
+                : t('subcontractor', 'pausedHint') || 'Cliquez pour redevenir disponible'
+            }
+            className="inline-flex items-center gap-3 rounded-full border border-[#EDEDED] bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-muted/50 disabled:opacity-60"
+          >
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                available ? 'bg-green-500' : 'bg-muted-foreground/50'
+              }`}
+            />
+            <span className="text-foreground">
+              {available
+                ? t('subcontractor', 'available') || 'Disponible'
+                : t('subcontractor', 'paused') || 'En pause'}
+            </span>
+            {/* Piste de bascule visuelle */}
+            <span
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                available ? 'bg-primary' : 'bg-muted'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  available ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </span>
+          </button>
+        )}
       </div>
 
       {error && (
@@ -383,6 +500,79 @@ export default function SubcontractorPortalPage() {
                       t={t}
                     />
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Mes donneurs d'ordre */}
+          <Card className="rounded-2xl border-[#EDEDED]">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {t('subcontractor', 'myContractors') || "Mes donneurs d'ordre"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {relationships.length === 0 ? (
+                <EmptyState
+                  text={
+                    t('subcontractor', 'noContractors') ||
+                    "Vous n'avez pas encore de donneur d'ordre."
+                  }
+                />
+              ) : (
+                <div className="space-y-3">
+                  {relationships.map((r) => {
+                    const isActive = (r?.status || '').toUpperCase() === 'ACTIVE';
+                    const name =
+                      r?.artisanCompany ||
+                      r?.artisanName ||
+                      (t('subcontractor', 'contractor') || "Donneur d'ordre");
+                    return (
+                      <div
+                        key={r?.id}
+                        className="flex items-center justify-between gap-3 p-4 border border-[#EDEDED] rounded-2xl"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-foreground truncate">
+                              {name}
+                            </span>
+                            <Badge variant={isActive ? 'success' : 'secondary'}>
+                              {isActive
+                                ? t('subcontractor', 'relationActive') || 'Disponible'
+                                : t('subcontractor', 'relationPaused') || 'En pause'}
+                            </Badge>
+                          </div>
+                          {r?.artisanCompany && r?.artisanName && (
+                            <div className="text-sm text-muted-foreground truncate">
+                              {r.artisanName}
+                            </div>
+                          )}
+                          {Array.isArray(r?.specialties) && r.specialties.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {r.specialties.map((s) => (
+                                <Badge key={s} variant="outline">
+                                  {s}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={actionId === r?.id}
+                          onClick={() => handleLeaveRelationship(r?.id, name)}
+                          className="gap-2 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-[#EDEDED]"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          {t('subcontractor', 'leaveRelationship') || 'Quitter la relation'}
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -639,6 +829,55 @@ function EmptyState({ text }: { text: string }) {
 }
 
 /**
+ * Bloc « donneur d'ordre » d'une mission confiée : nom + liens de contact
+ * (tel:/mailto:) pour se coordonner directement. Les coordonnées sont fournies
+ * par le back (subcontractor.artisan) APRÈS attribution.
+ */
+function ContractorContact({
+  contractor,
+  t,
+}: {
+  contractor?: SubcontractorAssignment['contractor'];
+  t: (ns: string, key: string) => string;
+}) {
+  const c = contractor;
+  const name =
+    c?.companyName ||
+    [c?.firstName, c?.lastName].filter(Boolean).join(' ') ||
+    '';
+  if (!name && !c?.phone && !c?.email) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-muted/50 border border-[#EDEDED] p-3 text-sm">
+      <span className="flex items-center gap-1.5 text-muted-foreground">
+        <Briefcase className="h-3.5 w-3.5" />
+        {t('subcontractor', 'contractor') || "Donneur d'ordre"} :
+        <span className="font-medium text-foreground">
+          {name || (t('subcontractor', 'contractor') || "Donneur d'ordre")}
+        </span>
+      </span>
+      {c?.phone && (
+        <a
+          href={`tel:${c.phone}`}
+          className="flex items-center gap-1.5 font-medium text-foreground hover:underline"
+        >
+          <Phone className="h-3.5 w-3.5" />
+          {c.phone}
+        </a>
+      )}
+      {c?.email && (
+        <a
+          href={`mailto:${c.email}`}
+          className="flex items-center gap-1.5 font-medium text-foreground hover:underline"
+        >
+          <Mail className="h-3.5 w-3.5" />
+          {c.email}
+        </a>
+      )}
+    </div>
+  );
+}
+
+/**
  * Détail de la commission plateforme pour une offre / mission :
  * montant convenu, taux appliqué (plancher 5 %), et net estimé pour le sous-traitant.
  */
@@ -746,6 +985,9 @@ function AssignmentRow({
           </div>
         </div>
       </div>
+
+      {/* Donneur d'ordre + coordonnées (pour se coordonner) */}
+      <ContractorContact contractor={a?.contractor} t={t} />
 
       {/* Détail commission plateforme + net estimé */}
       <CommissionInfo

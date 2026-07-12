@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NotificationType } from '@prisma/client';
+import { SubcontractorService } from './subcontractor.service';
 
 export interface AcceptOfferDto {
   notes?: string;
@@ -33,7 +34,11 @@ export interface LeaveRelationshipDto {
 export class SubcontractorPortalService {
   private readonly logger = new Logger(SubcontractorPortalService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    // Versement Connect réel du sous-traitant à la clôture des travaux (méthode idempotente).
+    private subcontractorService: SubcontractorService,
+  ) {}
 
   // ==========================================================================================
   // GAP 4 — COMMUNICATION SOUS-TRAITANT <-> DONNEUR D'ORDRE (état des lieux, non implémenté ici)
@@ -45,18 +50,16 @@ export class SubcontractorPortalService {
   // artisan.phone) pour un contact direct hors chat. Un vrai fil de discussion réutiliserait le
   // module Chat/Conversation existant (hors périmètre de cet agent : subcontractor/** uniquement).
   //
-  // GAP 5 — RÉMUNÉRATION RÉELLE DU SOUS-TRAITANT (résiduel documenté)
+  // GAP 5 — RÉMUNÉRATION RÉELLE DU SOUS-TRAITANT (CÂBLÉE)
   // ------------------------------------------------------------------------------------------
-  // Aucun VERSEMENT Stripe réel n'est déclenché vers le compte Connect du sous-traitant. Le champ
-  // SubcontractorAssignment.paymentStatus ('PENDING'->'PAID', posé par le donneur d'ordre via
-  // updateAssignment) et paidAt restent de simples FLAGS comptables : ils alimentent getEarnings
-  // (totalPaid/totalPending) mais ne meuvent aucun fonds. Câbler un transfert réel nécessiterait
-  // d'appeler le Payment/StripeService (ex. createTransfer vers le Connect du sous-traitant à la
-  // clôture) — hors périmètre strict de cet agent (subcontractor/** ; interdiction de toucher
-  // payment/* et de créer une dépendance vers de nouvelles méthodes paiement). RÉSIDUEL À CÂBLER
-  // CENTRALEMENT : à completeWork()/updateAssignment(PAID), invoquer le service paiement pour un
-  // transfert Connect idempotent (create-intent/webhook/capture/transfer déjà en place pour les
-  // missions) et stocker paymentReference = id du transfert.
+  // Un VERSEMENT Stripe Connect RÉEL est désormais déclenché vers le compte du sous-traitant à la
+  // clôture : completeWork() (ci-dessous) et updateAssignment(PAID) (côté donneur d'ordre) appellent
+  // SubcontractorService.settleAssignmentPayout(). Celui-ci calcule le net (agreedAmount - commission
+  // plateforme, plancher 5 %), émet stripe.createTransfer vers artisanProfile.stripeAccountId (après
+  // vérif stripeOnboarded), et pose paymentStatus=PAID / paidAt / paymentReference=id du transfert de
+  // façon IDEMPOTENTE (aucun double versement). Sous-traitant externe ou non onboardé → reste PENDING
+  // (versement différé/récupérable, même pattern que la clôture de mission). Le module payment n'est
+  // pas modifié : seule sa méthode existante createTransfer est appelée.
   // ==========================================================================================
 
   // ============ SUBCONTRACTOR DASHBOARD ============
@@ -316,7 +319,20 @@ export class SubcontractorPortalService {
     // Update subcontractor stats
     await this.updateSubcontractorStats(assignment.subcontractorId);
 
-    return updated;
+    // VERSEMENT RÉEL du sous-traitant à la clôture des travaux (Stripe Connect). Idempotent et
+    // best-effort : un échec ou un compte Connect non onboardé laisse l'attribution PENDING sans
+    // casser la clôture (le versement est différé/récupérable). Voir settleAssignmentPayout().
+    let payout: Awaited<ReturnType<SubcontractorService['settleAssignmentPayout']>> | undefined;
+    try {
+      payout = await this.subcontractorService.settleAssignmentPayout(assignmentId);
+    } catch (error) {
+      this.logger.error(
+        `completeWork ${assignmentId}: échec du déclenchement du versement sous-traitant`,
+        error as Error,
+      );
+    }
+
+    return { ...updated, payout };
   }
 
   // ============ EARNINGS & PAYMENTS ============

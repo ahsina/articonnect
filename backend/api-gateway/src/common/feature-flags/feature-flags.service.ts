@@ -146,7 +146,10 @@ export class FeatureFlagsService implements OnModuleInit {
     flag: FeatureFlag,
     context?: FeatureFlagContext,
   ): FeatureFlagEvaluationResult {
-    if (flag.status !== FeatureFlagStatus.ACTIVE) {
+    // `status` (ACTIVE/INACTIVE/…) est stocké tel que fourni. On compare de façon
+    // insensible à la casse pour ne pas rendre un flag « inactif » à tort si l'appelant
+    // a persisté "active" au lieu de "ACTIVE".
+    if (String(flag.status).toUpperCase() !== FeatureFlagStatus.ACTIVE) {
       return {
         key: flag.key,
         enabled: false,
@@ -154,7 +157,12 @@ export class FeatureFlagsService implements OnModuleInit {
       };
     }
 
-    switch (flag.type) {
+    // BUG FIX : `type` peut être persisté dans une casse arbitraire (ex. "boolean" au lieu
+    // de "BOOLEAN") car aucune normalisation n'est faite à la création. Un switch sensible à
+    // la casse tombait alors dans `default` → renvoyait `defaultValue` (false), ce qui rendait
+    // GET /:key/status incohérent avec l'état persisté par enable/disable (value.enabled=true).
+    // On normalise en MAJUSCULES pour que la source de vérité (value.enabled) soit respectée.
+    switch (String(flag.type).toUpperCase()) {
       case FeatureFlagType.BOOLEAN:
         return this.evaluateBooleanFlag(flag);
       case FeatureFlagType.PERCENTAGE:
@@ -306,7 +314,9 @@ export class FeatureFlagsService implements OnModuleInit {
       key: dto.key,
       name: dto.name,
       description: dto.description,
-      type: dto.type,
+      // Normalise la casse du type dès la création pour rester cohérent avec l'évaluation
+      // (l'enum FeatureFlagType est en MAJUSCULES). Fallback BOOLEAN si type absent/inconnu.
+      type: (String(dto.type || '').toUpperCase() as FeatureFlagType) || FeatureFlagType.BOOLEAN,
       status: FeatureFlagStatus.ACTIVE,
       value: dto.value,
       metadata: dto.metadata,

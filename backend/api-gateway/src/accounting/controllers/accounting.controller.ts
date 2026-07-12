@@ -107,31 +107,76 @@ export class AccountingController {
   @Get('vat-declaration')
   @Roles('ARTISAN')
   @ApiOperation({ summary: 'Get VAT declaration data for a period' })
-  @ApiQuery({ name: 'year', required: true, type: Number })
+  @ApiQuery({ name: 'year', required: false, type: Number, description: 'Year (with optional quarter/month)' })
   @ApiQuery({ name: 'quarter', required: false, type: Number, description: 'Quarter (1-4) for quarterly declaration' })
   @ApiQuery({ name: 'month', required: false, type: Number, description: 'Month (1-12) for monthly declaration' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Custom period start (YYYY-MM-DD), alternative to year' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'Custom period end (YYYY-MM-DD), alternative to year' })
   async getVATDeclaration(
     @Request() req,
-    @Query('year') year: number,
-    @Query('quarter') quarter?: number,
-    @Query('month') month?: number,
+    @Query('year') yearStr?: string,
+    @Query('quarter') quarterStr?: string,
+    @Query('month') monthStr?: string,
+    @Query('startDate') startDateStr?: string,
+    @Query('endDate') endDateStr?: string,
   ) {
+    // Deux modes acceptés : (A) year [+quarter|+month], ou (B) startDate + endDate.
+    // Sur paramètres invalides on renvoie un 400 propre (jamais un 500 « Invalid Date »).
     let startDate: Date;
     let endDate: Date;
+    let periodType: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL' | 'CUSTOM';
+    let year: number | undefined;
+    let quarter: number | undefined;
+    let month: number | undefined;
 
-    if (month) {
-      // Monthly declaration
-      startDate = new Date(year, month - 1, 1);
-      endDate = new Date(year, month, 0); // Last day of month
-    } else if (quarter) {
-      // Quarterly declaration
-      const startMonth = (quarter - 1) * 3;
-      startDate = new Date(year, startMonth, 1);
-      endDate = new Date(year, startMonth + 3, 0);
+    if (startDateStr || endDateStr) {
+      // Mode B : période personnalisée
+      if (!startDateStr || !endDateStr) {
+        throw new BadRequestException(
+          'Fournir startDate ET endDate ensemble (format YYYY-MM-DD), ou utiliser year[+quarter|+month].',
+        );
+      }
+      startDate = new Date(startDateStr);
+      endDate = new Date(endDateStr);
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new BadRequestException('startDate/endDate invalides. Format attendu: YYYY-MM-DD.');
+      }
+      if (startDate > endDate) {
+        throw new BadRequestException('startDate doit être antérieure à endDate.');
+      }
+      periodType = 'CUSTOM';
     } else {
-      // Annual declaration
-      startDate = new Date(year, 0, 1);
-      endDate = new Date(year, 11, 31);
+      // Mode A : year (+ quarter|month)
+      year = Number(yearStr);
+      if (!yearStr || !Number.isInteger(year) || year < 2000 || year > 2100) {
+        throw new BadRequestException(
+          'Paramètre year invalide. Fournir year=AAAA (+ quarter 1-4 ou month 1-12), ou startDate/endDate.',
+        );
+      }
+
+      if (monthStr !== undefined && monthStr !== '') {
+        month = Number(monthStr);
+        if (!Number.isInteger(month) || month < 1 || month > 12) {
+          throw new BadRequestException('Paramètre month invalide (attendu: 1-12).');
+        }
+        startDate = new Date(year, month - 1, 1);
+        endDate = new Date(year, month, 0); // Last day of month
+        periodType = 'MONTHLY';
+      } else if (quarterStr !== undefined && quarterStr !== '') {
+        quarter = Number(quarterStr);
+        if (!Number.isInteger(quarter) || quarter < 1 || quarter > 4) {
+          throw new BadRequestException('Paramètre quarter invalide (attendu: 1-4).');
+        }
+        const startMonth = (quarter - 1) * 3;
+        startDate = new Date(year, startMonth, 1);
+        endDate = new Date(year, startMonth + 3, 0);
+        periodType = 'QUARTERLY';
+      } else {
+        // Annual declaration
+        startDate = new Date(year, 0, 1);
+        endDate = new Date(year, 11, 31);
+        periodType = 'ANNUAL';
+      }
     }
 
     const summary = await this.fecExportService.getAccountingSummary(
@@ -157,7 +202,7 @@ export class AccountingController {
 
     return {
       period: {
-        type: month ? 'MONTHLY' : quarter ? 'QUARTERLY' : 'ANNUAL',
+        type: periodType,
         year,
         month,
         quarter,

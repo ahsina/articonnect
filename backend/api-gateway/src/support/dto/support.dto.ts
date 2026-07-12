@@ -6,9 +6,11 @@ import {
   IsEnum,
   IsBoolean,
   IsNumber,
+  IsInt,
   Min,
   Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum TicketPriority {
   LOW = 'LOW',
@@ -132,6 +134,51 @@ export class TicketFilterDto {
   page?: number;
 
   @IsNumber()
+  @IsOptional()
+  limit?: number;
+}
+
+/**
+ * Filtre GLOBAL des tickets pour l'inbox opérateur (ADMIN).
+ * Contrairement à TicketFilterDto (scopé au user courant), il permet de filtrer par
+ * agent assigné / demandeur et de rechercher par n° de ticket ou sujet.
+ * `page`/`limit` sont transformés depuis la query string (les query params sont des strings).
+ */
+export class AdminTicketFilterDto {
+  @IsEnum(TicketStatus)
+  @IsOptional()
+  status?: TicketStatus;
+
+  @IsEnum(TicketCategory)
+  @IsOptional()
+  category?: TicketCategory;
+
+  @IsEnum(TicketPriority)
+  @IsOptional()
+  priority?: TicketPriority;
+
+  @IsUUID()
+  @IsOptional()
+  assignedToId?: string;
+
+  @IsUUID()
+  @IsOptional()
+  userId?: string;
+
+  @IsString()
+  @IsOptional()
+  search?: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  page?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
   @IsOptional()
   limit?: number;
 }

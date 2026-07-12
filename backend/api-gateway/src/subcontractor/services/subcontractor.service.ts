@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { EmailService } from '../../email/services/email.service';
+import { StripeService } from '../../payment/services/stripe.service';
 import { randomBytes } from 'crypto';
 import {
   CreateSubcontractorDto,
@@ -25,7 +26,17 @@ export class SubcontractorService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private stripeService: StripeService,
   ) {}
+
+  // Retire invitationToken (secret bearer d'invitation) de tout objet sous-traitant renvoyé par
+  // une lecture. Le token ne doit JAMAIS transiter par une réponse API (create() le masque déjà) :
+  // il ne part que par l'email d'invitation (canal plateforme tracé). L'exposer dans findAll/findOne
+  // permettrait de le récupérer et de shunter l'onboarding → contournement anti-désintermédiation.
+  private stripInvitationToken<T extends { invitationToken?: unknown }>(row: T): Omit<T, 'invitationToken'> {
+    const { invitationToken: _t, ...safe } = row as any;
+    return safe;
+  }
 
   async create(artisanId: string, dto: CreateSubcontractorDto) {
     if (!dto.subcontractorUserId && !dto.externalEmail) {
@@ -109,7 +120,7 @@ export class SubcontractorService {
     const where: any = { artisanId };
     if (status) where.status = status;
 
-    return this.prisma.subcontractor.findMany({
+    const rows = await this.prisma.subcontractor.findMany({
       where,
       include: {
         subcontractorUser: {
@@ -121,6 +132,9 @@ export class SubcontractorService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // SÉCURITÉ : ne jamais exposer invitationToken dans une réponse de liste (secret bearer).
+    return rows.map((r) => this.stripInvitationToken(r));
   }
 
   async findOne(id: string, artisanId: string) {
@@ -150,7 +164,10 @@ export class SubcontractorService {
       throw new ForbiddenException('Access denied');
     }
 
-    return subcontractor;
+    // SÉCURITÉ : ne jamais exposer invitationToken dans une lecture détaillée non plus. Les champs
+    // fonctionnels (status, subcontractorUserId, assignments…) restent présents pour les appelants
+    // internes (createAssignment) — seul le secret d'invitation est retiré.
+    return this.stripInvitationToken(subcontractor);
   }
 
   async update(id: string, artisanId: string, dto: UpdateSubcontractorDto) {
@@ -423,17 +440,22 @@ export class SubcontractorService {
       throw new ForbiddenException('Access denied');
     }
 
+    // Passage à PAID = CLÔTURE financière → on déclenche un VERSEMENT Connect RÉEL (settleAssignmentPayout)
+    // qui pose lui-même paymentStatus/paidAt/paymentReference de façon idempotente. On NE force donc pas
+    // paymentStatus=PAID ni paidAt ici (sinon settleAssignmentPayout croirait la ligne déjà réglée et
+    // sauterait le transfert). Les autres statuts (APPROVED, DISPUTED, retour PENDING) restent manuels.
+    const wantsPayout = dto.paymentStatus === 'PAID';
+
     const updated = await this.prisma.subcontractorAssignment.update({
       where: { id },
       data: {
         role: dto.role,
         description: dto.description,
         agreedAmount: dto.agreedAmount,
-        paymentStatus: dto.paymentStatus,
+        paymentStatus: wantsPayout ? undefined : dto.paymentStatus,
         status: dto.status,
         rating: dto.rating,
         feedback: dto.feedback,
-        paidAt: dto.paymentStatus === 'PAID' ? new Date() : undefined,
       },
     });
 
@@ -442,7 +464,149 @@ export class SubcontractorService {
       await this.updateSubcontractorStats(assignment.subcontractorId);
     }
 
+    // Versement réel du sous-traitant si le donneur d'ordre marque PAID.
+    if (wantsPayout) {
+      const payout = await this.settleAssignmentPayout(id);
+      // On renvoie l'attribution rechargée (paymentStatus/paidAt/paymentReference à jour) + l'issue
+      // du versement, pour que l'appelant sache si le transfert est parti ou est resté PENDING.
+      const refreshed = await this.prisma.subcontractorAssignment.findUnique({ where: { id } });
+      return { ...refreshed, payout };
+    }
+
     return updated;
+  }
+
+  /**
+   * VERSEMENT RÉEL du sous-traitant via Stripe Connect à la clôture d'une attribution.
+   *
+   * net = agreedAmount - commission plateforme, où commission = agreedAmount × max(commissionRate, 5%)
+   * (plancher plateforme identique à createAssignment). Le versement part vers le compte Connect du
+   * sous-traitant (subcontractorUser.artisanProfile.stripeAccountId), après vérification stripeOnboarded.
+   *
+   * IDEMPOTENT : si paymentStatus est déjà PAID ou qu'un paymentReference existe, aucun second
+   * transfert n'est émis. En cas de succès : paymentStatus=PAID, paidAt=now, paymentReference=id du
+   * transfert Stripe. Si le sous-traitant n'a pas de compte Connect onboardé (ou est un sous-traitant
+   * EXTERNE sans compte plateforme), l'attribution reste PENDING avec un message clair (versement
+   * différé/récupérable, même pattern que la clôture de mission). Ne lève jamais : le versement est
+   * séparé de la clôture des travaux et son échec ne doit pas casser le happy-path.
+   */
+  async settleAssignmentPayout(assignmentId: string): Promise<{
+    paid: boolean;
+    pending?: boolean;
+    transferId?: string;
+    net?: number;
+    reason?: string;
+  }> {
+    const assignment = await this.prisma.subcontractorAssignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        mission: { select: { id: true, title: true } },
+        subcontractor: {
+          select: {
+            id: true,
+            subcontractorUserId: true,
+            subcontractorUser: {
+              select: {
+                artisanProfile: { select: { stripeAccountId: true, stripeOnboarded: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Assignment not found');
+    }
+
+    // IDEMPOTENCE : déjà réglé (flag PAID ou référence de transfert présente) → on ne reverse pas.
+    if (assignment.paymentStatus === 'PAID' || assignment.paymentReference) {
+      return {
+        paid: true,
+        transferId: assignment.paymentReference || undefined,
+        reason: 'Attribution déjà réglée (idempotent, aucun second versement).',
+      };
+    }
+
+    // Net à verser = montant convenu - commission plateforme (plancher 5%).
+    const gross = Number(assignment.agreedAmount);
+    const commissionPct = Math.max(
+      Number(assignment.commissionRate) || 0,
+      SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION,
+    );
+    const commission = (gross * commissionPct) / 100;
+    const net = Math.round((gross - commission) * 100) / 100;
+
+    if (!(net > 0)) {
+      return {
+        paid: false,
+        pending: true,
+        reason: `Montant net à verser nul ou négatif (brut ${gross} €, commission ${commissionPct} %).`,
+      };
+    }
+
+    // Sous-traitant EXTERNE (pas de compte plateforme) ou sans compte Connect onboardé → versement
+    // différé, on laisse PENDING (récupérable une fois l'onboarding fait). Même pattern que mission.
+    const acct = assignment.subcontractor.subcontractorUser?.artisanProfile;
+    if (!assignment.subcontractor.subcontractorUserId || !acct?.stripeAccountId || !acct?.stripeOnboarded) {
+      this.logger.warn(
+        `Assignment ${assignmentId}: sous-traitant sans compte Connect onboardé — versement de ${net} € différé (PENDING).`,
+      );
+      return {
+        paid: false,
+        pending: true,
+        reason:
+          'Sous-traitant sans compte Stripe Connect finalisé. Versement différé (PENDING), récupérable après onboarding.',
+      };
+    }
+
+    try {
+      const transfer = await this.stripeService.createTransfer({
+        amount: Math.floor(net * 100),
+        destination: acct.stripeAccountId,
+        metadata: {
+          assignmentId,
+          subcontractorId: assignment.subcontractor.id,
+          missionId: assignment.mission.id,
+          type: 'SUBCONTRACTOR_PAYOUT',
+        },
+      });
+
+      await this.prisma.subcontractorAssignment.update({
+        where: { id: assignmentId },
+        data: {
+          paymentStatus: 'PAID',
+          paidAt: new Date(),
+          paymentReference: transfer.id,
+        },
+      });
+
+      // Notifie le sous-traitant du versement (in-app).
+      if (assignment.subcontractor.subcontractorUserId) {
+        await this.notifyUser(
+          assignment.subcontractor.subcontractorUserId,
+          NotificationType.SYSTEM,
+          'Paiement reçu',
+          `Vous avez été payé ${net} € pour la mission "${assignment.mission.title}".`,
+          '/subcontractor-portal',
+        );
+      }
+
+      this.logger.log(
+        `Assignment ${assignmentId}: versé ${net} € au sous-traitant (transfer ${transfer.id}).`,
+      );
+      return { paid: true, transferId: transfer.id, net };
+    } catch (error) {
+      // Échec de transfert Connect : on laisse PENDING (récupérable). Ne casse pas la clôture.
+      this.logger.error(
+        `Assignment ${assignmentId}: échec versement ${net} € au sous-traitant: ${(error as any)?.message}. Reste PENDING.`,
+      );
+      return {
+        paid: false,
+        pending: true,
+        reason: `Échec du versement Stripe: ${(error as any)?.message}. Versement différé (PENDING).`,
+      };
+    }
   }
 
   async deleteAssignment(id: string, artisanId: string) {

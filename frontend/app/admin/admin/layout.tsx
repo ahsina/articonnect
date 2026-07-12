@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ClipboardList, TrendingUp, ShieldCheck, Eye, AlertTriangle,
   Ban, BadgeCheck, FileCheck, Award, Wrench, Tags, Star, Flag, Server, Activity,
   Timer, ShieldAlert, ScrollText, Settings, ChevronLeft, ChevronRight, ChevronDown,
-  Menu, X,
+  Menu, X, LifeBuoy, Inbox, Trash2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -62,6 +62,14 @@ const adminNavItems: NavItem[] = [
       { href: '/admin/admin/specialties', label: 'specialties', icon: Tags },
       { href: '/admin/admin/reputation', label: 'reputation', icon: Star },
       { href: '/admin/admin/feature-flags', label: 'featureFlags', icon: Flag },
+    ],
+  },
+  {
+    label: 'support',
+    icon: LifeBuoy,
+    children: [
+      { href: '/admin/admin/support', label: 'supportInbox', icon: Inbox },
+      { href: '/admin/admin/compliance-requests', label: 'gdprRequests', icon: Trash2 },
     ],
   },
   {

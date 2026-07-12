@@ -161,14 +161,55 @@ export interface Subcontractor {
 }
 
 /**
+ * Relation de sous-traitance vue par l'exécutant (portail).
+ * Forme réelle du back (GET /subcontractor-portal/relationships) :
+ * { id, status, available, specialties, acceptedAt, artisanName, artisanCompany }.
+ * `id` est le subcontractorId à passer à setAvailability / leaveRelationship.
+ */
+export interface PortalRelationship {
+  /** subcontractorId (clé de la relation) — cible de leave / setAvailability. */
+  id: string;
+  status?: SubcontractorStatus;
+  /** true si status === 'ACTIVE' (reçoit des offres). */
+  available?: boolean;
+  specialties?: string[];
+  acceptedAt?: string;
+  /** Nom du donneur d'ordre (artisan). */
+  artisanName?: string;
+  /** Raison sociale du donneur d'ordre (peut être null). */
+  artisanCompany?: string | null;
+  [key: string]: any;
+}
+
+/** Résultat d'un changement de disponibilité. */
+export interface SetAvailabilityResult {
+  updated: number;
+  active: boolean;
+  subcontractorId?: string;
+  [key: string]: any;
+}
+
+/** Résultat d'un départ de relation. */
+export interface LeaveRelationshipResult {
+  success: boolean;
+  subcontractorId?: string;
+  alreadyTerminated?: boolean;
+  [key: string]: any;
+}
+
+/**
  * Tableau de bord du portail sous-traitant (normalisé et aplati).
- * Forme réelle du back : { isSubcontractor, subcontractorId,
+ * Forme réelle du back : { isSubcontractor, subcontractorId, available, status,
  * stats:{ pendingOffers, activeAssignments, completedMissions, totalEarnings,
  * averageRating }, currentAssignments:[...] }.
  */
 export interface PortalDashboard {
   isSubcontractor?: boolean;
   subcontractorId?: string;
+  /** Disponibilité globale (true = reçoit des offres). Piloté par setAvailability. */
+  available?: boolean;
+  /** Statut brut de la relation courante ('ACTIVE' | 'INACTIVE' | ...). */
+  status?: SubcontractorStatus;
   pendingOffers?: number;
   activeAssignments?: number;
   completedAssignments?: number;
@@ -318,10 +359,26 @@ function normalizeAssignment(raw: any): SubcontractorAssignment {
   };
 }
 
+function normalizeRelationship(raw: any): PortalRelationship {
+  const status = raw?.status;
+  return {
+    ...raw,
+    id: raw?.id,
+    status,
+    // Le back renvoie `available` ; on le déduit du statut en repli (jamais undefined).
+    available: raw?.available ?? status === 'ACTIVE',
+    specialties: Array.isArray(raw?.specialties) ? raw.specialties : [],
+    acceptedAt: raw?.acceptedAt,
+    artisanName: raw?.artisanName ?? undefined,
+    artisanCompany: raw?.artisanCompany ?? null,
+  };
+}
+
 function normalizeDashboard(raw: any): PortalDashboard {
   if (!raw || raw.isSubcontractor === false) {
     return {
       isSubcontractor: false,
+      available: false,
       pendingOffers: 0,
       activeAssignments: 0,
       completedAssignments: 0,
@@ -335,6 +392,9 @@ function normalizeDashboard(raw: any): PortalDashboard {
     ...raw,
     isSubcontractor: true,
     subcontractorId: raw.subcontractorId,
+    // `available` (booléen) piloté par setAvailability ; repli sur status === 'ACTIVE'.
+    available: raw.available ?? raw.status === 'ACTIVE',
+    status: raw.status,
     pendingOffers: toNum(stats.pendingOffers ?? raw.pendingOffers),
     activeAssignments: toNum(stats.activeAssignments ?? raw.activeAssignments),
     completedAssignments: toNum(
@@ -448,6 +508,38 @@ export const subcontractorApi = {
     getEarnings: async (): Promise<SubcontractorEarnings> => {
       const response = await apiClient.get('/subcontractor-portal/earnings');
       return normalizeEarnings(response.data);
+    },
+
+    // --- Disponibilité & relations (self-service) ------------------------
+
+    // Lister ses donneurs d'ordre (relations ACTIVE/INACTIVE).
+    listRelationships: async (): Promise<PortalRelationship[]> => {
+      const response = await apiClient.get('/subcontractor-portal/relationships');
+      const list = Array.isArray(response.data) ? response.data : [];
+      return list.map(normalizeRelationship);
+    },
+
+    // Basculer sa disponibilité (true = reçoit des offres, false = en pause).
+    // Sans `subcontractorId`, s'applique à TOUTES les relations ACTIVE/INACTIVE.
+    setAvailability: async (dto: {
+      active: boolean;
+      subcontractorId?: string;
+    }): Promise<SetAvailabilityResult> => {
+      const response = await apiClient.post('/subcontractor-portal/availability', {
+        active: !!dto.active,
+        ...(dto.subcontractorId ? { subcontractorId: dto.subcontractorId } : {}),
+      });
+      return response.data;
+    },
+
+    // Quitter définitivement une relation (status -> TERMINATED). Idempotent côté back.
+    leaveRelationship: async (dto: {
+      subcontractorId: string;
+    }): Promise<LeaveRelationshipResult> => {
+      const response = await apiClient.post('/subcontractor-portal/leave', {
+        subcontractorId: dto.subcontractorId,
+      });
+      return response.data;
     },
   },
 

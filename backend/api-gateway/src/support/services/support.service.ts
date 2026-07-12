@@ -6,6 +6,7 @@ import {
   UpdateTicketDto,
   AddTicketMessageDto,
   TicketFilterDto,
+  AdminTicketFilterDto,
   TicketStatus,
   CreateArticleDto,
   UpdateArticleDto,
@@ -117,7 +118,72 @@ export class SupportService {
     };
   }
 
+  /**
+   * Inbox opérateur (ADMIN) : liste GLOBALE de TOUS les tickets, tous utilisateurs confondus.
+   * Filtrable par statut/catégorie/priorité, par agent assigné, par demandeur et par recherche
+   * texte (n° de ticket ou sujet). Aucune restriction `userId` — réservé aux ADMIN par le contrôleur.
+   */
+  async getAllTickets(filters: AdminTicketFilterDto) {
+    const { status, category, priority, assignedToId, userId, search, page = 1, limit = 20 } = filters;
+
+    const where: any = {};
+    if (status) where.status = status;
+    if (category) where.category = category;
+    if (priority) where.priority = priority;
+    if (assignedToId) where.assignedToId = assignedToId;
+    if (userId) where.userId = userId;
+    if (search) {
+      where.OR = [
+        { ticketNumber: { contains: search, mode: 'insensitive' } },
+        { subject: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [tickets, total] = await Promise.all([
+      this.prisma.supportTicket.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, firstName: true, lastName: true, email: true, role: true },
+          },
+          assignedTo: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+          _count: {
+            select: { messages: true },
+          },
+        },
+        // Les plus récents d'abord (défaut d'inbox). Le filtrage par statut/priorité permet à
+        // l'opérateur de cibler les tickets urgents / en attente de support.
+        orderBy: [{ createdAt: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.supportTicket.count({ where }),
+    ]);
+
+    return {
+      data: tickets,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async getTicket(id: string, userId: string) {
+    // On récupère le rôle AVANT de construire le filtre des messages : un opérateur ADMIN doit
+    // voir TOUTES les notes (y compris internes) pour traiter le ticket, alors qu'un client ne
+    // voit que les messages publics + les siens.
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const isAdmin = user?.role === 'ADMIN';
+
+    const messagesWhere = isAdmin
+      ? {} // admin : tous les messages, notes internes comprises
+      : { OR: [{ isInternal: false }, { senderId: userId }] };
+
     const ticket = await this.prisma.supportTicket.findUnique({
       where: { id },
       include: {
@@ -128,12 +194,7 @@ export class SupportService {
           select: { id: true, firstName: true, lastName: true },
         },
         messages: {
-          where: {
-            OR: [
-              { isInternal: false },
-              { senderId: userId },
-            ],
-          },
+          where: messagesWhere,
           orderBy: { createdAt: 'asc' },
           include: {
             sender: {
@@ -152,8 +213,7 @@ export class SupportService {
     }
 
     // Check access
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (ticket.userId !== userId && user?.role !== 'ADMIN') {
+    if (ticket.userId !== userId && !isAdmin) {
       throw new ForbiddenException('Access denied');
     }
 

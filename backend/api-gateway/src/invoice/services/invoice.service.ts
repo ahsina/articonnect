@@ -734,9 +734,26 @@ export class InvoiceService {
   }
 
   /**
-   * Auto-generate invoice from Order
+   * Génère la/les facture(s) de VENTE d'une commande marketplace réglée.
+   *
+   * Une commande peut mêler des produits de PLUSIEURS vendeurs (artisans) : on émet alors UNE facture
+   * par vendeur (issuerId = ce vendeur), ne reprenant QUE ses lignes, avec la TVA calculée ligne par
+   * ligne selon le `vatRate` DU PRODUIT (et donc de la variante achetée, dont le prix est déjà figé
+   * dans OrderItem.unitPrice/totalPrice). Le vendeur récupère ensuite sa facture (PDF) via /invoices.
+   *
+   * IDEMPOTENT : si une facture non annulée existe déjà pour (commande, vendeur), on ne la recrée pas.
+   * Peut donc être appelé plusieurs fois (au règlement, puis en filet de sécurité à la lecture des
+   * ventes) sans produire de doublon.
+   *
+   * @param opts.requirePaid (défaut true) : n'émet que pour une commande réellement encaissée
+   *   (statut PAID/PROCESSING/SHIPPED/DELIVERED). La facture de vente est un document post-règlement.
    */
-  async createFromOrder(orderId: string) {
+  async generateInvoicesForOrder(
+    orderId: string,
+    opts: { requirePaid?: boolean } = {},
+  ): Promise<{ created: any[]; skipped: string[]; reason?: string }> {
+    const requirePaid = opts.requirePaid ?? true;
+
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -745,11 +762,7 @@ export class InvoiceService {
           include: {
             product: {
               include: {
-                artisan: {
-                  include: {
-                    artisanProfile: true,
-                  },
-                },
+                artisan: { include: { artisanProfile: true } },
               },
             },
           },
@@ -761,56 +774,112 @@ export class InvoiceService {
       throw new NotFoundException('Order not found');
     }
 
-    // For now, assume one artisan per order (first product's artisan)
-    const artisan = order.items[0]?.product.artisan;
-    if (!artisan) {
+    const paidStatuses = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+    if (requirePaid && !paidStatuses.includes(order.status as string)) {
+      // Commande non encore encaissée : aucune facture de vente à émettre.
+      return { created: [], skipped: [], reason: 'ORDER_NOT_PAID' };
+    }
+
+    // Regroupe les lignes par vendeur (artisan) — une facture par vendeur.
+    const bySeller = new Map<string, typeof order.items>();
+    for (const item of order.items) {
+      const artisanId = item.product?.artisanId;
+      if (!artisanId) continue;
+      const arr = bySeller.get(artisanId) ?? [];
+      arr.push(item);
+      bySeller.set(artisanId, arr);
+    }
+
+    if (bySeller.size === 0) {
       throw new BadRequestException('Order has no artisan');
     }
 
-    // Build line items
-    const lineItems = order.items.map((item) => ({
-      description: `${item.product.name} x${item.quantity}`,
-      quantity: item.quantity,
-      unitPrice: parseFloat(item.unitPrice.toString()),
-      total: parseFloat(item.totalPrice.toString()),
-    }));
-
-    const subtotal = parseFloat(order.subtotal.toString());
-
-    // Build addresses
-    const issuerAddress = {
-      name: `${artisan.firstName} ${artisan.lastName}`,
-      address: artisan.artisanProfile?.baseAddress || 'N/A',
-      city: 'N/A',
-      postalCode: 'N/A',
-      country: 'Luxembourg',
-      siret: artisan.artisanProfile?.siret || undefined,
-      vat: artisan.artisanProfile?.vatNumber || undefined,
-    };
-
-    const clientAddress = {
-      name: `${order.client.firstName} ${order.client.lastName}`,
-      address: order.shippingAddress,
-      city: 'N/A',
-      postalCode: 'N/A',
-      country: 'Luxembourg',
-    };
-
-    // Calculate VAT rate
-    const vatRate = ((parseFloat(order.vat.toString()) / subtotal) * 100).toFixed(2);
-
-    // Create invoice
-    return this.create({
-      type: InvoiceType.MARKETPLACE,
-      orderId: order.id,
-      issuerId: artisan.id,
-      clientId: order.clientId,
-      subtotal,
-      taxRate: parseFloat(vatRate),
-      lineItems,
-      issuerAddress: issuerAddress as any,
-      clientAddress: clientAddress as any,
-      paymentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    // Factures déjà émises pour cette commande (idempotence par vendeur).
+    const existing = await this.prisma.invoice.findMany({
+      where: { orderId: order.id, status: { not: 'CANCELLED' } },
+      select: { issuerId: true },
     });
+    const alreadyIssued = new Set(existing.map((e) => e.issuerId));
+
+    const created: any[] = [];
+    const skipped: string[] = [];
+
+    for (const [artisanId, items] of bySeller.entries()) {
+      if (alreadyIssued.has(artisanId)) {
+        skipped.push(artisanId);
+        continue;
+      }
+
+      const artisan = items[0].product.artisan;
+
+      // Sous-total vendeur + TVA calculée LIGNE PAR LIGNE selon le taux du produit.
+      let subtotal = 0;
+      let taxAmount = 0;
+      const lineItems = items.map((item) => {
+        const lineTotal = parseFloat(item.totalPrice.toString());
+        const rate = parseFloat((item.product.vatRate ?? 0).toString());
+        subtotal += lineTotal;
+        taxAmount += (lineTotal * rate) / 100;
+        return {
+          description: `${item.product.name} x${item.quantity}`,
+          quantity: item.quantity,
+          unitPrice: parseFloat(item.unitPrice.toString()),
+          total: lineTotal,
+        };
+      });
+      subtotal = Math.round(subtotal * 100) / 100;
+      taxAmount = Math.round(taxAmount * 100) / 100;
+
+      // Invoice ne porte qu'UN taux de TVA : on passe le taux EFFECTIF (moyenne pondérée) pour que
+      // create() (taxAmount = subtotal * taxRate / 100) retrouve exactement la TVA ligne par ligne.
+      const effectiveRate =
+        subtotal > 0 ? Math.round((taxAmount / subtotal) * 10000) / 100 : 0;
+
+      const issuerAddress = {
+        name: `${artisan.firstName} ${artisan.lastName}`,
+        address: artisan.artisanProfile?.baseAddress || 'N/A',
+        city: 'N/A',
+        postalCode: 'N/A',
+        country: 'Luxembourg',
+        siret: artisan.artisanProfile?.siret || undefined,
+        vat: artisan.artisanProfile?.vatNumber || undefined,
+      };
+
+      const clientAddress = {
+        name: `${order.client.firstName} ${order.client.lastName}`,
+        address: order.shippingAddress,
+        city: 'N/A',
+        postalCode: 'N/A',
+        country: 'Luxembourg',
+      };
+
+      const invoice = await this.create({
+        type: InvoiceType.MARKETPLACE,
+        orderId: order.id,
+        issuerId: artisanId,
+        clientId: order.clientId,
+        subtotal,
+        taxRate: effectiveRate,
+        lineItems,
+        issuerAddress: issuerAddress as any,
+        clientAddress: clientAddress as any,
+        paymentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      created.push(invoice);
+    }
+
+    return { created, skipped };
+  }
+
+  /**
+   * Auto-generate invoice(s) from Order (endpoint manuel admin/artisan).
+   * Délègue à generateInvoicesForOrder (une facture par vendeur). `requirePaid: false` : l'appel
+   * manuel peut précéder l'automatisation. Renvoie la facture unique ou le tableau si multi-vendeurs.
+   */
+  async createFromOrder(orderId: string) {
+    const { created } = await this.generateInvoicesForOrder(orderId, {
+      requirePaid: false,
+    });
+    return created.length === 1 ? created[0] : created;
   }
 }

@@ -20,6 +20,7 @@ import {
   AddTicketMessageDto,
   RateTicketDto,
   TicketFilterDto,
+  AdminTicketFilterDto,
   CreateArticleDto,
   UpdateArticleDto,
 } from '../dto/support.dto';
@@ -29,6 +30,16 @@ export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
   // ============ TICKETS ============
+
+  // Inbox opérateur : liste GLOBALE de tous les tickets (ADMIN uniquement).
+  // Déclarée AVANT `@Get('tickets/:id')` : 'admin/tickets' est un chemin distinct, mais on la
+  // place en tête par clarté (l'inbox est le point d'entrée admin).
+  @Get('admin/tickets')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getAllTickets(@Query() filters: AdminTicketFilterDto) {
+    return this.supportService.getAllTickets(filters);
+  }
 
   @Post('tickets')
   @UseGuards(JwtAuthGuard)

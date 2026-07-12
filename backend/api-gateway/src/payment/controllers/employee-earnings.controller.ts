@@ -51,6 +51,14 @@ export class EmployeeEarningsController {
     return this.earningsService.getEmployeeEarnings(queryDto, req.user.userId);
   }
 
+  @Get('me')
+  @Roles('ARTISAN')
+  @ApiOperation({ summary: 'Get earnings of the current artisan (own records)' })
+  @ApiResponse({ status: 200, description: 'Current artisan earnings retrieved successfully' })
+  async getMyEarnings(@Query() queryDto: EmployeeEarningsQueryDto, @Request() req) {
+    return this.earningsService.getMyEarnings(req.user.userId, queryDto);
+  }
+
   @Get(':id')
   @Roles('ARTISAN')
   @ApiOperation({ summary: 'Get earnings details by ID' })

@@ -5,6 +5,13 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { StripeService } from '../../payment/services/stripe.service';
 import { FeeSettingsDto } from '../../config/dto/platform-config.dto';
+import { InvoiceService } from '../../invoice/services/invoice.service';
+
+// Statuts pour lesquels une commande est considérée réellement encaissée (facture de vente due,
+// stock réservé). Partagé par plusieurs méthodes.
+const PAID_STATUSES = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+// Seuil d'alerte de stock bas exposé au vendeur.
+const LOW_STOCK_THRESHOLD = 5;
 
 @Injectable()
 export class OrderService {
@@ -12,6 +19,7 @@ export class OrderService {
     private prisma: PrismaService,
     private platformConfig: PlatformConfigService,
     private stripeService: StripeService,
+    private invoiceService: InvoiceService,
   ) {}
 
   /**
@@ -35,20 +43,21 @@ export class OrderService {
   }
 
   async create(clientId: string, items: OrderItemDto[], shippingAddress: string) {
-    // Get configurable tax settings
-    const taxSettings = await this.platformConfig.getTaxSettings();
-    const vatRate = (taxSettings.defaultVatRate ?? 17) / 100; // Default 17% Luxembourg VAT
     const flatShippingCost = 5.99; // Flat shipping cost
 
-    // Validate and calculate totals
+    // Validate and calculate totals. La TVA est calculée LIGNE PAR LIGNE selon le taux DU PRODUIT
+    // (Product.vatRate) — plus de taux plateforme uniforme : deux produits à 3 % et 17 % dans la
+    // même commande cumulent leur TVA respective.
     let subtotal = 0;
+    let vat = 0;
 
-    // Prepare order items with prices
+    // Prepare order items with prices (variante prise en compte).
     const orderItems: Array<{
       productId: string;
       quantity: number;
       unitPrice: number;
       totalPrice: number;
+      variantId?: string;
     }> = [];
 
     for (const item of items) {
@@ -60,56 +69,96 @@ export class OrderService {
         throw new NotFoundException(`Produit ${item.productId} introuvable`);
       }
 
-      if (product.stock < item.quantity) {
-        throw new BadRequestException(
-          `Stock insuffisant pour ${product.name}. Disponible: ${product.stock}`,
-        );
+      let unitPrice = Number(product.price);
+
+      // VARIANTE : si une variante est demandée, le prix unitaire = prix produit + ajustement de la
+      // variante (priceAdjustment, éventuellement négatif = remise), et c'est le STOCK DE LA VARIANTE
+      // qui fait foi (pas le stock global du produit).
+      if (item.variantId) {
+        const variant = await this.prisma.productVariant.findUnique({
+          where: { id: item.variantId },
+        });
+        if (!variant || variant.productId !== product.id) {
+          throw new BadRequestException(
+            `Variante ${item.variantId} invalide pour le produit ${product.name}`,
+          );
+        }
+        unitPrice = Number(product.price) + Number(variant.priceAdjustment);
+        if (variant.stock < item.quantity) {
+          throw new BadRequestException(
+            `Stock insuffisant pour la variante « ${variant.name} ». Disponible: ${variant.stock}`,
+          );
+        }
+      } else {
+        if (product.stock < item.quantity) {
+          throw new BadRequestException(
+            `Stock insuffisant pour ${product.name}. Disponible: ${product.stock}`,
+          );
+        }
       }
 
-      const unitPrice = Number(product.price);
-      const totalPrice = unitPrice * item.quantity;
+      unitPrice = Math.round(unitPrice * 100) / 100;
+      const totalPrice = Math.round(unitPrice * item.quantity * 100) / 100;
+      const lineVat = (totalPrice * Number(product.vatRate)) / 100;
       subtotal += totalPrice;
+      vat += lineVat;
 
       orderItems.push({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice,
         totalPrice,
+        variantId: item.variantId,
       });
     }
 
-    const vat = subtotal * vatRate;
+    subtotal = Math.round(subtotal * 100) / 100;
+    vat = Math.round(vat * 100) / 100;
     const shippingCost = flatShippingCost;
-    const total = subtotal + vat + shippingCost;
+    const total = Math.round((subtotal + vat + shippingCost) * 100) / 100;
 
-    // Crée la commande en PENDING. Le stock n'est PAS décrémenté ici : la réservation de stock
-    // doit se faire au PAIEMENT (payOrder), pas à la création. Sinon une commande jamais payée /
-    // abandonnée consommerait définitivement le stock (aucune ré-incrémentation).
-    // La disponibilité est vérifiée à la création (ci-dessus) et RE-vérifiée au paiement.
-    const order = await this.prisma.order.create({
-      data: {
-        clientId,
-        shippingAddress,
-        subtotal: new Decimal(subtotal),
-        vat: new Decimal(vat),
-        shippingCost: new Decimal(shippingCost),
-        total: new Decimal(total),
-        items: {
-          create: orderItems.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: new Decimal(item.unitPrice),
-            totalPrice: new Decimal(item.totalPrice),
-          })),
-        },
-      },
-      include: {
-        items: {
-          include: {
-            product: true,
+    // Crée la commande en PENDING. Le stock GLOBAL d'un produit (ligne sans variante) n'est PAS
+    // décrémenté ici : sa réservation se fait au PAIEMENT (settleOrderPayment), sinon une commande
+    // abandonnée consommerait le stock. En revanche le stock de VARIANTE est réservé immédiatement
+    // (le lien commande->variante n'étant pas persistable sur OrderItem, il ne peut pas être décrémenté
+    // plus tard au règlement) — décrément fait dans la même transaction que la création.
+    const order = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          clientId,
+          shippingAddress,
+          subtotal: new Decimal(subtotal),
+          vat: new Decimal(vat),
+          shippingCost: new Decimal(shippingCost),
+          total: new Decimal(total),
+          items: {
+            create: orderItems.map((it) => ({
+              productId: it.productId,
+              quantity: it.quantity,
+              unitPrice: new Decimal(it.unitPrice),
+              totalPrice: new Decimal(it.totalPrice),
+            })),
           },
         },
-      },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      for (const it of orderItems) {
+        if (it.variantId) {
+          await tx.productVariant.update({
+            where: { id: it.variantId },
+            data: { stock: { decrement: it.quantity } },
+          });
+        }
+      }
+
+      return created;
     });
 
     return order;
@@ -360,24 +409,42 @@ export class OrderService {
 
     // Ré-incrémente le stock si on annule/rembourse une commande dont le stock avait été
     // décrémenté au paiement (statuts >= PAID). Une commande PENDING n'a pas consommé de stock.
-    const stockWasReserved = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status);
+    const stockWasReserved = PAID_STATUSES.includes(order.status);
+    let result;
     if ((status === 'CANCELLED' || status === 'REFUNDED') && stockWasReserved) {
-      return this.prisma.$transaction(async (tx) => {
+      result = await this.prisma.$transaction(async (tx) => {
         for (const it of (order as any).items || []) {
           await tx.product.update({
             where: { id: it.productId },
             data: { stock: { increment: it.quantity } },
           });
         }
-        return tx.order.update({ where: { id: orderId }, data: data as any });
+        return tx.order.update({
+          where: { id: orderId },
+          data: data as any,
+          include: { items: { include: { product: true } } },
+        });
+      });
+    } else {
+      result = await this.prisma.order.update({
+        where: { id: orderId },
+        data: data as any,
+        include: { items: { include: { product: true } } },
       });
     }
 
-    return this.prisma.order.update({
-      where: { id: orderId },
-      data: data as any,
-      include: { items: { include: { product: true } } },
-    });
+    // FACTURE DE VENTE : dès qu'une commande est (ou passe) payée, on garantit qu'une facture par
+    // vendeur existe (idempotent). Best-effort : la génération de facture ne doit jamais faire
+    // échouer la mise à jour de statut.
+    if (PAID_STATUSES.includes(status)) {
+      try {
+        await this.invoiceService.generateInvoicesForOrder(orderId, { requirePaid: true });
+      } catch {
+        /* best-effort : facture rattrapée à la lecture des ventes (getSellerOrders) */
+      }
+    }
+
+    return result;
   }
 
   // ==================== VENDEUR : EXPÉDITION / SUIVI ====================
@@ -397,7 +464,7 @@ export class OrderService {
    * Distinct de findAll (qui mêle achats + ventes) : ici uniquement les ventes.
    */
   async getSellerOrders(artisanId: string) {
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: { items: { some: { product: { artisanId } } } },
       include: {
         items: { include: { product: true } },
@@ -406,6 +473,24 @@ export class OrderService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // FILET DE SÉCURITÉ FACTURE : les commandes réglées par le WEBHOOK Stripe (settleOrderPayment,
+    // hors de ce service) ne passent pas par updateStatus -> on garantit ici, à la lecture des ventes,
+    // qu'une facture de vente existe pour chaque commande payée. Idempotent (aucun doublon).
+    const paidOrderIds = orders
+      .filter((o) => PAID_STATUSES.includes(o.status as string))
+      .map((o) => o.id);
+    if (paidOrderIds.length) {
+      await Promise.all(
+        paidOrderIds.map((id) =>
+          this.invoiceService
+            .generateInvoicesForOrder(id, { requirePaid: true })
+            .catch(() => undefined),
+        ),
+      );
+    }
+
+    return orders;
   }
 
   /**
@@ -466,6 +551,19 @@ export class OrderService {
       where: { artisanId, status: 'ACTIVE' },
     });
 
+    // ALERTE STOCK : produits du vendeur en rupture (SOLD_OUT / stock <= 0) ou en stock bas
+    // (0 < stock <= seuil). Permet au vendeur de réapprovisionner avant la rupture.
+    const sellerProducts = await this.prisma.product.findMany({
+      where: { artisanId, status: { in: ['ACTIVE', 'SOLD_OUT'] as any } },
+      select: { id: true, name: true, stock: true, status: true },
+    });
+    const lowStockProducts = sellerProducts
+      .filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
+      .map((p) => ({ productId: p.id, name: p.name, stock: p.stock }));
+    const outOfStockProducts = sellerProducts
+      .filter((p) => p.stock <= 0 || p.status === 'SOLD_OUT')
+      .map((p) => ({ productId: p.id, name: p.name, stock: p.stock }));
+
     return {
       revenue: Math.round(revenue * 100) / 100,
       netRevenue,
@@ -474,6 +572,12 @@ export class OrderService {
       unitsSold,
       activeProducts,
       topProducts,
+      // Alertes de stock exposées au tableau de bord vendeur.
+      lowStockThreshold: LOW_STOCK_THRESHOLD,
+      lowStockCount: lowStockProducts.length,
+      lowStockProducts,
+      outOfStockCount: outOfStockProducts.length,
+      outOfStockProducts,
     };
   }
 }
