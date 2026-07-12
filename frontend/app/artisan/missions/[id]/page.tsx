@@ -14,7 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api/client';
-import { translateMissionStatus, translatePriority, translateQuotationStatus, translateEventType } from '@/lib/utils/enum-translations';
+import { translateMissionStatus, translatePriority, translateQuotationStatus, translateEventType, translateOfferStatus } from '@/lib/utils/enum-translations';
+import type { OfferStatus } from '@/types/mission';
 
 interface Mission {
   id: string;
@@ -80,12 +81,16 @@ interface Negotiation {
   laborCost?: number;
   materialCost?: number;
   travelCost?: number;
+  availability?: string | null;
+  estimatedDuration?: string | null;
   message?: string;
   senderId: string;
   receiverId: string;
   accepted?: boolean;
   rejectedReason?: string;
+  status?: OfferStatus;
   expiresAt?: string;
+  viewedAt?: string | null;
   createdAt: string;
 }
 
@@ -101,13 +106,6 @@ export default function MissionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'quotation'>('details');
-  const [showQuotationModal, setShowQuotationModal] = useState(false);
-  const [quotationForm, setQuotationForm] = useState({
-    amount: '',
-    description: '',
-    validDays: '7',
-    items: [] as { description: string; quantity: number; unitPrice: number }[],
-  });
   const [completionNotes, setCompletionNotes] = useState('');
   const [afterPhotos, setAfterPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -119,9 +117,26 @@ export default function MissionDetailPage() {
     laborCost: '',
     materialCost: '',
     travelCost: '',
+    availability: '',
+    availabilityCustom: '',
+    estimatedDuration: '',
     message: '',
   });
+  // Offre tout juste envoyée : sert à afficher l'écran de confirmation (statut + expiration réels).
+  const [sentOffer, setSentOffer] = useState<Negotiation | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string>('');
+
+  // Somme de la ventilation (main d'œuvre + matériel + déplacement), calculée en direct.
+  const ventilationTotal =
+    (parseFloat(negotiationForm.laborCost) || 0) +
+    (parseFloat(negotiationForm.materialCost) || 0) +
+    (parseFloat(negotiationForm.travelCost) || 0);
+  // Valeur "availability" envoyée : soit l'option choisie, soit la date personnalisée.
+  const resolvedAvailability =
+    negotiationForm.availability === '__custom__'
+      ? negotiationForm.availabilityCustom
+      : negotiationForm.availability;
 
   useEffect(() => {
     if (missionId) {
@@ -142,6 +157,12 @@ export default function MissionDetailPage() {
       setNegotiations(Array.isArray(negotiationsResponse.data) ? negotiationsResponse.data : []);
       if (userResponse.data?.id) {
         setCurrentUserId(userResponse.data.id);
+        const u = userResponse.data;
+        setCurrentUserName(
+          u.artisanProfile?.companyName ||
+          [u.firstName, u.lastName].filter(Boolean).join(' ') ||
+          '',
+        );
       }
     } catch (error) {
       console.error('Error loading mission:', error);
@@ -321,12 +342,14 @@ export default function MissionDetailPage() {
 
     setNegotiationLoading(true);
     try {
-      await apiClient.post(`/missions/${missionId}/negotiations`, {
+      const response = await apiClient.post(`/missions/${missionId}/negotiations`, {
         missionId,
         proposedPrice: parseFloat(negotiationForm.proposedPrice),
         laborCost: negotiationForm.laborCost ? parseFloat(negotiationForm.laborCost) : undefined,
         materialCost: negotiationForm.materialCost ? parseFloat(negotiationForm.materialCost) : undefined,
         travelCost: negotiationForm.travelCost ? parseFloat(negotiationForm.travelCost) : undefined,
+        availability: resolvedAvailability || undefined,
+        estimatedDuration: negotiationForm.estimatedDuration || undefined,
         message: negotiationForm.message || undefined,
       });
       toast({
@@ -335,11 +358,16 @@ export default function MissionDetailPage() {
         variant: 'success',
       });
       setShowNegotiationForm(false);
+      // Confirmation claire : on garde une trace de l'offre envoyée (statut + expiresAt réels).
+      setSentOffer(response.data ?? null);
       setNegotiationForm({
         proposedPrice: '',
         laborCost: '',
         materialCost: '',
         travelCost: '',
+        availability: '',
+        availabilityCustom: '',
+        estimatedDuration: '',
         message: '',
       });
       loadMission();
@@ -416,53 +444,6 @@ export default function MissionDetailPage() {
   const canNegotiate = mission &&
     (mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING') &&
     negotiations.length < 5;
-
-  const handleSubmitQuotation = async () => {
-    if (!quotationForm.amount || !quotationForm.description) {
-      toast({
-        title: t('common', 'error') || 'Error',
-        description: t('artisan', 'fillRequired') || 'Please fill in all required fields',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      const validUntil = new Date();
-      validUntil.setDate(validUntil.getDate() + parseInt(quotationForm.validDays));
-
-      // Une quotation sur une mission = une offre de négociation (proposition de prix)
-      await apiClient.post(`/missions/${missionId}/negotiations`, {
-        missionId,
-        proposedPrice: parseFloat(quotationForm.amount),
-        message: quotationForm.description,
-      });
-
-      toast({
-        title: t('common', 'success') || 'Success',
-        description: t('artisan', 'quotationSubmitted') || 'Quotation submitted successfully',
-        variant: 'success',
-      });
-      setShowQuotationModal(false);
-      setQuotationForm({
-        amount: '',
-        description: '',
-        validDays: '7',
-        items: [],
-      });
-      loadMission();
-    } catch (error) {
-      console.error('Error submitting quotation:', error);
-      toast({
-        title: t('common', 'error') || 'Error',
-        description: t('artisan', 'quotationError') || 'Failed to submit quotation',
-        variant: 'destructive',
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -559,7 +540,7 @@ export default function MissionDetailPage() {
             <div className="text-sm text-muted-foreground">
               {mission.status === 'OPEN' &&
                 (t('artisan', 'openMissionHint') ||
-                  'This mission is available. Submit a quotation or accept it.')}
+                  'Mission ouverte. Envoyez votre offre ci-dessous — le client compare et choisit.')}
               {mission.status === 'ASSIGNED' &&
                 (t('artisan', 'assignedMissionHint') ||
                   'You have been assigned to this mission. Accept or decline.')}
@@ -575,11 +556,6 @@ export default function MissionDetailPage() {
                 (t('artisan', 'completedMissionHint') || 'Mission completed successfully!')}
             </div>
             <div className="flex gap-2">
-              {mission.status === 'OPEN' && !mission.quotation && (
-                <Button onClick={() => setShowQuotationModal(true)}>
-                  {t('artisan', 'submitQuotation') || 'Submit Quotation'}
-                </Button>
-              )}
               {mission.status === 'ASSIGNED' && (
                 <>
                   <Button variant="outline" onClick={handleDeclineMission} disabled={actionLoading}>
@@ -782,13 +758,47 @@ export default function MissionDetailPage() {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {t('negotiations', 'priceNegotiation') || 'Négociation du prix'}
+                  {t('offers', 'makeOfferTitle') || 'Faire une offre'}
                 </CardTitle>
                 <CardDescription>
-                  {t('negotiations', 'artisanNegotiationDesc') || 'Proposez un prix au client pour cette mission'}
+                  {t('offers', 'makeOfferDesc') || 'Le client compare les offres reçues (prix, dispo, durée) et choisit. Une seule offre — claire et convaincante.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Confirmation après envoi : statut + expiration réels */}
+                {sentOffer && (
+                  <div className="rounded-xl border border-green-300 bg-green-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white">✓</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-green-800">
+                          {t('offers', 'confirmSent') || 'Offre envoyée — le client a été notifié.'}
+                        </p>
+                        <p className="mt-1 text-sm text-green-700">
+                          {t('offers', 'confirmNotified') || "Vous serez alerté dès qu'il l'aura vue ou acceptée."}
+                          {sentOffer.status && (
+                            <> {' · '}{translateOfferStatus(sentOffer.status, t)}</>
+                          )}
+                        </p>
+                        {sentOffer.expiresAt && (
+                          <p className="mt-1 text-xs text-green-700">
+                            {t('offers', 'confirmExpires') || 'Expire le'}{' '}
+                            {new Date(sentOffer.expiresAt).toLocaleString('fr-FR')}{' '}
+                            {t('offers', 'confirmWithin24h') || '(sous 24h)'}
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setSentOffer(null)}
+                          className="mt-2 text-xs font-medium text-green-800 underline"
+                        >
+                          {t('common', 'ok') || 'OK'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Client Budget */}
                 <div className="p-3 bg-background rounded-lg">
                   <div className="flex justify-between items-center">
@@ -801,18 +811,38 @@ export default function MissionDetailPage() {
                   </div>
                 </div>
 
-                {/* Negotiations List */}
+                {/* Negotiations List — mes offres sur cette mission (statut réel) */}
                 {negotiations.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="text-sm font-medium text-foreground">
-                      {t('negotiations', 'history') || 'Historique des offres'} ({negotiations.length}/5)
+                      {t('offers', 'myOffersOnMission') || 'Vos offres'} ({negotiations.length}/5)
                     </h4>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
                       {negotiations.map((neg, index) => {
-                        const isFromMe = neg.senderId === currentUserId;
+                        const isFromMe = neg.senderId ? neg.senderId === currentUserId : true;
                         const isExpired = isNegotiationExpired(neg.expiresAt);
                         const isPending = neg.accepted === null || neg.accepted === undefined;
                         const isLastAndPending = index === negotiations.length - 1 && isPending && !isExpired;
+
+                        // Statut d'offre : on privilégie le champ `status` de l'API, sinon on le dérive.
+                        const derivedStatus: OfferStatus =
+                          (neg.status as OfferStatus) ||
+                          (neg.accepted === true
+                            ? 'ACCEPTED'
+                            : neg.accepted === false
+                              ? 'REJECTED'
+                              : isExpired
+                                ? 'EXPIRED'
+                                : neg.viewedAt
+                                  ? 'VIEWED'
+                                  : 'SENT');
+                        const statusColors: Record<OfferStatus, string> = {
+                          SENT: 'bg-blue-50 text-blue-600',
+                          VIEWED: 'bg-blue-100 text-blue-700',
+                          ACCEPTED: 'bg-green-100 text-green-700',
+                          REJECTED: 'bg-red-100 text-red-700',
+                          EXPIRED: 'bg-muted text-muted-foreground',
+                        };
 
                         return (
                           <div
@@ -821,8 +851,8 @@ export default function MissionDetailPage() {
                               isFromMe
                                 ? 'bg-green-100 border-green-500/30 ml-4'
                                 : 'bg-primary/10 border-primary/20 mr-4'
-                            } ${neg.accepted === true ? 'ring-2 ring-green-400' : ''} ${
-                              neg.accepted === false ? 'opacity-60' : ''
+                            } ${derivedStatus === 'ACCEPTED' ? 'ring-2 ring-green-400' : ''} ${
+                              derivedStatus === 'REJECTED' || derivedStatus === 'EXPIRED' ? 'opacity-60' : ''
                             }`}
                           >
                             <div className="flex justify-between items-start">
@@ -841,28 +871,22 @@ export default function MissionDetailPage() {
                                     {neg.travelCost && <span className="ml-2">Déplacement: {neg.travelCost}€</span>}
                                   </div>
                                 )}
+                                {/* Dispo + durée */}
+                                {(neg.availability || neg.estimatedDuration) && (
+                                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3">
+                                    {neg.availability && (
+                                      <span>{t('offers', 'availabilityShort') || 'Dispo'} : {neg.availability}</span>
+                                    )}
+                                    {neg.estimatedDuration && (
+                                      <span>{t('offers', 'durationShort') || 'Durée'} : {neg.estimatedDuration}</span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               <div className="text-right">
-                                {neg.accepted === true && (
-                                  <Badge className="bg-green-100 text-green-700">
-                                    {t('negotiations', 'accepted') || 'Acceptée'}
-                                  </Badge>
-                                )}
-                                {neg.accepted === false && (
-                                  <Badge className="bg-red-100 text-red-700">
-                                    {t('negotiations', 'rejected') || 'Refusée'}
-                                  </Badge>
-                                )}
-                                {isPending && isExpired && (
-                                  <Badge className="bg-muted text-foreground">
-                                    {t('negotiations', 'expired') || 'Expirée'}
-                                  </Badge>
-                                )}
-                                {isPending && !isExpired && (
-                                  <Badge className="bg-amber-100 text-amber-800">
-                                    {t('negotiations', 'pending') || 'En attente'}
-                                  </Badge>
-                                )}
+                                <Badge className={statusColors[derivedStatus]}>
+                                  {translateOfferStatus(derivedStatus, t)}
+                                </Badge>
                               </div>
                             </div>
 
@@ -876,6 +900,13 @@ export default function MissionDetailPage() {
                               </p>
                             )}
 
+                            {neg.viewedAt && derivedStatus === 'VIEWED' && (
+                              <p className="text-xs text-blue-600 mt-2">
+                                {t('offers', 'viewedAt') || 'Vue par le client le'}{' '}
+                                {new Date(neg.viewedAt).toLocaleString('fr-FR')}
+                              </p>
+                            )}
+
                             {neg.expiresAt && isPending && !isExpired && (
                               <p className="text-xs text-muted-foreground mt-2">
                                 {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
@@ -883,7 +914,7 @@ export default function MissionDetailPage() {
                               </p>
                             )}
 
-                            {/* Actions for pending offers from client */}
+                            {/* Actions pour une contre-offre en attente venant du client */}
                             {isLastAndPending && !isFromMe && (
                               <div className="flex gap-2 mt-3 pt-3 border-t">
                                 <Button
@@ -915,94 +946,200 @@ export default function MissionDetailPage() {
                 {/* Make Offer Button */}
                 {canNegotiate && !showNegotiationForm && (
                   <Button
-                    onClick={() => setShowNegotiationForm(true)}
+                    onClick={() => { setSentOffer(null); setShowNegotiationForm(true); }}
                     className="w-full"
                   >
                     {negotiations.length === 0
-                      ? t('negotiations', 'makeOffer') || 'Faire une offre'
+                      ? t('offers', 'makeOfferTitle') || 'Faire une offre'
                       : t('negotiations', 'counterOffer') || 'Faire une contre-offre'}
                   </Button>
                 )}
 
-                {/* Negotiation Form */}
+                {/* Formulaire d'offre unifié */}
                 {showNegotiationForm && (
                   <div className="p-4 bg-background rounded-lg space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2">
+                    {/* Ventilation */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        {t('offers', 'breakdown') || 'Ventilation (optionnelle)'}
+                      </label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            {t('negotiations', 'laborCost') || 'Main d\'œuvre'} (€)
+                          </label>
+                          <Input
+                            type="number"
+                            value={negotiationForm.laborCost}
+                            onChange={(e) => setNegotiationForm({ ...negotiationForm, laborCost: e.target.value })}
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            {t('negotiations', 'materialCost') || 'Matériel'} (€)
+                          </label>
+                          <Input
+                            type="number"
+                            value={negotiationForm.materialCost}
+                            onChange={(e) => setNegotiationForm({ ...negotiationForm, materialCost: e.target.value })}
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            {t('negotiations', 'travelCost') || 'Déplacement'} (€)
+                          </label>
+                          <Input
+                            type="number"
+                            value={negotiationForm.travelCost}
+                            onChange={(e) => setNegotiationForm({ ...negotiationForm, travelCost: e.target.value })}
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                      </div>
+                      {/* Total ventilation en direct */}
+                      {ventilationTotal > 0 && (
+                        <div className="mt-2 flex items-center justify-between rounded-lg bg-muted px-3 py-2">
+                          <span className="text-sm text-muted-foreground">
+                            {t('offers', 'breakdownTotal') || 'Total ventilation'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{ventilationTotal.toLocaleString('fr-FR')}€</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setNegotiationForm({ ...negotiationForm, proposedPrice: String(ventilationTotal) })}
+                            >
+                              {t('offers', 'useAsTotal') || 'Utiliser comme prix total'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Prix total proposé */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        {t('negotiations', 'totalPrice') || 'Prix total proposé'} (€) *
+                      </label>
+                      <Input
+                        type="number"
+                        value={negotiationForm.proposedPrice}
+                        onChange={(e) => setNegotiationForm({ ...negotiationForm, proposedPrice: e.target.value })}
+                        placeholder={mission.budget?.toString() || '0'}
+                        min="1"
+                        step="0.01"
+                      />
+                    </div>
+
+                    {/* Disponibilité + Durée estimée */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
                         <label className="block text-sm font-medium text-foreground mb-1">
-                          {t('negotiations', 'totalPrice') || 'Prix total proposé'} (€) *
+                          {t('offers', 'availability') || 'Disponibilité'}
                         </label>
-                        <Input
-                          type="number"
-                          value={negotiationForm.proposedPrice}
-                          onChange={(e) =>
-                            setNegotiationForm({ ...negotiationForm, proposedPrice: e.target.value })
-                          }
-                          placeholder={mission.budget?.toString() || '0'}
-                          min="0"
-                          step="0.01"
-                        />
+                        <select
+                          value={negotiationForm.availability}
+                          onChange={(e) => setNegotiationForm({ ...negotiationForm, availability: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="">{t('offers', 'availabilityChoose') || 'Choisir…'}</option>
+                          <option value="Dès demain matin">{t('offers', 'availTomorrow') || 'Dès demain matin'}</option>
+                          <option value="Sous 48h">{t('offers', 'avail48h') || 'Sous 48h'}</option>
+                          <option value="Cette semaine">{t('offers', 'availThisWeek') || 'Cette semaine'}</option>
+                          <option value="À convenir">{t('offers', 'availToAgree') || 'À convenir'}</option>
+                          <option value="__custom__">{t('offers', 'availCustom') || 'Date précise…'}</option>
+                        </select>
+                        {negotiationForm.availability === '__custom__' && (
+                          <Input
+                            type="date"
+                            className="mt-2"
+                            value={negotiationForm.availabilityCustom}
+                            onChange={(e) => setNegotiationForm({ ...negotiationForm, availabilityCustom: e.target.value })}
+                          />
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1">
-                          {t('negotiations', 'laborCost') || 'Main d\'œuvre'} (€)
+                          {t('offers', 'estimatedDuration') || 'Durée estimée'}
                         </label>
                         <Input
-                          type="number"
-                          value={negotiationForm.laborCost}
-                          onChange={(e) =>
-                            setNegotiationForm({ ...negotiationForm, laborCost: e.target.value })
-                          }
-                          min="0"
-                          step="0.01"
+                          type="text"
+                          list="offer-duration-suggestions"
+                          value={negotiationForm.estimatedDuration}
+                          onChange={(e) => setNegotiationForm({ ...negotiationForm, estimatedDuration: e.target.value })}
+                          placeholder={t('offers', 'durationPlaceholder') || '~1h'}
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                          {t('negotiations', 'materialCost') || 'Matériel'} (€)
-                        </label>
-                        <Input
-                          type="number"
-                          value={negotiationForm.materialCost}
-                          onChange={(e) =>
-                            setNegotiationForm({ ...negotiationForm, materialCost: e.target.value })
-                          }
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                          {t('negotiations', 'travelCost') || 'Déplacement'} (€)
-                        </label>
-                        <Input
-                          type="number"
-                          value={negotiationForm.travelCost}
-                          onChange={(e) =>
-                            setNegotiationForm({ ...negotiationForm, travelCost: e.target.value })
-                          }
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                          {t('negotiations', 'message') || 'Message (optionnel)'}
-                        </label>
-                        <textarea
-                          value={negotiationForm.message}
-                          onChange={(e) =>
-                            setNegotiationForm({ ...negotiationForm, message: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                          rows={2}
-                          placeholder={
-                            t('negotiations', 'artisanMessagePlaceholder') ||
-                            'Expliquez le détail de votre offre...'
-                          }
-                        />
+                        <datalist id="offer-duration-suggestions">
+                          <option value="~1h" />
+                          <option value="~2h" />
+                          <option value="~1/2 journée" />
+                          <option value="~1 journée" />
+                          <option value="2 jours" />
+                        </datalist>
                       </div>
                     </div>
+
+                    {/* Message */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        {t('negotiations', 'message') || 'Message (optionnel)'}
+                      </label>
+                      <textarea
+                        value={negotiationForm.message}
+                        onChange={(e) => setNegotiationForm({ ...negotiationForm, message: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        rows={2}
+                        placeholder={
+                          t('negotiations', 'artisanMessagePlaceholder') ||
+                          'Expliquez le détail de votre offre...'
+                        }
+                      />
+                    </div>
+
+                    {/* Aperçu — ce que voit le client */}
+                    <div className="rounded-xl border border-border bg-card p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {t('offers', 'clientPreview') || 'Aperçu — ce que voit le client'}
+                      </p>
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                          {(currentUserName || 'K').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-foreground truncate">
+                            {currentUserName || (t('offers', 'yourCompany') || 'Votre entreprise')}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {t('offers', 'newOfferBadge') || 'Nouvelle offre'}
+                          </div>
+                        </div>
+                        <div className="ml-auto text-right">
+                          <div className="text-lg font-bold text-foreground">
+                            {(parseFloat(negotiationForm.proposedPrice) || ventilationTotal || 0).toLocaleString('fr-FR')}€
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        {resolvedAvailability && (
+                          <span>{t('offers', 'availabilityShort') || 'Dispo'} : {resolvedAvailability}</span>
+                        )}
+                        {negotiationForm.estimatedDuration && (
+                          <span>{t('offers', 'durationShort') || 'Durée'} : {negotiationForm.estimatedDuration}</span>
+                        )}
+                      </div>
+                      {negotiationForm.message && (
+                        <p className="mt-2 text-xs italic text-muted-foreground line-clamp-2">
+                          "{negotiationForm.message}"
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex gap-2">
                       <Button
                         onClick={handleSubmitNegotiation}
@@ -1030,6 +1167,12 @@ export default function MissionDetailPage() {
                       'Limite de 5 négociations atteinte.'}
                   </p>
                 )}
+
+                {/* Note : le devis formel PDF reste séparé */}
+                <p className="text-xs text-muted-foreground">
+                  {t('offers', 'quoteSeparateNote') ||
+                    'Besoin d’un devis formel (PDF signable) pour un gros chantier ? Rendez-vous dans l’onglet Devis.'}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -1300,82 +1443,6 @@ export default function MissionDetailPage() {
         </Card>
       )}
 
-      {/* Quotation Modal */}
-      {showQuotationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
-              {t('artisan', 'submitQuotation') || 'Submit Quotation'}
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  {t('artisan', 'amount') || 'Amount (EUR)'} *
-                </label>
-                <Input
-                  type="number"
-                  value={quotationForm.amount}
-                  onChange={(e) => setQuotationForm({ ...quotationForm, amount: e.target.value })}
-                  min="0"
-                  placeholder={mission.budget.toString()}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('artisan', 'clientBudget') || 'Client budget'}: EUR{' '}
-                  {mission.budget != null ? mission.budget.toLocaleString() : "—"}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  {t('artisan', 'description') || 'Description'} *
-                </label>
-                <textarea
-                  value={quotationForm.description}
-                  onChange={(e) =>
-                    setQuotationForm({ ...quotationForm, description: e.target.value })
-                  }
-                  rows={4}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder={
-                    t('artisan', 'quotationDescPlaceholder') ||
-                    'Describe what is included in your quotation...'
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  {t('artisan', 'validFor') || 'Valid For (days)'}
-                </label>
-                <select
-                  value={quotationForm.validDays}
-                  onChange={(e) =>
-                    setQuotationForm({ ...quotationForm, validDays: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="3">3 days</option>
-                  <option value="7">7 days</option>
-                  <option value="14">14 days</option>
-                  <option value="30">30 days</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => setShowQuotationModal(false)}>
-                {t('common', 'cancel') || 'Cancel'}
-              </Button>
-              <Button onClick={handleSubmitQuotation} disabled={actionLoading}>
-                {actionLoading
-                  ? t('common', 'submitting') || 'Submitting...'
-                  : t('artisan', 'submitQuotation') || 'Submit Quotation'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

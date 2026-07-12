@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { missionsApi } from '@/lib/api/missions';
+import { userApi } from '@/lib/api/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translateMissionStatus } from '@/lib/utils/enum-translations';
 
@@ -52,6 +53,8 @@ export default function ClientMissionsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  // Nombre d'offres reçues (d'artisans) par mission ouverte — chargé après coup, non bloquant.
+  const [offerCounts, setOfferCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadMissions();
@@ -61,10 +64,37 @@ export default function ClientMissionsPage() {
     try {
       const data = await missionsApi.getAll();
       setMissions(data);
+      loadOfferCounts(data);
     } catch (error) {
       console.error('Error loading missions:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // GET /missions ne renvoie pas le nombre d'offres : on le récupère via getNegotiations pour les
+  // missions ouvertes (PENDING/NEGOTIATING) et on ne compte que les offres reçues d'artisans.
+  const loadOfferCounts = async (data: Mission[]) => {
+    const open = data.filter((m) => m.status === 'PENDING' || m.status === 'NEGOTIATING');
+    if (open.length === 0) return;
+    try {
+      const me = await userApi.getProfile().catch(() => null);
+      const myId: string | undefined = me?.id;
+      const entries = await Promise.all(
+        open.map(async (m) => {
+          try {
+            const negs = await missionsApi.getNegotiations(m.id);
+            const list: Array<{ senderId?: string }> = Array.isArray(negs) ? negs : [];
+            const received = myId ? list.filter((n) => n.senderId !== myId).length : list.length;
+            return [m.id, received] as const;
+          } catch {
+            return [m.id, 0] as const;
+          }
+        })
+      );
+      setOfferCounts(Object.fromEntries(entries));
+    } catch (error) {
+      console.error('Error loading offer counts:', error);
     }
   };
 
@@ -202,11 +232,20 @@ export default function ClientMissionsPage() {
                 <CardContent className="p-6">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         <h3 className="text-lg font-semibold text-foreground">{mission.title}</h3>
                         <Badge className={STATUS_COLORS[mission.status]}>
                           {translateMissionStatus(mission.status, t)}
                         </Badge>
+                        {(mission.status === 'PENDING' || mission.status === 'NEGOTIATING') &&
+                          offerCounts[mission.id] > 0 && (
+                          <Badge className="bg-foreground text-background">
+                            {offerCounts[mission.id]}{' '}
+                            {offerCounts[mission.id] > 1
+                              ? (t('offers', 'offersToCompareShort') || 'offres à comparer')
+                              : (t('offers', 'offerToCompareShort') || 'offre à comparer')}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-muted-foreground text-sm mb-2 line-clamp-2">{mission.description}</p>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">

@@ -26,9 +26,16 @@ const STATUS_BADGES: Record<MissionStatus, string> = {
   PENDING: 'bg-amber-100 text-amber-800',
   NEGOTIATING: 'bg-primary/10 text-primary',
   ACCEPTED: 'bg-green-100 text-green-700',
+  PENDING_DEPOSIT: 'bg-amber-100 text-amber-800',
+  DEPOSIT_PAID: 'bg-green-100 text-green-700',
+  PAID: 'bg-green-100 text-green-700',
+  IN_TRANSIT: 'bg-blue-100 text-blue-700',
   IN_PROGRESS: 'bg-purple-100 text-purple-700',
   COMPLETED: 'bg-muted text-foreground',
+  AUTO_VALIDATED: 'bg-muted text-foreground',
   CANCELLED: 'bg-red-100 text-red-700',
+  CANCELLED_NO_SHOW: 'bg-red-100 text-red-700',
+  DISPUTED: 'bg-red-100 text-red-700',
 };
 
 export default function ClientDashboard() {

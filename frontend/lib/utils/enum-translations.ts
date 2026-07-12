@@ -45,11 +45,33 @@ export const translateMissionStatus = (
 ): string => {
   const translations: Record<string, string> = {
     PENDING: t('status', 'pending') || 'En attente',
+    NEGOTIATING: t('status', 'negotiating') || 'Offres reçues',
     ACCEPTED: t('status', 'accepted') || 'Accepté',
+    PENDING_DEPOSIT: t('status', 'pendingDeposit') || 'Paiement à sécuriser',
+    DEPOSIT_PAID: t('status', 'depositPaid') || 'Acompte payé',
+    PAID: t('status', 'paid') || 'Payé',
+    IN_TRANSIT: t('status', 'inTransit') || 'En route',
     IN_PROGRESS: t('status', 'inProgress') || 'En cours',
     COMPLETED: t('status', 'completed') || 'Terminé',
+    AUTO_VALIDATED: t('status', 'autoValidated') || 'Validé (auto)',
     CANCELLED: t('status', 'cancelled') || 'Annulé',
+    CANCELLED_NO_SHOW: t('status', 'cancelledNoShow') || 'Annulé (absence)',
     DISPUTED: t('status', 'disputed') || 'En litige',
+  };
+  return translations[status] || status;
+};
+
+// Statut d'une OFFRE (Negotiation) — libellés courts et clairs, côté client comme artisan.
+export const translateOfferStatus = (
+  status: string,
+  t: TranslationFunction
+): string => {
+  const translations: Record<string, string> = {
+    SENT: t('offers', 'statusSent') || 'Envoyée',
+    VIEWED: t('offers', 'statusViewed') || 'Vue',
+    ACCEPTED: t('offers', 'statusAccepted') || 'Acceptée',
+    REJECTED: t('offers', 'statusRejected') || 'Refusée',
+    EXPIRED: t('offers', 'statusExpired') || 'Expirée',
   };
   return translations[status] || status;
 };

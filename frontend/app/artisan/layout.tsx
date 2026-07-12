@@ -11,7 +11,7 @@ import {
   LayoutDashboard, ClipboardList, Wallet, TrendingUp, CalendarDays, CalendarRange,
   Clock, Plane, User, FileText, Award, Star, FileSignature, Store, Building2,
   Users, ClipboardCheck, BarChart3, Settings, CreditCard, LogOut,
-  Network,
+  Network, Send,
   ChevronLeft, ChevronRight, ChevronDown, Menu, X, type LucideIcon,
 } from 'lucide-react';
 
@@ -72,6 +72,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   const artisanNavItems: NavItem[] = [
     { href: '/artisan/dashboard', label: t('navigation', 'dashboard') || 'Dashboard', icon: LayoutDashboard },
     { href: '/artisan/missions', label: t('navigation', 'missions') || 'Missions', icon: ClipboardList },
+    { href: '/artisan/offers', label: t('navigation', 'myOffers') || 'Mes offres', icon: Send },
     { href: '/artisan/earnings', label: t('navigation', 'earnings') || 'Earnings', icon: Wallet },
     { href: '/artisan/analytics', label: t('navigation', 'analytics') || 'Analytics', icon: TrendingUp },
     {

@@ -88,6 +88,12 @@ export const missionsApi = {
     return response.data;
   },
 
+  // Vue agrégée "Mes offres" (artisan) : offres envoyées + statut dérivé + résumé mission + stats.
+  getMyOffers: async () => {
+    const response = await apiClient.get('/missions/negotiations/mine');
+    return response.data;
+  },
+
   acceptNegotiation: async (negotiationId: string, accepted: boolean, rejectedReason?: string) => {
     const response = await apiClient.put(`/missions/negotiations/${negotiationId}/accept`, {
       accepted,

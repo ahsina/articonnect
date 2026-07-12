@@ -1,7 +1,7 @@
 'use client';
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
-import { MapPin } from 'lucide-react';
+import { MapPin, Star, ShieldCheck, Clock } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { translateMissionStatus } from '@/lib/utils/enum-translations';
+import { translateMissionStatus, translateOfferStatus } from '@/lib/utils/enum-translations';
 
 // Mini-carte de localisation, chargée côté client uniquement (Leaflet ne supporte pas le SSR).
 const MissionMap = dynamic(() => import('@/components/shared/MissionMap').then((m) => m.MissionMap), { ssr: false });
@@ -68,18 +68,24 @@ interface ClientProfile {
   companyName?: string;
 }
 
+type OfferStatus = 'SENT' | 'VIEWED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+
 interface Negotiation {
   id: string;
-  proposedPrice: number;
-  laborCost?: number;
-  materialCost?: number;
-  travelCost?: number;
-  message?: string;
+  status?: OfferStatus;
+  proposedPrice: number | string;
+  laborCost?: number | string | null;
+  materialCost?: number | string | null;
+  travelCost?: number | string | null;
+  availability?: string | null;
+  estimatedDuration?: string | null;
+  message?: string | null;
   senderId: string;
   receiverId: string;
-  accepted?: boolean;
-  rejectedReason?: string;
-  expiresAt?: string;
+  accepted?: boolean | null;
+  rejectedReason?: string | null;
+  expiresAt?: string | null;
+  viewedAt?: string | null;
   createdAt: string;
   sender?: {
     id: string;
@@ -89,12 +95,25 @@ interface Negotiation {
     reputationScore?: number;
     artisanProfile?: {
       companyName?: string;
-      rating?: number;
+      rating?: number | string;
       reviewCount?: number;
       businessVerified?: boolean;
-    };
+    } | null;
   };
 }
+
+// Parse une valeur Decimal (string) ou numérique en nombre, avec fallback.
+const toNum = (v: unknown, fallback = 0): number => {
+  if (v == null) return fallback;
+  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  return Number.isFinite(n) ? n : fallback;
+};
+
+// Formatte un prix en euros (entier si rond, sinon 2 décimales), séparateurs FR.
+const fmtEur = (v: unknown): string => {
+  const n = toNum(v);
+  return `${n.toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })} €`;
+};
 
 export default function MissionDetailsPage() {
   const router = useRouter();
@@ -124,6 +143,11 @@ export default function MissionDetailsPage() {
     totalRefund?: number;
   } | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  // Tri des offres côté client + modales d'acceptation/refus (remplacent confirm/prompt natifs).
+  const [offerSort, setOfferSort] = useState<'best' | 'priceAsc' | 'ratingDesc' | 'durationAsc'>('best');
+  const [offerToAccept, setOfferToAccept] = useState<Negotiation | null>(null);
+  const [offerToReject, setOfferToReject] = useState<Negotiation | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     if (missionId) {
@@ -309,19 +333,19 @@ export default function MissionDetailsPage() {
     }
   };
 
-  const handleAcceptNegotiation = async (negotiationId: string) => {
-    if (!confirm(t('negotiations', 'confirmAccept') || 'Accepter cette offre ?')) {
-      return;
-    }
-
+  // Confirme l'acceptation depuis la modale de récapitulatif, puis route vers le paiement séquestre.
+  const handleConfirmAccept = async () => {
+    if (!offerToAccept) return;
     setNegotiationLoading(true);
     try {
-      await missionsApi.acceptNegotiation(negotiationId, true);
+      await missionsApi.acceptNegotiation(offerToAccept.id, true);
       toast({
         title: t('common', 'success'),
         description: t('negotiations', 'offerAccepted') || 'Offre acceptée',
       });
-      loadData();
+      setOfferToAccept(null);
+      // On enchaîne directement sur le paiement sécurisé (« Accepter et payer »).
+      router.push(`/client/payment/${missionId}`);
     } catch (error) {
       console.error('Error accepting negotiation:', error);
       toast({
@@ -329,21 +353,21 @@ export default function MissionDetailsPage() {
         description: t('negotiations', 'acceptError') || 'Erreur',
         variant: 'destructive',
       });
-    } finally {
       setNegotiationLoading(false);
     }
   };
 
-  const handleRejectNegotiation = async (negotiationId: string) => {
-    const reason = prompt(t('negotiations', 'rejectReason') || 'Raison du refus (optionnel):');
-
+  const handleConfirmReject = async () => {
+    if (!offerToReject) return;
     setNegotiationLoading(true);
     try {
-      await missionsApi.acceptNegotiation(negotiationId, false, reason || undefined);
+      await missionsApi.acceptNegotiation(offerToReject.id, false, rejectReason || undefined);
       toast({
         title: t('common', 'success'),
         description: t('negotiations', 'offerRejected') || 'Offre refusée',
       });
+      setOfferToReject(null);
+      setRejectReason('');
       loadData();
     } catch (error) {
       console.error('Error rejecting negotiation:', error);
@@ -370,6 +394,72 @@ export default function MissionDetailsPage() {
   const canNegotiate = mission &&
     (mission.status === 'PENDING' || mission.status === 'NEGOTIATING') &&
     negotiations.length < 5;
+
+  // Une offre est « actionnable » (acceptable/refusable) si elle vient d'un artisan et n'est ni
+  // acceptée/refusée ni expirée. On s'appuie sur le status dérivé par le backend.
+  const isActionable = (neg: Negotiation) => {
+    if (neg.senderId === currentUserId) return false;
+    const st = neg.status;
+    if (st) return st === 'SENT' || st === 'VIEWED';
+    // Fallback si le status n'est pas renvoyé : en attente et non expirée.
+    return (neg.accepted === null || neg.accepted === undefined) && !isNegotiationExpired(neg.expiresAt || undefined);
+  };
+
+  // Note de l'artisan (string Decimal possible) pour tri/heuristique ; neutre si absente.
+  const ratingOf = (neg: Negotiation) => toNum(neg.sender?.artisanProfile?.rating, 0);
+  // Extrait un nombre de jours/heures d'une chaîne libre (« 2 jours », « 48h ») pour trier le délai.
+  const durationScore = (neg: Negotiation) => {
+    const s = `${neg.estimatedDuration || ''} ${neg.availability || ''}`.toLowerCase();
+    const m = s.match(/(\d+([.,]\d+)?)/);
+    if (!m) return Number.POSITIVE_INFINITY;
+    let n = parseFloat(m[1].replace(',', '.'));
+    if (/semaine|week/.test(s)) n *= 7;
+    if (/mois|month/.test(s)) n *= 30;
+    return n;
+  };
+
+  const myOffers = negotiations.filter((n) => n.senderId === currentUserId);
+  const artisanOffers = negotiations.filter((n) => n.senderId !== currentUserId);
+
+  // Meilleur rapport prix/note : plus le ratio est bas (prix bas, note haute), mieux c'est.
+  // Calculé sur les seules offres actionnables pour ne mettre en avant qu'une offre choisissable.
+  const actionableOffers = artisanOffers.filter(isActionable);
+  const bestOfferId = (() => {
+    if (actionableOffers.length < 2) return null;
+    let best: Negotiation | null = null;
+    let bestRatio = Number.POSITIVE_INFINITY;
+    for (const o of actionableOffers) {
+      const ratio = toNum(o.proposedPrice) / Math.max(ratingOf(o), 0.5);
+      if (ratio < bestRatio) { bestRatio = ratio; best = o; }
+    }
+    return best?.id ?? null;
+  })();
+
+  const sortedArtisanOffers = [...artisanOffers].sort((a, b) => {
+    // Les offres actionnables passent toujours avant celles clôturées/expirées.
+    const aAct = isActionable(a) ? 0 : 1;
+    const bAct = isActionable(b) ? 0 : 1;
+    if (aAct !== bAct) return aAct - bAct;
+    switch (offerSort) {
+      case 'priceAsc':
+        return toNum(a.proposedPrice) - toNum(b.proposedPrice);
+      case 'ratingDesc':
+        return ratingOf(b) - ratingOf(a);
+      case 'durationAsc':
+        return durationScore(a) - durationScore(b);
+      case 'best':
+      default: {
+        const ra = toNum(a.proposedPrice) / Math.max(ratingOf(a), 0.5);
+        const rb = toNum(b.proposedPrice) / Math.max(ratingOf(b), 0.5);
+        return ra - rb;
+      }
+    }
+  });
+
+  // Bouton « Payer » sur le détail : dès qu'un prix est convenu et que la mission n'est pas encore
+  // payée / clôturée. C'est la rupture corrigée (le bouton manquait sur le détail).
+  const canPay = !!(mission && mission.agreedPrice &&
+    ['ACCEPTED', 'PENDING_DEPOSIT', 'NEGOTIATING'].includes(mission.status));
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -770,121 +860,186 @@ export default function MissionDetailsPage() {
                     </div>
                   )}
 
-                  {/* Negotiations List */}
-                  {negotiations.length > 0 && (
+                  {/* Comparaison des offres d'artisans (le client compare et choisit) */}
+                  {artisanOffers.length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-foreground">
-                        {t('negotiations', 'history') || 'Historique des offres'} ({negotiations.length}/5)
-                      </h4>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {negotiations.map((neg, index) => {
-                          const isFromMe = neg.senderId === currentUserId;
-                          const isExpired = isNegotiationExpired(neg.expiresAt);
-                          const isPending = neg.accepted === null || neg.accepted === undefined;
-                          const isLastAndPending = index === negotiations.length - 1 && isPending && !isExpired;
-                          // Multi-offres : le client peut accepter TOUTE offre d'artisan en attente (pas seulement la dernière).
-                          const canAcceptOffer = isPending && !isExpired && !isFromMe;
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="font-display text-sm font-bold text-foreground">
+                          {artisanOffers.length} {artisanOffers.length > 1
+                            ? (t('offers', 'offersToCompare') || 'offres à comparer')
+                            : (t('offers', 'offerReceived') || 'offre reçue')}
+                        </h4>
+                        {/* Tri client-side */}
+                        <div className="flex flex-wrap gap-1">
+                          {([
+                            ['best', t('offers', 'sortBest') || 'Meilleur rapport'],
+                            ['priceAsc', t('offers', 'sortPrice') || 'Prix ↑'],
+                            ['ratingDesc', t('offers', 'sortRating') || 'Note ↓'],
+                            ['durationAsc', t('offers', 'sortDuration') || 'Délai'],
+                          ] as const).map(([key, label]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setOfferSort(key)}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                                offerSort === key
+                                  ? 'bg-foreground text-background'
+                                  : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {sortedArtisanOffers.map((neg) => {
+                          const profile = neg.sender?.artisanProfile;
+                          const artisanName = profile?.companyName ||
+                            `${neg.sender?.firstName ?? ''} ${neg.sender?.lastName ?? ''}`.trim() ||
+                            (t('negotiations', 'artisanOffer') || "Offre de l'artisan");
+                          const initial = (profile?.companyName || neg.sender?.firstName || 'A').charAt(0).toUpperCase();
+                          const rating = profile?.rating != null ? toNum(profile.rating) : null;
+                          const actionable = isActionable(neg);
+                          const isBest = neg.id === bestOfferId;
+                          const hasBreakdown = neg.laborCost != null || neg.materialCost != null || neg.travelCost != null;
+                          const statusLabel = neg.status ? translateOfferStatus(neg.status, t) : null;
+                          const statusClass =
+                            neg.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                            neg.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                            neg.status === 'EXPIRED' ? 'bg-muted text-muted-foreground' :
+                            neg.status === 'SENT' ? 'bg-amber-100 text-amber-800' :
+                            'bg-secondary text-foreground';
 
                           return (
                             <div
                               key={neg.id}
-                              className={`p-3 rounded-xl border ${
-                                isFromMe
-                                  ? 'bg-muted border-border ml-4'
-                                  : 'bg-card border-border mr-4'
-                              } ${neg.accepted === true ? 'ring-2 ring-green-500' : ''} ${
-                                neg.accepted === false ? 'opacity-60' : ''
+                              className={`relative rounded-2xl border bg-card p-4 transition-shadow ${
+                                isBest ? 'border-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)]' : 'border-border'
+                              } ${neg.status === 'ACCEPTED' ? 'ring-2 ring-green-500' : ''} ${
+                                neg.status === 'REJECTED' || neg.status === 'EXPIRED' ? 'opacity-60' : ''
                               }`}
                             >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  {isFromMe ? (
-                                    <span className="text-xs text-muted-foreground">
-                                      {t('negotiations', 'yourOffer') || 'Votre offre'}
-                                    </span>
-                                  ) : (
-                                    <div className="flex items-center gap-2">
-                                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground">
-                                        {(neg.sender?.artisanProfile?.companyName || neg.sender?.firstName || 'A').charAt(0)}
-                                      </span>
-                                      <div>
-                                        <div className="font-display text-sm font-bold leading-tight">
-                                          {neg.sender?.artisanProfile?.companyName ||
-                                            `${neg.sender?.firstName ?? ''} ${neg.sender?.lastName ?? ''}`.trim() ||
-                                            (t('negotiations', 'artisanOffer') || "Offre de l'artisan")}
-                                          {neg.sender?.artisanProfile?.businessVerified && (
-                                            <span className="ml-1 text-green-600"></span>
-                                          )}
-                                        </div>
-                                        {neg.sender?.artisanProfile?.rating != null && (
-                                          <div className="text-[11px] font-semibold text-muted-foreground">
-                                            <span className="text-amber-500"></span> {Number(neg.sender.artisanProfile.rating).toFixed(1)}
-                                            {neg.sender?.artisanProfile?.reviewCount ? ` (${neg.sender.artisanProfile.reviewCount})` : ''}
-                                          </div>
-                                        )}
-                                      </div>
+                              {isBest && (
+                                <span className="absolute -top-2.5 left-4 rounded-full bg-foreground px-2.5 py-0.5 text-[11px] font-bold text-background">
+                                  ★ {t('offers', 'bestValue') || 'Meilleur rapport'}
+                                </span>
+                              )}
+
+                              <div className="flex items-start justify-between gap-3">
+                                {/* Artisan */}
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground">
+                                    {initial}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 font-display text-sm font-bold leading-tight">
+                                      <span className="truncate">{artisanName}</span>
+                                      {profile?.businessVerified && (
+                                        <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
+                                          <ShieldCheck className="h-3 w-3" strokeWidth={2.5} />
+                                          {t('offers', 'verified') || 'Vérifié'}
+                                        </span>
+                                      )}
                                     </div>
-                                  )}
-                                  <div className="font-bold text-lg mt-1">{neg.proposedPrice}€</div>
+                                    {rating != null && rating > 0 && (
+                                      <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                        {rating.toFixed(1)}
+                                        {profile?.reviewCount ? ` (${profile.reviewCount} ${t('offers', 'reviews') || 'avis'})` : ''}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="text-right">
-                                  {neg.accepted === true && (
-                                    <Badge className="bg-green-100 text-green-700">
-                                      {t('negotiations', 'accepted') || 'Acceptée'}
-                                    </Badge>
-                                  )}
-                                  {neg.accepted === false && (
-                                    <Badge className="bg-red-100 text-red-700">
-                                      {t('negotiations', 'rejected') || 'Refusée'}
-                                    </Badge>
-                                  )}
-                                  {isPending && isExpired && (
-                                    <Badge className="bg-muted text-muted-foreground">
-                                      {t('negotiations', 'expired') || 'Expirée'}
-                                    </Badge>
-                                  )}
-                                  {isPending && !isExpired && (
-                                    <Badge className="bg-amber-100 text-amber-800">
-                                      {t('negotiations', 'pending') || 'En attente'}
-                                    </Badge>
-                                  )}
-                                </div>
+                                {/* Statut de l'offre */}
+                                {statusLabel && (
+                                  <Badge className={`flex-shrink-0 ${statusClass}`}>{statusLabel}</Badge>
+                                )}
                               </div>
 
+                              {/* Prix total + ventilation */}
+                              <div className="mt-3 flex items-end justify-between gap-3">
+                                <div>
+                                  <div className="font-display text-2xl font-extrabold leading-none text-foreground">
+                                    {fmtEur(neg.proposedPrice)}
+                                  </div>
+                                  <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                    {t('offers', 'totalPrice') || 'Prix total'}
+                                  </div>
+                                </div>
+                                {/* Disponibilité / délai en pastille */}
+                                {(neg.availability || neg.estimatedDuration) && (
+                                  <div className="flex flex-col items-end gap-1">
+                                    {neg.availability && (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-[11px] font-bold text-foreground">
+                                        <Clock className="h-3 w-3" /> {neg.availability}
+                                      </span>
+                                    )}
+                                    {neg.estimatedDuration && (
+                                      <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+                                        {t('offers', 'duration') || 'Durée'} : {neg.estimatedDuration}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {hasBreakdown && (
+                                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 rounded-xl bg-muted/50 px-3 py-2 text-xs">
+                                  {neg.laborCost != null && (
+                                    <span className="text-muted-foreground">
+                                      {t('offers', 'labor') || "Main d'œuvre"} <span className="font-bold text-foreground">{fmtEur(neg.laborCost)}</span>
+                                    </span>
+                                  )}
+                                  {neg.materialCost != null && (
+                                    <span className="text-muted-foreground">
+                                      {t('offers', 'material') || 'Matériel'} <span className="font-bold text-foreground">{fmtEur(neg.materialCost)}</span>
+                                    </span>
+                                  )}
+                                  {neg.travelCost != null && (
+                                    <span className="text-muted-foreground">
+                                      {t('offers', 'travel') || 'Déplacement'} <span className="font-bold text-foreground">{fmtEur(neg.travelCost)}</span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
                               {neg.message && (
-                                <p className="text-sm text-muted-foreground mt-2 italic">"{neg.message}"</p>
+                                <p className="mt-3 text-sm italic text-muted-foreground">« {neg.message} »</p>
                               )}
 
                               {neg.rejectedReason && (
-                                <p className="text-sm text-red-600 mt-2">
+                                <p className="mt-2 text-sm text-red-600">
                                   {t('negotiations', 'reason') || 'Raison'}: {neg.rejectedReason}
                                 </p>
                               )}
 
-                              {neg.expiresAt && isPending && !isExpired && (
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
-                                  {new Date(neg.expiresAt).toLocaleString('fr-FR')}
-                                </p>
-                              )}
+                              {neg.status === 'SENT' || neg.status === 'VIEWED' ? (
+                                neg.expiresAt && (
+                                  <p className="mt-2 text-[11px] text-muted-foreground">
+                                    {t('negotiations', 'expiresAt') || 'Expire le'}{' '}
+                                    {new Date(neg.expiresAt).toLocaleString('fr-FR')}
+                                  </p>
+                                )
+                              ) : null}
 
-                              {/* Actions for pending offers from artisan */}
-                              {canAcceptOffer && (
-                                <div className="flex gap-2 mt-3 pt-3 border-t">
+                              {/* Actions */}
+                              {actionable && (
+                                <div className="mt-3 flex gap-2 border-t border-border pt-3">
                                   <Button
                                     size="sm"
-                                    onClick={() => handleAcceptNegotiation(neg.id)}
+                                    onClick={() => setOfferToAccept(neg)}
                                     disabled={negotiationLoading}
                                     className="flex-1"
                                   >
-                                    {t('negotiations', 'accept') || 'Accepter'}
+                                    {t('offers', 'chooseAndPay') || 'Choisir cet artisan'}
                                   </Button>
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleRejectNegotiation(neg.id)}
+                                    onClick={() => { setRejectReason(''); setOfferToReject(neg); }}
                                     disabled={negotiationLoading}
-                                    className="flex-1"
                                   >
                                     {t('negotiations', 'reject') || 'Refuser'}
                                   </Button>
@@ -894,6 +1049,22 @@ export default function MissionDetailsPage() {
                           );
                         })}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Rappel des contre-propositions envoyées par le client */}
+                  {myOffers.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-display text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        {t('offers', 'yourCounterOffers') || 'Vos contre-propositions'}
+                      </h4>
+                      {myOffers.map((neg) => (
+                        <div key={neg.id} className="flex items-center justify-between rounded-xl border border-border bg-muted/40 px-3 py-2">
+                          <span className="text-sm font-bold text-foreground">{fmtEur(neg.proposedPrice)}</span>
+                          {neg.message && <span className="mx-2 flex-1 truncate text-xs italic text-muted-foreground">« {neg.message} »</span>}
+                          <span className="text-[11px] text-muted-foreground">{new Date(neg.createdAt).toLocaleDateString('fr-FR')}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
 
@@ -1042,6 +1213,21 @@ export default function MissionDetailsPage() {
                 <CardTitle>{t('common', 'actions')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Paiement séquestre — apparaît dès qu'un prix est convenu (rupture corrigée). */}
+                {canPay && (
+                  <>
+                    <Button
+                      className="w-full"
+                      onClick={() => router.push(`/client/payment/${missionId}`)}
+                    >
+                      {t('offers', 'payAmount') || 'Payer'} {fmtEur(mission.agreedPrice)}
+                    </Button>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
+                      {t('offers', 'escrowShort') || 'Sous séquestre — versé à l’artisan après validation.'}
+                    </p>
+                  </>
+                )}
                 {mission.status === 'PENDING' && (
                   <>
                     <Button className="w-full" variant="outline">
@@ -1228,6 +1414,148 @@ export default function MissionDetailsPage() {
                   {(cancellationFees?.fee || 0) > 0
                     ? `${t('cancellation', 'confirmWithFees') || 'Annuler'} (${cancellationFees?.fee}€)`
                     : t('cancellation', 'confirmFree') || 'Confirmer l\'annulation'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modale de récapitulatif d'acceptation d'offre (« Accepter et payer ») */}
+      {offerToAccept && (() => {
+        const neg = offerToAccept;
+        const profile = neg.sender?.artisanProfile;
+        const artisanName = profile?.companyName ||
+          `${neg.sender?.firstName ?? ''} ${neg.sender?.lastName ?? ''}`.trim() ||
+          (t('negotiations', 'artisanOffer') || "l'artisan");
+        const hasBreakdown = neg.laborCost != null || neg.materialCost != null || neg.travelCost != null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto">
+              <CardHeader>
+                <CardTitle className="font-display">
+                  {t('offers', 'confirmChoiceTitle') || 'Confirmer votre choix'}
+                </CardTitle>
+                <CardDescription>
+                  {t('offers', 'confirmChoiceDesc') || 'Vérifiez le récapitulatif avant de sécuriser le paiement.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-border p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t('offers', 'chosenArtisan') || 'Artisan choisi'}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1.5 font-display font-bold">
+                    {artisanName}
+                    {profile?.businessVerified && (
+                      <ShieldCheck className="h-4 w-4 text-green-600" strokeWidth={2.5} />
+                    )}
+                  </div>
+                  {profile?.rating != null && toNum(profile.rating) > 0 && (
+                    <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      {toNum(profile.rating).toFixed(1)}
+                      {profile?.reviewCount ? ` (${profile.reviewCount})` : ''}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-muted p-3">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-sm text-muted-foreground">{t('offers', 'totalPrice') || 'Prix total'}</span>
+                    <span className="font-display text-2xl font-extrabold">{fmtEur(neg.proposedPrice)}</span>
+                  </div>
+                  {hasBreakdown && (
+                    <div className="mt-2 space-y-1 border-t border-border pt-2 text-xs">
+                      {neg.laborCost != null && (
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('offers', 'labor') || "Main d'œuvre"}</span><span className="font-semibold">{fmtEur(neg.laborCost)}</span></div>
+                      )}
+                      {neg.materialCost != null && (
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('offers', 'material') || 'Matériel'}</span><span className="font-semibold">{fmtEur(neg.materialCost)}</span></div>
+                      )}
+                      {neg.travelCost != null && (
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t('offers', 'travel') || 'Déplacement'}</span><span className="font-semibold">{fmtEur(neg.travelCost)}</span></div>
+                      )}
+                    </div>
+                  )}
+                  {(neg.availability || neg.estimatedDuration) && (
+                    <div className="mt-2 flex items-center gap-1.5 border-t border-border pt-2 text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      {[neg.availability, neg.estimatedDuration].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                </div>
+
+                {/* Réassurance séquestre */}
+                <div className="flex items-start gap-2 rounded-xl bg-green-100/60 p-3 text-sm text-foreground">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-700" strokeWidth={2} />
+                  <span>
+                    {t('offers', 'escrowReassurance') ||
+                      'Votre paiement est versé sous séquestre : l’artisan n’est réglé qu’après validation des travaux, et vous êtes remboursé en cas de litige.'}
+                  </span>
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <Button
+                    variant="outline"
+                    onClick={() => setOfferToAccept(null)}
+                    disabled={negotiationLoading}
+                    className="flex-1"
+                  >
+                    {t('common', 'back') || 'Retour'}
+                  </Button>
+                  <Button
+                    onClick={handleConfirmAccept}
+                    disabled={negotiationLoading}
+                    className="flex-1"
+                  >
+                    {negotiationLoading
+                      ? (t('common', 'loading') || 'Chargement...')
+                      : (t('offers', 'acceptAndPay') || 'Accepter et payer')}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
+
+      {/* Modale de refus d'offre (remplace le prompt natif) */}
+      {offerToReject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="font-display">
+                {t('offers', 'rejectTitle') || 'Refuser cette offre'}
+              </CardTitle>
+              <CardDescription>
+                {t('offers', 'rejectDesc') || 'Vous pouvez indiquer une raison (facultatif). Les autres offres restent disponibles.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={3}
+                placeholder={t('negotiations', 'rejectReason') || 'Raison du refus (optionnel)'}
+              />
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => { setOfferToReject(null); setRejectReason(''); }}
+                  disabled={negotiationLoading}
+                  className="flex-1"
+                >
+                  {t('common', 'back') || 'Retour'}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmReject}
+                  disabled={negotiationLoading}
+                  className="flex-1"
+                >
+                  {t('negotiations', 'reject') || 'Refuser'}
                 </Button>
               </div>
             </CardContent>
