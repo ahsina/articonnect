@@ -10,14 +10,17 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { SubcontractorPortalService } from '../services/subcontractor-portal.service';
+// DTO validés (class-validator) du portail : remplacent les anciennes interfaces
+// non validées exportées par le service. Le service reste inchangé (ses interfaces
+// homonymes sont structurellement compatibles avec ces classes).
 import {
-  SubcontractorPortalService,
   AcceptOfferDto,
   DeclineOfferDto,
   UpdateProgressDto,
   SetAvailabilityDto,
   LeaveRelationshipDto,
-} from '../services/subcontractor-portal.service';
+} from '../dto/subcontractor-portal.dto';
 
 @ApiTags('Subcontractor Portal')
 @ApiBearerAuth()

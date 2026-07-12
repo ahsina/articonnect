@@ -69,6 +69,15 @@ export class QuoteController {
     return this.quoteService.getStats(req.user.id);
   }
 
+  // Inbox CLIENT : les devis REÇUS (clientId = utilisateur courant). Endpoint dédié au rôle CLIENT
+  // — GET / (findAll) reste réservé à l'ARTISAN émetteur. Doit être déclaré avant @Get(':id') pour
+  // ne pas être masqué par le handler dynamique (route-shadowing).
+  @Get('received')
+  @Roles('CLIENT')
+  async findReceived(@Request() req, @Query() filters: QuoteFilterDto) {
+    return this.quoteService.findAllForClient(req.user.id, filters);
+  }
+
   // Fixed-path GET routes must be declared before @Get(':id') to avoid
   // the dynamic :id handler shadowing them (route-shadowing fix).
 

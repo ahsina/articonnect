@@ -5,10 +5,29 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { marketplaceApi, Product, ProductStatus, Category } from '@/lib/api/marketplace';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  marketplaceApi,
+  Product,
+  ProductStatus,
+  Category,
+  ProductVariant,
+} from '@/lib/api/marketplace';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Plus, Package, ShoppingBag, RotateCcw, BarChart3, Star } from 'lucide-react';
+import {
+  Loader2,
+  Plus,
+  Package,
+  ShoppingBag,
+  RotateCcw,
+  BarChart3,
+  Star,
+  Layers,
+  Trash2,
+  X,
+} from 'lucide-react';
 import ProductForm from './ProductForm';
 import ProductReviewsModal from './ProductReviewsModal';
 import SellerOrders from './SellerOrders';
@@ -30,6 +49,7 @@ export default function ArtisanShopPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [reviewsFor, setReviewsFor] = useState<Product | null>(null);
+  const [variantsFor, setVariantsFor] = useState<Product | null>(null);
 
   useEffect(() => {
     if (user?.id) loadAll();
@@ -259,6 +279,10 @@ export default function ArtisanShopPage() {
                               <Star className="h-4 w-4 mr-1" />
                               {t('artisan', 'reviews') || 'Avis'}
                             </Button>
+                            <Button variant="outline" size="sm" onClick={() => setVariantsFor(product)}>
+                              <Layers className="h-4 w-4 mr-1" />
+                              {t('artisan', 'variants') || 'Variantes'}
+                            </Button>
                             <Button variant="outline" size="sm" onClick={() => handleToggleActive(product)}>
                               {product.status === 'ACTIVE' ? t('artisan', 'deactivate') || 'Désactiver' : t('artisan', 'activate') || 'Activer'}
                             </Button>
@@ -294,6 +318,298 @@ export default function ArtisanShopPage() {
         />
       )}
       {reviewsFor && <ProductReviewsModal product={reviewsFor} onClose={() => setReviewsFor(null)} />}
+      {variantsFor && <VariantsModal product={variantsFor} onClose={() => setVariantsFor(null)} />}
+    </div>
+  );
+}
+
+// ==================== VARIANTES PRODUIT ====================
+
+interface VariantsModalProps {
+  product: Product;
+  onClose: () => void;
+}
+
+/**
+ * Gestion des variantes (déclinaisons) d'un produit par le vendeur : liste, création, édition
+ * (nom / ajustement de prix / stock) et suppression. Le prix effectif d'une variante = prix du
+ * produit + priceAdjustment (négatif = remise). Le SKU n'existe pas au niveau variante (schéma).
+ */
+function VariantsModal({ product, onClose }: VariantsModalProps) {
+  const { t } = useLanguage();
+  const basePrice = Number(product.price) || 0;
+
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  // Formulaire de création
+  const [newName, setNewName] = useState('');
+  const [newAdj, setNewAdj] = useState('0');
+  const [newStock, setNewStock] = useState('0');
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setVariants(await marketplaceApi.getVariants(product.id));
+    } catch (e) {
+      setError(t('artisan', 'variantsLoadError') || 'Impossible de charger les variantes.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const effectivePrice = (adj: number) => Math.max(0, basePrice + (Number(adj) || 0));
+
+  const handleCreate = async () => {
+    if (!newName.trim()) {
+      setError(t('artisan', 'variantNameRequired') || 'Le nom de la variante est requis.');
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const created = await marketplaceApi.createVariant(product.id, {
+        name: newName.trim(),
+        priceAdjustment: Number(newAdj) || 0,
+        stock: Math.max(0, Math.trunc(Number(newStock) || 0)),
+      });
+      setVariants((prev) => [...prev, created]);
+      setNewName('');
+      setNewAdj('0');
+      setNewStock('0');
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message?.toString() ||
+          (t('artisan', 'variantSaveError') || "Échec de l'enregistrement de la variante."),
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const patchLocal = (id: string, patch: Partial<ProductVariant>) =>
+    setVariants((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+
+  const handleSave = async (v: ProductVariant) => {
+    if (!v.name.trim()) {
+      setError(t('artisan', 'variantNameRequired') || 'Le nom de la variante est requis.');
+      return;
+    }
+    setSavingId(v.id);
+    setError(null);
+    try {
+      const saved = await marketplaceApi.updateVariant(v.id, {
+        name: v.name.trim(),
+        priceAdjustment: Number(v.priceAdjustment) || 0,
+        stock: Math.max(0, Math.trunc(Number(v.stock) || 0)),
+      });
+      patchLocal(v.id, saved);
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message?.toString() ||
+          (t('artisan', 'variantSaveError') || "Échec de l'enregistrement de la variante."),
+      );
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleDelete = async (v: ProductVariant) => {
+    if (!confirm(t('artisan', 'variantDeleteConfirm') || 'Supprimer cette variante ?')) return;
+    setSavingId(v.id);
+    setError(null);
+    try {
+      await marketplaceApi.deleteVariant(v.id);
+      setVariants((prev) => prev.filter((x) => x.id !== v.id));
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.message?.toString() ||
+          (t('artisan', 'variantDeleteError') || 'Échec de la suppression de la variante.'),
+      );
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-card border border-border shadow-xl">
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              {t('artisan', 'variants') || 'Variantes'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {product.name} · {t('artisan', 'basePrice') || 'Prix de base'} {basePrice.toFixed(2)}€
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={t('common', 'close') || 'Fermer'}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-5">
+          {error && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-10 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              {t('common', 'loading') || 'Chargement…'}
+            </div>
+          ) : (
+            <>
+              {/* Liste des variantes existantes */}
+              {variants.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t('artisan', 'noVariants') ||
+                    "Aucune variante. Ajoutez des déclinaisons (couleur, taille…) ci-dessous."}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {variants.map((v) => (
+                    <div
+                      key={v.id}
+                      className="rounded-lg border border-border p-3 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
+                    >
+                      <div className="sm:col-span-4">
+                        <Label>{t('artisan', 'variantName') || 'Nom'}</Label>
+                        <Input
+                          value={v.name}
+                          onChange={(e) => patchLocal(v.id, { name: e.target.value })}
+                          placeholder="Ex : Blanc chaud"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <Label>{t('artisan', 'priceAdjustment') || 'Ajust. prix (€)'}</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={String(v.priceAdjustment)}
+                          onChange={(e) =>
+                            patchLocal(v.id, { priceAdjustment: Number(e.target.value) })
+                          }
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {t('artisan', 'effectivePrice') || 'Prix'}:{' '}
+                          {effectivePrice(v.priceAdjustment).toFixed(2)}€
+                        </p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <Label>{t('artisan', 'stock') || 'Stock'}</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={String(v.stock)}
+                          onChange={(e) => patchLocal(v.id, { stock: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div className="sm:col-span-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSave(v)}
+                          disabled={savingId === v.id}
+                        >
+                          {savingId === v.id && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                          {t('common', 'save') || 'Enregistrer'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(v)}
+                          disabled={savingId === v.id}
+                          className="text-destructive hover:text-destructive"
+                          aria-label={t('common', 'delete') || 'Supprimer'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Ajout d'une variante */}
+              <div className="rounded-lg border border-dashed border-border p-3">
+                <p className="mb-2 text-sm font-medium text-foreground">
+                  {t('artisan', 'addVariant') || 'Ajouter une variante'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                  <div className="sm:col-span-4">
+                    <Label htmlFor="nv-name">{t('artisan', 'variantName') || 'Nom'}</Label>
+                    <Input
+                      id="nv-name"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Ex : Blanc chaud"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label htmlFor="nv-adj">{t('artisan', 'priceAdjustment') || 'Ajust. prix (€)'}</Label>
+                    <Input
+                      id="nv-adj"
+                      type="number"
+                      step="0.01"
+                      value={newAdj}
+                      onChange={(e) => setNewAdj(e.target.value)}
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {t('artisan', 'effectivePrice') || 'Prix'}: {effectivePrice(Number(newAdj) || 0).toFixed(2)}€
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="nv-stock">{t('artisan', 'stock') || 'Stock'}</Label>
+                    <Input
+                      id="nv-stock"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={newStock}
+                      onChange={(e) => setNewStock(e.target.value)}
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Button onClick={handleCreate} disabled={creating} className="w-full">
+                      {creating ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4 mr-1" />
+                      )}
+                      {t('artisan', 'add') || 'Ajouter'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 flex justify-end px-6 py-4 border-t border-border bg-card">
+          <Button variant="outline" onClick={onClose}>
+            {t('common', 'close') || 'Fermer'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

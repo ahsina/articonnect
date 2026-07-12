@@ -27,10 +27,12 @@ const CATEGORIES = [
   { id: 'autre', name: 'Autre', Icon: Boxes, test: /.*/ },
 ];
 
-// key = identifiant UI ; type = MissionType backend valide (EMERGENCY | SCHEDULED uniquement).
+// key = identifiant UI ; type = MissionType backend valide (EMERGENCY | SCHEDULED | QUOTE).
 // nameKey/descKey/tagKey = clés i18n (namespace missions), résolues au rendu.
+// DEVIS → type natif QUOTE (mission « sur devis », accepté par l'API et supporté par le flux
+// offres/négociation, groupé avec SCHEDULED côté délais/expansion).
 const INTERVENTIONS = [
-  { key: 'DEVIS', type: 'SCHEDULED', nameKey: 'intDevisName', descKey: 'intDevisDesc', tagKey: 'intDevisTag', Icon: MessageSquare },
+  { key: 'DEVIS', type: 'QUOTE', nameKey: 'intDevisName', descKey: 'intDevisDesc', tagKey: 'intDevisTag', Icon: MessageSquare },
   { key: 'EMERGENCY', type: 'EMERGENCY', nameKey: 'intUrgenceName', descKey: 'intUrgenceDesc', tagKey: 'intUrgenceTag', Icon: Bolt },
   { key: 'SCHEDULED', type: 'SCHEDULED', nameKey: 'intPlanifieName', descKey: 'intPlanifieDesc', tagKey: 'intPlanifieTag', Icon: Calendar },
 ];

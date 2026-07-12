@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import apiClient from '@/lib/api/client';
 import { notificationsApi } from '@/lib/api/notifications';
 import { quoteApi, num, type Quote, type QuoteStatus } from '@/lib/api/quote';
 
@@ -45,28 +46,40 @@ export default function ClientQuotesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Fallback historique : reconstruit l'inbox à partir des notifications « Nouveau devis reçu »
+  // (link = /client/quotes/:id) puis GET /quotes/:id. Utilisé uniquement si l'endpoint client-scopé
+  // /quotes/received n'est pas disponible (rétrocompatibilité).
+  const loadFromNotifications = async (): Promise<Quote[]> => {
+    const notifs = await notificationsApi.getAll(100);
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const n of notifs) {
+      const link = n.link || '';
+      const m = link.match(/^\/client\/quotes\/([^/?#]+)/);
+      if (m && !seen.has(m[1])) {
+        seen.add(m[1]);
+        ids.push(m[1]);
+      }
+    }
+    const fetched = await Promise.all(ids.map((id) => quoteApi.get(id).catch(() => null)));
+    return fetched.filter((q): q is Quote => !!q);
+  };
+
   const load = async () => {
     setLoading(true);
     try {
-      // Le CLIENT n'a pas d'endpoint de liste : on reconstruit l'inbox à partir des
-      // notifications « Nouveau devis reçu » (link = /client/quotes/:id) puis GET /quotes/:id.
-      const notifs = await notificationsApi.getAll(100);
-      const ids: string[] = [];
-      const seen = new Set<string>();
-      for (const n of notifs) {
-        const link = n.link || '';
-        const m = link.match(/^\/client\/quotes\/([^/?#]+)/);
-        if (m && !seen.has(m[1])) {
-          seen.add(m[1]);
-          ids.push(m[1]);
-        }
+      // Source primaire : endpoint client-scopé GET /quotes/received (Quote.clientId = utilisateur
+      // courant), qui liste directement les vrais devis reçus (sans reparser les notifications).
+      let list: Quote[] = [];
+      try {
+        const res = await apiClient.get('/quotes/received');
+        list = Array.isArray(res.data) ? res.data : res.data?.data ?? [];
+      } catch {
+        // Fallback rétrocompatible si l'endpoint n'est pas encore déployé.
+        list = await loadFromNotifications();
       }
-      const fetched = await Promise.all(
-        ids.map((id) => quoteApi.get(id).catch(() => null)),
-      );
-      const valid = fetched.filter((q): q is Quote => !!q);
-      valid.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setQuotes(valid);
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setQuotes(list);
     } catch (error) {
       console.error('Erreur chargement devis:', error);
       toast({ title: 'Erreur', description: 'Impossible de charger vos devis.', variant: 'destructive' });

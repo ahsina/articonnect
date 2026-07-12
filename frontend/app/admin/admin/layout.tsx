@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ClipboardList, TrendingUp, ShieldCheck, Eye, AlertTriangle,
   Ban, BadgeCheck, FileCheck, Award, Wrench, Tags, Star, Flag, Server, Activity,
   Timer, ShieldAlert, ScrollText, Settings, ChevronLeft, ChevronRight, ChevronDown,
-  Menu, X, LifeBuoy, Inbox, Trash2,
+  Menu, X, LifeBuoy, Inbox, Trash2, Megaphone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -16,6 +16,7 @@ interface NavChild {
   href: string;
   label: string;
   icon: LucideIcon;
+  rawLabel?: string;
 }
 
 interface NavItemLink {
@@ -23,6 +24,7 @@ interface NavItemLink {
   label: string;
   icon: LucideIcon;
   highlight?: boolean;
+  rawLabel?: string;
 }
 
 interface NavItemGroup {
@@ -64,6 +66,7 @@ const adminNavItems: NavItem[] = [
       { href: '/admin/admin/feature-flags', label: 'featureFlags', icon: Flag },
     ],
   },
+  { href: '/admin/admin/announcements', label: 'announcements', rawLabel: 'Annonces', icon: Megaphone },
   {
     label: 'support',
     icon: LifeBuoy,
@@ -249,7 +252,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     }`}
                   >
                     <LinkIcon className="h-5 w-5 flex-shrink-0" />
-                    <span className={`flex-1 text-left ${collapsedHide}`}>{t('adminNav', linkItem.label)}</span>
+                    <span className={`flex-1 text-left ${collapsedHide}`}>{linkItem.rawLabel ?? t('adminNav', linkItem.label)}</span>
                   </button>
                 </li>
               );

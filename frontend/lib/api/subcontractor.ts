@@ -487,7 +487,9 @@ export const subcontractorApi = {
       id: string,
       progress?: number,
     ): Promise<SubcontractorAssignment> => {
-      const clamped = Math.min(100, Math.max(0, toNum(progress)));
+      // Entier borné 0-100 : le DTO back valide désormais @IsInt/@Min(0)/@Max(100),
+      // on arrondit donc côté client pour éviter un 400 sur une valeur décimale.
+      const clamped = Math.round(Math.min(100, Math.max(0, toNum(progress))));
       const response = await apiClient.post(
         `/subcontractor-portal/assignments/${id}/progress`,
         { progress: clamped, notes: `Avancement mis à jour: ${clamped}%` },

@@ -327,7 +327,7 @@ export class SubcontractorService {
         NotificationType.NEW_MISSION,
         'Nouvelle offre de sous-traitance',
         `Vous avez reçu une offre pour la mission "${assignment.mission.title}" (${Number(dto.agreedAmount)} €).`,
-        '/subcontractor-portal',
+        '/subcontractor/portal',
       );
     }
 
@@ -588,7 +588,7 @@ export class SubcontractorService {
           NotificationType.SYSTEM,
           'Paiement reçu',
           `Vous avez été payé ${net} € pour la mission "${assignment.mission.title}".`,
-          '/subcontractor-portal',
+          '/subcontractor/portal',
         );
       }
 

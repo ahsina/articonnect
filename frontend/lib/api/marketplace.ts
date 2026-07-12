@@ -34,10 +34,24 @@ export interface Product {
 
 export interface ProductVariant {
   id: string;
+  productId?: string;
   name: string;
-  options: string[];
-  price: number;
+  // Ajustement de prix par rapport au prix produit (peut être négatif = remise). Prisma Decimal
+  // sérialisé en string -> normalisé en nombre côté client.
+  priceAdjustment: number;
+  stock: number;
+  createdAt?: string;
 }
+
+// NB : le modèle ProductVariant (schéma gelé) ne porte que name / priceAdjustment / stock.
+// Aucun champ SKU au niveau variante (le SKU reste porté par le produit).
+export interface CreateVariantDto {
+  name: string;
+  priceAdjustment: number;
+  stock: number;
+}
+
+export type UpdateVariantDto = Partial<CreateVariantDto>;
 
 export interface Category {
   id: string;
@@ -407,7 +421,49 @@ export const marketplaceApi = {
     );
     return response.data;
   },
+
+  // ==================== PRODUCT VARIANTS ====================
+  /**
+   * Variantes d'un produit (déclinaisons : couleur, taille…). Chaque variante ajuste le prix
+   * (`priceAdjustment`, négatif possible) et porte son propre stock. Routes backend :
+   *  GET    /marketplace/products/:id/variants
+   *  POST   /marketplace/products/:id/variants
+   *  PATCH  /marketplace/variants/:variantId
+   *  DELETE /marketplace/variants/:variantId
+   */
+  getVariants: async (productId: string): Promise<ProductVariant[]> => {
+    const response = await apiClient.get(`/marketplace/products/${productId}/variants`);
+    const raw = Array.isArray(response.data) ? response.data : response.data?.data || [];
+    return raw.map(normalizeVariant);
+  },
+
+  createVariant: async (productId: string, data: CreateVariantDto): Promise<ProductVariant> => {
+    const response = await apiClient.post(`/marketplace/products/${productId}/variants`, data);
+    return normalizeVariant(response.data);
+  },
+
+  updateVariant: async (variantId: string, data: UpdateVariantDto): Promise<ProductVariant> => {
+    const response = await apiClient.patch(`/marketplace/variants/${variantId}`, data);
+    return normalizeVariant(response.data);
+  },
+
+  deleteVariant: async (variantId: string): Promise<void> => {
+    await apiClient.delete(`/marketplace/variants/${variantId}`);
+  },
 };
+
+/**
+ * Normalise une variante backend pour l'UI : `priceAdjustment` (Prisma Decimal -> string) en nombre.
+ */
+function normalizeVariant(v: any): ProductVariant {
+  if (!v) return v;
+  return {
+    ...v,
+    priceAdjustment:
+      v.priceAdjustment !== undefined && v.priceAdjustment !== null ? Number(v.priceAdjustment) : 0,
+    stock: v.stock !== undefined && v.stock !== null ? Number(v.stock) : 0,
+  };
+}
 
 /**
  * Calcule les stats vendeur à partir des commandes réelles.

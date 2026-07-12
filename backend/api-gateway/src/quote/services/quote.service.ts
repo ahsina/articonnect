@@ -379,6 +379,66 @@ export class QuoteService {
   }
 
   /**
+   * Inbox CLIENT : liste les devis REÇUS par le client connecté (clientId = utilisateur courant).
+   * Endpoint dédié au rôle CLIENT (findAll ci-dessus est réservé à l'ARTISAN émetteur). Les BROUILLONS
+   * (DRAFT, pas encore envoyés) sont exclus par défaut : le client ne doit voir que les devis qui lui
+   * ont effectivement été transmis. Le masquage anti-désintermédiation s'applique comme ailleurs
+   * (l'artisan émetteur reste masqué tant que la mission liée n'est pas payée en escrow). Défaut de
+   * pagination volontairement large (100) : la page inbox n'a pas de contrôle de pagination.
+   */
+  async findAllForClient(clientId: string, filters: QuoteFilterDto) {
+    const { status, category, fromDate, toDate, page = 1, limit = 100 } = filters;
+
+    const where: any = { clientId };
+
+    if (status) {
+      where.status = status;
+    } else {
+      // Sans filtre explicite, on masque les brouillons non envoyés.
+      where.status = { not: QuoteStatus.DRAFT };
+    }
+    if (category) where.category = category;
+    if (fromDate || toDate) {
+      where.createdAt = {};
+      if (fromDate) where.createdAt.gte = new Date(fromDate);
+      if (toDate) where.createdAt.lte = new Date(toDate);
+    }
+
+    const [quotes, total] = await Promise.all([
+      this.prisma.quote.findMany({
+        where,
+        include: {
+          artisan: {
+            select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+          },
+          lineItems: true,
+          mission: { select: QuoteService.MISSION_REVEAL_SELECT },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.quote.count({ where }),
+    ]);
+
+    // Masquage anti-désintermédiation sur chaque devis (le client ne récupère pas l'email/téléphone
+    // brut de l'artisan tant que la mission liée n'est pas payée en escrow).
+    const maskedQuotes = await Promise.all(
+      quotes.map((q) => this.maskQuoteParties(q, clientId)),
+    );
+
+    return {
+      data: maskedQuotes,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
    * Statuts de mission qui prouvent qu'un paiement escrow a bien été engagé (fonds bloqués
    * ou mission déjà en cours/terminée). Utilisé, avec Transaction.status HELD/COMPLETED, pour
    * décider si les coordonnées réelles peuvent être révélées (politique « à la Uber »).

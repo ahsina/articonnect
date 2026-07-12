@@ -62,6 +62,17 @@ export const missionsApi = {
     return response.data;
   },
 
+  startTravel: async (id: string) => {
+    const response = await apiClient.post(`/missions/${id}/start-travel`);
+    return response.data;
+  },
+
+  // Étape « arrivé sur place » (IN_TRANSIT -> IN_PROGRESS) : pose arrivedAt et notifie le client.
+  arrive: async (id: string) => {
+    const response = await apiClient.post(`/missions/${id}/arrive`);
+    return response.data;
+  },
+
   updateStatus: async (id: string, status: string) => {
     const response = await apiClient.put(`/missions/${id}/status`, { status });
     return response.data;

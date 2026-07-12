@@ -5,6 +5,7 @@ import { MonitoringController } from './controllers/monitoring.controller';
 import { AnalyticsController } from './controllers/analytics.controller';
 import { FraudSettingsController } from './controllers/fraud-settings.controller';
 import { PlatformConfigController } from './controllers/platform-config.controller';
+import { AnnouncementsController } from './controllers/announcements.controller';
 import { AdminService } from './services/admin.service';
 import { MonitoringService } from './services/monitoring.service';
 import { AnalyticsService } from './services/analytics.service';
@@ -14,11 +15,12 @@ import { MissionModule } from '../mission/mission.module';
 import { RedisModule } from '../common/redis/redis.module';
 import { EmailModule } from '../email/email.module';
 import { FraudModule } from '../fraud/fraud.module';
+import { NotificationModule } from '../notification/notification.module';
 
 // Note: PlatformConfigService is now provided by the global ConfigModule
 
 @Module({
-  imports: [MissionModule, RedisModule, EmailModule, FraudModule],
+  imports: [MissionModule, RedisModule, EmailModule, FraudModule, NotificationModule],
   controllers: [
     AdminController,
     CronController,
@@ -26,6 +28,7 @@ import { FraudModule } from '../fraud/fraud.module';
     AnalyticsController,
     FraudSettingsController,
     PlatformConfigController,
+    AnnouncementsController,
   ],
   providers: [
     AdminService,

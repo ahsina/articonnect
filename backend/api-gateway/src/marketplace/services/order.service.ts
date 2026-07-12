@@ -383,6 +383,18 @@ export class OrderService {
       throw new BadRequestException(`Statut invalide: ${status}`);
     }
 
+    // INTÉGRITÉ ARGENT (faille bloquante) : le passage à PAID est STRICTEMENT réservé au règlement
+    // réel — webhook Stripe (payment_intent/charge succeeded) -> PaymentService.settleOrderPayment,
+    // qui écrit status='PAID' + paidAt directement en base. Il ne doit JAMAIS pouvoir être forcé
+    // manuellement par le vendeur (ou l'admin) via cette API : sinon un vendeur marque sa propre
+    // commande PENDING « payée » sans aucun encaissement, ce qui gonfle son CA (getSellerStats.revenue)
+    // et déclenche l'émission d'une facture de vente sans contrepartie financière.
+    if (status === 'PAID') {
+      throw new ForbiddenException(
+        'Le statut « payé » ne peut pas être appliqué manuellement : il est enregistré automatiquement à la réception du paiement (Stripe).',
+      );
+    }
+
     // Le vendeur ne fait avancer la fulfillment QU'À PARTIR d'une commande payée. Il ne peut pas
     // marquer PROCESSING/SHIPPED/DELIVERED une commande encore PENDING (non encaissée).
     const fulfillmentStatuses = ['PROCESSING', 'SHIPPED', 'DELIVERED'];
@@ -396,7 +408,7 @@ export class OrderService {
     const now = new Date();
     const data: Record<string, unknown> = { status };
     if (trackingNumber !== undefined) data.trackingNumber = trackingNumber;
-    if (status === 'PAID' && !order.paidAt) data.paidAt = now;
+    // (PAID est bloqué plus haut — l'horodatage paidAt est posé par settleOrderPayment au règlement réel.)
     if (status === 'SHIPPED') {
       if (!order.paidAt) data.paidAt = now; // expédié implique payé
       if (!order.shippedAt) data.shippedAt = now;

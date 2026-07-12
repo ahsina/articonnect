@@ -225,6 +225,28 @@ export default function MissionDetailPage() {
     }
   };
 
+  const handleArriveMission = async () => {
+    setActionLoading(true);
+    try {
+      await apiClient.post(`/missions/${missionId}/arrive`);
+      toast({
+        title: t('common', 'success') || 'Success',
+        description: t('artisan', 'missionArrived') || 'Arrivée sur place confirmée — le client est notifié',
+        variant: 'success',
+      });
+      loadMission();
+    } catch (error) {
+      console.error('Error marking arrival:', error);
+      toast({
+        title: t('common', 'error') || 'Error',
+        description: t('artisan', 'arriveError') || "Impossible de confirmer l'arrivée sur place",
+        variant: 'destructive',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleCompleteMission = async () => {
     setActionLoading(true);
     try {
@@ -543,6 +565,9 @@ export default function MissionDetailPage() {
                   'You have been assigned to this mission. Accept or decline.')}
               {mission.status === 'ACCEPTED' &&
                 (t('artisan', 'acceptedMissionHint') || 'Mission accepted. Start when ready.')}
+              {mission.status === 'IN_TRANSIT' &&
+                (t('artisan', 'inTransitMissionHint') ||
+                  'En route vers le client. Confirmez votre arrivée sur place pour démarrer le travail.')}
               {mission.status === 'IN_PROGRESS' &&
                 (t('artisan', 'inProgressMissionHint') ||
                   'Mission in progress. Complete when finished.')}
@@ -572,6 +597,15 @@ export default function MissionDetailPage() {
                   className="bg-green-600 hover:bg-green-700"
                 >
                   {t('artisan', 'startMission') || 'Start Mission'}
+                </Button>
+              )}
+              {mission.status === 'IN_TRANSIT' && (
+                <Button
+                  onClick={handleArriveMission}
+                  disabled={actionLoading}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {t('artisan', 'markArrival') || 'Je suis arrivé sur place'}
                 </Button>
               )}
               {mission.status === 'IN_PROGRESS' && (
