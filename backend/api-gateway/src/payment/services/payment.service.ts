@@ -1,14 +1,15 @@
-import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, UnprocessableEntityException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, UnprocessableEntityException, Logger, Inject, Optional, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { ReputationService } from './reputation.service';
-import { RefundReason, Payment } from '@prisma/client';
+import { RefundReason, Payment, NotificationType } from '@prisma/client';
 import type { MissionWithRelations } from '../types/payment.types';
 import { PayoutFraudDetectorService } from '../../fraud/services/payout-fraud-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { KycService } from '../../compliance/services/kyc.service';
 import { PlatformConfigService } from '../../config/services/platform-config.service';
 import { FeeSettingsDto } from '../../config/dto/platform-config.dto';
+import { NotificationService, NotificationPriority } from '../../notification/services/notification.service';
 
 @Injectable()
 export class PaymentService {
@@ -23,6 +24,10 @@ export class PaymentService {
     @Inject(forwardRef(() => KycService))
     private kycService: KycService,
     private platformConfig: PlatformConfigService,
+    // @Optional : en production, NotificationService est TOUJOURS fourni (PaymentModule importe
+    // NotificationModule qui l'exporte). @Optional garantit juste que les tests unitaires qui
+    // construisent PaymentService sans ce provider continuent de résoudre la DI (best-effort au run).
+    @Optional() private notificationService?: NotificationService,
   ) {}
 
   /**
@@ -562,6 +567,44 @@ export class PaymentService {
 
     // Le règlement (versement vendeur) n'est effectué que par le gagnant du CLAIM.
     if (!claimed) return;
+
+    // NOTIFICATION VENDEUR(S) : prévenir chaque vendeur concerné d'une nouvelle vente PAYÉE
+    // (in-app + push/email selon SES préférences, via le même NotificationService que le reste de l'app).
+    // - Multi-vendeurs : une notification par vendeur (dédupliqué par artisanId).
+    // - Idempotent de fait : ce bloc n'est atteint que par le GAGNANT du CLAIM (une seule fois par
+    //   commande) — une redélivrance Stripe (payment_intent.succeeded / charge.succeeded) est sortie plus haut.
+    // - Best-effort : un échec de notification NE fait PAS échouer le règlement (try/catch global +
+    //   allSettled pour que l'échec d'un vendeur n'empêche pas la notification des autres).
+    // - Anti-désintermédiation : on n'expose AUCUNE commission ici (simple avis « nouvelle vente »).
+    try {
+      const orderRef = order.id.slice(0, 8).toUpperCase();
+      const productsBySeller = new Map<string, string[]>();
+      for (const it of order.items) {
+        const artisanId = it.product?.artisanId;
+        if (!artisanId) continue;
+        const names = productsBySeller.get(artisanId) || [];
+        if (it.product?.name) names.push(it.product.name);
+        productsBySeller.set(artisanId, names);
+      }
+      await Promise.allSettled(
+        [...productsBySeller.entries()].map(([artisanId, names]) => {
+          const label = names.length > 0 ? names.join(', ') : `commande ${orderRef}`;
+          return this.notificationService?.createNotification(
+            artisanId,
+            NotificationType.PAYMENT_RECEIVED,
+            'Nouvelle vente',
+            `Nouvelle vente : ${label} (commande ${orderRef}).`,
+            '/artisan/products',
+            { orderId: order.id, transactionId: transaction.id },
+            { priority: NotificationPriority.HIGH },
+          );
+        }),
+      );
+    } catch (e) {
+      this.logger.error(
+        `Order ${order.id}: échec notification vendeur(s) de la nouvelle vente: ${(e as any)?.message}`,
+      );
+    }
 
     // Versement vendeur(s) : net = CA produits du vendeur - commission. Barème courant.
     const feeSettings = await this.platformConfig.getFeeSettings();

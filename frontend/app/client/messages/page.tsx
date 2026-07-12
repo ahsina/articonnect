@@ -1,7 +1,8 @@
 'use client';
 
 import { Send, ArrowLeft } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,9 +34,12 @@ interface Conversation {
   unreadCount: number;
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  // Deep-link : ?userId ouvre directement la conversation avec cet utilisateur
+  const targetUserId = searchParams.get('userId');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -49,6 +53,14 @@ export default function MessagesPage() {
   useEffect(() => {
     loadConversations();
   }, []);
+
+  // Deep-link ?userId : présélectionne la conversation ciblée (même si aucune
+  // n'existe encore → conversation vide pour écrire directement à cet utilisateur).
+  useEffect(() => {
+    if (targetUserId) {
+      setSelectedConversation(targetUserId);
+    }
+  }, [targetUserId]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -92,7 +104,8 @@ export default function MessagesPage() {
       const data = await chatApi.getConversations();
 
       setConversations(data);
-      if (data.length > 0) {
+      // Fallback « 1re conversation » uniquement si aucun deep-link ?userId n'est demandé.
+      if (data.length > 0 && !selectedConversation && !targetUserId) {
         setSelectedConversation(data[0].userId);
       }
     } catch (error) {
@@ -179,7 +192,18 @@ export default function MessagesPage() {
     }
   };
 
-  const selectedConv = conversations.find((c) => c.userId === selectedConversation);
+  // Si une conversation ciblée (deep-link) n'existe pas encore, on synthétise une
+  // conversation vide pour afficher la zone de chat et pouvoir écrire directement.
+  // Dès le 1er message échangé, la vraie conversation (avec infos utilisateur) la remplace.
+  const selectedConv =
+    conversations.find((c) => c.userId === selectedConversation) ||
+    (selectedConversation
+      ? {
+          userId: selectedConversation,
+          user: { id: selectedConversation, firstName: '', lastName: '' },
+          unreadCount: 0,
+        }
+      : undefined);
 
   if (loading) {
     return (
@@ -352,5 +376,21 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function MessagesLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-muted-foreground">Chargement...</div>
+    </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<MessagesLoadingFallback />}>
+      <MessagesContent />
+    </Suspense>
   );
 }

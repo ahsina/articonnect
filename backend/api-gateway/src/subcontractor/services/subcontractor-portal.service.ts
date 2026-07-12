@@ -40,11 +40,40 @@ export interface RateContractorDto {
 export class SubcontractorPortalService {
   private readonly logger = new Logger(SubcontractorPortalService.name);
 
+  // Plancher de commission plateforme (5 %) — identique à SubcontractorService.
+  // PLATFORM_MIN_SUBCONTRACTOR_COMMISSION et à settleAssignmentPayout (source de vérité du
+  // versement Connect). Le sous-traitant perçoit le NET (montant convenu - commission).
+  private static readonly COMMISSION_FLOOR = 5;
+
   constructor(
     private prisma: PrismaService,
     // Versement Connect réel du sous-traitant à la clôture des travaux (méthode idempotente).
     private subcontractorService: SubcontractorService,
   ) {}
+
+  /**
+   * Net réellement perçu par le sous-traitant pour une attribution :
+   *   net = agreedAmount - commission, où commission = agreedAmount × max(commissionRate, 5 %).
+   * MÊME formule et MÊME arrondi que SubcontractorService.settleAssignmentPayout (le net est
+   * calculé identiquement au montant du transfert Stripe Connect réellement émis). La commission
+   * exposée est dérivée de (gross - net) afin que net + commission == gross à l'affichage.
+   * On n'expose JAMAIS ce détail au client final ; l'exposer au SOUS-TRAITANT sur SES gains est voulu.
+   */
+  private computeCommission(agreedAmount: unknown, commissionRate: unknown) {
+    const gross = Number(agreedAmount) || 0;
+    const rate = Math.max(
+      Number(commissionRate) || 0,
+      SubcontractorPortalService.COMMISSION_FLOOR,
+    );
+    const commission = (gross * rate) / 100;
+    const net = Math.max(0, Math.round((gross - commission) * 100) / 100);
+    return {
+      gross,
+      commissionRate: rate,
+      commission: Math.round((gross - net) * 100) / 100,
+      net,
+    };
+  }
 
   // ==========================================================================================
   // GAP 4 — COMMUNICATION SOUS-TRAITANT <-> DONNEUR D'ORDRE (état des lieux, non implémenté ici)
@@ -77,46 +106,71 @@ export class SubcontractorPortalService {
       return { isSubcontractor: false };
     }
 
-    const [pendingOffers, activeAssignments, completedCount, earnings] = await Promise.all([
-      this.prisma.subcontractorAssignment.count({
-        where: {
-          subcontractorId: subcontractor.id,
-          status: 'ASSIGNED',
-        },
-      }),
-      this.prisma.subcontractorAssignment.findMany({
-        where: {
-          subcontractorId: subcontractor.id,
-          status: 'IN_PROGRESS',
-        },
-        include: {
-          mission: {
-            select: {
-              id: true,
-              title: true,
-              scheduledFor: true,
-              address: true,
-              city: true,
-              client: { select: { firstName: true, lastName: true } },
+    const [pendingOffers, activeAssignments, completedAssignments, onboardingUser] =
+      await Promise.all([
+        this.prisma.subcontractorAssignment.count({
+          where: {
+            subcontractorId: subcontractor.id,
+            status: 'ASSIGNED',
+          },
+        }),
+        this.prisma.subcontractorAssignment.findMany({
+          where: {
+            subcontractorId: subcontractor.id,
+            status: 'IN_PROGRESS',
+          },
+          include: {
+            mission: {
+              select: {
+                id: true,
+                title: true,
+                scheduledFor: true,
+                address: true,
+                city: true,
+                client: { select: { firstName: true, lastName: true } },
+              },
             },
           },
-        },
-        orderBy: { mission: { scheduledFor: 'asc' } },
-      }),
-      this.prisma.subcontractorAssignment.count({
-        where: {
-          subcontractorId: subcontractor.id,
-          status: 'COMPLETED',
-        },
-      }),
-      this.prisma.subcontractorAssignment.aggregate({
-        where: {
-          subcontractorId: subcontractor.id,
-          paymentStatus: 'PAID',
-        },
-        _sum: { agreedAmount: true },
-      }),
-    ]);
+          orderBy: { mission: { scheduledFor: 'asc' } },
+        }),
+        // Attributions terminées : on lit agreedAmount + commissionRate + paymentStatus pour dériver
+        // le NET par attribution (le sous-traitant perçoit le net, pas le brut) et les totaux nets.
+        this.prisma.subcontractorAssignment.findMany({
+          where: {
+            subcontractorId: subcontractor.id,
+            status: 'COMPLETED',
+          },
+          select: { agreedAmount: true, commissionRate: true, paymentStatus: true },
+        }),
+        // État d'onboarding Stripe Connect du sous-traitant (il EST un ARTISAN) — lecture seule, pour
+        // afficher le CTA « Configurer mes versements » dans le portail tant qu'il n'est pas onboardé.
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            artisanProfile: { select: { stripeOnboarded: true, stripeAccountId: true } },
+          },
+        }),
+      ]);
+
+    // Agrégats NET (montant réellement perçu) vs BRUT (montant convenu). On garde totalEarnings en
+    // brut versé pour compat, et on ajoute les nets (versé / en attente / total).
+    let paidGross = 0;
+    let paidNet = 0;
+    let pendingNet = 0;
+    for (const a of completedAssignments) {
+      const { gross, net } = this.computeCommission(a.agreedAmount, a.commissionRate);
+      if (a.paymentStatus === 'PAID') {
+        paidGross += gross;
+        paidNet += net;
+      } else {
+        pendingNet += net;
+      }
+    }
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
+    const ap = onboardingUser?.artisanProfile;
+    const stripeOnboarded = !!ap?.stripeOnboarded;
+    const hasStripeAccount = !!ap?.stripeAccountId;
 
     return {
       isSubcontractor: true,
@@ -125,11 +179,19 @@ export class SubcontractorPortalService {
       // pause). Voir setAvailability().
       available: subcontractor.status === 'ACTIVE',
       status: subcontractor.status,
+      // État Connect (lecture seule) : source du CTA d'onboarding des versements dans le portail.
+      stripeOnboarded,
+      hasStripeAccount,
       stats: {
         pendingOffers,
         activeAssignments: activeAssignments.length,
-        completedMissions: completedCount,
-        totalEarnings: earnings._sum.agreedAmount || 0,
+        completedMissions: completedAssignments.length,
+        // BRUT versé (compat historique).
+        totalEarnings: round2(paidGross),
+        // NET (ce que le sous-traitant perçoit réellement) : versé, en attente, total.
+        totalNet: round2(paidNet),
+        pendingNet: round2(pendingNet),
+        netEarnings: round2(paidNet + pendingNet),
         averageRating: subcontractor.averageRating,
       },
       currentAssignments: activeAssignments,
@@ -590,23 +652,46 @@ export class SubcontractorPortalService {
       orderBy: { updatedAt: 'desc' },
     });
 
-    const totalEarned = assignments.reduce((sum, a) => sum + Number(a.agreedAmount), 0);
-    const totalPaid = assignments
-      .filter(a => a.paymentStatus === 'PAID')
-      .reduce((sum, a) => sum + Number(a.agreedAmount), 0);
-    const totalPending = totalEarned - totalPaid;
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
+    // Détail BRUT (montant convenu) vs NET (réellement perçu = montant - commission plateforme,
+    // plancher 5 %). Même formule que le versement Connect (settleAssignmentPayout).
+    const rows = assignments.map((a) => ({
+      a,
+      c: this.computeCommission(a.agreedAmount, a.commissionRate),
+    }));
+
+    const totalEarned = round2(rows.reduce((s, { c }) => s + c.gross, 0));
+    const totalNet = round2(rows.reduce((s, { c }) => s + c.net, 0));
+    const totalPaid = round2(
+      rows.filter(({ a }) => a.paymentStatus === 'PAID').reduce((s, { c }) => s + c.gross, 0),
+    );
+    const paidNet = round2(
+      rows.filter(({ a }) => a.paymentStatus === 'PAID').reduce((s, { c }) => s + c.net, 0),
+    );
+    const totalPending = round2(totalEarned - totalPaid);
+    const pendingNet = round2(totalNet - paidNet);
 
     return {
       summary: {
+        // BRUT (compat historique).
         totalEarned,
         totalPaid,
         totalPending,
+        // NET (ce que le sous-traitant perçoit réellement).
+        totalNet,
+        paidNet,
+        pendingNet,
         missionsCompleted: assignments.length,
       },
-      assignments: assignments.map(a => ({
+      assignments: rows.map(({ a, c }) => ({
         id: a.id,
         missionTitle: a.mission.title,
+        // `amount` = brut (montant convenu, compat) ; `netAmount` = net perçu ; + détail commission.
         amount: a.agreedAmount,
+        netAmount: c.net,
+        commission: c.commission,
+        commissionRate: c.commissionRate,
         completedAt: a.updatedAt,
         paymentStatus: a.paymentStatus,
         paidAt: a.paidAt,

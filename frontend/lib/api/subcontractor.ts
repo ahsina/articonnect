@@ -242,10 +242,21 @@ export interface PortalDashboard {
   available?: boolean;
   /** Statut brut de la relation courante ('ACTIVE' | 'INACTIVE' | ...). */
   status?: SubcontractorStatus;
+  /** Onboarding Stripe Connect finalisé (versements possibles). Source du CTA d'onboarding. */
+  stripeOnboarded?: boolean;
+  /** Un compte Connect existe déjà (onboarding entamé mais peut-être incomplet). */
+  hasStripeAccount?: boolean;
   pendingOffers?: number;
   activeAssignments?: number;
   completedAssignments?: number;
+  /** BRUT versé (montant convenu). Conservé pour compat. */
   totalEarnings?: number;
+  /** NET versé (réellement perçu = brut - commission plateforme). */
+  totalNet?: number;
+  /** NET en attente de versement. */
+  pendingNet?: number;
+  /** NET total (versé + en attente). */
+  netEarnings?: number;
   pendingEarnings?: number;
   averageRating?: number;
   currentAssignments?: SubcontractorAssignment[];
@@ -261,16 +272,30 @@ export interface PortalDashboard {
  * paymentStatus, paidAt }] }.
  */
 export interface SubcontractorEarnings {
+  /** BRUT total (montant convenu). Conservé pour compat. */
   totalEarnings?: number;
   paidEarnings?: number;
   pendingEarnings?: number;
+  /** NET total (réellement perçu = brut - commission plateforme, plancher 5 %). */
+  netEarnings?: number;
+  /** NET versé. */
+  paidNet?: number;
+  /** NET en attente. */
+  pendingNet?: number;
   missionsCompleted?: number;
   currency?: string;
   items?: Array<{
     id?: string;
     assignmentId?: string;
     missionTitle?: string;
+    /** BRUT (montant convenu). */
     amount?: number;
+    /** NET perçu par le sous-traitant pour cette attribution. */
+    netAmount?: number;
+    /** Commission plateforme retenue (brut - net). */
+    commission?: number;
+    /** Taux de commission appliqué (%) — plancher 5 %. */
+    commissionRate?: number;
     status?: string;
     createdAt?: string;
     paidAt?: string | null;
@@ -458,12 +483,19 @@ function normalizeDashboard(raw: any): PortalDashboard {
     // `available` (booléen) piloté par setAvailability ; repli sur status === 'ACTIVE'.
     available: raw.available ?? raw.status === 'ACTIVE',
     status: raw.status,
+    // Onboarding Connect (lecture seule) : pilote l'affichage du CTA « Configurer mes versements ».
+    stripeOnboarded: !!raw.stripeOnboarded,
+    hasStripeAccount: !!raw.hasStripeAccount,
     pendingOffers: toNum(stats.pendingOffers ?? raw.pendingOffers),
     activeAssignments: toNum(stats.activeAssignments ?? raw.activeAssignments),
     completedAssignments: toNum(
       stats.completedMissions ?? stats.completedAssignments ?? raw.completedAssignments,
     ),
     totalEarnings: toNum(stats.totalEarnings ?? raw.totalEarnings),
+    // NET (réellement perçu). Repli sur le brut si le back ne fournit pas encore le net.
+    totalNet: toNum(stats.totalNet ?? stats.totalEarnings ?? raw.totalNet),
+    pendingNet: toNum(stats.pendingNet ?? raw.pendingNet),
+    netEarnings: toNum(stats.netEarnings ?? stats.totalNet ?? raw.netEarnings),
     averageRating: toNum(stats.averageRating ?? raw.averageRating),
     currentAssignments: Array.isArray(raw.currentAssignments)
       ? raw.currentAssignments.map(normalizeAssignment)
@@ -483,17 +515,28 @@ function normalizeEarnings(raw: any): SubcontractorEarnings {
     totalEarnings: toNum(summary.totalEarned ?? raw?.totalEarnings),
     paidEarnings: toNum(summary.totalPaid ?? raw?.paidEarnings),
     pendingEarnings: toNum(summary.totalPending ?? raw?.pendingEarnings),
+    // NET (réellement perçu). Repli sur le brut si le back ne fournit pas encore le net.
+    netEarnings: toNum(summary.totalNet ?? summary.totalEarned ?? raw?.netEarnings),
+    paidNet: toNum(summary.paidNet ?? summary.totalPaid ?? raw?.paidNet),
+    pendingNet: toNum(summary.pendingNet ?? summary.totalPending ?? raw?.pendingNet),
     missionsCompleted: toNum(summary.missionsCompleted ?? raw?.missionsCompleted),
     currency: raw?.currency || 'EUR',
-    items: rows.map((a: any) => ({
-      id: a?.id,
-      assignmentId: a?.assignmentId ?? a?.id,
-      missionTitle: a?.missionTitle ?? a?.mission?.title,
-      amount: toNum(a?.amount ?? a?.agreedAmount),
-      status: a?.status ?? a?.paymentStatus,
-      createdAt: a?.createdAt ?? a?.completedAt,
-      paidAt: a?.paidAt ?? null,
-    })),
+    items: rows.map((a: any) => {
+      const amount = toNum(a?.amount ?? a?.agreedAmount);
+      return {
+        id: a?.id,
+        assignmentId: a?.assignmentId ?? a?.id,
+        missionTitle: a?.missionTitle ?? a?.mission?.title,
+        amount,
+        // NET perçu : fourni par le back ; repli sur le brut si absent.
+        netAmount: toNum(a?.netAmount ?? a?.amount ?? a?.agreedAmount),
+        commission: a?.commission != null ? toNum(a.commission) : undefined,
+        commissionRate: a?.commissionRate != null ? toNum(a.commissionRate) : undefined,
+        status: a?.status ?? a?.paymentStatus,
+        createdAt: a?.createdAt ?? a?.completedAt,
+        paidAt: a?.paidAt ?? null,
+      };
+    }),
   };
 }
 
@@ -641,6 +684,15 @@ export const subcontractorApi = {
     getEarnings: async (): Promise<SubcontractorEarnings> => {
       const response = await apiClient.get('/subcontractor-portal/earnings');
       return normalizeEarnings(response.data);
+    },
+
+    // ONBOARDING VERSEMENTS (Stripe Connect) — le sous-traitant EST un ARTISAN : on réutilise
+    // l'endpoint artisan existant POST /artisan/stripe/onboarding (aucun nouvel endpoint créé). Il
+    // renvoie une URL d'onboarding réelle vers laquelle le portail redirige. Tant que l'onboarding
+    // n'est pas finalisé, ses gains restent en attente (PENDING) côté versement Connect.
+    startStripeOnboarding: async (): Promise<{ url: string }> => {
+      const response = await apiClient.post('/artisan/stripe/onboarding');
+      return response.data;
     },
 
     // --- Invitations en attente (visibilité in-app, GAP 1) --------------

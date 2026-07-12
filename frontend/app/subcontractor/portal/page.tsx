@@ -18,6 +18,7 @@ import {
   MessageSquare,
   AlertTriangle,
   UserPlus,
+  CreditCard,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -111,6 +112,7 @@ export default function SubcontractorPortalPage() {
   const [relationships, setRelationships] = useState<PortalRelationship[]>([]);
   const [invitations, setInvitations] = useState<PortalInvitation[]>([]);
   const [availabilityBusy, setAvailabilityBusy] = useState(false);
+  const [onboardingBusy, setOnboardingBusy] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -394,6 +396,38 @@ export default function SubcontractorPortalPage() {
     }
   };
 
+  // Lancer l'onboarding Stripe Connect (versements). Réutilise l'endpoint artisan existant via
+  // subcontractorApi.portal.startStripeOnboarding, puis redirige vers l'URL d'onboarding réelle.
+  const handleStartOnboarding = async () => {
+    if (onboardingBusy) return;
+    setOnboardingBusy(true);
+    try {
+      const { url } = await subcontractorApi.portal.startStripeOnboarding();
+      if (url && typeof window !== 'undefined') {
+        window.location.href = url;
+        return; // redirection en cours
+      }
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'onboardingError') ||
+          "Impossible de démarrer la configuration des versements.",
+        variant: 'destructive',
+      });
+    } catch (e) {
+      console.error('Error starting Stripe onboarding:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'onboardingError') ||
+          "Impossible de démarrer la configuration des versements.",
+        variant: 'destructive',
+      });
+    } finally {
+      setOnboardingBusy(false);
+    }
+  };
+
   // Basculer sa disponibilité globale (Disponible <-> En pause). Reflète l'état
   // courant renvoyé par le dashboard (available) et recharge après écriture.
   const handleToggleAvailability = async () => {
@@ -533,7 +567,6 @@ export default function SubcontractorPortalPage() {
     Number(dashboard?.completedAssignments) ||
     assignments.filter((a) => (a?.status || '').toUpperCase() === 'COMPLETED').length ||
     0;
-  const monthEarnings = Number(dashboard?.totalEarnings ?? earnings?.totalEarnings) || 0;
   const earningsCurrency = earnings?.currency || 'EUR';
 
   // "Missions en cours" du tableau de bord = uniquement IN_PROGRESS
@@ -549,6 +582,19 @@ export default function SubcontractorPortalPage() {
       : dashboard?.currentAssignments || [];
 
   const available = dashboard?.available ?? true;
+
+  // Onboarding versements requis : sous-traitant connu du back mais compte Stripe Connect non
+  // finalisé (ses gains restent alors en attente de versement). Pilote la bannière CTA.
+  const needsOnboarding =
+    !!dashboard?.isSubcontractor && dashboard?.stripeOnboarded === false;
+  // Gains NET versés (réellement perçus) : on privilégie le net renvoyé par le back, repli sur le brut.
+  const netMonthEarnings =
+    Number(
+      dashboard?.totalNet ??
+        dashboard?.totalEarnings ??
+        earnings?.paidNet ??
+        earnings?.paidEarnings,
+    ) || 0;
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'dashboard', label: t('subcontractor', 'tabDashboard') || 'Tableau de bord', icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -625,6 +671,41 @@ export default function SubcontractorPortalPage() {
             <span className="text-sm text-red-700">{error}</span>
             <Button size="sm" onClick={loadAll}>
               {t('common', 'retry') || 'Retry'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bannière onboarding versements (Stripe Connect) — visible tant que le compte n'est pas
+          finalisé. Sans elle, les gains du sous-traitant restent bloqués en attente de versement. */}
+      {needsOnboarding && (
+        <Card className="mb-6 rounded-2xl border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="mt-0.5 shrink-0 rounded-full bg-amber-100 p-2 text-amber-700">
+                <CreditCard className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-semibold text-foreground">
+                  {t('subcontractor', 'onboardingTitle') || 'Configurez vos versements'}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t('subcontractor', 'onboardingDesc') ||
+                    'Pour recevoir vos gains, finalisez la configuration de votre compte de versement. Vos gains sont conservés en attente tant que ce n’est pas fait.'}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleStartOnboarding}
+              disabled={onboardingBusy}
+              className="gap-2 shrink-0"
+            >
+              <CreditCard className="h-4 w-4" />
+              {onboardingBusy
+                ? t('common', 'loading') || 'Chargement…'
+                : dashboard?.hasStripeAccount
+                  ? t('subcontractor', 'onboardingResume') || 'Finaliser mes versements'
+                  : t('subcontractor', 'onboardingCta') || 'Configurer mes versements'}
             </Button>
           </CardContent>
         </Card>
@@ -753,8 +834,8 @@ export default function SubcontractorPortalPage() {
               value={completedCount}
             />
             <KpiCard
-              label={t('subcontractor', 'kpiEarnings') || 'Gains du mois'}
-              value={formatMoney(monthEarnings, earningsCurrency)}
+              label={t('subcontractor', 'kpiEarnings') || 'Gains nets versés'}
+              value={formatMoney(netMonthEarnings, earningsCurrency)}
             />
           </div>
 
@@ -1030,16 +1111,25 @@ export default function SubcontractorPortalPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <KpiCard
-              label={t('subcontractor', 'totalEarnings') || 'Gains totaux'}
-              value={formatMoney(earnings?.totalEarnings, earningsCurrency)}
+              label={t('subcontractor', 'totalNetEarnings') || 'Gains nets totaux'}
+              value={formatMoney(
+                earnings?.netEarnings ?? earnings?.totalEarnings,
+                earningsCurrency,
+              )}
             />
             <KpiCard
-              label={t('subcontractor', 'paidEarnings') || 'Versés'}
-              value={formatMoney(earnings?.paidEarnings, earningsCurrency)}
+              label={t('subcontractor', 'paidNetEarnings') || 'Nets versés'}
+              value={formatMoney(
+                earnings?.paidNet ?? earnings?.paidEarnings,
+                earningsCurrency,
+              )}
             />
             <KpiCard
-              label={t('subcontractor', 'pendingEarnings') || 'En attente'}
-              value={formatMoney(earnings?.pendingEarnings, earningsCurrency)}
+              label={t('subcontractor', 'pendingNetEarnings') || 'Nets en attente'}
+              value={formatMoney(
+                earnings?.pendingNet ?? earnings?.pendingEarnings,
+                earningsCurrency,
+              )}
             />
           </div>
 
@@ -1069,9 +1159,21 @@ export default function SubcontractorPortalPage() {
                               {item.missionTitle}
                             </div>
                           )}
+                          {/* NET perçu en principal ; montant convenu (brut) en secondaire. */}
                           <div className="text-sm font-semibold text-foreground">
-                            {formatMoney(item?.amount, earningsCurrency)}
+                            {formatMoney(item?.netAmount ?? item?.amount, earningsCurrency)}
+                            <span className="ml-1 text-xs font-normal text-muted-foreground">
+                              {t('subcontractor', 'net') || 'net'}
+                            </span>
                           </div>
+                          {item?.netAmount != null &&
+                            item?.amount != null &&
+                            item.netAmount !== item.amount && (
+                              <div className="text-xs text-muted-foreground">
+                                {t('subcontractor', 'agreedAmount') || 'Montant convenu'}
+                                {` : ${formatMoney(item.amount, earningsCurrency)}`}
+                              </div>
+                            )}
                           <div className="text-xs text-muted-foreground">
                             {formatDate(item?.createdAt)}
                           </div>
