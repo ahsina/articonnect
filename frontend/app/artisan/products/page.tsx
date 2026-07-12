@@ -26,6 +26,7 @@ import {
   Star,
   Layers,
   Trash2,
+  Truck,
   X,
 } from 'lucide-react';
 import ProductForm from './ProductForm';
@@ -126,15 +127,21 @@ export default function ArtisanShopPage() {
             <p className="text-muted-foreground">{t('artisan', 'manageProducts') || 'Gérez vos produits, commandes et ventes'}</p>
           </div>
           {tab === 'products' && (
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setShowForm(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              {t('artisan', 'addProduct') || 'Ajouter un produit'}
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => router.push('/artisan/products/shipping')}>
+                <Truck className="h-4 w-4 mr-1" />
+                {t('artisan', 'shipping') || 'Livraison'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditing(null);
+                  setShowForm(true);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t('artisan', 'addProduct') || 'Ajouter un produit'}
+              </Button>
+            </div>
           )}
         </div>
 

@@ -159,6 +159,27 @@ export interface SellerStats {
   topProducts: SellerTopProduct[];
 }
 
+// ==================== SHIPPING POLICY ====================
+
+/**
+ * Politique de livraison d'un vendeur (une seule par vendeur, clé = artisanId côté backend).
+ *  - `freeShipping` : livraison toujours offerte sur les produits du vendeur.
+ *  - `flatRate` : forfait de port appliqué (ignoré si `freeShipping`).
+ *  - `freeThreshold` : franco de port — port offert dès que le panier dépasse ce montant (null = aucun).
+ * Les montants sont des Prisma Decimal sérialisés en string -> normalisés en nombre côté client.
+ */
+export interface ShippingPolicy {
+  freeShipping: boolean;
+  flatRate: number;
+  freeThreshold: number | null;
+}
+
+export interface UpdateShippingPolicyDto {
+  freeShipping: boolean;
+  flatRate: number;
+  freeThreshold?: number | null;
+}
+
 // ==================== RETURNS ====================
 
 export type ReturnStatus =
@@ -490,7 +511,52 @@ export const marketplaceApi = {
   deleteVariant: async (variantId: string): Promise<void> => {
     await apiClient.delete(`/marketplace/variants/${variantId}`);
   },
+
+  // ==================== SHIPPING POLICY ====================
+  /**
+   * Politique de livraison du VENDEUR connecté.
+   * Route backend : GET /marketplace/shipping-policy -> { freeShipping, flatRate, freeThreshold }.
+   * Si aucune politique n'est encore définie (ou endpoint pas encore déployé -> 404), on renvoie
+   * des valeurs par défaut sûres afin que le formulaire s'affiche toujours correctement.
+   */
+  getShippingPolicy: async (): Promise<ShippingPolicy> => {
+    try {
+      const { data } = await apiClient.get('/marketplace/shipping-policy');
+      return normalizeShippingPolicy(data);
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return { freeShipping: false, flatRate: 5.99, freeThreshold: null };
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Enregistre (upsert) la politique de livraison du vendeur connecté.
+   * Route backend : PUT /marketplace/shipping-policy -> renvoie la politique enregistrée.
+   */
+  updateShippingPolicy: async (data: UpdateShippingPolicyDto): Promise<ShippingPolicy> => {
+    const { data: saved } = await apiClient.put('/marketplace/shipping-policy', {
+      freeShipping: data.freeShipping,
+      flatRate: data.flatRate,
+      freeThreshold: data.freeThreshold ?? null,
+    });
+    return normalizeShippingPolicy(saved);
+  },
 };
+
+/**
+ * Normalise une politique de livraison backend pour l'UI : `flatRate`/`freeThreshold`
+ * (Prisma Decimal -> string) convertis en nombre ; `freeThreshold` absent/null -> null.
+ */
+function normalizeShippingPolicy(p: any): ShippingPolicy {
+  return {
+    freeShipping: Boolean(p?.freeShipping),
+    flatRate: p?.flatRate !== undefined && p?.flatRate !== null ? Number(p.flatRate) : 5.99,
+    freeThreshold:
+      p?.freeThreshold !== undefined && p?.freeThreshold !== null ? Number(p.freeThreshold) : null,
+  };
+}
 
 /**
  * Normalise une variante backend pour l'UI : `priceAdjustment` (Prisma Decimal -> string) en nombre.

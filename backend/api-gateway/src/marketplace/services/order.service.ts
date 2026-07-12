@@ -6,6 +6,8 @@ import { PlatformConfigService } from '../../config/services/platform-config.ser
 import { StripeService } from '../../payment/services/stripe.service';
 import { FeeSettingsDto } from '../../config/dto/platform-config.dto';
 import { InvoiceService } from '../../invoice/services/invoice.service';
+import { ShippingPolicyService } from './shipping-policy.service';
+import { UpdateShippingPolicyDto } from '../dto/shipping-policy.dto';
 
 // Statuts pour lesquels une commande est considérée réellement encaissée (facture de vente due,
 // stock réservé). Partagé par plusieurs méthodes.
@@ -17,12 +19,18 @@ const LOW_STOCK_THRESHOLD = 5;
 export class OrderService {
   private readonly logger = new Logger(OrderService.name);
 
+  // Frais de port dynamiques par vendeur (ShippingPolicy). Instancié ici (dépendance = PrismaService
+  // uniquement) pour rester dans la partition « marketplace/order + shipping » sans toucher au module.
+  private readonly shippingPolicyService: ShippingPolicyService;
+
   constructor(
     private prisma: PrismaService,
     private platformConfig: PlatformConfigService,
     private stripeService: StripeService,
     private invoiceService: InvoiceService,
-  ) {}
+  ) {
+    this.shippingPolicyService = new ShippingPolicyService(prisma);
+  }
 
   /**
    * Commission plateforme sur une vente marketplace, avec plancher/plafond configurés — MÊME formule
@@ -45,13 +53,16 @@ export class OrderService {
   }
 
   async create(clientId: string, items: OrderItemDto[], shippingAddress: string) {
-    const flatShippingCost = 5.99; // Flat shipping cost
-
     // Validate and calculate totals. La TVA est calculée LIGNE PAR LIGNE selon le taux DU PRODUIT
     // (Product.vatRate) — plus de taux plateforme uniforme : deux produits à 3 % et 17 % dans la
     // même commande cumulent leur TVA respective.
     let subtotal = 0;
     let vat = 0;
+
+    // FRAIS DE PORT DYNAMIQUES : sous-total produits (HT) regroupé PAR VENDEUR (product.artisanId),
+    // pour appliquer la ShippingPolicy de chaque vendeur (cf. computeShippingTotal). Un vendeur sans
+    // politique retombe sur le forfait historique 5,99 € (rétrocompat mono-vendeur).
+    const subtotalBySeller = new Map<string, number>();
 
     // Prepare order items with prices (variante prise en compte).
     const orderItems: Array<{
@@ -105,6 +116,10 @@ export class OrderService {
       subtotal += totalPrice;
       vat += lineVat;
 
+      // Cumule le sous-total (HT) par vendeur pour le calcul des frais de port par politique.
+      const sellerId = product.artisanId;
+      subtotalBySeller.set(sellerId, (subtotalBySeller.get(sellerId) || 0) + totalPrice);
+
       orderItems.push({
         productId: item.productId,
         quantity: item.quantity,
@@ -116,7 +131,9 @@ export class OrderService {
 
     subtotal = Math.round(subtotal * 100) / 100;
     vat = Math.round(vat * 100) / 100;
-    const shippingCost = flatShippingCost;
+    // Frais de port = somme des politiques par vendeur (0 si franco/gratuit, sinon forfait vendeur ;
+    // défaut 5,99 € si le vendeur n'a pas de politique).
+    const shippingCost = await this.shippingPolicyService.computeShippingTotal(subtotalBySeller);
     const total = Math.round((subtotal + vat + shippingCost) * 100) / 100;
 
     // Crée la commande en PENDING. Le stock GLOBAL d'un produit (ligne sans variante) n'est PAS
@@ -647,6 +664,23 @@ export class OrderService {
    */
   async shipOrder(orderId: string, artisanId: string, trackingNumber?: string) {
     return this.updateStatus(orderId, artisanId, 'SHIPPED', trackingNumber);
+  }
+
+  // ==================== VENDEUR : POLITIQUE DE FRAIS DE PORT ====================
+
+  /**
+   * Politique de frais de port du vendeur connecté (ou les défauts 5,99 € si aucune n'est encore
+   * définie). Délègue au ShippingPolicyService (clé = artisanId). Exposé au vendeur via le contrôleur.
+   */
+  async getShippingPolicy(artisanId: string) {
+    return this.shippingPolicyService.getPolicy(artisanId);
+  }
+
+  /**
+   * Crée / met à jour (upsert) la politique de frais de port du vendeur connecté.
+   */
+  async upsertShippingPolicy(artisanId: string, dto: UpdateShippingPolicyDto) {
+    return this.shippingPolicyService.upsertPolicy(artisanId, dto);
   }
 
   // ==================== VENDEUR : MES VENTES ====================

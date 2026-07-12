@@ -1227,6 +1227,19 @@ model Category {
   @@index([active])
 }
 
+// Politique de livraison configurable par vendeur (artisanId). Remplace le forfait 5,99€ codé en dur.
+model ShippingPolicy {
+  id            String   @id @default(uuid())
+  artisanId     String   @unique
+  freeShipping  Boolean  @default(false) // livraison toujours gratuite
+  flatRate      Decimal  @default(5.99) @db.Decimal(10, 2) // forfait par défaut
+  freeThreshold Decimal? @db.Decimal(10, 2) // franco de port au-delà de ce sous-total (par vendeur)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([artisanId])
+}
+
 model Product {
   id          String           @id @default(uuid())
   artisanId   String

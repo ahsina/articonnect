@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -10,6 +10,7 @@ import { CreateProductDto, UpdateProductDto, CreateProductReviewDto, ReplyProduc
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { CreateOrderDto, UpdateOrderStatusDto, ShipOrderDto } from '../dto/order.dto';
 import { CreateCategoryDto, UpdateCategoryDto } from '../dto/category.dto';
+import { UpdateShippingPolicyDto } from '../dto/shipping-policy.dto';
 
 @ApiTags('Marketplace')
 @Controller('marketplace')
@@ -277,6 +278,38 @@ export class MarketplaceController {
   @ApiResponse({ status: 200, description: 'Stats vendeur' })
   async getSellerStats(@Request() req) {
     return this.orderService.getSellerStats(req.user.userId);
+  }
+
+  // ==================== VENDEUR : FRAIS DE PORT (ShippingPolicy) ====================
+
+  @Get('shipping-policy')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ma politique de frais de port (ou défauts 5,99 € si absente)' })
+  @ApiResponse({ status: 200, description: 'Politique de frais de port du vendeur' })
+  async getShippingPolicy(@Request() req) {
+    return this.orderService.getShippingPolicy(req.user.userId);
+  }
+
+  @Put('shipping-policy')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Créer / mettre à jour ma politique de frais de port (upsert)' })
+  @ApiResponse({ status: 200, description: 'Politique de frais de port enregistrée' })
+  async putShippingPolicy(@Request() req, @Body() data: UpdateShippingPolicyDto) {
+    return this.orderService.upsertShippingPolicy(req.user.userId, data);
+  }
+
+  @Post('shipping-policy')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Créer / mettre à jour ma politique de frais de port (upsert, alias POST)' })
+  @ApiResponse({ status: 201, description: 'Politique de frais de port enregistrée' })
+  async postShippingPolicy(@Request() req, @Body() data: UpdateShippingPolicyDto) {
+    return this.orderService.upsertShippingPolicy(req.user.userId, data);
   }
 
   // ==================== ORDERS ====================
