@@ -55,6 +55,10 @@ export class ArtisanController {
   @Get('dashboard') getDashboard(@Request() req) { return this.artisan.getDashboard(this.uid(req)); }
   @Get('analytics') getAnalytics(@Request() req) { return this.artisan.getAnalytics(this.uid(req)); }
 
+  // Vérification KYC (côté artisan) — état + re-soumission (débloque un REJECTED)
+  @Get('verification') getVerification(@Request() req) { return this.artisan.getVerification(this.uid(req)); }
+  @Post('verification/resubmit') resubmitVerification(@Request() req, @Body() dto: any) { return this.artisan.resubmitVerification(this.uid(req), dto); }
+
   // Notification preferences
   @Get('notification-preferences') getNotif(@Request() req) { return this.artisan.getNotificationPreferences(this.uid(req)); }
   @Put('notification-preferences') setNotif(@Request() req, @Body() dto: any) { return this.artisan.updateNotificationPreferences(this.uid(req), dto); }

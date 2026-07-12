@@ -23,12 +23,15 @@ export class StripeService {
     customerId?: string;
     radarSession?: string; // Radar session from frontend (stripe.js)
     userIp?: string; // User IP for fraud detection
+    // Capture 'manual' (défaut) = escrow missions ; 'automatic' = encaissement immédiat (commandes
+    // marketplace : bien physique, pas d'étape de validation type mission).
+    captureMethod?: 'manual' | 'automatic';
   }) {
     return this.stripe.paymentIntents.create({
       amount: params.amount,
       currency: params.currency,
       metadata: params.metadata,
-      capture_method: 'manual', // For escrow
+      capture_method: params.captureMethod || 'manual', // For escrow (default)
 
       // Escrow carte : on autorise les cartes + wallets (Apple/Google Pay) mais PAS les méthodes à
       // redirection externe (Klarna/Link/Satispay), sinon la confirmation carte part en redirect et
@@ -70,12 +73,17 @@ export class StripeService {
     amount: number;
     destination: string;
     metadata?: Record<string, string>;
+    // sourceTransaction : id de la charge d'origine. Rattache le transfert à cette charge afin de
+    // pouvoir verser même quand le solde disponible plateforme n'est pas encore crédité (fonds encore
+    // "pending" après une charge marketplace) — indispensable pour un versement vendeur fiable.
+    sourceTransaction?: string;
   }) {
     return this.stripe.transfers.create({
       amount: params.amount,
       currency: 'eur',
       destination: params.destination,
       metadata: params.metadata,
+      ...(params.sourceTransaction ? { source_transaction: params.sourceTransaction } : {}),
     });
   }
 

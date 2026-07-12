@@ -31,10 +31,12 @@ describe('CompanyService', () => {
     },
     artisanProfile: {
       update: jest.fn(),
+      findMany: jest.fn(),
     },
     mission: {
       count: jest.fn(),
       aggregate: jest.fn(),
+      findMany: jest.fn(),
     },
     $transaction: jest.fn(),
   };
@@ -421,10 +423,16 @@ describe('CompanyService', () => {
         .mockResolvedValueOnce(100) // totalMissions
         .mockResolvedValueOnce(80) // completedMissions
         .mockResolvedValueOnce(20); // activeMissions
-      mockPrismaService.mission.aggregate.mockResolvedValue({
-        _sum: { finalPrice: 50000 },
-      });
+      // Revenu réel = somme de finalPrice ?? agreedPrice sur les missions complétées.
+      mockPrismaService.mission.findMany.mockResolvedValue([
+        { finalPrice: 30000, agreedPrice: null },
+        { finalPrice: null, agreedPrice: 20000 },
+      ]);
       mockPrismaService.companyEmployee.count.mockResolvedValue(5);
+      // Note/avis agrégés depuis les profils artisans des membres.
+      mockPrismaService.artisanProfile.findMany.mockResolvedValue([
+        { rating: 4.5, reviewCount: 100 },
+      ]);
 
       const result = await service.getCompanyStats('company-123', 'user-123');
 
@@ -451,13 +459,12 @@ describe('CompanyService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should handle null revenue sum', async () => {
+    it('should handle empty revenue (no completed missions)', async () => {
       mockPrismaService.company.findUnique.mockResolvedValue(mockCompany);
       mockPrismaService.mission.count.mockResolvedValue(0);
-      mockPrismaService.mission.aggregate.mockResolvedValue({
-        _sum: { finalPrice: null },
-      });
+      mockPrismaService.mission.findMany.mockResolvedValue([]);
       mockPrismaService.companyEmployee.count.mockResolvedValue(1);
+      mockPrismaService.artisanProfile.findMany.mockResolvedValue([]);
 
       const result = await service.getCompanyStats('company-123', 'user-123');
 

@@ -51,6 +51,10 @@ export class ChatService {
         .recordBlockedMessage(data.senderId, { content: data.content, detectedPatterns: filterResult.detectedPatterns })
         .catch(() => undefined);
       throw new BadRequestException({
+        // `error` explicite : sans lui, le filtre d'exceptions global retombe sur son défaut
+        // « Internal Server Error » dans le corps (bien que le statut HTTP soit 400), ce qui
+        // faisait passer un blocage volontaire pour une erreur serveur côté client.
+        error: 'Bad Request',
         message: 'Votre message contient des informations de contact interdites. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via Krafolt.',
         detectedPatterns: filterResult.detectedPatterns,
         violationType: filterResult.violationType,
@@ -63,6 +67,7 @@ export class ChatService {
       const fnResult = await this.contentFilter.filterFileName(data.fileName, data.senderId);
       if (fnResult.isBlocked) {
         throw new BadRequestException({
+          error: 'Bad Request',
           message: 'Le nom du fichier contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
           detectedPatterns: fnResult.detectedPatterns,
           violationType: fnResult.violationType,
@@ -102,6 +107,7 @@ export class ChatService {
             .recordBlockedMessage(data.senderId, { content: data.content, detectedPatterns: ['PHONE_SPLIT_MULTIMSG'] })
             .catch(() => undefined);
           throw new BadRequestException({
+            error: 'Bad Request',
             message: 'Votre message complète un numéro de téléphone partagé sur plusieurs messages. Pour votre sécurité et celle de nos utilisateurs, veuillez communiquer uniquement via Krafolt.',
             detectedPatterns: ['PHONE_SPLIT_MULTIMSG'],
             violationType: 'HIGH',

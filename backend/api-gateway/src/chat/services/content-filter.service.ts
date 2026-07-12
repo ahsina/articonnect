@@ -847,26 +847,26 @@ export class ContentFilterService {
         `Content violation logged | User: ${userId} | Context: ${context} | Severity: ${severity} | Total(30d): ${violationCount}`,
       );
 
-      // Auto-suspension après 5 violations sur 30 jours (toutes sévérités confondues).
+      // ⚠️ RÉCONCILIATION anti-fraude : le content-filter NE bloque PLUS le login lui-même.
+      // Historiquement, DEUX systèmes écrivaient User.status='SUSPENDED' avec des seuils
+      // incohérents (ici : 5 violations/30j TOUTES sévérités confondues — y compris des signaux
+      // MEDIUM/LOW légitimes comme les médias pré-paiement ; côté fraud/ : un score >=90).
+      // Résultat : un compte au score déjà élevé se retrouvait login-verrouillé dès le 1er
+      // message bloqué, sans recours. Désormais l'AUTO-SUSPENSION (blocage du login) a UN SEUL
+      // maître : DisintermediationDetectorService.enforce(), déclenché sur chaque message bloqué
+      // (voir ChatService.createMessage → recordBlockedMessage). Lui seul décide, et UNIQUEMENT
+      // sur PREUVE DURE (violations « contact » réelles ET répétées) ; sous ce seuil il se limite
+      // au gel des mises en relation (leakageFlagged) SANS toucher au login.
+      // Ici on se contente donc de TRACER le franchissement de seuil pour l'audit admin.
       if (violationCount >= 5) {
-        this.logger.error(`User ${userId} exceeded violation threshold (${violationCount})`);
-        const user = await this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { status: true },
+        await this.prisma.contentViolation.updateMany({
+          where: { userId, reviewed: false, actionTaken: null },
+          data: { actionTaken: 'FLAGGED_REPEATED_CONTACT_SHARING' },
         });
-        if (user && user.status !== 'SUSPENDED') {
-          await this.prisma.user.update({
-            where: { id: userId },
-            data: { status: 'SUSPENDED' },
-          });
-          await this.prisma.contentViolation.updateMany({
-            where: { userId, reviewed: false },
-            data: { actionTaken: 'ACCOUNT_SUSPENDED' },
-          });
-          this.logger.warn(
-            `User ${userId} auto-suspended after ${violationCount} content violations (REPEATED_CONTACT_SHARING)`,
-          );
-        }
+        this.logger.warn(
+          `User ${userId} a franchi le seuil de ${violationCount} violations/30j (REPEATED_CONTACT_SHARING) ` +
+            `→ marqué pour revue ; auto-suspension déléguée au détecteur anti-désintermédiation (preuve dure requise).`,
+        );
       }
     } catch (error) {
       this.logger.error('Failed to log content violation', error);

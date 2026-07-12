@@ -117,7 +117,7 @@ export default function ClientOrdersPage() {
   const loadOrders = async () => {
     try {
       const data = await marketplaceApi.getOrders();
-      setOrders(data);
+      setOrders(data as unknown as Order[]);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {

@@ -35,6 +35,17 @@ export class CreateProductDto {
   @IsString({ each: true })
   images?: string[];
 
+  @ApiProperty({
+    required: false,
+    type: [String],
+    example: ['https://example.com/photo1.jpg'],
+    description: 'Photos du produit (persistées sur Product.photos). Alias accepté : `images`.',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photos?: string[];
+
   @ApiProperty({ example: 10 })
   @IsNumber()
   @Min(0)
@@ -85,6 +96,12 @@ export class UpdateProductDto {
   @IsString({ each: true })
   images?: string[];
 
+  @ApiProperty({ required: false, type: [String], description: 'Photos du produit. Alias accepté : `images`.' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photos?: string[];
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsNumber()
@@ -114,6 +131,13 @@ export class CreateProductReviewDto {
   @IsString()
   @MaxLength(2000)
   comment?: string;
+}
+
+export class ReplyProductReviewDto {
+  @ApiProperty({ example: 'Merci pour votre retour, ravi que le produit vous plaise !' })
+  @IsString()
+  @MaxLength(2000)
+  reply: string;
 }
 
 export interface ProductFilters {

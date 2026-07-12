@@ -34,6 +34,18 @@ export class UpdateOrderStatusDto {
   @ApiProperty({ example: 'PAID' })
   @IsString()
   status: string;
+
+  @ApiProperty({ required: false, example: 'LU123456789', description: 'Numéro de suivi (posé lors du passage à SHIPPED)' })
+  @IsOptional()
+  @IsString()
+  trackingNumber?: string;
+}
+
+export class ShipOrderDto {
+  @ApiProperty({ required: false, example: 'LU123456789', description: 'Numéro de suivi transporteur' })
+  @IsOptional()
+  @IsString()
+  trackingNumber?: string;
 }
 
 export interface OrderSummary {

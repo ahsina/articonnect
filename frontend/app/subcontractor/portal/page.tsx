@@ -27,18 +27,53 @@ import {
 type TabKey = 'dashboard' | 'offers' | 'assignments' | 'earnings';
 
 const OFFER_STATUS_VARIANT: Record<string, BadgeVariant> = {
+  ASSIGNED: 'warning', // offre reçue, en attente de réponse
   PENDING: 'warning',
+  IN_PROGRESS: 'info',
   ACCEPTED: 'success',
   DECLINED: 'error',
+  CANCELLED: 'error',
   EXPIRED: 'secondary',
 };
 
 const ASSIGNMENT_STATUS_VARIANT: Record<string, BadgeVariant> = {
+  ASSIGNED: 'warning',
   PENDING: 'warning',
   IN_PROGRESS: 'info',
   COMPLETED: 'success',
   CANCELLED: 'error',
 };
+
+// Libellés FR par défaut des statuts (fallback si i18n absent).
+const OFFER_STATUS_LABEL: Record<string, string> = {
+  ASSIGNED: 'À traiter',
+  PENDING: 'En attente',
+  IN_PROGRESS: 'Acceptée',
+  ACCEPTED: 'Acceptée',
+  DECLINED: 'Refusée',
+  CANCELLED: 'Refusée',
+  EXPIRED: 'Expirée',
+};
+
+const ASSIGNMENT_STATUS_LABEL: Record<string, string> = {
+  ASSIGNED: 'À accepter',
+  PENDING: 'En attente',
+  IN_PROGRESS: 'En cours',
+  COMPLETED: 'Terminée',
+  CANCELLED: 'Annulée',
+};
+
+// Plancher de commission plateforme (5 %) — cf. lib COMMISSION_FLOOR_RATE.
+const COMMISSION_FLOOR = 5;
+
+/** Détail commission d'une offre/mission : convenu, commission, net estimé. */
+function commissionBreakdown(amount?: number, rate?: number) {
+  const gross = Number(amount) || 0;
+  const effectiveRate = Math.max(Number(rate) || 0, COMMISSION_FLOOR);
+  const commission = Math.round(gross * effectiveRate) / 100;
+  const net = Math.max(0, gross - commission);
+  return { gross, effectiveRate, commission, net };
+}
 
 type BadgeVariant =
   | 'default'
@@ -141,9 +176,17 @@ export default function SubcontractorPortalPage() {
 
   const handleDecline = async (id: string) => {
     if (!id) return;
+    // Le back exige un motif de refus ; on le demande (annulable).
+    const reason = typeof window !== 'undefined'
+      ? window.prompt(
+          t('subcontractor', 'declineReasonPrompt') || 'Motif du refus (optionnel) :',
+          '',
+        )
+      : '';
+    if (reason === null) return; // annulé
     setActionId(id);
     try {
-      await subcontractorApi.portal.declineOffer(id);
+      await subcontractorApi.portal.declineOffer(id, reason || undefined);
       toast({
         title: t('common', 'success') || 'Success',
         description: t('subcontractor', 'offerDeclined') || 'Offer declined.',
@@ -209,9 +252,14 @@ export default function SubcontractorPortalPage() {
   };
 
   // --- Derived KPIs (tolerant, anti-NaN) ---------------------------------
+  // Une offre "à traiter" a le statut back ASSIGNED (ou PENDING en repli).
+  const isActionableOffer = (s?: string) => {
+    const st = (s || '').toUpperCase();
+    return st === 'ASSIGNED' || st === 'PENDING';
+  };
   const pendingOffersCount =
     Number(dashboard?.pendingOffers) ||
-    offers.filter((o) => (o?.status || '').toUpperCase() === 'PENDING').length ||
+    offers.filter((o) => isActionableOffer(o?.status)).length ||
     0;
   const activeCount =
     Number(dashboard?.activeAssignments) ||
@@ -224,9 +272,12 @@ export default function SubcontractorPortalPage() {
   const monthEarnings = Number(dashboard?.totalEarnings ?? earnings?.totalEarnings) || 0;
   const earningsCurrency = earnings?.currency || 'EUR';
 
-  const activeAssignments = assignments.filter(
-    (a) => (a?.status || '').toUpperCase() !== 'COMPLETED' && (a?.status || '').toUpperCase() !== 'CANCELLED',
-  );
+  // "Missions en cours" du tableau de bord = uniquement IN_PROGRESS
+  // (les offres ASSIGNED ne sont pas encore acceptées).
+  const activeAssignments =
+    dashboard?.currentAssignments && dashboard.currentAssignments.length > 0
+      ? dashboard.currentAssignments
+      : assignments.filter((a) => (a?.status || '').toUpperCase() === 'IN_PROGRESS');
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'dashboard', label: t('subcontractor', 'tabDashboard') || 'Tableau de bord', icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -353,8 +404,9 @@ export default function SubcontractorPortalPage() {
             ) : (
               <div className="space-y-3">
                 {offers.map((offer) => {
-                  const status = (offer?.status || 'PENDING').toUpperCase();
-                  const isPending = status === 'PENDING';
+                  const status = (offer?.status || 'ASSIGNED').toUpperCase();
+                  // ASSIGNED = offre reçue à traiter (le back n'utilise pas PENDING).
+                  const isActionable = status === 'ASSIGNED' || status === 'PENDING';
                   const busy = actionId === offer?.id;
                   const contractorName =
                     offer?.contractor?.companyName ||
@@ -363,6 +415,7 @@ export default function SubcontractorPortalPage() {
                       .join(' ') ||
                     offer?.contractor?.email ||
                     (t('subcontractor', 'contractor') || 'Donneur d\'ordre');
+                  const breakdown = commissionBreakdown(offer?.amount, offer?.commissionRate);
                   return (
                     <div
                       key={offer?.id}
@@ -376,8 +429,13 @@ export default function SubcontractorPortalPage() {
                                 (t('subcontractor', 'untitledMission') || 'Mission')}
                             </h4>
                             <Badge variant={OFFER_STATUS_VARIANT[status] || 'secondary'}>
-                              {t('subcontractor', `offerStatus_${status}`) || status}
+                              {t('subcontractor', `offerStatus_${status}`) ||
+                                OFFER_STATUS_LABEL[status] ||
+                                status}
                             </Badge>
+                            {offer?.role && (
+                              <Badge variant="outline">{offer.role}</Badge>
+                            )}
                           </div>
                           {offer?.mission?.description && (
                             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
@@ -409,12 +467,24 @@ export default function SubcontractorPortalPage() {
                           )}
                         </div>
                         <div className="text-right shrink-0">
+                          <div className="text-xs text-muted-foreground">
+                            {t('subcontractor', 'agreedAmount') || 'Montant convenu'}
+                          </div>
                           <div className="text-lg font-bold text-foreground">
                             {formatMoney(offer?.amount, offer?.currency)}
                           </div>
                         </div>
                       </div>
-                      {isPending && (
+
+                      {/* Détail commission plateforme + net estimé */}
+                      <CommissionInfo
+                        breakdown={breakdown}
+                        currency={offer?.currency}
+                        onFormatMoney={formatMoney}
+                        t={t}
+                      />
+
+                      {isActionable && (
                         <div className="flex justify-end gap-2 mt-4">
                           <Button
                             variant="outline"
@@ -513,7 +583,12 @@ export default function SubcontractorPortalPage() {
                         className="flex items-center justify-between p-3 border border-[#EDEDED] rounded-2xl"
                       >
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground">
+                          {item?.missionTitle && (
+                            <div className="text-sm font-medium text-foreground truncate">
+                              {item.missionTitle}
+                            </div>
+                          )}
+                          <div className="text-sm font-semibold text-foreground">
                             {formatMoney(item?.amount, earningsCurrency)}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -563,6 +638,49 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
+/**
+ * Détail de la commission plateforme pour une offre / mission :
+ * montant convenu, taux appliqué (plancher 5 %), et net estimé pour le sous-traitant.
+ */
+function CommissionInfo({
+  breakdown,
+  currency,
+  onFormatMoney,
+  t,
+}: {
+  breakdown: { gross: number; effectiveRate: number; commission: number; net: number };
+  currency?: string;
+  onFormatMoney: (a?: number, c?: string) => string;
+  t: (ns: string, key: string) => string;
+}) {
+  if (!breakdown || breakdown.gross <= 0) return null;
+  return (
+    <div className="mt-3 rounded-xl bg-muted/50 border border-[#EDEDED] p-3 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-muted-foreground">
+          {t('subcontractor', 'commission') || 'Commission plateforme'}
+          {` (${breakdown.effectiveRate}%)`}
+        </span>
+        <span className="font-medium text-foreground">
+          − {onFormatMoney(breakdown.commission, currency)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between mt-1">
+        <span className="text-muted-foreground">
+          {t('subcontractor', 'netEstimated') || 'Net estimé'}
+        </span>
+        <span className="font-semibold text-foreground">
+          {onFormatMoney(breakdown.net, currency)}
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t('subcontractor', 'commissionFloorNote') ||
+          'Commission plateforme minimale de 5 %.'}
+      </p>
+    </div>
+  );
+}
+
 function AssignmentRow({
   assignment,
   busy,
@@ -583,10 +701,11 @@ function AssignmentRow({
   t: (ns: string, key: string) => string;
 }) {
   const a = assignment || ({} as SubcontractorAssignment);
-  const status = (a?.status || 'PENDING').toUpperCase();
+  const status = (a?.status || 'ASSIGNED').toUpperCase();
   const progress = Math.min(100, Math.max(0, Number(a?.progress) || 0));
   const isDone = status === 'COMPLETED';
-  const isCancelled = status === 'CANCELLED';
+  const canWork = status === 'IN_PROGRESS'; // seul l'état IN_PROGRESS accepte progress/complete
+  const breakdown = commissionBreakdown(a?.amount, a?.commissionRate);
 
   return (
     <div className="p-4 border border-[#EDEDED] rounded-2xl">
@@ -597,8 +716,11 @@ function AssignmentRow({
               {a?.mission?.title || (t('subcontractor', 'untitledMission') || 'Mission')}
             </h4>
             <Badge variant={statusVariant[status] || 'secondary'}>
-              {t('subcontractor', `assignmentStatus_${status}`) || status}
+              {t('subcontractor', `assignmentStatus_${status}`) ||
+                ASSIGNMENT_STATUS_LABEL[status] ||
+                status}
             </Badge>
+            {a?.role && <Badge variant="outline">{a.role}</Badge>}
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             {a?.mission?.city && (
@@ -616,11 +738,22 @@ function AssignmentRow({
           </div>
         </div>
         <div className="text-right shrink-0">
+          <div className="text-xs text-muted-foreground">
+            {t('subcontractor', 'agreedAmount') || 'Montant convenu'}
+          </div>
           <div className="text-base font-bold text-foreground">
             {onFormatMoney(a?.amount, a?.currency)}
           </div>
         </div>
       </div>
+
+      {/* Détail commission plateforme + net estimé */}
+      <CommissionInfo
+        breakdown={breakdown}
+        currency={a?.currency}
+        onFormatMoney={onFormatMoney}
+        t={t}
+      />
 
       {/* Progress bar */}
       <div className="mt-3">
@@ -639,7 +772,7 @@ function AssignmentRow({
         </div>
       </div>
 
-      {!isDone && !isCancelled && (
+      {canWork && (
         <div className="flex flex-wrap justify-end gap-2 mt-4">
           {[25, 50, 75].map((step) => (
             <Button

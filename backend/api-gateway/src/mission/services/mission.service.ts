@@ -1234,6 +1234,222 @@ export class MissionService {
     };
   }
 
+  // ================================================================
+  // ACTIONS ADMIN (modération de missions problématiques)
+  // Réservées au rôle ADMIN via le contrôleur. Contrairement aux
+  // méthodes participant (cancelMission/updateStatus), elles ne passent
+  // PAS par le contrôle d'ownership : l'admin agit sur N'IMPORTE quelle
+  // mission. Chaque action est tracée dans MissionHistory (rôle ADMIN).
+  // ================================================================
+
+  /**
+   * Liste paginée des missions pour le back-office admin, avec infos client/artisan.
+   * Filtre optionnel par statut (déjà validé côté contrôleur contre l'enum).
+   */
+  async adminListMissions(opts: {
+    page?: number;
+    limit?: number;
+    status?: MissionStatus;
+  }) {
+    const page = opts.page && opts.page > 0 ? opts.page : 1;
+    const limit = opts.limit && opts.limit > 0 ? Math.min(opts.limit, 100) : 20;
+    const skip = (page - 1) * limit;
+    const where = opts.status ? { status: opts.status } : {};
+
+    const [missions, total] = await Promise.all([
+      this.prisma.mission.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          category: true,
+          type: true,
+          clientBudget: true,
+          agreedPrice: true,
+          city: true,
+          createdAt: true,
+          updatedAt: true,
+          scheduledFor: true,
+          completedAt: true,
+          cancelledAt: true,
+          client: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          artisan: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+        },
+      }),
+      this.prisma.mission.count({ where }),
+    ]);
+
+    return {
+      data: missions,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * ADMIN — Annulation forcée d'une mission problématique.
+   * Rembourse INTÉGRALEMENT le client (l'admin ne pénalise pas : intervention plateforme), puis
+   * bascule la mission en CANCELLED. Best-effort sur le remboursement (une mission sans paiement
+   * capturé renvoie simplement 0€ remboursé, sans bloquer l'annulation).
+   */
+  async adminForceCancel(missionId: string, adminId: string, reason?: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      select: {
+        id: true,
+        status: true,
+        agreedPrice: true,
+        clientBudget: true,
+      },
+    });
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+    if (
+      mission.status === MissionStatus.CANCELLED ||
+      mission.status === MissionStatus.CANCELLED_NO_SHOW
+    ) {
+      throw new BadRequestException('Cette mission est déjà annulée');
+    }
+
+    // Remboursement plein du montant sécurisé (capé automatiquement au montant réellement payé).
+    const basePrice = Number(mission.agreedPrice || mission.clientBudget || 0);
+    const refundResult = await this.paymentService.refundForCancellation(
+      missionId,
+      basePrice,
+    );
+
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: { status: MissionStatus.CANCELLED, cancelledAt: new Date() },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.CANCELLED,
+      adminId,
+      'ADMIN',
+      `[ADMIN] ${reason || 'Annulation forcée par un administrateur'} — remboursé ${refundResult.refunded}€`,
+    );
+
+    return { ...updated, refunded: refundResult.refunded };
+  }
+
+  /**
+   * ADMIN — Réassigner une mission à un autre artisan.
+   * Valide que la cible est bien un utilisateur ARTISAN. Interdit sur une mission déjà terminée
+   * ou annulée (rien à réassigner). Trace l'ancien et le nouvel artisan.
+   */
+  async adminReassignMission(
+    missionId: string,
+    adminId: string,
+    newArtisanId: string,
+    note?: string,
+  ) {
+    if (!newArtisanId) {
+      throw new BadRequestException('artisanId requis');
+    }
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      select: { id: true, status: true, artisanId: true },
+    });
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+    if (
+      mission.status === MissionStatus.COMPLETED ||
+      mission.status === MissionStatus.AUTO_VALIDATED ||
+      mission.status === MissionStatus.CANCELLED ||
+      mission.status === MissionStatus.CANCELLED_NO_SHOW
+    ) {
+      throw new BadRequestException(
+        'Impossible de réassigner une mission terminée ou annulée',
+      );
+    }
+
+    const artisan = await this.prisma.user.findUnique({
+      where: { id: newArtisanId },
+      select: { id: true, role: true },
+    });
+    if (!artisan || artisan.role !== 'ARTISAN') {
+      throw new BadRequestException(
+        "L'utilisateur cible n'existe pas ou n'est pas un artisan",
+      );
+    }
+    if (mission.artisanId === newArtisanId) {
+      throw new BadRequestException(
+        'Cet artisan est déjà assigné à la mission',
+      );
+    }
+
+    const previousArtisanId = mission.artisanId;
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: { artisanId: newArtisanId },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      updated.status,
+      adminId,
+      'ADMIN',
+      `[ADMIN] Mission réassignée (${previousArtisanId || 'non assignée'} → ${newArtisanId})${note ? ` — ${note}` : ''}`,
+    );
+
+    return updated;
+  }
+
+  /**
+   * ADMIN — Clôturer de force une mission (marquée COMPLETED).
+   * Utile pour débloquer une mission dont le travail est fait mais bloquée dans le flux.
+   */
+  async adminCloseMission(missionId: string, adminId: string, note?: string) {
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      select: { id: true, status: true },
+    });
+    if (!mission) {
+      throw new NotFoundException('Mission introuvable');
+    }
+    if (
+      mission.status === MissionStatus.COMPLETED ||
+      mission.status === MissionStatus.AUTO_VALIDATED ||
+      mission.status === MissionStatus.CANCELLED ||
+      mission.status === MissionStatus.CANCELLED_NO_SHOW
+    ) {
+      throw new BadRequestException(
+        'Cette mission est déjà clôturée ou annulée',
+      );
+    }
+
+    const updated = await this.prisma.mission.update({
+      where: { id: missionId },
+      data: { status: MissionStatus.COMPLETED, completedAt: new Date() },
+    });
+
+    await this.createHistoryEntry(
+      missionId,
+      MissionStatus.COMPLETED,
+      adminId,
+      'ADMIN',
+      `[ADMIN] Mission clôturée par un administrateur${note ? ` — ${note}` : ''}`,
+    );
+
+    return updated;
+  }
+
   /**
    * Barème d'annulation UNIQUE (utilisé par l'AFFICHAGE getCancellationFees ET le PRÉLÈVEMENT réel
    * cancelMission → aucune divergence possible).

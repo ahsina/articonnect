@@ -104,11 +104,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Complete 2FA login with session token' })
   async complete2FA(
     @Body() body: { sessionToken: string; twoFactorCode: string },
+    @Ip() ipAddress: string,
+    @Request() req: any,
     @Response({ passthrough: true }) res: any,
   ) {
+    const userAgent = req.headers['user-agent'] || 'unknown';
     const result = await this.authService.complete2FALogin(
       body.sessionToken,
       body.twoFactorCode,
+      ipAddress,
+      userAgent,
     );
 
     // Set httpOnly cookies for tokens
@@ -161,7 +166,11 @@ export class AuthController {
     @Body() body?: { refreshToken?: string },
   ) {
     const refreshToken = req.cookies?.refreshToken || body?.refreshToken;
-    const result = await this.authService.logout(req.user.userId, refreshToken);
+    const result = await this.authService.logout(
+      req.user.userId,
+      refreshToken,
+      req.user.sessionId,
+    );
 
     // Clear auth cookies
     this.clearAuthCookies(res);

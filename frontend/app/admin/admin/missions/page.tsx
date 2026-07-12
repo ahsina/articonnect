@@ -3,8 +3,30 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, BusinessMetrics } from '@/lib/api/admin';
+import apiClient from '@/lib/api/client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+// Forme EXACTE renvoyée par GET /missions/admin/all (voir mission.service.adminListMissions).
+interface AdminMissionRow {
+  id: string;
+  title: string;
+  status: string;
+  category: string;
+  type: string;
+  clientBudget: string | number | null;
+  agreedPrice: string | number | null;
+  city: string | null;
+  createdAt: string;
+  scheduledFor: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  client: { id: string; firstName: string; lastName: string; email: string } | null;
+  artisan: { id: string; firstName: string; lastName: string; email: string } | null;
+}
+
+// Statuts terminaux : plus aucune action de modération possible.
+const TERMINAL_STATUSES = ['COMPLETED', 'AUTO_VALIDATED', 'CANCELLED', 'CANCELLED_NO_SHOW'];
 
 export default function MissionsManagementPage() {
   const { t } = useLanguage();
@@ -13,9 +35,19 @@ export default function MissionsManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Liste des missions + actions de modération admin.
+  const [missions, setMissions] = useState<AdminMissionRow[]>([]);
+  const [missionsLoading, setMissionsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [actingId, setActingId] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    loadMissions();
+  }, [statusFilter]);
 
   const loadData = async () => {
     try {
@@ -31,6 +63,67 @@ export default function MissionsManagementPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMissions = async () => {
+    try {
+      setMissionsLoading(true);
+      const res = await apiClient.get('/missions/admin/all', {
+        params: { limit: 50, ...(statusFilter ? { status: statusFilter } : {}) },
+      });
+      setMissions(res.data?.data ?? []);
+    } catch (err) {
+      console.error('Error loading missions list:', err);
+    } finally {
+      setMissionsLoading(false);
+    }
+  };
+
+  const handleForceCancel = async (missionId: string) => {
+    const reason = prompt("Motif de l'annulation forcée :", 'Annulation administrateur');
+    if (reason === null) return;
+    try {
+      setActingId(missionId);
+      const res = await apiClient.post(`/missions/${missionId}/admin/cancel`, { reason });
+      alert(`Mission annulée. Remboursé au client: ${res.data?.refunded ?? 0}€`);
+      await loadMissions();
+    } catch (err: any) {
+      console.error('Error force-cancelling mission:', err);
+      alert(err?.response?.data?.message || "Échec de l'annulation");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleReassign = async (missionId: string) => {
+    const artisanId = prompt("ID de l'artisan à qui réassigner la mission :");
+    if (!artisanId || !artisanId.trim()) return;
+    try {
+      setActingId(missionId);
+      await apiClient.post(`/missions/${missionId}/admin/reassign`, {
+        artisanId: artisanId.trim(),
+      });
+      await loadMissions();
+    } catch (err: any) {
+      console.error('Error reassigning mission:', err);
+      alert(err?.response?.data?.message || 'Échec de la réassignation');
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleClose = async (missionId: string) => {
+    if (!confirm('Clôturer de force cette mission (marquée TERMINÉE) ?')) return;
+    try {
+      setActingId(missionId);
+      await apiClient.post(`/missions/${missionId}/admin/close`, {});
+      await loadMissions();
+    } catch (err: any) {
+      console.error('Error closing mission:', err);
+      alert(err?.response?.data?.message || 'Échec de la clôture');
+    } finally {
+      setActingId(null);
     }
   };
 
@@ -309,6 +402,134 @@ export default function MissionsManagementPage() {
                 </span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Mission Management — liste + actions de modération admin */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <CardTitle>Gestion des missions</CardTitle>
+                <CardDescription>
+                  Annuler, réassigner ou clôturer une mission problématique.
+                </CardDescription>
+              </div>
+              <select
+                aria-label="Filtrer par statut"
+                className="px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">Tous les statuts</option>
+                <option value="PENDING">PENDING</option>
+                <option value="NEGOTIATING">NEGOTIATING</option>
+                <option value="ACCEPTED">ACCEPTED</option>
+                <option value="DEPOSIT_PAID">DEPOSIT_PAID</option>
+                <option value="PAID">PAID</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="COMPLETED">COMPLETED</option>
+                <option value="CANCELLED">CANCELLED</option>
+                <option value="DISPUTED">DISPUTED</option>
+              </select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {missionsLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('common', 'loading')}
+              </div>
+            ) : missions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Aucune mission
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-background">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Mission
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Client
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Artisan
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Statut
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Prix
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {missions.map((m) => {
+                      const terminal = TERMINAL_STATUSES.includes(m.status);
+                      const price = Number(m.agreedPrice ?? m.clientBudget ?? 0);
+                      return (
+                        <tr key={m.id} className="hover:bg-accent">
+                          <td className="px-4 py-3">
+                            <div className="font-medium text-foreground">{m.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {m.category} · {m.city || '—'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {m.client
+                              ? `${m.client.firstName} ${m.client.lastName}`
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {m.artisan
+                              ? `${m.artisan.firstName} ${m.artisan.lastName}`
+                              : 'Non assigné'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-muted text-foreground">
+                              {m.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground">
+                            {price.toLocaleString('fr-FR')}€
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => handleReassign(m.id)}
+                                disabled={terminal || actingId === m.id}
+                                className="text-primary font-medium hover:underline disabled:opacity-40 disabled:no-underline"
+                              >
+                                Réassigner
+                              </button>
+                              <button
+                                onClick={() => handleClose(m.id)}
+                                disabled={terminal || actingId === m.id}
+                                className="text-green-700 font-medium hover:underline disabled:opacity-40 disabled:no-underline"
+                              >
+                                Clôturer
+                              </button>
+                              <button
+                                onClick={() => handleForceCancel(m.id)}
+                                disabled={terminal || actingId === m.id}
+                                className="text-red-600 font-medium hover:underline disabled:opacity-40 disabled:no-underline"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
 

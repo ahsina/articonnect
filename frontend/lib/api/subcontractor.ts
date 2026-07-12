@@ -4,19 +4,35 @@ import apiClient from './client';
 // Types — shapes tolérants (le back reste la source de vérité).
 // ---------------------------------------------------------------------------
 
+// Statut réel côté back : une offre en attente de réponse a le statut `ASSIGNED`
+// (le sous-traitant l'a reçue mais ne l'a pas encore acceptée). Une fois acceptée
+// elle devient `IN_PROGRESS`, refusée -> `CANCELLED`.
 export type SubcontractorOfferStatus =
+  | 'ASSIGNED'
   | 'PENDING'
+  | 'IN_PROGRESS'
   | 'ACCEPTED'
   | 'DECLINED'
+  | 'CANCELLED'
   | 'EXPIRED'
   | string;
 
 export type SubcontractorAssignmentStatus =
+  | 'ASSIGNED'
   | 'PENDING'
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'CANCELLED'
   | string;
+
+/** Commission plateforme : plancher réglementaire de 5 %. */
+export const COMMISSION_FLOOR_RATE = 5;
+
+/** Convertit une valeur (Decimal string, number, null) en number sûr (0 si NaN). */
+const toNum = (v: any): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
 
 export type SubcontractorStatus =
   | 'ACTIVE'
@@ -24,31 +40,53 @@ export type SubcontractorStatus =
   | 'PENDING_INVITATION'
   | string;
 
-/** Offre reçue par l'artisan qui EXÉCUTE (portail sous-traitant). */
+/** Mission telle qu'incluse dans une offre / un assignment (normalisée). */
+export interface SubcontractorMission {
+  id?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  /** Normalisé depuis `scheduledFor` (nom réel côté back). */
+  scheduledAt?: string;
+  scheduledFor?: string;
+  status?: string;
+  clientName?: string;
+  client?: { firstName?: string; lastName?: string; phone?: string; [key: string]: any };
+  [key: string]: any;
+}
+
+/**
+ * Offre reçue par l'artisan qui EXÉCUTE (portail sous-traitant).
+ * Forme réelle du back : { agreedAmount, commissionRate, role, description,
+ * status:'ASSIGNED', mission{...,scheduledFor,client}, subcontractor:{artisan{...}} }.
+ * Les fonctions `portal.*` normalisent vers les champs ci-dessous.
+ */
 export interface SubcontractorOffer {
   id: string;
   status?: SubcontractorOfferStatus;
+  role?: string;
   missionId?: string;
-  mission?: {
-    id?: string;
-    title?: string;
-    description?: string;
-    address?: string;
-    city?: string;
-    postalCode?: string;
-    scheduledAt?: string;
-    [key: string]: any;
-  };
+  mission?: SubcontractorMission;
+  /** Montant convenu (normalisé depuis `agreedAmount`). */
   amount?: number;
   currency?: string;
+  /** Taux de commission plateforme en % (normalisé depuis `commissionRate`). */
+  commissionRate?: number;
+  /** Note interne / rôle (normalisé depuis `description`). */
+  note?: string;
   message?: string;
   contractorId?: string;
+  /** Donneur d'ordre (normalisé depuis `subcontractor.artisan`). */
   contractor?: {
     id?: string;
     companyName?: string;
     firstName?: string;
     lastName?: string;
     email?: string;
+    phone?: string;
     [key: string]: any;
   };
   createdAt?: string;
@@ -61,22 +99,28 @@ export interface SubcontractorOffer {
 export interface SubcontractorAssignment {
   id: string;
   status?: SubcontractorAssignmentStatus;
+  role?: string;
+  /** Avancement 0-100 (persisté côté back sur le champ `progress`). */
   progress?: number;
   subcontractorId?: string;
   subcontractor?: Subcontractor;
   missionId?: string;
-  mission?: {
-    id?: string;
-    title?: string;
-    description?: string;
-    address?: string;
-    city?: string;
-    postalCode?: string;
-    scheduledAt?: string;
-    [key: string]: any;
-  };
+  mission?: SubcontractorMission;
+  /** Montant convenu (normalisé depuis `agreedAmount`). */
   amount?: number;
   currency?: string;
+  /** Taux de commission plateforme en % (normalisé depuis `commissionRate`). */
+  commissionRate?: number;
+  paymentStatus?: string;
+  /** Donneur d'ordre (normalisé depuis `subcontractor.artisan`). */
+  contractor?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    [key: string]: any;
+  };
+  note?: string;
   notes?: string;
   startedAt?: string;
   completedAt?: string;
@@ -116,31 +160,47 @@ export interface Subcontractor {
   [key: string]: any;
 }
 
-/** Tableau de bord du portail sous-traitant. */
+/**
+ * Tableau de bord du portail sous-traitant (normalisé et aplati).
+ * Forme réelle du back : { isSubcontractor, subcontractorId,
+ * stats:{ pendingOffers, activeAssignments, completedMissions, totalEarnings,
+ * averageRating }, currentAssignments:[...] }.
+ */
 export interface PortalDashboard {
+  isSubcontractor?: boolean;
+  subcontractorId?: string;
   pendingOffers?: number;
   activeAssignments?: number;
   completedAssignments?: number;
   totalEarnings?: number;
   pendingEarnings?: number;
   averageRating?: number;
+  currentAssignments?: SubcontractorAssignment[];
   recentOffers?: SubcontractorOffer[];
   recentAssignments?: SubcontractorAssignment[];
   [key: string]: any;
 }
 
-/** Résumé des gains du portail sous-traitant. */
+/**
+ * Résumé des gains du portail sous-traitant (normalisé).
+ * Forme réelle du back : { summary:{ totalEarned, totalPaid, totalPending,
+ * missionsCompleted }, assignments:[{ id, missionTitle, amount, completedAt,
+ * paymentStatus, paidAt }] }.
+ */
 export interface SubcontractorEarnings {
   totalEarnings?: number;
   paidEarnings?: number;
   pendingEarnings?: number;
+  missionsCompleted?: number;
   currency?: string;
   items?: Array<{
     id?: string;
     assignmentId?: string;
+    missionTitle?: string;
     amount?: number;
     status?: string;
     createdAt?: string;
+    paidAt?: string | null;
     [key: string]: any;
   }>;
   [key: string]: any;
@@ -180,6 +240,141 @@ export interface UpdateSubcontractorAssignmentDto {
 }
 
 // ---------------------------------------------------------------------------
+// Normalisation back -> front.
+// Le back sérialise les Decimal en string ("400"), imbrique les gains sous
+// `stats`/`summary`, nomme le montant `agreedAmount`, la date `scheduledFor`,
+// le donneur d'ordre `subcontractor.artisan`, et le statut d'offre en attente
+// `ASSIGNED`. On aligne tout ici pour que la page lise des champs stables.
+// ---------------------------------------------------------------------------
+
+function normalizeMission(m: any): SubcontractorMission | undefined {
+  if (!m || typeof m !== 'object') return undefined;
+  const clientName = m.client
+    ? [m.client.firstName, m.client.lastName].filter(Boolean).join(' ') || undefined
+    : undefined;
+  return {
+    ...m,
+    scheduledAt: m.scheduledAt ?? m.scheduledFor ?? undefined,
+    clientName,
+  };
+}
+
+function normalizeContractor(raw: any) {
+  const artisan = raw?.subcontractor?.artisan ?? raw?.contractor ?? null;
+  if (!artisan || typeof artisan !== 'object') return undefined;
+  return {
+    firstName: artisan.firstName,
+    lastName: artisan.lastName,
+    email: artisan.email,
+    phone: artisan.phone,
+    companyName: artisan.companyName,
+  };
+}
+
+function normalizeOffer(raw: any): SubcontractorOffer {
+  return {
+    ...raw,
+    id: raw?.id,
+    status: raw?.status,
+    role: raw?.role ?? undefined,
+    missionId: raw?.missionId,
+    mission: normalizeMission(raw?.mission),
+    amount: toNum(raw?.agreedAmount ?? raw?.amount),
+    currency: raw?.currency || 'EUR',
+    commissionRate: toNum(raw?.commissionRate),
+    contractor: normalizeContractor(raw),
+    note: raw?.description ?? raw?.note ?? undefined,
+    createdAt: raw?.createdAt,
+    updatedAt: raw?.updatedAt,
+  };
+}
+
+function normalizeAssignment(raw: any): SubcontractorAssignment {
+  const status = raw?.status;
+  // `progress` est persisté côté back ; s'il manque encore, on déduit 100 % pour
+  // une mission terminée et 0 sinon (jamais NaN).
+  const progress =
+    raw?.progress != null
+      ? Math.min(100, Math.max(0, toNum(raw.progress)))
+      : status === 'COMPLETED'
+        ? 100
+        : 0;
+  return {
+    ...raw,
+    id: raw?.id,
+    status,
+    role: raw?.role ?? undefined,
+    missionId: raw?.missionId,
+    mission: normalizeMission(raw?.mission),
+    amount: toNum(raw?.agreedAmount ?? raw?.amount),
+    currency: raw?.currency || 'EUR',
+    commissionRate: toNum(raw?.commissionRate),
+    paymentStatus: raw?.paymentStatus,
+    progress,
+    contractor: normalizeContractor(raw),
+    note: raw?.description ?? raw?.note ?? undefined,
+    createdAt: raw?.createdAt,
+    updatedAt: raw?.updatedAt,
+  };
+}
+
+function normalizeDashboard(raw: any): PortalDashboard {
+  if (!raw || raw.isSubcontractor === false) {
+    return {
+      isSubcontractor: false,
+      pendingOffers: 0,
+      activeAssignments: 0,
+      completedAssignments: 0,
+      totalEarnings: 0,
+      averageRating: 0,
+      currentAssignments: [],
+    };
+  }
+  const stats = raw.stats ?? {};
+  return {
+    ...raw,
+    isSubcontractor: true,
+    subcontractorId: raw.subcontractorId,
+    pendingOffers: toNum(stats.pendingOffers ?? raw.pendingOffers),
+    activeAssignments: toNum(stats.activeAssignments ?? raw.activeAssignments),
+    completedAssignments: toNum(
+      stats.completedMissions ?? stats.completedAssignments ?? raw.completedAssignments,
+    ),
+    totalEarnings: toNum(stats.totalEarnings ?? raw.totalEarnings),
+    averageRating: toNum(stats.averageRating ?? raw.averageRating),
+    currentAssignments: Array.isArray(raw.currentAssignments)
+      ? raw.currentAssignments.map(normalizeAssignment)
+      : [],
+  };
+}
+
+function normalizeEarnings(raw: any): SubcontractorEarnings {
+  const summary = raw?.summary ?? {};
+  const rows = Array.isArray(raw?.assignments)
+    ? raw.assignments
+    : Array.isArray(raw?.items)
+      ? raw.items
+      : [];
+  return {
+    ...raw,
+    totalEarnings: toNum(summary.totalEarned ?? raw?.totalEarnings),
+    paidEarnings: toNum(summary.totalPaid ?? raw?.paidEarnings),
+    pendingEarnings: toNum(summary.totalPending ?? raw?.pendingEarnings),
+    missionsCompleted: toNum(summary.missionsCompleted ?? raw?.missionsCompleted),
+    currency: raw?.currency || 'EUR',
+    items: rows.map((a: any) => ({
+      id: a?.id,
+      assignmentId: a?.assignmentId ?? a?.id,
+      missionTitle: a?.missionTitle ?? a?.mission?.title,
+      amount: toNum(a?.amount ?? a?.agreedAmount),
+      status: a?.status ?? a?.paymentStatus,
+      createdAt: a?.createdAt ?? a?.completedAt,
+      paidAt: a?.paidAt ?? null,
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Client API sous-traitance.
 //   - portal : l'artisan qui EXÉCUTE (voit offres, missions, gains).
 //   - manage : l'artisan DONNEUR d'ordre (invite, assigne, suit).
@@ -188,60 +383,71 @@ export interface UpdateSubcontractorAssignmentDto {
 export const subcontractorApi = {
   // --- Portail sous-traitant (exécutant) ---------------------------------
   portal: {
-    // Tableau de bord agrégé du portail.
+    // Tableau de bord agrégé du portail (aplati depuis `stats`).
     getDashboard: async (): Promise<PortalDashboard> => {
       const response = await apiClient.get('/subcontractor-portal/dashboard');
-      return response.data;
+      return normalizeDashboard(response.data);
     },
 
-    // Offres reçues (en attente / historique).
+    // Offres reçues à traiter (statut back `ASSIGNED`).
     getOffers: async (): Promise<SubcontractorOffer[]> => {
       const response = await apiClient.get('/subcontractor-portal/offers');
-      return response.data;
+      const list = Array.isArray(response.data) ? response.data : [];
+      return list.map(normalizeOffer);
     },
 
-    // Accepter une offre.
-    acceptOffer: async (id: string): Promise<SubcontractorOffer> => {
-      const response = await apiClient.post(`/subcontractor-portal/offers/${id}/accept`);
-      return response.data;
+    // Accepter une offre (notes optionnelles).
+    acceptOffer: async (id: string, notes?: string): Promise<SubcontractorAssignment> => {
+      const response = await apiClient.post(
+        `/subcontractor-portal/offers/${id}/accept`,
+        notes ? { notes } : {},
+      );
+      return normalizeAssignment(response.data);
     },
 
-    // Refuser une offre.
-    declineOffer: async (id: string): Promise<SubcontractorOffer> => {
-      const response = await apiClient.post(`/subcontractor-portal/offers/${id}/decline`);
-      return response.data;
+    // Refuser une offre. Le back exige un motif (`reason`) — on en fournit
+    // toujours un pour éviter un feedback "undefined" en base.
+    declineOffer: async (id: string, reason?: string): Promise<SubcontractorAssignment> => {
+      const response = await apiClient.post(
+        `/subcontractor-portal/offers/${id}/decline`,
+        { reason: (reason && reason.trim()) || 'Refusé par le sous-traitant' },
+      );
+      return normalizeAssignment(response.data);
     },
 
-    // Missions confiées à l'exécutant.
+    // Missions confiées à l'exécutant (tous statuts).
     getAssignments: async (): Promise<SubcontractorAssignment[]> => {
       const response = await apiClient.get('/subcontractor-portal/assignments');
-      return response.data;
+      const list = Array.isArray(response.data) ? response.data : [];
+      return list.map(normalizeAssignment);
     },
 
-    // Mettre à jour l'avancement d'une mission (progress optionnel).
+    // Mettre à jour l'avancement d'une mission (0-100, persisté sur `progress`).
     updateProgress: async (
       id: string,
       progress?: number,
     ): Promise<SubcontractorAssignment> => {
+      const clamped = Math.min(100, Math.max(0, toNum(progress)));
       const response = await apiClient.post(
         `/subcontractor-portal/assignments/${id}/progress`,
-        { progress },
+        { progress: clamped, notes: `Avancement mis à jour: ${clamped}%` },
       );
-      return response.data;
+      return normalizeAssignment(response.data);
     },
 
     // Marquer une mission comme terminée.
     completeAssignment: async (id: string): Promise<SubcontractorAssignment> => {
       const response = await apiClient.post(
         `/subcontractor-portal/assignments/${id}/complete`,
+        {},
       );
-      return response.data;
+      return normalizeAssignment(response.data);
     },
 
-    // Résumé des gains.
+    // Résumé des gains (aplati depuis `summary` + `assignments`).
     getEarnings: async (): Promise<SubcontractorEarnings> => {
       const response = await apiClient.get('/subcontractor-portal/earnings');
-      return response.data;
+      return normalizeEarnings(response.data);
     },
   },
 

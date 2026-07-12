@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { EmailService } from '../../email/services/email.service';
 import { randomBytes } from 'crypto';
@@ -300,7 +301,40 @@ export class SubcontractorService {
       },
     });
 
+    // Notifie le sous-traitant (in-app) qu'une nouvelle offre/mission lui a été attribuée. Ne
+    // concerne que les sous-traitants ayant un compte plateforme (subcontractorUserId) ; les
+    // sous-traitants externes sont contactés par email d'invitation, pas de notification in-app.
+    if (subcontractor.subcontractorUserId) {
+      await this.notifyUser(
+        subcontractor.subcontractorUserId,
+        NotificationType.NEW_MISSION,
+        'Nouvelle offre de sous-traitance',
+        `Vous avez reçu une offre pour la mission "${assignment.mission.title}" (${Number(dto.agreedAmount)} €).`,
+        '/subcontractor-portal',
+      );
+    }
+
     return assignment;
+  }
+
+  /**
+   * Crée une notification in-app (best-effort : ne casse jamais le happy-path si l'écriture échoue).
+   * Réutilise le modèle Notification directement via Prisma (même pattern que le portail sous-traitant).
+   */
+  private async notifyUser(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    message: string,
+    link?: string,
+  ): Promise<void> {
+    try {
+      await this.prisma.notification.create({
+        data: { userId, type, title, message, link },
+      });
+    } catch (error) {
+      this.logger.error(`Échec création notification pour ${userId}`, error as Error);
+    }
   }
 
   /**

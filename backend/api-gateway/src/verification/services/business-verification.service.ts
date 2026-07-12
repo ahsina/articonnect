@@ -243,6 +243,95 @@ export class BusinessVerificationService {
   }
 
   /**
+   * DÉCISION ADMIN — Approuver la vérification d'un artisan.
+   * Passe le profil à VERIFIED + pose le badge (businessVerified=true) + horodate.
+   * Accepte l'id du profil OU l'userId (même convention que getVerificationStatus).
+   */
+  async adminApprove(artisanId: string) {
+    const profile = await this.prisma.artisanProfile.findFirst({
+      where: { OR: [{ id: artisanId }, { userId: artisanId }] },
+      select: { id: true, businessVerificationWarnings: true, companyName: true },
+    });
+    if (!profile) {
+      throw new BadRequestException('Profil artisan introuvable');
+    }
+
+    const now = new Date();
+    const decisionNote = `ADMIN_APPROVED: vérification validée manuellement`;
+
+    await this.prisma.artisanProfile.update({
+      where: { id: profile.id },
+      data: {
+        businessVerified: true,
+        businessVerifiedAt: now,
+        businessVerificationStatus: VerificationStatus.VERIFIED,
+        businessVerificationLastCheck: now,
+        // On purge les erreurs (la décision admin fait autorité) et on trace la décision.
+        businessVerificationErrors: [],
+        businessVerificationWarnings: [
+          ...(profile.businessVerificationWarnings || []),
+          decisionNote,
+        ],
+      },
+    });
+
+    this.logger.log(
+      `Artisan ${artisanId} APPROVED by admin: ${profile.companyName}`,
+    );
+
+    return {
+      message: 'Vérification approuvée',
+      artisanId,
+      status: VerificationStatus.VERIFIED,
+      verified: true,
+    };
+  }
+
+  /**
+   * DÉCISION ADMIN — Rejeter la vérification d'un artisan.
+   * Passe le profil à REJECTED, retire le badge (businessVerified=false) et trace le motif.
+   * Accepte l'id du profil OU l'userId.
+   */
+  async adminReject(artisanId: string, reason: string) {
+    const profile = await this.prisma.artisanProfile.findFirst({
+      where: { OR: [{ id: artisanId }, { userId: artisanId }] },
+      select: { id: true, businessVerificationWarnings: true, companyName: true },
+    });
+    if (!profile) {
+      throw new BadRequestException('Profil artisan introuvable');
+    }
+
+    const now = new Date();
+    const decisionNote = `ADMIN_REJECTED: ${reason}`;
+
+    await this.prisma.artisanProfile.update({
+      where: { id: profile.id },
+      data: {
+        businessVerified: false,
+        businessVerifiedAt: null,
+        businessVerificationStatus: VerificationStatus.REJECTED,
+        businessVerificationLastCheck: now,
+        businessVerificationWarnings: [
+          ...(profile.businessVerificationWarnings || []),
+          decisionNote,
+        ],
+      },
+    });
+
+    this.logger.log(
+      `Artisan ${artisanId} REJECTED by admin (${reason}): ${profile.companyName}`,
+    );
+
+    return {
+      message: 'Vérification rejetée',
+      artisanId,
+      status: VerificationStatus.REJECTED,
+      verified: false,
+      reason,
+    };
+  }
+
+  /**
    * Get all unverified artisans (for admin review)
    */
   async getUnverifiedArtisans(limit: number = 50) {

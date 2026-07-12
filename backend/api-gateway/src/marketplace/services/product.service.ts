@@ -10,6 +10,7 @@ import {
   UpdateProductDto,
   ProductFilters,
   CreateProductReviewDto,
+  ReplyProductReviewDto,
 } from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
 import { Prisma } from '@prisma/client';
@@ -53,6 +54,9 @@ export class ProductService {
         stock: data.stock,
         sku: data.sku,
         status: data.status || 'DRAFT',
+        // Photos : le front envoie `photos` (ou l'alias `images`). On persiste sur Product.photos
+        // (jusqu'ici ignoré -> photos restait toujours []).
+        photos: data.photos ?? data.images ?? [],
       },
       include: {
         artisan: {
@@ -230,6 +234,13 @@ export class ProductService {
       delete updateData.category;
     }
 
+    // Photos : mapper `photos` / alias `images` sur la colonne Product.photos. `images` n'est PAS une
+    // colonne Product : le laisser dans le payload Prisma provoquait un 500 (Unknown arg `images`).
+    if (updateData.photos !== undefined || updateData.images !== undefined) {
+      updateData.photos = updateData.photos ?? updateData.images;
+    }
+    delete updateData.images;
+
     return this.prisma.product.update({
       where: { id },
       data: updateData,
@@ -360,6 +371,9 @@ export class ProductService {
       productId: review.productId,
       rating: review.rating,
       comment: review.comment,
+      // Réponse publique du vendeur à l'avis (null tant que le vendeur n'a pas répondu).
+      sellerReply: review.sellerReply ?? null,
+      sellerReplyAt: review.sellerReplyAt ?? null,
       createdAt: review.createdAt,
       updatedAt: review.updatedAt,
       reviewer: review.reviewer,
@@ -436,5 +450,60 @@ export class ProductService {
     });
 
     return reviews.map((r) => this.mapReview(r));
+  }
+
+  /**
+   * Réponse du VENDEUR à un avis client (façon Amazon/marketplace).
+   * Réservée au propriétaire (artisan) du produit ; pose sellerReply/sellerReplyAt.
+   */
+  async replyToReview(
+    productId: string,
+    reviewId: string,
+    artisanId: string,
+    data: ReplyProductReviewDto,
+  ) {
+    const review = await this.prisma.productReview.findUnique({
+      where: { id: reviewId },
+      include: { product: { select: { id: true, artisanId: true } } },
+    });
+
+    if (!review || review.productId !== productId) {
+      throw new NotFoundException('Avis introuvable');
+    }
+
+    // Seul le vendeur (propriétaire du produit) peut répondre.
+    if (review.product.artisanId !== artisanId) {
+      throw new ForbiddenException("Seul le vendeur du produit peut répondre à cet avis");
+    }
+
+    const updated = await this.prisma.productReview.update({
+      where: { id: reviewId },
+      data: { sellerReply: data.reply, sellerReplyAt: new Date() },
+      include: {
+        reviewer: {
+          select: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+      },
+    });
+
+    return this.mapReview(updated);
+  }
+
+  // ==================== VENDEUR : MES PRODUITS ====================
+
+  /**
+   * Produits de l'artisan connecté — TOUS statuts (DRAFT/ACTIVE/INACTIVE/SOLD_OUT), contrairement
+   * au catalogue public qui ne montre que ACTIVE. Sert le tableau de bord vendeur.
+   */
+  async getMyProducts(artisanId: string) {
+    const products = await this.prisma.product.findMany({
+      where: { artisanId },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { reviews: true, orderItems: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return products;
   }
 }

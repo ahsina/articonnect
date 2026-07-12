@@ -2,283 +2,298 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { marketplaceApi, Product, ProductStatus } from '@/lib/api/marketplace';
+import { marketplaceApi, Product, ProductStatus, Category } from '@/lib/api/marketplace';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2, Plus, Package, ShoppingBag, RotateCcw, BarChart3, Star } from 'lucide-react';
+import ProductForm from './ProductForm';
+import ProductReviewsModal from './ProductReviewsModal';
+import SellerOrders from './SellerOrders';
+import SellerReturns from './SellerReturns';
+import SellerStats from './SellerStats';
 
-export default function ArtisanProductsPage() {
+type Tab = 'products' | 'orders' | 'returns' | 'sales';
+
+export default function ArtisanShopPage() {
   const { t } = useLanguage();
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const { user } = useAuth();
 
-  const CATEGORIES = [
-    { id: 'tools', name: t('marketplace', 'tools') },
-    { id: 'materials', name: t('marketplace', 'materials') },
-    { id: 'decorations', name: t('marketplace', 'decorations') },
-    { id: 'furniture', name: t('marketplace', 'furniture') },
-    { id: 'equipment', name: t('marketplace', 'equipment') },
-    { id: 'lighting', name: t('marketplace', 'lighting') },
-  ];
+  const [tab, setTab] = useState<Tab>('products');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [reviewsFor, setReviewsFor] = useState<Product | null>(null);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (user?.id) loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-  const loadProducts = async () => {
+  const loadAll = async () => {
+    setLoading(true);
     try {
-      // Get products for current artisan (artisanId will be determined by auth token)
-      const response = await marketplaceApi.getProducts();
-      setProducts(response.data);
-    } catch (error) {
-      console.error('Error loading products:', error);
+      const [prods, cats] = await Promise.all([
+        marketplaceApi.getMyProducts(user!.id),
+        marketplaceApi.getCategories().catch(() => [] as Category[]),
+      ]);
+      setProducts(prods);
+      setCategories(cats);
+    } catch (e) {
+      console.error('Erreur chargement boutique', e);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleActive = async (productId: string) => {
+  const categoryName = (p: Product): string => {
+    const id = p.categoryId || p.category;
+    const found = categories.find((c) => c.id === id || c.slug === id);
+    return found?.name || '';
+  };
+
+  const handleToggleActive = async (product: Product) => {
+    const newStatus: ProductStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
-      const product = products.find((p) => p.id === productId);
-      if (!product) return;
-
-      const newStatus: ProductStatus = product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await marketplaceApi.updateProduct(productId, { status: newStatus });
-
-      setProducts(
-        products.map((p) =>
-          p.id === productId ? { ...p, status: newStatus } : p
-        )
-      );
-    } catch (error) {
-      console.error('Error toggling product status:', error);
+      await marketplaceApi.updateProduct(product.id, { status: newStatus });
+      setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, status: newStatus } : p)));
+    } catch (e) {
+      console.error('Erreur changement statut', e);
     }
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm(t('artisan', 'deleteProductConfirm'))) return;
-
+  const handleDelete = async (product: Product) => {
+    if (!confirm(t('artisan', 'deleteProductConfirm') || 'Supprimer ce produit ?')) return;
     try {
-      await marketplaceApi.deleteProduct(productId);
-      setProducts(products.filter((p) => p.id !== productId));
-    } catch (error) {
-      console.error('Error deleting product:', error);
+      await marketplaceApi.deleteProduct(product.id);
+      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+    } catch (e) {
+      console.error('Erreur suppression', e);
     }
   };
 
-  const getCategoryName = (categoryId: string) => {
-    return CATEGORIES.find((c) => c.id === categoryId)?.name || categoryId;
+  const handleSaved = (saved: Product) => {
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.id === saved.id);
+      return exists ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev];
+    });
+    setShowForm(false);
+    setEditing(null);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">{t('common', 'loading')}</div>
-      </div>
-    );
-  }
+  const stockValue = products.reduce((sum, p) => sum + (Number(p.price) || 0) * (p.stock || 0), 0);
+
+  const tabs: { key: Tab; label: string; icon: typeof Package }[] = [
+    { key: 'products', label: t('artisan', 'myProducts') || 'Mes produits', icon: Package },
+    { key: 'orders', label: t('artisan', 'salesOrders') || 'Commandes', icon: ShoppingBag },
+    { key: 'returns', label: t('artisan', 'returns') || 'Retours', icon: RotateCcw },
+    { key: 'sales', label: t('artisan', 'salesDashboard') || 'Ventes', icon: BarChart3 },
+  ];
 
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{t('artisan', 'myProducts')}</h1>
-            <p className="text-muted-foreground">
-              {t('artisan', 'manageProducts')}
-            </p>
+            <h1 className="text-3xl font-bold text-foreground mb-1">{t('artisan', 'myShop') || 'Ma boutique'}</h1>
+            <p className="text-muted-foreground">{t('artisan', 'manageProducts') || 'Gérez vos produits, commandes et ventes'}</p>
           </div>
-          <Button onClick={() => setShowAddModal(true)}>
-            + {t('artisan', 'addProduct')}
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('artisan', 'totalProducts')}</div>
-              <div className="text-2xl font-bold">{products.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('artisan', 'active')}</div>
-              <div className="text-2xl font-bold text-foreground">
-                {products.filter((p) => p.status === 'ACTIVE').length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('artisan', 'outOfStock')}</div>
-              <div className="text-2xl font-bold text-foreground">
-                {products.filter((p) => p.stock === 0).length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('artisan', 'stockValue')}</div>
-              <div className="text-2xl font-bold text-primary">
-                {(Number(products.reduce((sum, p) => sum + p.price * p.stock, 0)) || 0).toFixed(0)}€
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Products List */}
-        <div className="space-y-4">
-          {products.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <div className="text-4xl mb-4"></div>
-                <p className="text-muted-foreground mb-4">
-                  {t('artisan', 'noProducts')}
-                </p>
-                <Button onClick={() => setShowAddModal(true)}>
-                  {t('artisan', 'addFirstProduct')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            products.map((product) => (
-              <Card key={product.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex gap-6">
-                    {/* Product Image */}
-                    <img
-                      src={product.images[0] || 'https://via.placeholder.com/150?text=Produit'}
-                      alt={product.name}
-                      className="w-32 h-32 object-cover rounded-lg"
-                    />
-
-                    {/* Product Details */}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="text-xl font-semibold text-foreground">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {getCategoryName(product.category)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {product.status === 'ACTIVE' ? (
-                            <Badge variant="success" className="bg-green-100 text-green-700">
-                              {t('artisan', 'activeStatus')}
-                            </Badge>
-                          ) : (
-                            <Badge variant="default" className="bg-muted text-foreground">
-                              {t('artisan', 'inactiveStatus')}
-                            </Badge>
-                          )}
-                          {product.stock === 0 && (
-                            <Badge variant="error" className="bg-red-100 text-red-700">
-                              {t('artisan', 'outOfStockStatus')}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="text-foreground mb-3 line-clamp-2">
-                        {product.description}
-                      </p>
-
-                      <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">{t('artisan', 'price')}:</span>
-                          <p className="font-semibold text-lg">{product.price}€</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">{t('artisan', 'stock')}:</span>
-                          <p className="font-semibold text-lg">{product.stock}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">{t('artisan', 'value')}:</span>
-                          <p className="font-semibold text-lg">
-                            {(Number(product.price * product.stock) || 0).toFixed(0)}€
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/client/marketplace/${product.id}`)}
-                        >
-                          {t('artisan', 'view')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingProduct(product)}
-                        >
-                          {t('common', 'edit')}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleActive(product.id)}
-                        >
-                          {product.status === 'ACTIVE' ? `⏸${t('artisan', 'deactivate')}` : `▶${t('artisan', 'activate')}`}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          {t('common', 'delete')}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+          {tab === 'products' && (
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setShowForm(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {t('artisan', 'addProduct') || 'Ajouter un produit'}
+            </Button>
           )}
         </div>
 
-        {/* Add/Edit Product Modal Placeholder */}
-        {(showAddModal || editingProduct) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-2xl">
-              <CardHeader>
-                <CardTitle>
-                  {editingProduct ? t('artisan', 'editProduct') : t('artisan', 'addProduct')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Formulaire d'ajout/modification de produit à implémenter
-                </p>
-                <div className="flex justify-end gap-2">
+        {/* Tabs */}
+        <div className="mb-6 border-b border-border">
+          <div className="flex gap-1 overflow-x-auto">
+            {tabs.map((tb) => {
+              const Icon = tb.icon;
+              return (
+                <button
+                  key={tb.key}
+                  onClick={() => setTab(tb.key)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                    tab === tb.key
+                      ? 'border-primary text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tb.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content */}
+        {tab === 'products' && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-sm text-muted-foreground">{t('artisan', 'totalProducts') || 'Total produits'}</div>
+                  <div className="text-2xl font-bold text-foreground">{products.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-sm text-muted-foreground">{t('artisan', 'active') || 'Actifs'}</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {products.filter((p) => p.status === 'ACTIVE').length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-sm text-muted-foreground">{t('artisan', 'outOfStock') || 'Rupture'}</div>
+                  <div className="text-2xl font-bold text-foreground">{products.filter((p) => p.stock === 0).length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-sm text-muted-foreground">{t('artisan', 'stockValue') || 'Valeur du stock'}</div>
+                  <div className="text-2xl font-bold text-primary">{(Number(stockValue) || 0).toFixed(0)}€</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-16 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                {t('common', 'loading') || 'Chargement…'}
+              </div>
+            ) : products.length === 0 ? (
+              <Card>
+                <CardContent className="p-10 text-center">
+                  <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground mb-4">{t('artisan', 'noProducts') || 'Vous n’avez pas encore de produit.'}</p>
                   <Button
-                    variant="outline"
                     onClick={() => {
-                      setShowAddModal(false);
-                      setEditingProduct(null);
+                      setEditing(null);
+                      setShowForm(true);
                     }}
                   >
-                    {t('common', 'cancel')}
+                    <Plus className="h-4 w-4 mr-1" />
+                    {t('artisan', 'addFirstProduct') || 'Ajouter un premier produit'}
                   </Button>
-                  <Button>{t('common', 'save')}</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {products.map((product) => (
+                  <Card key={product.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col sm:flex-row gap-6">
+                        <img
+                          src={product.images[0] || 'https://via.placeholder.com/150?text=Produit'}
+                          alt={product.name}
+                          className="w-full sm:w-32 h-32 object-cover rounded-lg border border-border"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2 gap-2 flex-wrap">
+                            <div>
+                              <h3 className="text-xl font-semibold text-foreground">{product.name}</h3>
+                              <p className="text-sm text-muted-foreground">{categoryName(product)}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={product.status === 'ACTIVE' ? 'success' : 'secondary'}>
+                                {t('productStatus', product.status) || product.status}
+                              </Badge>
+                              {product.stock === 0 && (
+                                <Badge variant="error">{t('artisan', 'outOfStockStatus') || 'Rupture'}</Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          <p className="text-foreground mb-3 line-clamp-2">{product.description}</p>
+
+                          <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">{t('artisan', 'price') || 'Prix'}</span>
+                              <p className="font-semibold text-lg">{(Number(product.price) || 0).toFixed(2)}€</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t('artisan', 'stock') || 'Stock'}</span>
+                              <p className="font-semibold text-lg">{product.stock}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t('artisan', 'value') || 'Valeur'}</span>
+                              <p className="font-semibold text-lg">
+                                {((Number(product.price) || 0) * (product.stock || 0)).toFixed(0)}€
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" size="sm" onClick={() => router.push(`/client/marketplace/${product.id}`)}>
+                              {t('artisan', 'view') || 'Voir'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditing(product);
+                                setShowForm(true);
+                              }}
+                            >
+                              {t('common', 'edit') || 'Modifier'}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setReviewsFor(product)}>
+                              <Star className="h-4 w-4 mr-1" />
+                              {t('artisan', 'reviews') || 'Avis'}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleToggleActive(product)}>
+                              {product.status === 'ACTIVE' ? t('artisan', 'deactivate') || 'Désactiver' : t('artisan', 'activate') || 'Activer'}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleDelete(product)} className="text-destructive hover:text-destructive">
+                              {t('common', 'delete') || 'Supprimer'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
         )}
+
+        {tab === 'orders' && user?.id && <SellerOrders myUserId={user.id} />}
+        {tab === 'returns' && <SellerReturns />}
+        {tab === 'sales' && user?.id && <SellerStats myUserId={user.id} />}
       </div>
+
+      {/* Modals */}
+      {showForm && (
+        <ProductForm
+          product={editing}
+          categories={categories}
+          onClose={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
+          onSaved={handleSaved}
+        />
+      )}
+      {reviewsFor && <ProductReviewsModal product={reviewsFor} onClose={() => setReviewsFor(null)} />}
     </div>
   );
 }

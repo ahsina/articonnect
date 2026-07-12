@@ -470,48 +470,65 @@ export class CompanyService {
       throw new ForbiddenException("Vous n'avez pas accès aux statistiques de cette entreprise");
     }
 
-    const [totalMissions, completedMissions, activeMissions, totalRevenue, employeeCount] = await Promise.all([
-      this.prisma.mission.count({
-        where: { companyId },
-      }),
+    // Les missions productives de l'entreprise sont rattachées soit à la company (companyId),
+    // soit — cas historique/solo — à l'un de ses membres via artisanId. On agrège sur l'UNION
+    // des deux pour ne pas renvoyer completedMissions:0 / totalRevenue:0 alors que les membres
+    // ont réalisé des missions (le rattachement companyId n'a été posé que tardivement).
+    const memberIds = [
+      ...new Set([
+        company.ownerId,
+        ...company.employees
+          .filter((emp) => emp.status === EmployeeStatus.ACTIVE)
+          .map((emp) => emp.userId),
+      ]),
+    ];
+    const scopeWhere: any = {
+      OR: [{ companyId }, { artisanId: { in: memberIds } }],
+    };
+
+    const [totalMissions, completedMissions, activeMissions, completedRows, employeeCount] = await Promise.all([
+      this.prisma.mission.count({ where: scopeWhere }),
+      this.prisma.mission.count({ where: { ...scopeWhere, status: 'COMPLETED' } }),
       this.prisma.mission.count({
         where: {
-          companyId,
-          status: 'COMPLETED',
-        },
-      }),
-      this.prisma.mission.count({
-        where: {
-          companyId,
+          ...scopeWhere,
           status: {
-            in: ['PENDING', 'ACCEPTED', 'IN_PROGRESS'],
+            in: ['PENDING', 'NEGOTIATING', 'ACCEPTED', 'PENDING_DEPOSIT', 'DEPOSIT_PAID', 'IN_TRANSIT', 'PAID', 'IN_PROGRESS'],
           },
         },
       }),
-      this.prisma.mission.aggregate({
-        where: {
-          companyId,
-          status: 'COMPLETED',
-        },
-        _sum: {
-          finalPrice: true,
-        },
+      // finalPrice est souvent null → on somme finalPrice ?? agreedPrice (revenu réel convenu).
+      this.prisma.mission.findMany({
+        where: { ...scopeWhere, status: 'COMPLETED' },
+        select: { finalPrice: true, agreedPrice: true },
       }),
       this.prisma.companyEmployee.count({
-        where: {
-          companyId,
-          status: EmployeeStatus.ACTIVE,
-        },
+        where: { companyId, status: EmployeeStatus.ACTIVE },
       }),
     ]);
+
+    const totalRevenue = completedRows.reduce(
+      (sum, m) => sum + Number(m.finalPrice ?? m.agreedPrice ?? 0),
+      0,
+    );
+
+    // Note/avis : agrégés en réel depuis les profils artisans des membres (les compteurs
+    // dénormalisés Company.averageRating/totalReviews restent à 0 faute d'alimentation).
+    const memberProfiles = await this.prisma.artisanProfile.findMany({
+      where: { userId: { in: memberIds } },
+      select: { rating: true, reviewCount: true },
+    });
+    const totalReviews = memberProfiles.reduce((s, p) => s + (p.reviewCount || 0), 0);
+    const weightedRating = memberProfiles.reduce((s, p) => s + Number(p.rating || 0) * (p.reviewCount || 0), 0);
+    const averageRating = totalReviews ? +(weightedRating / totalReviews).toFixed(2) : Number(company.averageRating || 0);
 
     return {
       totalMissions,
       completedMissions,
       activeMissions,
-      totalRevenue: totalRevenue._sum.finalPrice || 0,
-      averageRating: company.averageRating,
-      totalReviews: company.totalReviews,
+      totalRevenue: +totalRevenue.toFixed(2),
+      averageRating,
+      totalReviews,
       employeeCount,
     };
   }

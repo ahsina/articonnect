@@ -1276,6 +1276,8 @@ model ProductReview {
   reviewer   User     @relation("ProductReviews", fields: [reviewerId], references: [id])
   rating     Int // 1-5 stars
   comment    String?
+  sellerReply   String?   // Reponse publique du vendeur a l'avis
+  sellerReplyAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -3271,6 +3273,7 @@ model SubcontractorAssignment {
   // Payment split
   agreedAmount      Decimal  @db.Decimal(10, 2)
   commissionRate    Decimal  @db.Decimal(5, 2) // Percentage of mission
+  progress          Int      @default(0) // Avancement 0-100 (suivi sous-traitant)
   paymentStatus     String   @default("PENDING") // PENDING, APPROVED, PAID, DISPUTED
   paidAt            DateTime?
   paymentReference  String?

@@ -335,6 +335,88 @@ export class MissionController {
     return this.missionService.getDepositStatus(missionId);
   }
 
+  // ================================================================
+  // ACTIONS ADMIN (modération de missions problématiques)
+  // ================================================================
+
+  /**
+   * Liste paginée des missions pour le back-office admin.
+   */
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lister les missions (Admin only)' })
+  @ApiQuery({ name: 'status', required: false, enum: MissionStatus })
+  async adminListMissions(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('status') status?: string,
+  ) {
+    const validStatus =
+      status && (Object.values(MissionStatus) as string[]).includes(status)
+        ? (status as MissionStatus)
+        : undefined;
+    return this.missionService.adminListMissions({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+      status: validStatus,
+    });
+  }
+
+  /**
+   * Annuler de force une mission (Admin) — remboursement plein du client.
+   */
+  @Post(':id/admin/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Annulation forcée d\'une mission (Admin only)' })
+  async adminForceCancel(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.missionService.adminForceCancel(id, req.user.userId, body?.reason);
+  }
+
+  /**
+   * Réassigner une mission à un autre artisan (Admin).
+   */
+  @Post(':id/admin/reassign')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Réassigner une mission à un artisan (Admin only)' })
+  async adminReassign(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { artisanId: string; note?: string },
+  ) {
+    return this.missionService.adminReassignMission(
+      id,
+      req.user.userId,
+      body?.artisanId,
+      body?.note,
+    );
+  }
+
+  /**
+   * Clôturer de force une mission (Admin) — marque COMPLETED.
+   */
+  @Post(':id/admin/close')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Clôturer de force une mission (Admin only)' })
+  async adminClose(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { note?: string },
+  ) {
+    return this.missionService.adminCloseMission(id, req.user.userId, body?.note);
+  }
+
   /**
    * Auto-valider les missions bloquées (CRON job - admin)
    */

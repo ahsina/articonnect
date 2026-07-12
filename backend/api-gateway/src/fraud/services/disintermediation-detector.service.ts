@@ -27,8 +27,20 @@ import { PrismaService } from '../../common/prisma/prisma.service';
  *   - score >=  40 → WARNING          : avertissement tracé (aucun blocage).
  *   - score >=  60 → REQUIRE_DEPOSIT  : escrow/dépôt rendu obligatoire pour ce compte.
  *   - score >=  75 → FREEZE_MATCHING  : leakageFlagged=true → gel des mises en relation
- *                                       (plus de nouvelle révélation de contact).
- *   - score >=  90 → DEACTIVATE       : compte SUSPENDED.
+ *                                       (plus de nouvelle révélation de contact) — LOGIN PRÉSERVÉ.
+ *   - score >=  90 → DEACTIVATE       : compte SUSPENDED (blocage login) UNIQUEMENT sur PREUVE
+ *                                       DURE ET RÉPÉTÉE (>= SUSPEND_MIN_CONTACT_VIOLATIONS partages
+ *                                       « contact » réels bloqués/30j). Sinon → simple gel (login OK).
+ *
+ * AUTO-SUSPENSION = UN SEUL MÉCANISME. enforce() est le seul point qui écrit status='SUSPENDED'
+ * de façon automatique. Le content-filter (chat) ne bloque plus le login lui-même : il TRACE ses
+ * violations et délègue la décision ici → plus d'états 'SUSPENDED' qui oscillent entre deux systèmes
+ * aux seuils incohérents, et un compte frais n'est jamais verrouillé dès son 1er message bloqué.
+ *
+ * RECOURS (compte suspendu) : la suspension n'est jamais posée sur un simple score comportemental ;
+ * elle exige une preuve dure. Un compte suspendu conserve l'accès en LECTURE et le parcours de
+ * recours est le contact du support (support@krafolt.com) → revue admin, puis flagUser('NONE')/
+ * réactivation manuelle (status='ACTIVE', leakageFlagged=false). La levée reste une décision humaine.
  *
  * IMPORTANT — happy-path préservé : ce détecteur n'annule JAMAIS la révélation de contact
  * légitime déclenchée par un paiement escrow pour le client et l'artisan ASSIGNÉ. Il ne fait
@@ -57,6 +69,17 @@ export interface LeakageRiskResult {
   signals: LeakageSignal[];
   recommendedPenalty: LeakagePenalty;
 }
+
+// PREUVE DURE pour l'AUTO-SUSPENSION (blocage du login). Seuil volontairement élevé : seule une
+// répétition réelle et délibérée de partages de coordonnées « contact » BLOQUÉS (téléphone/email/
+// WhatsApp…) sur 30 jours autorise à couper le login. Motifs :
+//  - Le score de leakage peut monter jusqu'à DEACTIVATE (>=90) en quelques messages car deux
+//    signaux comptent les MÊMES événements (chaque message bloqué crée une ContentViolation ET
+//    incrémente offPlatformSolicitationCount) → un score de 90 n'est PAS une preuve dure.
+//  - Un compte FRAIS ne doit jamais être login-verrouillé dès ses 1ers messages bloqués : sous ce
+//    seuil, on se limite au GEL des mises en relation (leakageFlagged), réversible, login préservé.
+// 8 partages « contact » réellement bloqués sur 30 jours = intention manifeste et répétée.
+const SUSPEND_MIN_CONTACT_VIOLATIONS = 8;
 
 // Statuts de mission qui prouvent qu'un paiement/escrow a réellement été financé.
 const PAID_MISSION_STATUSES = [
@@ -381,20 +404,24 @@ export class DisintermediationDetectorService {
     switch (penalty) {
       case 'DEACTIVATE': {
         // Gel systématique. Mais l'auto-SUSPENSION (blocage du LOGIN) n'est appliquée que sur PREUVE
-        // DURE de partage de coordonnées — jamais sur un score gonflé par le seul signal comportemental
-        // CONTACT_FISHING (beaucoup de conversations peu converties = NORMAL pour un nouveau client qui
-        // compare). Preuve dure = >=3 violations contact réelles (30j) OU >=5 sollicitations avérées.
-        // Sinon : on se limite au gel des mises en relation (réversible, login préservé) + revue admin
-        // → évite de verrouiller un utilisateur légitime sur un faux positif (ex: un nombre à 10 chiffres
-        // innocent lu comme un téléphone).
+        // DURE et RÉPÉTÉE de partage de coordonnées — jamais sur un score gonflé :
+        //  - ni par le signal comportemental CONTACT_FISHING (beaucoup de conversations peu converties
+        //    = NORMAL pour un nouveau client qui compare),
+        //  - ni par le double-comptage d'un même message bloqué (ContentViolation + offPlatform...),
+        //    qui faisait atteindre DEACTIVATE en ~3 messages et login-verrouillait un compte FRAIS.
+        // Preuve dure = >= SUSPEND_MIN_CONTACT_VIOLATIONS partages « contact » RÉELS bloqués sur 30j.
+        // On n'utilise PLUS offPlatformSolicitationCount comme déclencheur d'auto-suspension : ce
+        // compteur additionne indistinctement médias pré-paiement et messages bloqués → pas une preuve.
+        // Sinon : gel des mises en relation (réversible, LOGIN PRÉSERVÉ) + revue admin → un utilisateur
+        // légitime n'est jamais verrouillé sur un faux positif (ex : nombre à 10 chiffres lu comme un tel).
         data.leakageFlagged = true;
-        const hardEvidence =
-          result.signals.some(
-            (s) => s.type === 'CONTACT_SHARING_VIOLATIONS' && ((s.data?.contactViolationCount as number) ?? 0) >= 3,
-          ) ||
-          result.signals.some(
-            (s) => s.type === 'OFF_PLATFORM_SOLICITATION' && ((s.data?.solicitationCount as number) ?? 0) >= 5,
-          );
+        const contactViolationCount = Math.max(
+          0,
+          ...result.signals
+            .filter((s) => s.type === 'CONTACT_SHARING_VIOLATIONS')
+            .map((s) => (s.data?.contactViolationCount as number) ?? 0),
+        );
+        const hardEvidence = contactViolationCount >= SUSPEND_MIN_CONTACT_VIOLATIONS;
         if (prior.status === 'ACTIVE' && hardEvidence) {
           data.status = 'SUSPENDED';
           transition = true;

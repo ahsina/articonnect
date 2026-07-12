@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: { sub: string; email: string; role: string; sessionId?: string }) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
@@ -53,6 +53,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
+      // Identifiant de la session (appareil) courante, issu du token : permet de marquer
+      // « cet appareil » dans la liste des sessions et de révoquer les autres appareils.
+      sessionId: payload.sessionId,
     };
   }
 }

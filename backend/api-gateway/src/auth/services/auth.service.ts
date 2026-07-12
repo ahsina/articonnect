@@ -11,6 +11,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { EmailService } from '../../email/services/email.service';
 import { TwoFactorService } from './two-factor.service';
+import { SessionService } from './session.service';
 import { MultiAccountDetectorService } from '../../fraud/services/multi-account-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import * as bcrypt from 'bcrypt';
@@ -29,6 +30,7 @@ export class AuthService {
     private redis: RedisService,
     private emailService: EmailService,
     private twoFactorService: TwoFactorService,
+    private sessionService: SessionService,
     private multiAccountDetector: MultiAccountDetectorService,
     private featureToggle: FeatureToggleService,
   ) {}
@@ -134,8 +136,15 @@ export class AuthService {
       user.firstName
     );
 
+    // Enregistre une session « appareil » dès l'inscription (le compte est connecté).
+    const sessionId = await this.sessionService.createSession(
+      user.id,
+      ipAddress || 'unknown',
+      userAgent || 'unknown',
+    );
+
     // Generate tokens
-    const { accessToken, refreshToken } = await this.generateTokens(user);
+    const { accessToken, refreshToken } = await this.generateTokens(user, sessionId);
 
     return {
       user: this.sanitizeUser(user),
@@ -267,8 +276,16 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
+    // Enregistre une session « appareil » (Redis) pour ce login : userId, id de session,
+    // userAgent + IP, dates. Permet à GET /sessions de lister les appareils connectés.
+    const sessionId = await this.sessionService.createSession(
+      user.id,
+      ipAddress || 'unknown',
+      userAgent || 'unknown',
+    );
+
     // Generate tokens
-    const { accessToken, refreshToken } = await this.generateTokens(user);
+    const { accessToken, refreshToken } = await this.generateTokens(user, sessionId);
 
     return {
       user: this.sanitizeUser(user),
@@ -281,7 +298,12 @@ export class AuthService {
    * Complete 2FA login using session token
    * This method verifies the 2FA code without requiring the password again
    */
-  async complete2FALogin(sessionToken: string, twoFactorCode: string) {
+  async complete2FALogin(
+    sessionToken: string,
+    twoFactorCode: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     // Verify session token
     let sessionData;
     try {
@@ -325,8 +347,15 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
+    // Enregistre la session « appareil » après validation du second facteur.
+    const sessionId = await this.sessionService.createSession(
+      user.id,
+      ipAddress || 'unknown',
+      userAgent || 'unknown',
+    );
+
     // Generate auth tokens
-    const { accessToken, refreshToken } = await this.generateTokens(user);
+    const { accessToken, refreshToken } = await this.generateTokens(user, sessionId);
 
     return {
       user: this.sanitizeUser(user),
@@ -353,28 +382,38 @@ export class AuthService {
     return user;
   }
 
-  async generateTokens(user: User) {
-    const payload = {
+  async generateTokens(user: User, sessionId?: string) {
+    const payload: Record<string, any> = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
+    // Rattache l'identifiant de session (appareil) au token afin que req.user.sessionId
+    // soit disponible côté guard (session courante, révocation ciblée).
+    if (sessionId) {
+      payload.sessionId = sessionId;
+    }
 
     const accessToken = this.jwtService.sign(payload);
 
     // Generate refresh token
-    const refreshToken = await this.generateRefreshToken(user.id);
+    const refreshToken = await this.generateRefreshToken(user.id, sessionId);
 
     return { accessToken, refreshToken };
   }
 
-  async generateRefreshToken(userId: string): Promise<string> {
+  async generateRefreshToken(userId: string, sessionId?: string): Promise<string> {
     // Use separate secret for refresh tokens (defense-in-depth)
     // Falls back to JWT_SECRET if JWT_REFRESH_SECRET not set (backward compatibility)
     const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 
+    const refreshPayload: Record<string, any> = { sub: userId, type: 'refresh' };
+    if (sessionId) {
+      refreshPayload.sessionId = sessionId;
+    }
+
     const token = this.jwtService.sign(
-      { sub: userId, type: 'refresh' },
+      refreshPayload,
       {
         secret: refreshSecret,
         expiresIn: '30d',
@@ -436,12 +475,26 @@ export class AuthService {
         throw new UnauthorizedException('Utilisateur introuvable');
       }
 
-      // Generate new access token
-      const accessToken = this.jwtService.sign({
+      // Preserve la session « appareil » à travers le rafraîchissement du token :
+      // on reporte le sessionId (présent dans le refresh token) dans le nouvel access
+      // token et on met à jour la date de dernière activité de la session.
+      const sessionId: string | undefined = payload.sessionId;
+      const accessPayload: Record<string, any> = {
         sub: user.id,
         email: user.email,
         role: user.role,
-      });
+      };
+      if (sessionId) {
+        accessPayload.sessionId = sessionId;
+        // Best-effort : ne pas faire échouer le refresh si la session a expiré/été révoquée.
+        try {
+          await this.sessionService.touchSession(sessionId);
+        } catch {
+          // ignore
+        }
+      }
+
+      const accessToken = this.jwtService.sign(accessPayload);
 
       return { accessToken };
     } catch (error) {
@@ -449,7 +502,16 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string, refreshToken?: string) {
+  async logout(userId: string, refreshToken?: string, sessionId?: string) {
+    // Révoque la session « appareil » courante afin qu'elle disparaisse de GET /sessions.
+    if (sessionId) {
+      try {
+        await this.sessionService.revokeSession(sessionId);
+      } catch {
+        // best-effort : ne bloque pas la déconnexion si Redis/session indisponible
+      }
+    }
+
     if (refreshToken) {
       // Revoke specific refresh token
       const tokens = await this.prisma.refreshToken.findMany({

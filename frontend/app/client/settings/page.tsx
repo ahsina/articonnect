@@ -425,6 +425,18 @@ export default function ClientSettingsPage() {
                   <span className="text-muted-foreground"></span>
                 </div>
               </Link>
+
+              <Link href="/client/settings/devices">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer">
+                  <div>
+                    <div className="font-medium">Appareils connectés</div>
+                    <div className="text-sm text-muted-foreground">
+                      Gérez les appareils connectés à votre compte et déconnectez ceux que vous ne reconnaissez pas.
+                    </div>
+                  </div>
+                  <span className="text-muted-foreground"></span>
+                </div>
+              </Link>
             </CardContent>
           </Card>
 

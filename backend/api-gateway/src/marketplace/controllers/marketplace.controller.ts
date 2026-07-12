@@ -4,9 +4,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ProductService } from '../services/product.service';
 import { OrderService } from '../services/order.service';
 import { CategoryService } from '../services/category.service';
-import { CreateProductDto, UpdateProductDto, CreateProductReviewDto } from '../dto/product.dto';
+import { CreateProductDto, UpdateProductDto, CreateProductReviewDto, ReplyProductReviewDto } from '../dto/product.dto';
 import { CreateVariantDto, UpdateVariantDto } from '../dto/variant.dto';
-import { CreateOrderDto, UpdateOrderStatusDto } from '../dto/order.dto';
+import { CreateOrderDto, UpdateOrderStatusDto, ShipOrderDto } from '../dto/order.dto';
 
 @ApiTags('Marketplace')
 @Controller('marketplace')
@@ -52,6 +52,16 @@ export class MarketplaceController {
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 12,
     });
+  }
+
+  // ⚠️ Doit être déclaré AVANT `products/:id` sinon "mine" serait capturé comme un :id.
+  @Get('products/mine')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mes produits (vendeur) — tous statuts (DRAFT/ACTIVE/INACTIVE)' })
+  @ApiResponse({ status: 200, description: 'Produits de l\'artisan connecté' })
+  async getMyProducts(@Request() req) {
+    return this.productService.getMyProducts(req.user.userId);
   }
 
   @Get('products/:id')
@@ -168,6 +178,42 @@ export class MarketplaceController {
     return this.productService.getProductReviews(id);
   }
 
+  @Post('products/:id/reviews/:reviewId/reply')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Seller reply to a product review (owner only)' })
+  @ApiResponse({ status: 201, description: 'Reply posted' })
+  @ApiResponse({ status: 403, description: 'Not the product owner' })
+  @ApiResponse({ status: 404, description: 'Review not found' })
+  async replyToReview(
+    @Request() req,
+    @Param('id') id: string,
+    @Param('reviewId') reviewId: string,
+    @Body() data: ReplyProductReviewDto,
+  ) {
+    return this.productService.replyToReview(id, reviewId, req.user.userId, data);
+  }
+
+  // ==================== SELLER (VENDEUR) ====================
+
+  @Get('seller/orders')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mes commandes vendeur (contenant mes produits)' })
+  @ApiResponse({ status: 200, description: 'Ventes de l\'artisan connecté' })
+  async getSellerOrders(@Request() req) {
+    return this.orderService.getSellerOrders(req.user.userId);
+  }
+
+  @Get('seller/stats')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Statistiques de vente (CA, commandes, top produits)' })
+  @ApiResponse({ status: 200, description: 'Stats vendeur' })
+  async getSellerStats(@Request() req) {
+    return this.orderService.getSellerStats(req.user.userId);
+  }
+
   // ==================== ORDERS ====================
 
   @Post('orders')
@@ -208,9 +254,18 @@ export class MarketplaceController {
   @Patch('orders/:id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update order status' })
+  @ApiOperation({ summary: 'Update order status (seller): PAID->PROCESSING->SHIPPED->DELIVERED' })
   @ApiResponse({ status: 200, description: 'Order status updated' })
   async updateOrderStatus(@Request() req, @Param('id') id: string, @Body() body: UpdateOrderStatusDto) {
-    return this.orderService.updateStatus(id, req.user.userId, body.status);
+    return this.orderService.updateStatus(id, req.user.userId, body.status, body.trackingNumber);
+  }
+
+  @Post('orders/:id/ship')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark order as shipped (seller) + tracking number' })
+  @ApiResponse({ status: 200, description: 'Order shipped' })
+  async shipOrder(@Request() req, @Param('id') id: string, @Body() body: ShipOrderDto) {
+    return this.orderService.shipOrder(id, req.user.userId, body.trackingNumber);
   }
 }

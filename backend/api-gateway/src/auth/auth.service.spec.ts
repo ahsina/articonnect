@@ -6,6 +6,7 @@ import { PrismaService } from '../common/prisma/prisma.service';
 import { RedisService } from '../common/redis/redis.service';
 import { EmailService } from '../email/services/email.service';
 import { TwoFactorService } from './services/two-factor.service';
+import { SessionService } from './services/session.service';
 import { MultiAccountDetectorService } from '../fraud/services/multi-account-detector.service';
 import { FeatureToggleService } from '../fraud/services/feature-toggle.service';
 import * as bcrypt from 'bcrypt';
@@ -76,6 +77,14 @@ describe('AuthService', () => {
     analyzeRegistration: jest.fn(),
   };
 
+  const mockSessionService = {
+    createSession: jest.fn().mockResolvedValue('test-session-id'),
+    revokeSession: jest.fn().mockResolvedValue(undefined),
+    touchSession: jest.fn().mockResolvedValue(undefined),
+    getUserSessions: jest.fn().mockResolvedValue([]),
+    getSession: jest.fn().mockResolvedValue(null),
+  };
+
   const mockFeatureToggleService = {
     isMultiAccountDetectionEnabled: jest.fn(),
     getMultiAccountRiskThreshold: jest.fn(),
@@ -99,6 +108,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: EmailService, useValue: mockEmailService },
         { provide: TwoFactorService, useValue: mockTwoFactorService },
+        { provide: SessionService, useValue: mockSessionService },
         { provide: MultiAccountDetectorService, useValue: mockMultiAccountDetectorService },
         { provide: FeatureToggleService, useValue: mockFeatureToggleService },
       ],

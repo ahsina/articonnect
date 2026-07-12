@@ -491,14 +491,146 @@ export class PaymentService {
       where: { stripePaymentIntentId: paymentIntent.id },
     });
 
-    if (transaction) {
-      await this.prisma.transaction.update({
+    if (!transaction) return;
+
+    // COMMANDE marketplace (type PRODUCT / orderId) : encaissement immédiat -> règlement vendeur.
+    if (transaction.orderId) {
+      let chargeId: string | undefined;
+      try {
+        const pi = await this.stripeService.retrievePaymentIntent(paymentIntent.id);
+        chargeId = (pi as any)?.latest_charge as string | undefined;
+      } catch {
+        /* le règlement peut se faire sans source_transaction (fallback solde plateforme) */
+      }
+      await this.settleOrderPayment(transaction.id, chargeId);
+      return;
+    }
+
+    await this.prisma.transaction.update({
+      where: { id: transaction.id },
+      data: { status: 'HELD' },
+    });
+
+    await this.reflectEscrowPaidOnMission(transaction);
+  }
+
+  /**
+   * Règlement d'une commande marketplace après encaissement Stripe (webhook succeeded).
+   * Idempotent : ne règle qu'une commande encore PENDING (une redélivrance PI+charge ne double pas).
+   *  1) transaction atomique : décrément du stock + Order.status=PAID + paidAt + Transaction.HELD ;
+   *  2) hors transaction : versement du net à chaque VENDEUR (Stripe Connect) — commission plateforme
+   *     retenue. Si aucun vendeur onboardé (ou transfert échoué), les fonds restent encaissés côté
+   *     plateforme et la commande demeure PAID : versement DIFFÉRÉ/récupérable, commission tracée.
+   */
+  private async settleOrderPayment(transactionId: string, chargeId?: string) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+    if (!transaction || !transaction.orderId) return;
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: transaction.orderId },
+      include: { items: { include: { product: { select: { id: true, artisanId: true, name: true } } } } },
+    });
+    if (!order) return;
+
+    // IDEMPOTENCE : on ne règle qu'une commande PENDING (stock décrémenté une seule fois).
+    if (order.status !== 'PENDING') return;
+
+    // payment_intent.succeeded ET charge.succeeded arrivent quasi simultanément pour la même charge :
+    // les deux tentent de régler. On CLAME la transition PENDING->PAID de façon atomique via updateMany
+    // (verrou ligne Postgres) : le 2e event matche 0 ligne et sort sans re-décrémenter le stock.
+    const claimed = await this.prisma.$transaction(async (tx) => {
+      const res = await tx.order.updateMany({
+        where: { id: order.id, status: 'PENDING' },
+        data: { status: 'PAID', paidAt: new Date() },
+      });
+      if (res.count === 0) return false; // déjà réglé par l'autre event
+
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+      await tx.transaction.update({
         where: { id: transaction.id },
         data: { status: 'HELD' },
       });
+      return true;
+    });
 
-      await this.reflectEscrowPaidOnMission(transaction);
+    // Le règlement (versement vendeur) n'est effectué que par le gagnant du CLAIM.
+    if (!claimed) return;
+
+    // Versement vendeur(s) : net = CA produits du vendeur - commission. Barème courant.
+    const feeSettings = await this.platformConfig.getFeeSettings();
+    const rate = (Number(feeSettings.platformCommissionRate) || 0) / 100;
+    const floorEuros = (Number(feeSettings.minCommissionAmount) || 0) / 100;
+    const capEuros = (Number(feeSettings.maxCommissionAmount) || 0) / 100;
+
+    const grossBySeller = new Map<string, number>();
+    for (const it of order.items) {
+      const artisanId = it.product?.artisanId;
+      if (!artisanId) continue;
+      grossBySeller.set(artisanId, (grossBySeller.get(artisanId) || 0) + Number(it.totalPrice));
     }
+
+    let anyTransfer = false;
+    let lastTransferId: string | undefined;
+    let allTransferred = true;
+
+    for (const [artisanId, gross] of grossBySeller.entries()) {
+      let commission = gross * rate;
+      if (floorEuros > 0) commission = Math.max(commission, floorEuros);
+      if (capEuros > 0) commission = Math.min(commission, capEuros);
+      commission = Math.max(commission, 0.01);
+      commission = Math.min(commission, gross);
+      const net = Math.round((gross - commission) * 100) / 100;
+      if (net <= 0) { allTransferred = false; continue; }
+
+      const seller = await this.prisma.user.findUnique({
+        where: { id: artisanId },
+        include: { artisanProfile: { select: { stripeAccountId: true, stripeOnboarded: true } } },
+      });
+      const acct = seller?.artisanProfile;
+      if (!acct?.stripeAccountId || !acct?.stripeOnboarded) {
+        // Vendeur non onboardé : versement différé (fonds encaissés, commande PAID). Récupérable.
+        this.logger.warn(
+          `Order ${order.id}: vendeur ${artisanId} sans compte Connect onboardé — versement de ${net}€ différé.`,
+        );
+        allTransferred = false;
+        continue;
+      }
+
+      try {
+        const transfer = await this.stripeService.createTransfer({
+          amount: Math.floor(net * 100),
+          destination: acct.stripeAccountId,
+          sourceTransaction: chargeId,
+          metadata: { orderId: order.id, transactionId: transaction.id, artisanId },
+        });
+        anyTransfer = true;
+        lastTransferId = transfer.id;
+        this.logger.log(`Order ${order.id}: versé ${net}€ au vendeur ${artisanId} (transfer ${transfer.id}).`);
+      } catch (e) {
+        allTransferred = false;
+        this.logger.error(
+          `Order ${order.id}: échec versement ${net}€ au vendeur ${artisanId}: ${(e as any)?.message}. Fonds encaissés, versement différé.`,
+        );
+      }
+    }
+
+    // Transaction : COMPLETED si tous les vendeurs ont été versés ; sinon on garde HELD (versement
+    // différé récupérable) — mais la commande RESTE PAID (le client a bien payé).
+    await this.prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        status: allTransferred && anyTransfer ? 'COMPLETED' : 'HELD',
+        ...(allTransferred && anyTransfer ? { completedAt: new Date() } : {}),
+        ...(lastTransferId && grossBySeller.size === 1 ? { stripeTransferId: lastTransferId } : {}),
+      },
+    });
   }
 
   /**
@@ -1438,6 +1570,15 @@ export class PaymentService {
     });
 
     if (transaction) {
+      // COMMANDE marketplace : règlement vendeur (idempotent avec payment_intent.succeeded).
+      if (transaction.orderId) {
+        await this.settleOrderPayment(transaction.id, charge.id);
+        this.logger.log(
+          `Order charge success: Transaction ${transaction.id}. Amount: ${charge.amount ? charge.amount / 100 : 'unknown'}€`,
+        );
+        return;
+      }
+
       // Update transaction to HELD (funds received/authorized, ready to capture)
       await this.prisma.transaction.update({
         where: { id: transaction.id },

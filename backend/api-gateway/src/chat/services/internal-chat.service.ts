@@ -73,6 +73,9 @@ export class InternalChatService {
       const result = await this.contentFilter.filterContent(content, userId, 'chat_interne');
       if (result.isBlocked) {
         throw new BadRequestException({
+          // `error` explicite : sinon le filtre d'exceptions global met « Internal Server Error »
+          // dans le corps (statut HTTP pourtant 400) → un blocage volontaire passait pour un 500.
+          error: 'Bad Request',
           message:
             'Votre message contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
           detectedPatterns: result.detectedPatterns,
@@ -88,6 +91,7 @@ export class InternalChatService {
       const fn = await this.contentFilter.filterFileName(opts.fileName, userId, 'chat_interne');
       if (fn.isBlocked) {
         throw new BadRequestException({
+          error: 'Bad Request',
           message:
             'Le nom du fichier contient des informations de contact interdites. Pour votre sécurité, veuillez communiquer uniquement via Krafolt.',
           detectedPatterns: fn.detectedPatterns,

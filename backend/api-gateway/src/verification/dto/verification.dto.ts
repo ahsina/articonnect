@@ -143,6 +143,15 @@ export class IdentityVerificationDto {
 }
 
 /**
+ * Admin rejection DTO — motif obligatoire (tracé dans les warnings du profil).
+ */
+export class RejectVerificationDto {
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
+}
+
+/**
  * Manual verification request DTO
  */
 export class ManualVerificationRequestDto {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, UnverifiedArtisan, VerificationStatus, KycStatus } from '@/lib/api/admin';
+import apiClient from '@/lib/api/client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -72,6 +73,45 @@ export default function VerificationsPage() {
     } catch (err) {
       console.error('Error re-verifying artisan:', err);
       setReverifyingId(null);
+    }
+  };
+
+  const [decidingId, setDecidingId] = useState<string | null>(null);
+
+  // DÉCISION admin : approuver la vérification (VERIFIED + badge).
+  const handleApprove = async (artisanId: string) => {
+    if (!confirm('Approuver la vérification de cet artisan ?')) return;
+    try {
+      setDecidingId(artisanId);
+      await apiClient.post(`/verification/admin/${artisanId}/approve`);
+      setSelectedArtisan(null);
+      setVerificationStatus(null);
+      await loadData();
+    } catch (err) {
+      console.error('Error approving verification:', err);
+      setError(t('adminVerifications', 'errorLoad'));
+    } finally {
+      setDecidingId(null);
+    }
+  };
+
+  // DÉCISION admin : rejeter la vérification (REJECTED + motif obligatoire).
+  const handleReject = async (artisanId: string) => {
+    const reason = prompt('Motif du rejet de la vérification :');
+    if (!reason || !reason.trim()) return;
+    try {
+      setDecidingId(artisanId);
+      await apiClient.post(`/verification/admin/${artisanId}/reject`, {
+        reason: reason.trim(),
+      });
+      setSelectedArtisan(null);
+      setVerificationStatus(null);
+      await loadData();
+    } catch (err) {
+      console.error('Error rejecting verification:', err);
+      setError(t('adminVerifications', 'errorLoad'));
+    } finally {
+      setDecidingId(null);
     }
   };
 
@@ -305,6 +345,20 @@ export default function VerificationsPage() {
                                 className="text-green-600 hover:text-green-700 disabled:opacity-50"
                               >
                                 {reverifyingId === artisan.id ? t('adminVerifications', 'verifying') : t('adminVerifications', 'verify')}
+                              </button>
+                              <button
+                                onClick={() => handleApprove(artisan.id)}
+                                disabled={decidingId === artisan.id}
+                                className="text-green-700 font-medium hover:underline disabled:opacity-50"
+                              >
+                                Approuver
+                              </button>
+                              <button
+                                onClick={() => handleReject(artisan.id)}
+                                disabled={decidingId === artisan.id}
+                                className="text-red-600 font-medium hover:underline disabled:opacity-50"
+                              >
+                                Rejeter
                               </button>
                             </div>
                           </td>
@@ -622,6 +676,20 @@ export default function VerificationsPage() {
                       className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
                     >
                       {t('adminVerifications', 'close')}
+                    </button>
+                    <button
+                      onClick={() => handleReject(selectedArtisan.id)}
+                      disabled={decidingId === selectedArtisan.id}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Rejeter
+                    </button>
+                    <button
+                      onClick={() => handleApprove(selectedArtisan.id)}
+                      disabled={decidingId === selectedArtisan.id}
+                      className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50"
+                    >
+                      Approuver
                     </button>
                     <button
                       onClick={() => {

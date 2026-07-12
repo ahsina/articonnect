@@ -116,7 +116,7 @@ export default function MarketplacePage() {
       image: product.images?.[0],
       artisan: product.artisan
         ? {
-            id: product.artisan.id,
+            id: product.artisan.id || product.artisanId,
             name: product.artisan.companyName || `${product.artisan.firstName} ${product.artisan.lastName}`,
           }
         : undefined,

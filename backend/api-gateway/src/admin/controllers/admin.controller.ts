@@ -1,10 +1,21 @@
-import { Controller, Get, Put, Post, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Param,
+  Query,
+  Body,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AdminService } from '../services/admin.service';
 import { AuditLogService } from '../../common/services/audit-log.service';
+import { ChangeRoleDto } from '../dto/change-role.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -51,6 +62,19 @@ export class AdminController {
   @Put('users/:id/activate')
   async activateUser(@Param('id') id: string) {
     return this.adminService.activateUser(id);
+  }
+
+  @Put('users/:id/role')
+  @ApiOperation({
+    summary:
+      "Changer le rôle d'un utilisateur (promotion/rétrogradation) — Admin only, audité",
+  })
+  async changeUserRole(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ChangeRoleDto,
+  ) {
+    return this.adminService.changeUserRole(id, dto.role, req.user?.userId);
   }
 
   @Post('users/:id/unblock-security')

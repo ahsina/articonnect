@@ -15,7 +15,11 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { BusinessVerificationService } from '../services/business-verification.service';
-import { VerifyBusinessDto, ManualVerificationRequestDto } from '../dto/verification.dto';
+import {
+  VerifyBusinessDto,
+  ManualVerificationRequestDto,
+  RejectVerificationDto,
+} from '../dto/verification.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Controller('verification')
@@ -115,6 +119,35 @@ export class VerificationController {
   @Roles(UserRole.ADMIN)
   async getArtisansNeedingReverification() {
     return this.businessVerificationService.getArtisansNeedingReverification();
+  }
+
+  /**
+   * POST /verification/admin/:id/approve
+   * DÉCISION admin : approuve la vérification (VERIFIED + badge).
+   * :id = id du profil artisan OU userId.
+   * Admin only
+   */
+  @Post('admin/:id/approve')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async approveVerification(@Param('id') id: string) {
+    return this.businessVerificationService.adminApprove(id);
+  }
+
+  /**
+   * POST /verification/admin/:id/reject
+   * DÉCISION admin : rejette la vérification (REJECTED + motif).
+   * :id = id du profil artisan OU userId.
+   * Admin only
+   */
+  @Post('admin/:id/reject')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async rejectVerification(
+    @Param('id') id: string,
+    @Body() dto: RejectVerificationDto,
+  ) {
+    return this.businessVerificationService.adminReject(id, dto.reason);
   }
 
   /**

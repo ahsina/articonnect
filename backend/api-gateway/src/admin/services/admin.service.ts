@@ -1,5 +1,11 @@
-import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  Optional,
+} from '@nestjs/common';
+import { Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AuditLogService } from '../../common/services/audit-log.service';
 
@@ -236,6 +242,68 @@ export class AdminService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Changement de rôle d'un utilisateur (promotion/rétrogradation) par un admin.
+   * - Valide que le rôle cible est bien une valeur de l'enum UserRole (anti-injection).
+   * - No-op sûr si le rôle est déjà celui demandé (renvoie l'utilisateur inchangé, pas d'audit inutile).
+   * - Trace TOUJOURS l'ancien et le nouveau rôle dans l'AuditLog (action CHANGE_ROLE) pour la
+   *   traçabilité des escalades de privilèges (sensibilité maximale : passage à ADMIN).
+   */
+  async changeUserRole(userId: string, role: string, adminId?: string) {
+    const validRoles = Object.values(UserRole) as string[];
+    if (!role || !validRoles.includes(role)) {
+      throw new BadRequestException(
+        `Rôle invalide. Valeurs autorisées: ${validRoles.join(', ')}`,
+      );
+    }
+
+    const existing = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('User not found');
+    }
+
+    const previousRole = existing.role;
+    if (previousRole === role) {
+      // Idempotent : rien à changer, on évite une écriture/audit superflus.
+      return this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          status: true,
+        },
+      });
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: role as UserRole },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+      },
+    });
+
+    await this.writeAudit(
+      'CHANGE_ROLE',
+      userId,
+      { previousRole, newRole: role },
+      adminId,
+    );
+
+    return updated;
   }
 
   /**

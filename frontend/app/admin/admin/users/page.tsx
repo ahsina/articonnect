@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { adminApi, UserWithStats } from '@/lib/api/admin';
+import apiClient from '@/lib/api/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,28 @@ export default function AdminUsersPage() {
       toast({
         title: t('common', 'error'),
         description: t('admin', 'reactivationError'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+    if (!confirm(`Confirmer le changement de rôle vers ${newRole} ?`)) {
+      return;
+    }
+    try {
+      // Endpoint admin dédié : PUT /admin/users/:id/role { role } (audité côté back).
+      await apiClient.put(`/admin/users/${userId}/role`, { role: newRole });
+      toast({
+        title: t('common', 'success'),
+        description: `Rôle mis à jour: ${newRole}`,
+      });
+      loadUsers();
+    } catch (error) {
+      console.error('Error changing role:', error);
+      toast({
+        title: t('common', 'error'),
+        description: 'Échec du changement de rôle',
         variant: 'destructive',
       });
     }
@@ -275,23 +298,40 @@ export default function AdminUsersPage() {
                           {formatDate(user.createdAt)}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm">
-                          {user.suspended ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleUnsuspend(user.id)}
+                          <div className="flex items-center gap-2">
+                            {user.suspended ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUnsuspend(user.id)}
+                              >
+                                {t('admin', 'reactivate')}
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleSuspend(user.id)}
+                              >
+                                {t('admin', 'suspend')}
+                              </Button>
+                            )}
+                            {/* Changement de rôle (promotion / rétrogradation) */}
+                            <select
+                              aria-label="Changer le rôle"
+                              className="px-2 py-1 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                              value={user.role}
+                              onChange={(e) => {
+                                if (e.target.value !== user.role) {
+                                  handleChangeRole(user.id, e.target.value);
+                                }
+                              }}
                             >
-                              {t('admin', 'reactivate')}
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleSuspend(user.id)}
-                            >
-                              {t('admin', 'suspend')}
-                            </Button>
-                          )}
+                              <option value="CLIENT">CLIENT</option>
+                              <option value="ARTISAN">ARTISAN</option>
+                              <option value="ADMIN">ADMIN</option>
+                            </select>
+                          </div>
                         </td>
                       </tr>
                     ))}
