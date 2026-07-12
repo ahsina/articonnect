@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsBoolean, Min, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateNegotiationDto {
@@ -61,6 +61,29 @@ export class CreateNegotiationDto {
   @IsOptional()
   @IsString()
   message?: string;
+
+  // Disponibilité proposée par l'artisan : le client compare le délai autant que le prix.
+  // Texte libre court (ex "Dès demain matin", "Sous 48h"). Non filtré anti-coordonnées à ce stade
+  // (pas un canal de message libre : format attendu court), longueur bornée pour éviter les abus.
+  @ApiProperty({
+    required: false,
+    example: 'Dès demain matin',
+    description: 'Disponibilité proposée (texte court, max 120 caractères)'
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  availability?: string;
+
+  @ApiProperty({
+    required: false,
+    example: '~1 journée',
+    description: 'Durée estimée des travaux (texte court, max 120 caractères)'
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  estimatedDuration?: string;
 }
 
 export class AcceptNegotiationDto {

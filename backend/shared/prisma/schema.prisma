@@ -1073,7 +1073,14 @@ model Negotiation {
   accepted       Boolean?
   rejectedReason String?
   expiresAt      DateTime? // Timeout for negotiation (24h standard, 15min emergency)
-  createdAt      DateTime  @default(now())
+
+  // Disponibilité proposée par l'artisan (le client compare le délai autant que le prix)
+  availability      String? // ex "Dès demain matin", "Sous 48h", date ISO libre
+  estimatedDuration String? // ex "~1h", "1 journée"
+  // Feedback de lecture : posé quand le destinataire (client) ouvre l'offre → statut "Vue"
+  viewedAt DateTime?
+
+  createdAt DateTime @default(now())
 
   @@index([missionId])
   @@index([expiresAt])

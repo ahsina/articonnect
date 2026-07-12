@@ -79,6 +79,20 @@ export class MissionController {
     );
   }
 
+  /**
+   * MES OFFRES (artisan) — endpoint agrégé de toutes les offres envoyées par l'utilisateur.
+   * ⚠️ Chemin STATIQUE `negotiations/mine` : déclaré AVANT toute route paramétrée (`:id/...`)
+   * pour ne pas être capté par ex. `:id/negotiations`. (Ici aucune route ne l'ombre, mais on garde
+   * l'ordre défensif.)
+   */
+  @Get('negotiations/mine')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all offers sent by the current user (artisan) with status + stats' })
+  async getMyNegotiations(@Request() req) {
+    return this.negotiationService.mine(req.user.userId);
+  }
+
   @Get(':id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

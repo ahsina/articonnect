@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateNegotiationDto, AcceptNegotiationDto } from '../dto/negotiation.dto';
 import { NotificationService } from '../../notification/services/notification.service';
-import { MissionType, MissionStatus } from '@prisma/client';
+import { MissionType, MissionStatus, NotificationType } from '@prisma/client';
 import { PriceAnomalyDetectorService } from '../../fraud/services/price-anomaly-detector.service';
 import { FeatureToggleService } from '../../fraud/services/feature-toggle.service';
 import { ContentFilterService } from '../../chat/services/content-filter.service';
@@ -18,6 +18,39 @@ export class NegotiationService {
     private featureToggle: FeatureToggleService,
     private contentFilter: ContentFilterService,
   ) {}
+
+  /**
+   * Statut DÉRIVÉ lisible d'une offre, calculé à la volée (aucun champ DB dédié).
+   * Ordre de priorité :
+   *   accepted === true              → 'ACCEPTED'
+   *   accepted === false             → 'REJECTED'
+   *   en attente & expirée           → 'EXPIRED'
+   *   en attente & déjà consultée    → 'VIEWED'
+   *   sinon                          → 'SENT'
+   */
+  private deriveStatus(neg: {
+    accepted?: boolean | null;
+    expiresAt?: Date | null;
+    viewedAt?: Date | null;
+  }): 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'VIEWED' | 'SENT' {
+    if (neg.accepted === true) return 'ACCEPTED';
+    if (neg.accepted === false) return 'REJECTED';
+    // accepted == null (en attente)
+    if (neg.expiresAt && new Date() > neg.expiresAt) return 'EXPIRED';
+    if (neg.viewedAt) return 'VIEWED';
+    return 'SENT';
+  }
+
+  /**
+   * Ajoute le champ calculé `status` à une offre (ou null passe-plat).
+   * N'altère aucune donnée persistée ; enrichit seulement la réponse API.
+   */
+  private withStatus<T extends { accepted?: boolean | null; expiresAt?: Date | null; viewedAt?: Date | null }>(
+    neg: T | null,
+  ): (T & { status: string }) | null {
+    if (!neg) return null;
+    return { ...neg, status: this.deriveStatus(neg) };
+  }
 
   async create(userId: string, createDto: CreateNegotiationDto) {
     const mission = await this.prisma.mission.findUnique({
@@ -127,6 +160,9 @@ export class NegotiationService {
         materialCost: createDto.materialCost,
         travelCost: createDto.travelCost,
         message: messageToStore,
+        // Dispo / délai proposés par l'artisan (comparés par le client au même titre que le prix).
+        availability: createDto.availability,
+        estimatedDuration: createDto.estimatedDuration,
         expiresAt,
       },
     });
@@ -138,7 +174,7 @@ export class NegotiationService {
       createDto.proposedPrice,
     );
 
-    return negotiation;
+    return this.withStatus(negotiation);
   }
 
   /**
@@ -220,6 +256,8 @@ export class NegotiationService {
     // Transaction ATOMIQUE (client-10 + artisan-17 « idem ») : toutes les écritures sont conditionnées
     // sur l'état lu, via des updateMany gardés. Deux acceptations concurrentes ne peuvent donc pas
     // toutes deux réussir (le second updateMany renvoie count=0 → 409).
+    // Capture les senders des offres auto-rejetées (pour les notifier après la transaction).
+    let losingSenderIds: string[] = [];
     const updated = await this.prisma.$transaction(async (tx) => {
       // 1. Marquer CETTE offre — uniquement si elle est encore en attente (accepted=null).
       const negResult = await tx.negotiation.updateMany({
@@ -256,6 +294,18 @@ export class NegotiationService {
         }
 
         // 3. Rejeter automatiquement les autres offres en attente sur cette mission.
+        //    On capture d'ABORD les expéditeurs (senders) de ces offres perdantes AVANT de les
+        //    basculer à accepted=false, afin de pouvoir les notifier après la transaction.
+        const losing = await tx.negotiation.findMany({
+          where: {
+            missionId: negotiation.missionId,
+            id: { not: negotiationId },
+            accepted: null,
+          },
+          select: { senderId: true },
+        });
+        losingSenderIds = losing.map((l) => l.senderId);
+
         await tx.negotiation.updateMany({
           where: {
             missionId: negotiation.missionId,
@@ -268,6 +318,62 @@ export class NegotiationService {
 
       return tx.negotiation.findUnique({ where: { id: negotiationId } });
     });
+
+    // Notifications (best-effort, HORS transaction) : ne bloquent JAMAIS l'attribution.
+    // On calque createNotification(userId, type, title, message, link?) sur les helpers existants.
+    const missionLink = `/missions/${negotiation.missionId}`;
+    try {
+      if (dto.accepted) {
+        // Artisan GAGNANT = le sender de l'offre acceptée (jamais le client).
+        await this.notificationService.createNotification(
+          negotiation.senderId,
+          NotificationType.NEGOTIATION_ACCEPTED,
+          'Votre offre a été acceptée',
+          'Le client a retenu votre offre. Consultez la mission pour la suite.',
+          missionLink,
+          { missionId: negotiation.missionId, negotiationId },
+        );
+      } else {
+        // Refus explicite d'une offre : on notifie l'artisan (sender).
+        // La raison a déjà été filtrée anti-coordonnées plus haut (dto.rejectedReason).
+        const reasonSuffix = dto.rejectedReason ? ` Motif : ${dto.rejectedReason}` : '';
+        await this.notificationService.createNotification(
+          negotiation.senderId,
+          NotificationType.NEGOTIATION_REJECTED,
+          'Votre offre a été refusée',
+          `Le client n'a pas retenu votre offre.${reasonSuffix}`,
+          missionLink,
+          { missionId: negotiation.missionId, negotiationId },
+        );
+      }
+    } catch (error) {
+      this.logger.error('Échec notification (accept/reject offre) — non bloquant:', error);
+    }
+
+    // Notifier les artisans PERDANTS (offres auto-rejetées par l'acceptation d'une autre offre).
+    // Dé-dupliqué par senderId et sans exposer de coordonnées.
+    if (dto.accepted && losingSenderIds.length > 0) {
+      const uniqueLosers = [...new Set(losingSenderIds)].filter(
+        (id) => id !== negotiation.senderId,
+      );
+      for (const loserId of uniqueLosers) {
+        try {
+          await this.notificationService.createNotification(
+            loserId,
+            NotificationType.NEGOTIATION_REJECTED,
+            'Une autre offre a été retenue',
+            'Le client a choisi une autre offre pour cette mission.',
+            missionLink,
+            { missionId: negotiation.missionId },
+          );
+        } catch (error) {
+          this.logger.error(
+            `Échec notification perdant ${loserId} (non bloquant):`,
+            error,
+          );
+        }
+      }
+    }
 
     // If accepted, check for price anomalies (best-effort, hors transaction)
     if (dto.accepted) {
@@ -313,7 +419,7 @@ export class NegotiationService {
       }
     }
 
-    return updated;
+    return this.withStatus(updated);
   }
 
   async findByMission(missionId: string, userId: string) {
@@ -325,12 +431,56 @@ export class NegotiationService {
       throw new NotFoundException('Mission introuvable');
     }
 
-    if (mission.clientId !== userId && mission.artisanId !== userId) {
+    const isClient = mission.clientId === userId;
+    const isAssignedArtisan = mission.artisanId === userId;
+
+    // ACCÈS : le client et l'artisan assigné ont toujours accès. En plus, un artisan CANDIDAT
+    // (mission non encore assignée) doit pouvoir relire SES échanges : on l'autorise s'il est
+    // sender OU receiver d'au moins une offre de la mission (corrige le 403 historique).
+    let isParticipant = isClient || isAssignedArtisan;
+    if (!isParticipant) {
+      const myExchange = await this.prisma.negotiation.findFirst({
+        where: {
+          missionId,
+          OR: [{ senderId: userId }, { receiverId: userId }],
+        },
+        select: { id: true },
+      });
+      isParticipant = !!myExchange;
+    }
+
+    if (!isParticipant) {
       throw new ForbiddenException('Accès non autorisé');
     }
 
-    return this.prisma.negotiation.findMany({
-      where: { missionId },
+    // 🛡️ Anti-désintermédiation : le CLIENT voit TOUTES les offres (il compare/choisit). Un artisan
+    // (candidat OU assigné) ne voit QUE ses propres échanges (offres où il est sender ou receiver),
+    // JAMAIS celles d'un concurrent.
+    const where = isClient
+      ? { missionId }
+      : { missionId, OR: [{ senderId: userId }, { receiverId: userId }] };
+
+    // MARQUAGE « VUE » : quand le CLIENT propriétaire ouvre les offres, on horodate viewedAt sur
+    // les offres qui lui sont destinées (receiverId===client) encore en attente et non vues.
+    // Best-effort, avant de retourner. L'artisan qui relit ses offres ne déclenche PAS le « vue ».
+    if (isClient) {
+      try {
+        await this.prisma.negotiation.updateMany({
+          where: {
+            missionId,
+            receiverId: userId,
+            viewedAt: null,
+            accepted: null,
+          },
+          data: { viewedAt: new Date() },
+        });
+      } catch (error) {
+        this.logger.error('Échec marquage viewedAt (non bloquant):', error);
+      }
+    }
+
+    const negotiations = await this.prisma.negotiation.findMany({
+      where,
       orderBy: { createdAt: 'asc' },
       include: {
         sender: {
@@ -347,5 +497,88 @@ export class NegotiationService {
         },
       },
     });
+
+    return negotiations.map((n) => this.withStatus(n));
+  }
+
+  /**
+   * ENDPOINT AGRÉGÉ « MES OFFRES » (artisan) : toutes les offres ENVOYÉES par l'utilisateur
+   * (senderId === userId), across toutes ses missions, triées par createdAt desc.
+   * Chaque offre est enrichie du `status` dérivé + résumé de la mission liée + nom client anonymisé
+   * (prénom + initiale du nom, JAMAIS de coordonnées : anti-désintermédiation).
+   * Renvoie aussi un résumé de stats (counts par statut + taux de conversion).
+   */
+  async mine(userId: string) {
+    const negotiations = await this.prisma.negotiation.findMany({
+      where: { senderId: userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        mission: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            city: true,
+            status: true,
+            client: {
+              select: { firstName: true, lastName: true },
+            },
+          },
+        },
+      },
+    });
+
+    const offers = negotiations.map((n) => {
+      const status = this.deriveStatus(n);
+      const client = n.mission?.client;
+      // Nom client anonymisé : prénom + initiale du nom (pas de coordonnées).
+      const clientName = client
+        ? `${client.firstName ?? ''}${client.lastName ? ' ' + client.lastName.charAt(0) + '.' : ''}`.trim()
+        : null;
+      return {
+        id: n.id,
+        missionId: n.missionId,
+        status,
+        proposedPrice: n.proposedPrice,
+        laborCost: n.laborCost,
+        materialCost: n.materialCost,
+        travelCost: n.travelCost,
+        availability: n.availability,
+        estimatedDuration: n.estimatedDuration,
+        message: n.message,
+        expiresAt: n.expiresAt,
+        viewedAt: n.viewedAt,
+        createdAt: n.createdAt,
+        mission: n.mission
+          ? {
+              id: n.mission.id,
+              title: n.mission.title,
+              category: n.mission.category,
+              city: n.mission.city,
+              status: n.mission.status,
+            }
+          : null,
+        clientName,
+      };
+    });
+
+    // Stats : counts par statut + taux de conversion = accepted / (total hors expired).
+    const counts = { ACCEPTED: 0, REJECTED: 0, EXPIRED: 0, VIEWED: 0, SENT: 0 };
+    for (const o of offers) {
+      counts[o.status] = (counts[o.status] ?? 0) + 1;
+    }
+    const total = offers.length;
+    const denominator = total - counts.EXPIRED;
+    const conversionRate =
+      denominator > 0 ? Math.round((counts.ACCEPTED / denominator) * 100) : 0;
+
+    return {
+      offers,
+      stats: {
+        total,
+        counts,
+        conversionRate, // en % : offres acceptées / offres traitées (hors expirées)
+      },
+    };
   }
 }
