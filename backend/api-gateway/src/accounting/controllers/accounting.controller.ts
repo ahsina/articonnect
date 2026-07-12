@@ -80,6 +80,56 @@ export class AccountingController {
     res.status(HttpStatus.OK).send(data);
   }
 
+  @Get('platform-export')
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary:
+      'Export CSV du grand livre plateforme (commissions perçues + TVA collectée par période) — Admin only',
+  })
+  @ApiQuery({ name: 'startDate', required: true, description: 'Start date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'endDate', required: true, description: 'End date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'format', required: false, enum: ['csv'], description: 'Output format (csv only)' })
+  async exportPlatformLedger(
+    @Res() res: Response,
+    @Query('startDate') startDateStr: string,
+    @Query('endDate') endDateStr: string,
+    @Query('format') format: 'csv' = 'csv',
+  ) {
+    if (!startDateStr || !endDateStr) {
+      throw new BadRequestException(
+        'startDate et endDate sont requis (format YYYY-MM-DD).',
+      );
+    }
+
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new BadRequestException('Dates invalides. Format attendu: YYYY-MM-DD');
+    }
+    if (startDate > endDate) {
+      throw new BadRequestException(
+        'La date de début doit être antérieure à la date de fin',
+      );
+    }
+
+    // On borne endDate à la fin de journée pour inclure les écritures du dernier jour.
+    endDate.setHours(23, 59, 59, 999);
+
+    const { data, filename } = await this.fecExportService.generatePlatformLedger({
+      startDate,
+      endDate,
+      format,
+    });
+
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': Buffer.byteLength(data, 'utf-8'),
+    });
+    res.status(HttpStatus.OK).send(data);
+  }
+
   @Get('summary')
   @Roles('ARTISAN')
   @ApiOperation({ summary: 'Get accounting summary for a period' })

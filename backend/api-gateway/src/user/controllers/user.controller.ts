@@ -11,7 +11,9 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -113,8 +115,16 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Export all user data (GDPR compliance)' })
-  async exportData(@Request() req) {
-    return this.gdprService.exportUserData(req.user.userId);
+  async exportData(@Request() req, @Res({ passthrough: true }) res: Response) {
+    const data = await this.gdprService.exportUserData(req.user.userId);
+    // Fichier téléchargeable (droit d'accès/portabilité RGPD art.15/20) : on force le
+    // téléchargement plutôt qu'un affichage inline, avec un nom stable par utilisateur.
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="gdpr-export-${req.user.userId}.json"`,
+    );
+    return data;
   }
 
   @Post('gdpr/request-deletion')

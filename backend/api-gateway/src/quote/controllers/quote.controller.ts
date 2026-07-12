@@ -11,7 +11,10 @@ import {
   Request,
   Ip,
   Headers,
+  Res,
+  HttpStatus,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -108,6 +111,24 @@ export class QuoteController {
   @Get(':id')
   async findOne(@Request() req, @Param('id') id: string) {
     return this.quoteService.findOne(id, req.user.id);
+  }
+
+  // PDF du devis — accessible à l'artisan émetteur ET au client destinataire (ownership vérifié
+  // dans le service). Deux segments (':id/pdf') → non masqué par @Get(':id'). Stream direct
+  // application/pdf (même pattern que /documents/pdf/quote/:id, mais sans restriction artisan-only).
+  @Get(':id/pdf')
+  async downloadPdf(@Request() req, @Param('id') id: string, @Res() res: Response) {
+    const { buffer, quoteNumber } = await this.quoteService.generatePdf(
+      id,
+      req.user.id,
+      req.user.role === 'ADMIN',
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="devis-${quoteNumber}.pdf"`,
+      'Content-Length': buffer.length,
+    });
+    res.status(HttpStatus.OK).send(buffer);
   }
 
   @Put(':id')

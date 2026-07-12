@@ -174,11 +174,62 @@ export class AdminService {
     };
   }
 
-  async getAllUsers(page: number = 1, limit: number = 20) {
+  /**
+   * Liste paginée + filtrée des utilisateurs pour l'admin.
+   *
+   * Le front (admin/users) envoie {role, suspended, search} en plus de page/limit ;
+   * ces filtres étaient jusqu'ici ignorés (seuls page/limit étaient pris en compte).
+   * On construit désormais un `where` Prisma correspondant. Tous les filtres sont
+   * optionnels — les appelants existants (page/limit seuls) restent inchangés.
+   *
+   * @param filters.role     Rôle exact (CLIENT|ARTISAN|ADMIN). Valeur inconnue = ignorée.
+   * @param filters.status   Statut exact (ACTIVE|SUSPENDED|DELETED). Prioritaire sur `suspended`.
+   * @param filters.suspended true → status SUSPENDED ; false → status non-SUSPENDED (actifs).
+   * @param filters.search   Recherche insensible à la casse sur email + prénom + nom.
+   */
+  async getAllUsers(
+    page: number = 1,
+    limit: number = 20,
+    filters: {
+      role?: string;
+      status?: string;
+      suspended?: boolean;
+      search?: string;
+    } = {},
+  ) {
     const skip = (page - 1) * limit;
+
+    const where: Prisma.UserWhereInput = {};
+
+    // Filtre rôle : seulement si c'est une valeur valide de l'enum (anti-injection / no-op sûr).
+    if (filters.role) {
+      const validRoles = Object.values(UserRole) as string[];
+      if (validRoles.includes(filters.role)) {
+        where.role = filters.role as UserRole;
+      }
+    }
+
+    // Filtre statut : `status` explicite (enum) prioritaire, sinon dérivé du booléen `suspended`.
+    const validStatuses = ['ACTIVE', 'SUSPENDED', 'DELETED'];
+    if (filters.status && validStatuses.includes(filters.status)) {
+      where.status = filters.status as Prisma.UserWhereInput['status'];
+    } else if (filters.suspended !== undefined) {
+      where.status = filters.suspended ? 'SUSPENDED' : { not: 'SUSPENDED' };
+    }
+
+    // Recherche texte : email OU prénom OU nom (insensible à la casse).
+    if (filters.search && filters.search.trim()) {
+      const q = filters.search.trim();
+      where.OR = [
+        { email: { contains: q, mode: 'insensitive' } },
+        { firstName: { contains: q, mode: 'insensitive' } },
+        { lastName: { contains: q, mode: 'insensitive' } },
+      ];
+    }
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -192,7 +243,7 @@ export class AdminService {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.user.count(),
+      this.prisma.user.count({ where }),
     ]);
 
     return {

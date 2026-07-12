@@ -3279,8 +3279,12 @@ model SubcontractorAssignment {
   paymentReference  String?
 
   // Performance
-  rating   Int? // 1-5
+  rating   Int? // 1-5 — note du donneur d'ordre → sous-traitant
   feedback String?
+
+  // Réputation réciproque : note du sous-traitant → donneur d'ordre (fiabilité, paiement à temps)
+  contractorRating   Int? // 1-5
+  contractorFeedback String?
 
   // Status
   status String @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED

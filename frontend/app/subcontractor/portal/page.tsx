@@ -14,6 +14,9 @@ import {
   Mail,
   LogOut,
   Users,
+  Star,
+  MessageSquare,
+  AlertTriangle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -260,6 +263,132 @@ export default function SubcontractorPortalPage() {
     }
   };
 
+  // Noter le donneur d'ordre (notation réciproque) sur une mission terminée.
+  const handleRateContractor = async (
+    id: string,
+    contractorRating: number,
+    contractorFeedback?: string,
+  ) => {
+    if (!id || !contractorRating) return;
+    setActionId(id);
+    try {
+      await subcontractorApi.portal.rateContractor(id, { contractorRating, contractorFeedback });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description:
+          t('subcontractor', 'contractorRated') || "Merci, votre évaluation a été enregistrée.",
+        variant: 'success',
+      });
+      await loadAll();
+    } catch (e) {
+      console.error('Error rating contractor:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'contractorRateError') || "Impossible d'enregistrer votre évaluation.",
+        variant: 'destructive',
+      });
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // Ouvrir un recours / signaler un problème (impayé, désaccord) -> ticket support.
+  const handleReportIssue = async (a?: SubcontractorAssignment) => {
+    if (!a?.id) return;
+    const description =
+      typeof window !== 'undefined'
+        ? window.prompt(
+            t('subcontractor', 'reportIssuePrompt') ||
+              'Décrivez le problème (impayé, désaccord, litige) :',
+            '',
+          )
+        : '';
+    if (description === null) return; // annulé
+    if (!description.trim()) {
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'reportIssueEmpty') || 'Merci de décrire le problème rencontré.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setActionId(a.id);
+    try {
+      const ticket = await subcontractorApi.portal.reportIssue({
+        assignmentId: a.id,
+        description: description.trim(),
+        category: 'DISPUTE',
+        missionId: a?.mission?.id || a?.missionId,
+      });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description:
+          (t('subcontractor', 'reportIssueSent') || 'Votre recours a été transmis au support.') +
+          (ticket?.ticketNumber ? ` (${ticket.ticketNumber})` : ''),
+        variant: 'success',
+      });
+    } catch (e) {
+      console.error('Error reporting issue:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'reportIssueError') || "Impossible d'envoyer votre recours.",
+        variant: 'destructive',
+      });
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // Contacter le donneur d'ordre in-app (chat existant).
+  const handleContactContractor = async (a?: SubcontractorAssignment) => {
+    const contractorUserId = a?.contractor?.id;
+    if (!a?.id) return;
+    if (!contractorUserId) {
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'contactUnavailable') ||
+          "Coordonnées du donneur d'ordre indisponibles pour la messagerie.",
+        variant: 'destructive',
+      });
+      return;
+    }
+    const content =
+      typeof window !== 'undefined'
+        ? window.prompt(
+            t('subcontractor', 'contactPrompt') || "Votre message au donneur d'ordre :",
+            '',
+          )
+        : '';
+    if (content === null) return; // annulé
+    if (!content.trim()) return;
+    setActionId(a.id);
+    try {
+      await subcontractorApi.portal.contactContractor({
+        contractorUserId,
+        content: content.trim(),
+        missionId: a?.mission?.id || a?.missionId,
+      });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'messageSent') || 'Message envoyé.',
+        variant: 'success',
+      });
+    } catch (e) {
+      console.error('Error contacting contractor:', e);
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description: t('subcontractor', 'messageError') || "Impossible d'envoyer le message.",
+        variant: 'destructive',
+      });
+    } finally {
+      setActionId(null);
+    }
+  };
+
   // Basculer sa disponibilité globale (Disponible <-> En pause). Reflète l'état
   // courant renvoyé par le dashboard (available) et recharge après écriture.
   const handleToggleAvailability = async () => {
@@ -494,6 +623,9 @@ export default function SubcontractorPortalPage() {
                       busy={actionId === a?.id}
                       onProgress={handleProgress}
                       onComplete={handleComplete}
+                      onRateContractor={handleRateContractor}
+                      onReport={handleReportIssue}
+                      onContact={handleContactContractor}
                       onFormatDate={formatDate}
                       onFormatMoney={formatMoney}
                       statusVariant={ASSIGNMENT_STATUS_VARIANT}
@@ -722,6 +854,9 @@ export default function SubcontractorPortalPage() {
                     busy={actionId === a?.id}
                     onProgress={handleProgress}
                     onComplete={handleComplete}
+                    onRateContractor={handleRateContractor}
+                    onReport={handleReportIssue}
+                    onContact={handleContactContractor}
                     onFormatDate={formatDate}
                     onFormatMoney={formatMoney}
                     statusVariant={ASSIGNMENT_STATUS_VARIANT}
@@ -925,6 +1060,9 @@ function AssignmentRow({
   busy,
   onProgress,
   onComplete,
+  onRateContractor,
+  onReport,
+  onContact,
   onFormatDate,
   onFormatMoney,
   statusVariant,
@@ -934,6 +1072,9 @@ function AssignmentRow({
   busy: boolean;
   onProgress: (id: string, progress: number) => void;
   onComplete: (id: string) => void;
+  onRateContractor?: (id: string, rating: number, feedback?: string) => void;
+  onReport?: (a: SubcontractorAssignment) => void;
+  onContact?: (a: SubcontractorAssignment) => void;
   onFormatDate: (d?: string) => string;
   onFormatMoney: (a?: number, c?: string) => string;
   statusVariant: Record<string, BadgeVariant>;
@@ -1014,29 +1155,158 @@ function AssignmentRow({
         </div>
       </div>
 
-      {canWork && (
-        <div className="flex flex-wrap justify-end gap-2 mt-4">
-          {[25, 50, 75].map((step) => (
-            <Button
-              key={step}
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={() => onProgress(a?.id, step)}
-            >
-              {step}%
-            </Button>
-          ))}
+      {/* Notation réciproque du donneur d'ordre (missions terminées uniquement) */}
+      {isDone && onRateContractor && (
+        <ContractorRatingBlock
+          assignment={a}
+          busy={busy}
+          onRateContractor={onRateContractor}
+          t={t}
+        />
+      )}
+
+      {/* Actions transverses : contacter le donneur d'ordre + recours */}
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+        {onContact && (
           <Button
+            variant="outline"
             size="sm"
             disabled={busy}
-            onClick={() => onComplete(a?.id)}
+            onClick={() => onContact(a)}
             className="gap-2"
           >
-            <CheckCircle2 className="h-4 w-4" />
-            {t('subcontractor', 'markCompleted') || 'Marquer terminée'}
+            <MessageSquare className="h-4 w-4" />
+            {t('subcontractor', 'contactContractor') || "Contacter le donneur d'ordre"}
           </Button>
-        </div>
+        )}
+        {onReport && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => onReport(a)}
+            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-[#EDEDED]"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            {t('subcontractor', 'reportIssue') || 'Signaler un problème / recours'}
+          </Button>
+        )}
+
+        {canWork && (
+          <div className="flex flex-wrap justify-end gap-2 ml-auto">
+            {[25, 50, 75].map((step) => (
+              <Button
+                key={step}
+                variant="outline"
+                size="sm"
+                disabled={busy}
+                onClick={() => onProgress(a?.id, step)}
+              >
+                {step}%
+              </Button>
+            ))}
+            <Button
+              size="sm"
+              disabled={busy}
+              onClick={() => onComplete(a?.id)}
+              className="gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {t('subcontractor', 'markCompleted') || 'Marquer terminée'}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Notation RÉCIPROQUE : le sous-traitant évalue le donneur d'ordre (fiabilité, paiement à temps)
+ * sur une mission TERMINÉE. Si déjà noté (a.contractorRating), affichage en lecture seule ; sinon
+ * sélecteur d'étoiles interactif + commentaire optionnel + envoi. Écrit via POST rate-contractor.
+ */
+function ContractorRatingBlock({
+  assignment,
+  busy,
+  onRateContractor,
+  t,
+}: {
+  assignment: SubcontractorAssignment;
+  busy: boolean;
+  onRateContractor: (id: string, rating: number, feedback?: string) => void;
+  t: (ns: string, key: string) => string;
+}) {
+  const a = assignment;
+  const existing = Number(a?.contractorRating) || 0;
+  const [hover, setHover] = useState(0);
+  const [selected, setSelected] = useState(0);
+  const [feedback, setFeedback] = useState('');
+  const alreadyRated = existing >= 1;
+  const shown = alreadyRated ? existing : hover || selected;
+
+  return (
+    <div className="mt-3 rounded-xl bg-muted/50 border border-[#EDEDED] p-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+        <Star className="h-4 w-4" />
+        {alreadyRated
+          ? t('subcontractor', 'contractorRatingGiven') || "Votre évaluation du donneur d'ordre"
+          : t('subcontractor', 'rateContractor') || "Noter le donneur d'ordre"}
+      </div>
+      <div className="flex items-center gap-1" role="radiogroup" aria-label="Note">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={alreadyRated || busy}
+            aria-label={`${n}/5`}
+            aria-checked={shown === n}
+            role="radio"
+            onMouseEnter={() => !alreadyRated && setHover(n)}
+            onMouseLeave={() => !alreadyRated && setHover(0)}
+            onClick={() => !alreadyRated && setSelected(n)}
+            className={`p-0.5 transition ${alreadyRated ? 'cursor-default' : 'cursor-pointer'} disabled:opacity-100`}
+          >
+            <Star
+              className={`h-6 w-6 ${
+                n <= shown ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/40'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+
+      {alreadyRated ? (
+        a?.contractorFeedback ? (
+          <p className="mt-2 text-sm text-muted-foreground italic">
+            &laquo; {a.contractorFeedback} &raquo;
+          </p>
+        ) : null
+      ) : (
+        <>
+          <textarea
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            rows={2}
+            maxLength={1000}
+            placeholder={
+              t('subcontractor', 'contractorFeedbackPlaceholder') ||
+              'Commentaire (optionnel) : ponctualité, paiement, communication…'
+            }
+            className="mt-2 w-full rounded-xl border border-[#EDEDED] bg-white p-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <div className="flex justify-end mt-2">
+            <Button
+              size="sm"
+              disabled={busy || selected < 1}
+              onClick={() => onRateContractor(a?.id, selected, feedback.trim() || undefined)}
+              className="gap-2"
+            >
+              <Star className="h-4 w-4" />
+              {t('subcontractor', 'submitRating') || "Envoyer l'évaluation"}
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import { marketplaceApi } from '@/lib/api/marketplace';
 import { StarRating } from '@/components/ui/star-rating';
 import apiClient from '@/lib/api/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { MessageCircle } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -16,6 +17,8 @@ interface OrderItem {
   product?: {
     name: string;
     images?: string[];
+    // ID du vendeur (userId de l'artisan propriétaire du produit) exposé par l'API commande.
+    artisanId?: string;
   };
   quantity: number;
   unitPrice: number | string;
@@ -344,6 +347,24 @@ export default function ClientOrdersPage() {
                     >
                       {t('orders', 'viewDetails')}
                     </Button>
+
+                    {/* Contacter le vendeur (SAV / suivi livraison) — relaie vers le chat
+                        avec l'ID du vendeur (product.artisanId) issu de la commande chargée. */}
+                    {(() => {
+                      const sellerId = order.items
+                        ?.map((it) => it.product?.artisanId)
+                        .find(Boolean);
+                      return sellerId ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/client/messages?userId=${sellerId}`)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {t('orders', 'contactSeller') || 'Contacter le vendeur'}
+                        </Button>
+                      ) : null;
+                    })()}
 
                     {order.status === 'DELIVERED' && (
                       <Button

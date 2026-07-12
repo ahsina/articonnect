@@ -112,8 +112,15 @@ export interface SubcontractorAssignment {
   /** Taux de commission plateforme en % (normalisé depuis `commissionRate`). */
   commissionRate?: number;
   paymentStatus?: string;
-  /** Donneur d'ordre (normalisé depuis `subcontractor.artisan`). */
+  /** Note du donneur d'ordre → sous-traitant (1-5) et son commentaire. */
+  rating?: number | null;
+  feedback?: string | null;
+  /** Note RÉCIPROQUE du sous-traitant → donneur d'ordre (1-5) et son commentaire. */
+  contractorRating?: number | null;
+  contractorFeedback?: string | null;
+  /** Donneur d'ordre (normalisé depuis `subcontractor.artisan`). `id` = userId (contact chat). */
   contractor?: {
+    id?: string;
     firstName?: string;
     lastName?: string;
     email?: string;
@@ -304,6 +311,8 @@ function normalizeContractor(raw: any) {
   const artisan = raw?.subcontractor?.artisan ?? raw?.contractor ?? null;
   if (!artisan || typeof artisan !== 'object') return undefined;
   return {
+    // `id` = userId du donneur d'ordre (cible du chat POST /chat/conversation/:userId/message).
+    id: artisan.id,
     firstName: artisan.firstName,
     lastName: artisan.lastName,
     email: artisan.email,
@@ -352,6 +361,10 @@ function normalizeAssignment(raw: any): SubcontractorAssignment {
     commissionRate: toNum(raw?.commissionRate),
     paymentStatus: raw?.paymentStatus,
     progress,
+    rating: raw?.rating ?? null,
+    feedback: raw?.feedback ?? null,
+    contractorRating: raw?.contractorRating ?? null,
+    contractorFeedback: raw?.contractorFeedback ?? null,
     contractor: normalizeContractor(raw),
     note: raw?.description ?? raw?.note ?? undefined,
     createdAt: raw?.createdAt,
@@ -504,6 +517,53 @@ export const subcontractorApi = {
         {},
       );
       return normalizeAssignment(response.data);
+    },
+
+    // NOTATION RÉCIPROQUE : le sous-traitant note le donneur d'ordre (1-5) sur une
+    // mission TERMINÉE. Écrit contractorRating/contractorFeedback (déjà en base).
+    rateContractor: async (
+      id: string,
+      dto: { contractorRating: number; contractorFeedback?: string },
+    ): Promise<SubcontractorAssignment> => {
+      const rating = Math.round(Math.min(5, Math.max(1, toNum(dto?.contractorRating))));
+      const feedback = (dto?.contractorFeedback || '').trim();
+      const response = await apiClient.post(
+        `/subcontractor-portal/assignments/${id}/rate-contractor`,
+        { contractorRating: rating, ...(feedback ? { contractorFeedback: feedback } : {}) },
+      );
+      return normalizeAssignment(response.data);
+    },
+
+    // RECOURS / LITIGE : ouvre un ticket support (module support existant, non modifié).
+    // Le ticket remonte dans l'inbox admin support. category DISPUTE ou PAYMENT_ISSUE.
+    reportIssue: async (dto: {
+      assignmentId: string;
+      description: string;
+      category?: 'DISPUTE' | 'PAYMENT_ISSUE' | 'MISSION_ISSUE';
+      missionId?: string;
+    }): Promise<{ id: string; ticketNumber?: string; [k: string]: any }> => {
+      const response = await apiClient.post('/support/tickets', {
+        subject: `Recours sous-traitance #${dto.assignmentId}`,
+        description: dto.description,
+        category: dto.category || 'DISPUTE',
+        priority: 'HIGH',
+        ...(dto.missionId ? { missionId: dto.missionId } : {}),
+      });
+      return response.data;
+    },
+
+    // CONTACT IN-APP : envoie un message au donneur d'ordre via le chat existant
+    // (module chat non modifié). `contractorUserId` = contractor.id de l'attribution.
+    contactContractor: async (dto: {
+      contractorUserId: string;
+      content: string;
+      missionId?: string;
+    }): Promise<{ id: string; [k: string]: any }> => {
+      const response = await apiClient.post(
+        `/chat/conversation/${dto.contractorUserId}/message`,
+        { content: dto.content, ...(dto.missionId ? { missionId: dto.missionId } : {}) },
+      );
+      return response.data;
     },
 
     // Résumé des gains (aplati depuis `summary` + `assignments`).

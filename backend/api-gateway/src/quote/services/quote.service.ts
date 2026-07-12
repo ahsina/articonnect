@@ -14,6 +14,7 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { QuoteTotals } from '../../common/types/json-fields.types';
 import { ContactRevealService } from '../../mission/services/contact-reveal.service';
+import { PdfService } from '../../documents/services/pdf.service';
 
 @Injectable()
 export class QuoteService {
@@ -26,6 +27,7 @@ export class QuoteService {
   constructor(
     private prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly pdfService: PdfService,
   ) {
     this.contactReveal = new ContactRevealService(this.prisma);
   }
@@ -483,6 +485,36 @@ export class QuoteService {
     // paiement escrow ET à la fenêtre active de la mission (COMPLETED/AUTO_VALIDATED + 72h de grâce,
     // puis re-masquage), uniquement pour le client et l'artisan assigné. Email jamais exposé.
     return this.maskQuoteParties(quote, userId);
+  }
+
+  /**
+   * Génère le PDF du devis (mêmes lignes/qté/PU/TVA/remise/totaux/conditions/mentions légales que
+   * l'affichage). Réutilise le générateur PDF PROUVÉ `PdfService.generateQuotePdf` (celui exposé par
+   * /documents/pdf/quote/:id — libellé « DEVIS », coordonnées entreprise, SIRET/TVA, remise, CGV),
+   * SANS le modifier. Ownership : artisan émetteur OU client destinataire (OU admin) — le
+   * générateur documents n'ayant AUCUN contrôle d'accès (route artisan-only), la garde est ici.
+   * Renvoie le buffer + le numéro de devis pour nommer le fichier téléchargé.
+   */
+  async generatePdf(
+    id: string,
+    userId: string,
+    isAdmin = false,
+  ): Promise<{ buffer: Buffer; quoteNumber: string }> {
+    const quote = await this.prisma.quote.findUnique({
+      where: { id },
+      select: { id: true, quoteNumber: true, artisanId: true, clientId: true },
+    });
+
+    if (!quote) {
+      throw new NotFoundException('Quote not found');
+    }
+
+    if (!isAdmin && quote.artisanId !== userId && quote.clientId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const buffer = await this.pdfService.generateQuotePdf(id);
+    return { buffer, quoteNumber: quote.quoteNumber };
   }
 
   async update(id: string, artisanId: string, dto: UpdateQuoteDto) {

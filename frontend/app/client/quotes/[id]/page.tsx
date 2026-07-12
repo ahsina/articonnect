@@ -252,6 +252,9 @@ export default function ClientQuoteDetailPage() {
             <div className="text-right">
               <div className="text-2xl font-bold text-primary">{formatCurrency(num(quote.totalAmount))}</div>
               <div className="text-xs text-muted-foreground">Valide jusqu&apos;au {formatDate(quote.validUntil)}</div>
+              <a href={quoteApi.pdfUrl(quote.id)} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="mt-3">Télécharger le PDF</Button>
+              </a>
             </div>
           </div>
         </CardHeader>

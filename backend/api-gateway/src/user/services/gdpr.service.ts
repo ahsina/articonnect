@@ -43,6 +43,8 @@ export class GdprService {
             certifications: true,
           },
         },
+        // Consentements (RGPD art.7) : préférences marketing/analytics/géoloc/notifications.
+        consents: true,
         givenReviews: true,
         receivedReviews: true,
         clientMissions: true,
@@ -51,6 +53,51 @@ export class GdprService {
         // Factures : l'utilisateur peut être émetteur (artisan) et/ou destinataire (client).
         issuedInvoices: true,
         receivedInvoices: true,
+        // Paiements/transactions initiés par l'utilisateur (escrow, remboursements). Données
+        // financières propres au demandeur : montants, méthode, références Stripe/PayPal.
+        payments: true,
+        // Marketplace : commandes passées en tant que client (adresse de livraison = la sienne).
+        orders: {
+          include: {
+            items: true,
+          },
+        },
+        // Offres / négociations sur missions (l'utilisateur émet ET reçoit des propositions).
+        negotiationsSent: true,
+        negotiationsReceived: true,
+        // Demandes de devis (l'utilisateur en tant que client ; en tant qu'artisan = contrepartie).
+        clientRequests: true,
+        artisanRequests: true,
+        // Favoris (artisans/produits sauvegardés). Contrepartie pseudonymisée (id + prénom / nom produit).
+        favorites: {
+          include: {
+            artisan: {
+              select: {
+                id: true,
+                firstName: true,
+              },
+            },
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        // Tickets support : on n'embarque QUE les messages visibles du client (pas les notes internes).
+        supportTickets: {
+          include: {
+            messages: {
+              where: { isInternal: false },
+            },
+          },
+        },
+        // Messages/conversations : chargés via relations pour scoper strictement au demandeur.
+        // - sentMessages : le demandeur est l'auteur → contenu + pièces jointes conservés.
+        // - receivedMessages : contenu rédigé par la CONTREPARTIE → métadonnées seulement (voir plus bas).
+        sentMessages: { orderBy: { createdAt: 'asc' } },
+        receivedMessages: { orderBy: { createdAt: 'asc' } },
         refreshTokens: true,
       },
     });
@@ -59,37 +106,84 @@ export class GdprService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    // Remove sensitive data
+    // Remove sensitive data / credentials (jamais dans un export téléchargeable).
     const {
       password: _password,
       twoFactorSecret: _twoFactorSecret,
       refreshTokens: _refreshTokens,
+      // Jetons OAuth Microsoft = identifiants d'accès (credentials), pas de la « donnée
+      // personnelle » exploitable : on ne les restitue jamais dans un fichier téléchargé.
+      outlookAccessToken: _outlookAccessToken,
+      outlookRefreshToken: _outlookRefreshToken,
       clientMissions,
       artisanMissions,
       issuedInvoices,
       receivedInvoices,
+      payments,
+      orders,
+      negotiationsSent,
+      negotiationsReceived,
+      clientRequests,
+      artisanRequests,
+      favorites,
+      supportTickets,
+      sentMessages,
+      receivedMessages,
       ...userWithoutSensitiveData
-    } = user;
+    } = user as any;
+
+    // receivedMessages : le corps et les pièces jointes sont rédigés par la CONTREPARTIE →
+    // on ne restitue que les métadonnées (id, expéditeur pseudonyme, lu/non lu, date). L'utilisateur
+    // conserve la trace de l'échange sans qu'on exfiltre le contenu/PII d'autrui (art.15).
+    const receivedMessagesMeta = (receivedMessages ?? []).map((m: any) => ({
+      id: m.id,
+      senderId: m.senderId,
+      read: m.read,
+      readAt: m.readAt,
+      createdAt: m.createdAt,
+      contentOmitted: true,
+    }));
 
     const sanitized = {
       ...userWithoutSensitiveData,
       // clientMissions : missions où le demandeur est le CLIENT → l'adresse du chantier est
       // la SIENNE, on la conserve. La contrepartie artisan n'est qu'un artisanId (pseudonyme).
-      clientMissions,
+      clientMissions: clientMissions ?? [],
       // artisanMissions : missions où le demandeur est l'ARTISAN → l'adresse/géoloc du chantier
       // appartient au CLIENT (contrepartie). On la réduit à une zone approximative.
-      artisanMissions: (artisanMissions as any[]).map((m) =>
+      artisanMissions: (artisanMissions ?? []).map((m: any) =>
         this.redactCounterpartyMissionLocation(m),
       ),
       // Factures : on retire l'adresse de la contrepartie (bloc JSON {name, address, ...}).
       // issuedInvoices → l'émetteur est le demandeur, le client est la contrepartie.
-      issuedInvoices: (issuedInvoices as any[]).map((inv) =>
+      issuedInvoices: (issuedInvoices ?? []).map((inv: any) =>
         this.redactInvoiceCounterparty(inv, 'clientAddress'),
       ),
       // receivedInvoices → le destinataire est le demandeur, l'émetteur est la contrepartie.
-      receivedInvoices: (receivedInvoices as any[]).map((inv) =>
+      receivedInvoices: (receivedInvoices ?? []).map((inv: any) =>
         this.redactInvoiceCounterparty(inv, 'issuerAddress'),
       ),
+      // Paiements/transactions du demandeur (montants, remboursements, références PSP).
+      payments: payments ?? [],
+      // Commandes marketplace du demandeur (adresse de livraison = la sienne).
+      orders: orders ?? [],
+      // Offres/négociations : l'utilisateur voit les siennes ET celles reçues sur ses missions.
+      // Aucune PII de contrepartie (uniquement senderId/receiverId pseudonymes + prix + message métier).
+      negotiationsSent: negotiationsSent ?? [],
+      negotiationsReceived: negotiationsReceived ?? [],
+      // Demandes de devis en tant que client (adresse = la sienne).
+      clientRequests: clientRequests ?? [],
+      // Demandes reçues en tant qu'artisan : l'adresse appartient au client (contrepartie) → zone approx.
+      artisanRequests: (artisanRequests ?? []).map((r: any) =>
+        this.redactCounterpartyRequestLocation(r),
+      ),
+      // Favoris (contrepartie déjà pseudonymisée via select id/prénom/nom produit).
+      favorites: favorites ?? [],
+      // Tickets support (messages internes déjà exclus via le where).
+      supportTickets: supportTickets ?? [],
+      // Messages : sortants complets (rédigés par l'utilisateur), entrants en métadonnées seules.
+      sentMessages: sentMessages ?? [],
+      receivedMessages: receivedMessagesMeta,
     };
 
     return {
@@ -100,10 +194,18 @@ export class GdprService {
           'Account Information',
           'Profile Data',
           'Addresses',
+          'Consents',
           'Reviews',
           'Missions',
-          'Notifications',
+          'Quote Requests',
+          'Offers & Negotiations',
+          'Payments & Transactions',
           'Invoices',
+          'Marketplace Orders',
+          'Favorites',
+          'Messages',
+          'Support Tickets',
+          'Notifications',
           'Preferences',
         ],
         exportFormat: 'JSON',
@@ -135,6 +237,26 @@ export class GdprService {
       ...rest,
       // Zone approximative uniquement (ville), jamais l'adresse précise du client.
       approximateArea: mission.city ?? null,
+    };
+  }
+
+  /**
+   * Réduit une demande de devis reçue en tant qu'ARTISAN : l'adresse/géoloc appartient au
+   * CLIENT (contrepartie). On supprime rue, code postal et coordonnées ; on ne garde que la
+   * ville comme zone approximative. Le client reste identifié par son clientId (pseudonyme).
+   */
+  private redactCounterpartyRequestLocation(request: any) {
+    if (!request || typeof request !== 'object') return request;
+    const {
+      address: _address,
+      postalCode: _postalCode,
+      latitude: _latitude,
+      longitude: _longitude,
+      ...rest
+    } = request;
+    return {
+      ...rest,
+      approximateArea: request.city ?? null,
     };
   }
 

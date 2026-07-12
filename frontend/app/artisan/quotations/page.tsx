@@ -459,7 +459,7 @@ export default function QuotationsPage() {
                         <div className="text-xs text-muted-foreground">TVA {num(q.taxRate)}%</div>
                         <div className="flex flex-col gap-2 mt-3">
                           <a href={quoteApi.pdfUrl(q.id)} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="w-full">PDF</Button>
+                            <Button variant="outline" size="sm" className="w-full">Télécharger le PDF</Button>
                           </a>
                           {q.missionId && (
                             <Link href={`/artisan/missions/${q.missionId}`}>

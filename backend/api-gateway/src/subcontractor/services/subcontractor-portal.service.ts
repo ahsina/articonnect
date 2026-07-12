@@ -30,6 +30,12 @@ export interface LeaveRelationshipDto {
   subcontractorId: string;
 }
 
+export interface RateContractorDto {
+  // Note du sous-traitant → donneur d'ordre (1-5). Validée par class-validator côté DTO.
+  contractorRating: number;
+  contractorFeedback?: string;
+}
+
 @Injectable()
 export class SubcontractorPortalService {
   private readonly logger = new Logger(SubcontractorPortalService.name);
@@ -249,12 +255,61 @@ export class SubcontractorPortalService {
         },
         subcontractor: {
           select: {
-            artisan: { select: { firstName: true, lastName: true, phone: true } },
+            // `artisan.id` = userId du donneur d'ordre : requis pour le contact in-app (chat) et
+            // pour afficher qui noter (notation réciproque). `artisan` est une relation User.
+            artisan: { select: { id: true, firstName: true, lastName: true, phone: true } },
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * NOTATION RÉCIPROQUE — le sous-traitant note le DONNEUR D'ORDRE (fiabilité, paiement à temps).
+   * Écrit contractorRating/contractorFeedback sur l'attribution du sous-traitant courant.
+   * Ownership STRICT (getAssignmentForUser vérifie subcontractor.subcontractorUserId === userId) et
+   * la mission doit être COMPLETED (on ne note qu'une collaboration terminée). Symétrique de la note
+   * donneur d'ordre → sous-traitant (rating/feedback). Idempotent : ré-écrit la note (pas de doublon).
+   */
+  async rateContractor(userId: string, assignmentId: string, dto: RateContractorDto) {
+    const assignment = await this.getAssignmentForUser(assignmentId, userId);
+
+    if (assignment.status !== 'COMPLETED') {
+      throw new BadRequestException(
+        "Vous ne pouvez évaluer le donneur d'ordre qu'une fois la mission terminée",
+      );
+    }
+
+    const rating = Number(dto?.contractorRating);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new BadRequestException('La note (contractorRating) doit être un entier entre 1 et 5');
+    }
+
+    const feedback =
+      typeof dto?.contractorFeedback === 'string' && dto.contractorFeedback.trim().length > 0
+        ? dto.contractorFeedback.trim()
+        : null;
+
+    const updated = await this.prisma.subcontractorAssignment.update({
+      where: { id: assignmentId },
+      data: {
+        contractorRating: rating,
+        contractorFeedback: feedback,
+      },
+      include: {
+        mission: { select: { id: true, title: true, artisanId: true } },
+      },
+    });
+
+    // Notifie le donneur d'ordre de l'évaluation reçue.
+    await this.createNotification(
+      updated.mission.artisanId,
+      'Évaluation reçue',
+      `Le sous-traitant a évalué votre collaboration sur "${updated.mission.title}" (${rating}/5).`,
+    );
+
+    return updated;
   }
 
   async updateProgress(userId: string, assignmentId: string, dto: UpdateProgressDto) {

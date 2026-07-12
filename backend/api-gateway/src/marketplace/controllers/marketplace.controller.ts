@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { ProductService } from '../services/product.service';
 import { OrderService } from '../services/order.service';
 import { CategoryService } from '../services/category.service';
@@ -56,7 +58,8 @@ export class MarketplaceController {
 
   // ⚠️ Doit être déclaré AVANT `products/:id` sinon "mine" serait capturé comme un :id.
   @Get('products/mine')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mes produits (vendeur) — tous statuts (DRAFT/ACTIVE/INACTIVE)' })
   @ApiResponse({ status: 200, description: 'Produits de l\'artisan connecté' })
@@ -73,7 +76,8 @@ export class MarketplaceController {
   }
 
   @Post('products')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created' })
@@ -82,7 +86,8 @@ export class MarketplaceController {
   }
 
   @Patch('products/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a product' })
   @ApiResponse({ status: 200, description: 'Product updated' })
@@ -92,7 +97,8 @@ export class MarketplaceController {
   }
 
   @Delete('products/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a product' })
   @ApiResponse({ status: 200, description: 'Product deleted' })
@@ -103,7 +109,8 @@ export class MarketplaceController {
   // ==================== PRODUCT VARIANTS ====================
 
   @Post('products/:productId/variants')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create product variant' })
   @ApiResponse({ status: 201, description: 'Variant created' })
@@ -131,7 +138,8 @@ export class MarketplaceController {
   }
 
   @Patch('variants/:variantId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update product variant' })
   @ApiResponse({ status: 200, description: 'Variant updated' })
@@ -145,7 +153,8 @@ export class MarketplaceController {
   }
 
   @Delete('variants/:variantId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete product variant' })
   @ApiResponse({ status: 200, description: 'Variant deleted' })
@@ -179,7 +188,8 @@ export class MarketplaceController {
   }
 
   @Post('products/:id/reviews/:reviewId/reply')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Seller reply to a product review (owner only)' })
   @ApiResponse({ status: 201, description: 'Reply posted' })
@@ -197,7 +207,8 @@ export class MarketplaceController {
   // ==================== SELLER (VENDEUR) ====================
 
   @Get('seller/orders')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mes commandes vendeur (contenant mes produits)' })
   @ApiResponse({ status: 200, description: 'Ventes de l\'artisan connecté' })
@@ -206,7 +217,8 @@ export class MarketplaceController {
   }
 
   @Get('seller/stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Statistiques de vente (CA, commandes, top produits)' })
   @ApiResponse({ status: 200, description: 'Stats vendeur' })
@@ -252,7 +264,8 @@ export class MarketplaceController {
   }
 
   @Patch('orders/:id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update order status (seller): PAID->PROCESSING->SHIPPED->DELIVERED' })
   @ApiResponse({ status: 200, description: 'Order status updated' })
@@ -261,7 +274,8 @@ export class MarketplaceController {
   }
 
   @Post('orders/:id/ship')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ARTISAN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark order as shipped (seller) + tracking number' })
   @ApiResponse({ status: 200, description: 'Order shipped' })

@@ -79,3 +79,19 @@ export class LeaveRelationshipDto {
   @IsNotEmpty({ message: 'subcontractorId est requis.' })
   subcontractorId: string;
 }
+
+/**
+ * Notation RÉCIPROQUE du donneur d'ordre par le sous-traitant (fiabilité, paiement à temps).
+ * Écrit `contractorRating`/`contractorFeedback` sur l'attribution du sous-traitant courant.
+ * Symétrique de la note donneur d'ordre → sous-traitant (rating/feedback), déjà en base.
+ */
+export class RateContractorDto {
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  contractorRating: number;
+
+  @IsString()
+  @IsOptional()
+  contractorFeedback?: string;
+}

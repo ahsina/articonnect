@@ -44,13 +44,29 @@ export class AdminController {
   }
 
   @Get('users')
+  @ApiOperation({
+    summary:
+      'Liste paginée + filtrée des utilisateurs (role / status|suspended / search) — Admin only',
+  })
   async getUsers(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('role') role?: string,
+    @Query('status') status?: string,
+    @Query('suspended') suspended?: string,
+    @Query('search') search?: string,
   ) {
+    // `suspended` arrive en chaîne dans la query string ('true'/'false') → booléen strict,
+    // undefined si absent (pas de filtre statut dérivé).
+    const suspendedBool =
+      suspended === undefined || suspended === ''
+        ? undefined
+        : suspended === 'true';
+
     return this.adminService.getAllUsers(
       page ? Number(page) : 1,
       limit ? Number(limit) : 20,
+      { role, status, suspended: suspendedBool, search },
     );
   }
 

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { marketplaceApi, Order, OrderItem } from '@/lib/api/marketplace';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Loader2, Truck, PackageCheck, Package } from 'lucide-react';
+import { Loader2, Truck, PackageCheck, Package, MessageCircle } from 'lucide-react';
 
 interface SellerOrdersProps {
   myUserId: string;
@@ -29,6 +30,7 @@ type FilterKey = (typeof FILTERS)[number];
 
 export default function SellerOrders({ myUserId }: SellerOrdersProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -205,6 +207,23 @@ export default function SellerOrders({ myUserId }: SellerOrdersProps) {
                     {t('orders', 'trackingNumber') || 'Suivi'}: <span className="font-medium text-foreground">{order.trackingNumber}</span>
                   </div>
                 )}
+
+                {/* Contacter l'acheteur (SAV / suivi) — relaie vers le chat avec l'ID acheteur */}
+                {(() => {
+                  const buyerId = order.client?.id || order.clientId;
+                  return buyerId ? (
+                    <div className="mt-3 border-t border-border pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/artisan/messages?userId=${buyerId}`)}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        {t('artisan', 'contactBuyer') || "Contacter l'acheteur"}
+                      </Button>
+                    </div>
+                  ) : null;
+                })()}
 
                 {/* Actions vendeur */}
                 {(canShip || canDeliver) && (

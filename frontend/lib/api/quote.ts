@@ -197,10 +197,15 @@ export const quoteApi = {
     return response.data;
   },
 
-  /** URL de téléchargement du PDF (ARTISAN uniquement côté backend). */
+  /**
+   * URL de téléchargement du PDF du devis (application/pdf en pièce jointe).
+   * Backend : GET /quotes/:id/pdf — accessible à l'ARTISAN émetteur ET au CLIENT destinataire
+   * (ownership vérifié côté service). Auth par cookie httpOnly → l'URL est de même origine que
+   * l'API, donc utilisable directement dans un <a href> / window.open (le cookie est envoyé).
+   */
   pdfUrl: (id: string): string => {
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    return `${base}/documents/pdf/quote/${id}`;
+    return `${base}/quotes/${id}/pdf`;
   },
 };
 

@@ -376,6 +376,144 @@ export class FecExportService {
   }
 
   /**
+   * Export du GRAND LIVRE PLATEFORME (Krafolt) sur une période — réservé aux admins.
+   *
+   * Contrairement au FEC (par artisan), cet export agrège TOUTES les factures finalisées
+   * de la plateforme et expose, pour chaque écriture, la vue « plateforme » :
+   *   date, type, référence, montant HT, TVA, commission (revenu Krafolt), net (reversé artisan).
+   *
+   * Source : modèle Invoice (document fiscal portant nativement HT/TVA/commission/net).
+   * On ne retient que les factures finalisées (ISSUED/PAID/OVERDUE), exactement comme
+   * `generateFEC`/`getAccountingSummary` — les brouillons (DRAFT) et annulées ne sont pas
+   * des écritures comptables. Aucun nouveau modèle : réutilisation stricte de l'existant.
+   */
+  async generatePlatformLedger(options: {
+    startDate: Date;
+    endDate: Date;
+    format?: 'csv';
+  }): Promise<{ data: string; filename: string; totals: {
+    ht: number; tva: number; commission: number; net: number; count: number;
+  } }> {
+    const { startDate, endDate } = options;
+
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        issueDate: { gte: startDate, lte: endDate },
+        status: { in: ['ISSUED', 'PAID', 'OVERDUE'] },
+      },
+      orderBy: { issueDate: 'asc' },
+      select: {
+        issueDate: true,
+        type: true,
+        status: true,
+        invoiceNumber: true,
+        subtotal: true,
+        taxAmount: true,
+        platformCommission: true,
+        artisanNetAmount: true,
+      },
+    });
+
+    const headers = [
+      'Date',
+      'Type',
+      'Référence',
+      'Statut',
+      'Montant HT',
+      'TVA',
+      'Commission',
+      'Net',
+    ];
+
+    // Séparateur ';' + décimales à la française (formatAmount => "1234,56") : ouverture
+    // directe dans Excel FR sans casser les colonnes.
+    const sep = ';';
+    const esc = (v: string) => {
+      const s = String(v ?? '');
+      return /[";\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    let sumHT = 0;
+    let sumTVA = 0;
+    let sumCommission = 0;
+    let sumNet = 0;
+
+    const lines: string[] = [];
+    lines.push(headers.join(sep));
+
+    for (const inv of invoices) {
+      const ht = Number(inv.subtotal);
+      const tva = Number(inv.taxAmount);
+      const commission = Number(inv.platformCommission);
+      const net = Number(inv.artisanNetAmount);
+
+      sumHT += ht;
+      sumTVA += tva;
+      sumCommission += commission;
+      sumNet += net;
+
+      lines.push(
+        [
+          this.formatDateISO(inv.issueDate),
+          esc(inv.type),
+          esc(inv.invoiceNumber),
+          esc(inv.status),
+          this.formatAmount(ht),
+          this.formatAmount(tva),
+          this.formatAmount(commission),
+          this.formatAmount(net),
+        ].join(sep),
+      );
+    }
+
+    // Ligne de totaux (commission perçue + TVA collectée agrégées sur la période).
+    lines.push(
+      [
+        'TOTAL',
+        '',
+        `${invoices.length} écriture(s)`,
+        '',
+        this.formatAmount(sumHT),
+        this.formatAmount(sumTVA),
+        this.formatAmount(sumCommission),
+        this.formatAmount(sumNet),
+      ].join(sep),
+    );
+
+    // BOM UTF-8 pour qu'Excel interprète correctement les accents.
+    const data = '﻿' + lines.join('\r\n');
+
+    const filename = `krafolt-grand-livre-${this.formatDateFEC(startDate)}-${this.formatDateFEC(endDate)}.csv`;
+
+    this.logger.log(
+      `Generated platform ledger with ${invoices.length} entries for period ${startDate.toISOString()} to ${endDate.toISOString()}`,
+    );
+
+    return {
+      data,
+      filename,
+      totals: {
+        ht: sumHT,
+        tva: sumTVA,
+        commission: sumCommission,
+        net: sumNet,
+        count: invoices.length,
+      },
+    };
+  }
+
+  /**
+   * Format date en ISO court (YYYY-MM-DD) pour lisibilité humaine dans le CSV.
+   */
+  private formatDateISO(date: Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
    * Get summary statistics for a period
    */
   async getAccountingSummary(userId: string, startDate: Date, endDate: Date) {

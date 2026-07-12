@@ -20,6 +20,7 @@ import {
   UpdateProgressDto,
   SetAvailabilityDto,
   LeaveRelationshipDto,
+  RateContractorDto,
 } from '../dto/subcontractor-portal.dto';
 
 @ApiTags('Subcontractor Portal')
@@ -93,6 +94,16 @@ export class SubcontractorPortalController {
     @Body() body: { notes?: string },
   ) {
     return this.portalService.completeWork(req.user.id, id, body.notes);
+  }
+
+  @Post('assignments/:id/rate-contractor')
+  @ApiOperation({ summary: "Rate the contractor (donneur d'ordre) — reciprocal rating" })
+  async rateContractor(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: RateContractorDto,
+  ) {
+    return this.portalService.rateContractor(req.user.id, id, dto);
   }
 
   // ============ DISPONIBILITÉ & RELATIONS (SELF-SERVICE) ============
