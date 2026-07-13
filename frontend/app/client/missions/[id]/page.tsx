@@ -1,11 +1,12 @@
 'use client';
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
-import { MapPin, Star, ShieldCheck, Clock } from 'lucide-react';
+import { MapPin, Star, ShieldCheck, Clock, Phone, Truck, Check, MessageSquare, Lock } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { missionsApi } from '@/lib/api/missions';
+import apiClient from '@/lib/api/client';
 import { userApi } from '@/lib/api/user';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,12 +33,19 @@ interface Mission {
   country: string;
   clientBudget?: number;
   agreedPrice?: number;
+  depositAmount?: number;
+  totalAmount?: number;
   scheduledFor?: string;
   createdAt: string;
   acceptedAt?: string;
+  depositPaidAt?: string;
+  startedAt?: string;
+  arrivedAt?: string;
   completedAt?: string;
   validatedAt?: string;
   autoValidatedAt?: string;
+  cancelledAt?: string;
+  retractionExpiresAt?: string;
   // Photos
   beforePhotos?: string[];
   afterPhotos?: string[];
@@ -52,8 +60,12 @@ interface Mission {
     firstName: string;
     lastName: string;
     email: string;
+    phone?: string | null;
+    avatar?: string | null;
     artisanProfile?: {
       companyName: string;
+      rating?: number | string;
+      reviewCount?: number;
     };
   };
   review?: {
@@ -69,6 +81,20 @@ interface ClientProfile {
 }
 
 type OfferStatus = 'SENT' | 'VIEWED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+
+// Événement de suivi renvoyé par GET /missions/:id/tracking (historique horodaté).
+interface TrackingEvent {
+  id: string;
+  status: string;
+  changedByRole?: string;
+  note?: string | null;
+  createdAt: string;
+}
+interface TrackingData {
+  currentStatus?: string;
+  timeline?: TrackingEvent[];
+  milestones?: Record<string, string | null>;
+}
 
 interface Negotiation {
   id: string;
@@ -123,6 +149,7 @@ export default function MissionDetailsPage() {
   const missionId = params.id as string;
 
   const [mission, setMission] = useState<Mission | null>(null);
+  const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [negotiations, setNegotiations] = useState<Negotiation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,13 +184,16 @@ export default function MissionDetailsPage() {
 
   const loadData = async () => {
     try {
-      const [missionData, profileData, negotiationsData, userData] = await Promise.all([
+      const [missionData, profileData, negotiationsData, userData, trackingData] = await Promise.all([
         missionsApi.getById(missionId),
         userApi.getClientProfile().catch(() => null),
         missionsApi.getNegotiations(missionId).catch(() => []),
         userApi.getProfile().catch(() => null),
+        // Historique horodaté (facultatif) : enrichit la timeline si présent, sinon on dérive du statut.
+        apiClient.get(`/missions/${missionId}/tracking`).then((r) => r.data).catch(() => null),
       ]);
       setMission(missionData);
+      setTracking(trackingData);
       setClientProfile(profileData);
       setNegotiations(negotiationsData || []);
       if (userData?.id) {
@@ -489,6 +519,93 @@ export default function MissionDetailsPage() {
     });
   };
 
+  // Date courte (jj mois · hh:mm) pour l'horodatage des étapes de suivi.
+  const formatShort = (dateString?: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleString('fr-FR', {
+      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SUIVI D'INTERVENTION — dérivation des étapes depuis le statut (13 valeurs) + les
+  // timestamps réels de la mission + les événements horodatés de /missions/:id/tracking.
+  // ─────────────────────────────────────────────────────────────────────────────
+  const trackingEvents = tracking?.timeline ?? [];
+  // Timestamp d'un événement du fil de suivi (par statut, optionnellement par rôle acteur).
+  const eventTime = (status: string, role?: string): string | undefined =>
+    trackingEvents.find((e) => e.status === status && (!role || e.changedByRole === role))?.createdAt;
+
+  const artisanOffersCount = negotiations.filter((n) => n.senderId !== currentUserId).length;
+  const firstOfferTime = (() => {
+    const times = negotiations
+      .filter((n) => n.senderId !== currentUserId)
+      .map((n) => n.createdAt)
+      .filter(Boolean)
+      .sort();
+    return times[0];
+  })();
+
+  const st = mission?.status ?? '';
+  const isCancelled = st === 'CANCELLED' || st === 'CANCELLED_NO_SHOW';
+  const isValidated = !!(mission?.validatedAt || mission?.autoValidatedAt);
+  const isInTransit = st === 'IN_TRANSIT';
+  // Séquestre : payé et pas encore libéré (versé à l'artisan seulement à la validation).
+  const isPaidEscrow = ['DEPOSIT_PAID', 'PAID', 'IN_TRANSIT', 'IN_PROGRESS', 'COMPLETED', 'AUTO_VALIDATED', 'DISPUTED'].includes(st);
+  const escrowReleased = isValidated;
+  const escrowAmount = toNum(mission?.depositAmount ?? mission?.totalAmount ?? mission?.agreedPrice);
+
+  // Décompte d'auto-validation (7 j après la fin des travaux) — réutilise la logique needsValidation.
+  const autoValidateDeadline = mission?.completedAt
+    ? new Date(new Date(mission.completedAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+    : null;
+  const daysLeftToValidate = autoValidateDeadline
+    ? Math.max(0, Math.ceil((autoValidateDeadline.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null;
+
+  // Index de l'étape « en cours » (0-based sur les 9 étapes ci-dessous), dérivé du statut.
+  const currentStepIndex = (() => {
+    switch (st) {
+      case 'PENDING':
+      case 'NEGOTIATING': return 1;
+      case 'ACCEPTED':
+      case 'PENDING_DEPOSIT': return 3;
+      case 'DEPOSIT_PAID':
+      case 'PAID':
+      case 'IN_TRANSIT': return 4;
+      case 'IN_PROGRESS': return 6;
+      case 'COMPLETED': return isValidated ? 8 : 7;
+      case 'AUTO_VALIDATED': return 8;
+      case 'DISPUTED': return 7;
+      default: return 0;
+    }
+  })();
+
+  // 9 étapes de la timeline verticale, chacune avec son horodatage réel quand il existe.
+  const trackingSteps: { label: string; time?: string | null; state: 'done' | 'current' | 'upcoming' }[] =
+    mission ? [
+      { label: t('tracking', 'stepPublished') || 'Publiée', time: mission.createdAt },
+      { label: `${t('tracking', 'stepOffers') || 'Offres reçues'}${artisanOffersCount ? ` (${artisanOffersCount})` : ''}`, time: firstOfferTime },
+      { label: t('tracking', 'stepChosen') || 'Artisan choisi', time: mission.acceptedAt || eventTime('ACCEPTED') },
+      { label: t('tracking', 'stepPaid') || 'Paiement sécurisé (séquestre)', time: mission.depositPaidAt || eventTime('PAID') || eventTime('DEPOSIT_PAID') },
+      { label: t('tracking', 'stepTransit') || 'En route', time: eventTime('IN_TRANSIT') },
+      { label: t('tracking', 'stepArrived') || 'Arrivé sur place', time: mission.arrivedAt || eventTime('IN_PROGRESS', 'ARTISAN') },
+      { label: t('tracking', 'stepWorking') || 'Intervention en cours', time: mission.startedAt || eventTime('IN_PROGRESS') },
+      { label: t('tracking', 'stepCompleted') || 'Terminé — à valider', time: mission.completedAt || eventTime('COMPLETED', 'ARTISAN') },
+      { label: t('tracking', 'stepValidated') || 'Validé', time: mission.validatedAt || mission.autoValidatedAt || eventTime('COMPLETED', 'CLIENT') },
+    ].map((s, i) => ({
+      ...s,
+      state: i < currentStepIndex ? 'done' : i === currentStepIndex ? (isValidated ? 'done' : 'current') : 'upcoming',
+    })) : [];
+
+  // Nom d'affichage de l'artisan (société sinon prénom/nom) pour le hero « en direct ».
+  const artisanDisplayName = mission?.artisan
+    ? (mission.artisan.artisanProfile?.companyName ||
+       `${mission.artisan.firstName ?? ''} ${mission.artisan.lastName ?? ''}`.trim())
+    : '';
+  const artisanRating = mission?.artisan?.artisanProfile?.rating != null
+    ? toNum(mission.artisan.artisanProfile.rating) : null;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -536,8 +653,73 @@ export default function MissionDetailsPage() {
           </p>
         </div>
 
+        {/* HERO « EN DIRECT » — l'artisan est en route vers votre adresse (statut IN_TRANSIT).
+            Honnête : pas d'ETA inventé ni de position GPS (le backend n'en fournit pas). */}
+        {isInTransit && mission.artisan && (
+          <div className="mb-6 overflow-hidden rounded-2xl bg-foreground text-background">
+            <div className="flex items-center gap-2 bg-background/10 px-6 py-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-400" />
+              </span>
+              <span className="font-display text-[11px] font-bold uppercase tracking-wider text-background/80">
+                {t('tracking', 'liveNow') || 'En direct'}
+              </span>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-4">
+                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-background/15 text-xl font-extrabold">
+                  {(artisanDisplayName || 'A').charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 font-display text-lg font-extrabold leading-tight">
+                    <Truck className="h-5 w-5 flex-shrink-0" strokeWidth={2.2} />
+                    <span className="truncate">{artisanDisplayName || (t('missions', 'yourArtisan') || 'Votre artisan')}</span>
+                  </div>
+                  {artisanRating != null && artisanRating > 0 && (
+                    <div className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-background/70">
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      {artisanRating.toFixed(1)}
+                      {mission.artisan.artisanProfile?.reviewCount ? ` (${mission.artisan.artisanProfile.reviewCount})` : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <p className="mt-3 font-display text-xl font-extrabold">
+                {t('tracking', 'onTheWayTitle') || 'En route vers votre adresse'}
+              </p>
+              <p className="mt-1 flex items-start gap-1.5 text-sm text-background/70">
+                <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                {mission.address}, {mission.postalCode} {mission.city}
+              </p>
+              {mission.scheduledFor && (
+                <p className="mt-1 text-sm text-background/70">
+                  {t('tracking', 'scheduledFor') || 'Créneau prévu'} : {formatDate(mission.scheduledFor)}
+                </p>
+              )}
+              <div className="mt-4 flex gap-2">
+                <Button
+                  className="flex-1 bg-background text-foreground hover:bg-background/90"
+                  onClick={() => router.push(`/client/messages?userId=${mission.artisan?.id}`)}
+                >
+                  <MessageSquare className="mr-1.5 h-4 w-4" /> {t('common', 'contact') || 'Contacter'}
+                </Button>
+                {mission.artisan.phone && (
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-background/30 bg-transparent text-background hover:bg-background/10"
+                    onClick={() => window.open(`tel:${mission.artisan?.phone}`)}
+                  >
+                    <Phone className="mr-1.5 h-4 w-4" /> {t('tracking', 'call') || 'Appeler'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Bandeau de statut « à la Uber » (un seul statut, piloté par l'état) */}
-        {(() => {
+        {!isInTransit && (() => {
           const s = mission.status;
           const offers = negotiations.length;
           const artisanName = mission.artisan?.firstName || t('missions', 'yourArtisan') || 'Votre artisan';
@@ -585,6 +767,80 @@ export default function MissionDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* ÉTAT « TERMINÉ — À VALIDER » : la validation prend le dessus (action prioritaire). */}
+            {needsValidation && (
+              <Card className="border-2 border-foreground overflow-hidden">
+                <div className="bg-foreground px-6 py-4 text-background">
+                  <div className="font-display text-[11px] font-bold uppercase tracking-wider text-background/60">
+                    {t('tracking', 'actionNeeded') || 'Action requise'}
+                  </div>
+                  <h2 className="font-display mt-1 text-xl font-extrabold">
+                    {t('tracking', 'completedTitle') || 'Travaux terminés — à valider'}
+                  </h2>
+                  <p className="mt-1 text-sm text-background/70">
+                    {t('tracking', 'completedSub') || 'Vérifiez le résultat, puis validez pour libérer le paiement à l’artisan.'}
+                  </p>
+                </div>
+                <CardContent className="space-y-4 p-6">
+                  {/* Aperçu photos après-travaux */}
+                  {mission.afterPhotos && mission.afterPhotos.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-sm font-semibold text-foreground">
+                        {t('missions', 'afterPhotos') || 'Photos après travaux'}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {mission.afterPhotos.slice(0, 3).map((url, index) => (
+                          <img
+                            key={index}
+                            src={url}
+                            alt={`Après ${index + 1}`}
+                            className="h-24 w-full cursor-pointer rounded-lg border border-border object-cover transition-opacity hover:opacity-90"
+                            onClick={() => window.open(url, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Décompte d'auto-validation (7 j) */}
+                  <div className="flex items-start gap-2 rounded-xl bg-amber-100 p-3 text-sm text-amber-900">
+                    <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>
+                      {daysLeftToValidate != null
+                        ? (t('tracking', 'autoValidateIn') || 'Sans action de votre part, le travail sera validé automatiquement dans')
+                          + ` ${daysLeftToValidate} ` + (daysLeftToValidate > 1 ? (t('tracking', 'days') || 'jours') : (t('tracking', 'day') || 'jour')) + '.'
+                        : (t('validation', 'autoValidateWarning') || 'Si vous ne validez pas dans les 7 jours, la mission sera automatiquement validée.')}
+                    </span>
+                  </div>
+
+                  {/* Réassurance séquestre */}
+                  <div className="flex items-start gap-2 rounded-xl bg-green-100/60 p-3 text-sm text-foreground">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-700" strokeWidth={2} />
+                    <span>
+                      {t('tracking', 'validateReassurance') ||
+                        'Votre paiement reste sous séquestre : il n’est versé qu’une fois que vous validez, et vous êtes remboursé en cas de litige.'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button onClick={handleValidate} className="flex-1">
+                      <Check className="mr-1.5 h-4 w-4" strokeWidth={2.5} />
+                      {escrowAmount > 0
+                        ? (t('tracking', 'validateAndRelease') || 'Valider le travail') + ` (${t('tracking', 'releases') || 'libère'} ${fmtEur(escrowAmount)})`
+                        : (t('validation', 'validateWork') || 'Valider le travail')}
+                    </Button>
+                    <Button
+                      onClick={handleDispute}
+                      variant="outline"
+                      className="flex-1 border-red-500/30 text-red-600 hover:bg-red-100"
+                    >
+                      {t('validation', 'reportProblem') || 'Signaler un problème'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Détails de la demande — repliés par défaut (façon Uber : le statut prime) */}
             <details className="group rounded-2xl border border-border bg-card">
               <summary className="flex cursor-pointer list-none items-center justify-between p-4 font-display text-sm font-bold">
@@ -1149,60 +1405,26 @@ export default function MissionDetailsPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Validation Section - shown when mission is completed but not validated */}
-            {needsValidation && (
-              <Card className="border-green-200 bg-green-100/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-700">
-                    {t('validation', 'workCompleted') || 'Travail terminé'}
-                  </CardTitle>
-                  <CardDescription>
-                    {t('validation', 'validateDesc') || 'L\'artisan a terminé le travail. Vérifiez et validez.'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* After Photos Preview */}
-                  {mission.afterPhotos && mission.afterPhotos.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-foreground mb-2">
-                        {t('missions', 'afterPhotos') || 'Photos après travaux'}
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {mission.afterPhotos.slice(0, 3).map((url, index) => (
-                          <img
-                            key={index}
-                            src={url}
-                            alt={`After ${index + 1}`}
-                            className="w-full h-20 object-cover rounded-lg border cursor-pointer"
-                            onClick={() => window.open(url, '_blank')}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-3 bg-amber-100 border rounded-xl">
-                    <p className="text-sm text-amber-800">
-                      {t('validation', 'autoValidateWarning') ||
-                        'Si vous ne validez pas dans les 7 jours, la mission sera automatiquement validée.'}
-                    </p>
+            {/* Carte SÉQUESTRE — l'argent est bloqué jusqu'à la validation (rassurance façon Uber). */}
+            {isPaidEscrow && escrowAmount > 0 && (
+              <Card className={escrowReleased ? 'border-green-200 bg-green-100/40' : 'border-border bg-muted/40'}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    {escrowReleased
+                      ? <ShieldCheck className="h-4 w-4 flex-shrink-0 text-green-700" strokeWidth={2.2} />
+                      : <Lock className="h-4 w-4 flex-shrink-0 text-foreground" strokeWidth={2.2} />}
+                    <span className="font-display text-sm font-bold text-foreground">
+                      {escrowReleased
+                        ? (t('tracking', 'escrowReleasedTitle') || 'Paiement libéré')
+                        : (t('tracking', 'escrowHeldTitle') || 'Sous séquestre')}
+                    </span>
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleValidate}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                    >
-                      {t('validation', 'validateWork') || 'Valider le travail'}
-                    </Button>
-                    <Button
-                      onClick={handleDispute}
-                      variant="outline"
-                      className="flex-1 text-red-600 border-red-500/30 hover:bg-red-100"
-                    >
-                      {t('validation', 'reportProblem') || 'Signaler un problème'}
-                    </Button>
-                  </div>
+                  <div className="mt-1 font-display text-2xl font-extrabold text-foreground">{fmtEur(escrowAmount)}</div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {escrowReleased
+                      ? (t('tracking', 'escrowReleasedDesc') || 'Versé à l’artisan après votre validation.')
+                      : (t('tracking', 'escrowHeldDesc') || 'Versés à l’artisan après validation, remboursables en cas de litige.')}
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -1271,53 +1493,86 @@ export default function MissionDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Timeline */}
+            {/* SUIVI D'INTERVENTION — timeline verticale complète (remplace l'« Historique » à 3 jalons). */}
             <Card>
               <CardHeader>
-                <CardTitle>{t('missions', 'history') || 'Historique'}</CardTitle>
+                <CardTitle>{t('tracking', 'title') || 'Suivi de l’intervention'}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {t('missions', 'created') || 'Mission créée'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{formatDate(mission.createdAt)}</p>
-                    </div>
-                  </div>
-
-                  {mission.acceptedAt && (
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                        
+                {isCancelled ? (
+                  // Parcours interrompu : on montre la publication puis l'annulation, sans étapes futures.
+                  <ol className="space-y-0">
+                    <li className="relative flex gap-3 pb-5">
+                      <span className="absolute left-[11px] top-6 h-full w-0.5 bg-border" />
+                      <span className="z-10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      </span>
+                      <div className="min-w-0 pt-0.5">
+                        <p className="font-display text-sm font-bold text-foreground">{t('tracking', 'stepPublished') || 'Publiée'}</p>
+                        <p className="text-xs text-muted-foreground">{formatShort(mission.createdAt)}</p>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {t('missions', 'accepted') || 'Mission acceptée'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{formatDate(mission.acceptedAt)}</p>
+                    </li>
+                    <li className="relative flex gap-3">
+                      <span className="z-10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">✕</span>
+                      <div className="min-w-0 pt-0.5">
+                        <p className="font-display text-sm font-bold text-red-600">{translateMissionStatus(st, t)}</p>
+                        {formatShort(mission.cancelledAt) && (
+                          <p className="text-xs text-muted-foreground">{formatShort(mission.cancelledAt)}</p>
+                        )}
                       </div>
-                    </div>
-                  )}
-
-                  {mission.completedAt && (
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                        
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {t('missions', 'completed') || 'Mission terminée'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{formatDate(mission.completedAt)}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    </li>
+                  </ol>
+                ) : (
+                  <ol className="space-y-0">
+                    {trackingSteps.map((step, i) => {
+                      const isLast = i === trackingSteps.length - 1;
+                      const done = step.state === 'done';
+                      const current = step.state === 'current';
+                      return (
+                        <li key={i} className={`relative flex gap-3 ${isLast ? '' : 'pb-5'}`}>
+                          {/* Connecteur vertical vers l'étape suivante */}
+                          {!isLast && (
+                            <span className={`absolute left-[11px] top-6 h-full w-0.5 ${done ? 'bg-foreground' : 'bg-border'}`} />
+                          )}
+                          {/* Pastille d'état */}
+                          <span
+                            className={`z-10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                              done
+                                ? 'border-foreground bg-foreground text-background'
+                                : current
+                                  ? 'border-foreground bg-background text-foreground'
+                                  : 'border-border bg-background text-transparent'
+                            }`}
+                          >
+                            {done ? (
+                              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                            ) : current ? (
+                              <span className="relative flex h-2.5 w-2.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground opacity-60" />
+                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-foreground" />
+                              </span>
+                            ) : (
+                              <span className="h-2 w-2 rounded-full bg-border" />
+                            )}
+                          </span>
+                          <div className="min-w-0 pt-0.5">
+                            <p className={`font-display text-sm leading-tight ${current ? 'font-extrabold text-foreground' : done ? 'font-bold text-foreground' : 'font-semibold text-muted-foreground'}`}>
+                              {step.label}
+                              {current && (
+                                <span className="ml-2 inline-flex items-center rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold text-background">
+                                  {t('tracking', 'inProgressBadge') || 'En cours'}
+                                </span>
+                              )}
+                            </p>
+                            {step.time && (done || current) && (
+                              <p className="text-xs text-muted-foreground">{formatShort(step.time)}</p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
               </CardContent>
             </Card>
           </div>

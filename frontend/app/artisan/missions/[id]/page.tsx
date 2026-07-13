@@ -62,6 +62,18 @@ interface Mission {
   updatedAt: string;
   startedAt?: string;
   completedAt?: string;
+  // Lifecycle timestamps (miroir de suivi) + montants — présents sur GET /missions/:id
+  acceptedAt?: string | null;
+  depositPaidAt?: string | null;
+  arrivedAt?: string | null;
+  validatedAt?: string | null;
+  autoValidatedAt?: string | null;
+  retractionExpiresAt?: string | null;
+  agreedPrice?: string | number | null;
+  finalPrice?: string | number | null;
+  totalAmount?: string | number | null;
+  depositPercentage?: number | null;
+  vatRate?: string | number | null;
 }
 
 interface TimelineEvent {
@@ -236,9 +248,10 @@ export default function MissionDetailPage() {
       loadMission();
     } catch (error) {
       console.error('Error starting mission:', error);
+      const backendMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast({
         title: t('common', 'error') || 'Error',
-        description: t('artisan', 'startError') || 'Failed to start mission',
+        description: backendMsg || t('artisan', 'startError') || 'Failed to start mission',
         variant: 'destructive',
       });
     } finally {
@@ -258,9 +271,10 @@ export default function MissionDetailPage() {
       loadMission();
     } catch (error) {
       console.error('Error marking arrival:', error);
+      const backendMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast({
         title: t('common', 'error') || 'Error',
-        description: t('artisan', 'arriveError') || "Impossible de confirmer l'arrivée sur place",
+        description: backendMsg || t('artisan', 'arriveError') || "Impossible de confirmer l'arrivée sur place",
         variant: 'destructive',
       });
     } finally {
@@ -269,6 +283,20 @@ export default function MissionDetailPage() {
   };
 
   const handleCompleteMission = async () => {
+    // Photos après travaux obligatoires : preuve du travail fini (protège l'artisan en cas de litige).
+    const hasExistingPhotos = !!(mission?.afterPhotos && mission.afterPhotos.length > 0);
+    if (afterPhotos.length === 0 && !hasExistingPhotos) {
+      toast({
+        title: t('common', 'error') || 'Error',
+        description:
+          t('tracking', 'photosRequired') ||
+          'Ajoutez au moins une photo « après travaux » avant de terminer — elle protège votre paiement.',
+        variant: 'destructive',
+      });
+      setActiveTab('details');
+      setTimeout(() => document.getElementById('finalisation')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+      return;
+    }
     setActionLoading(true);
     try {
       // First upload after photos if any
@@ -284,9 +312,10 @@ export default function MissionDetailPage() {
       loadMission();
     } catch (error) {
       console.error('Error completing mission:', error);
+      const backendMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast({
         title: t('common', 'error') || 'Error',
-        description: t('artisan', 'completeError') || 'Failed to complete mission',
+        description: backendMsg || t('artisan', 'completeError') || 'Failed to complete mission',
         variant: 'destructive',
       });
     } finally {
@@ -502,101 +531,287 @@ export default function MissionDetailPage() {
         </p>
       </div>
 
-      {/* Bandeau de statut « à la Uber » (côté artisan, piloté par l'état) */}
+      {/* ============================================================================
+          COCKPIT « prochaine action » + timeline miroir + net à percevoir.
+          Une seule action claire pilotée par mission.status, réutilise les handlers
+          existants (accept/decline/start-travel/arrive/complete + upload photos).
+          ============================================================================ */}
       {(() => {
         const s = mission.status;
-        const stepLabels = ['', t('missions', 'aStReceived') || 'Reçue', t('missions', 'aStAccepted') || 'Acceptée', t('missions', 'aStWorking') || 'En cours', t('missions', 'aStDone') || 'Terminée', t('missions', 'aStPaid') || 'Payée'];
-        const active =
-          ['OPEN', 'PENDING', 'ASSIGNED', 'NEGOTIATING'].includes(s) ? 1 :
-          ['ACCEPTED', 'PAID', 'PENDING_DEPOSIT'].includes(s) ? 2 :
-          ['IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s) ? 3 :
-          ['COMPLETED'].includes(s) ? 4 :
-          ['VALIDATED', 'AUTO_VALIDATED'].includes(s) ? 5 : 1;
-        const clientName = mission.client?.firstName ? `, ${mission.client.firstName}` : '';
-        let headline = '', sub = '';
-        if (active === 1) { headline = t('missions', 'aHeadReceived') || 'Décrochez cette mission'; sub = t('missions', 'aSubReceived') || 'Envoyez votre offre — le client compare et choisit.'; }
-        else if (active === 2) { headline = t('missions', 'aHeadAccepted') || 'Mission acceptée'; sub = `${t('missions', 'aSubAccepted') || 'Vous pouvez démarrer quand vous êtes prêt'}${clientName}.`; }
-        else if (active === 3) { headline = t('missions', 'aHeadWorking') || 'Intervention en cours'; sub = t('missions', 'aSubWorking') || 'Marquez la mission terminée une fois le travail fini.'; }
-        else if (active === 4) { headline = t('missions', 'aHeadDone') || 'En attente de validation'; sub = t('missions', 'aSubDone') || 'Le client valide, puis votre paiement est libéré.'; }
-        else { headline = t('missions', 'aHeadPaid') || 'Mission payée'; sub = t('missions', 'aSubPaid') || 'Paiement libéré. Bravo !'; }
+        // Rang de progression (permet de dériver l'état de chaque étape du miroir).
+        const rank: Record<string, number> = {
+          OPEN: 0, PENDING: 0, NEGOTIATING: 0, ASSIGNED: 0,
+          ACCEPTED: 1, PENDING_DEPOSIT: 1,
+          PAID: 2, DEPOSIT_PAID: 2,
+          IN_TRANSIT: 3,
+          ARRIVED: 4, IN_PROGRESS: 4,
+          COMPLETED: 5,
+          VALIDATED: 6, AUTO_VALIDATED: 6,
+        };
+        const cur = rank[s] ?? 0;
+        const isCancelled = s === 'CANCELLED' || s === 'CANCELLED_NO_SHOW';
+        const isDisputed = s === 'DISPUTED';
+        const isActiveJob = cur >= 1 && !isCancelled; // relation de travail engagée
+        const clientFirst = mission.client?.firstName || '';
+        const fmt = (d?: string | null) =>
+          d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : null;
+
+        // ---- Net à percevoir (commission plateforme = 10 %, aligné sur le payout live) ----
+        const PLATFORM_FEE_RATE = 0.1;
+        const grossRaw = mission.agreedPrice ?? mission.finalPrice ?? null;
+        const gross = grossRaw != null ? Number(grossRaw) : null;
+        const grossValid = gross != null && !Number.isNaN(gross) && gross > 0;
+        const netEstimate = grossValid ? Math.round(gross! * (1 - PLATFORM_FEE_RATE) * 100) / 100 : null;
+
+        // ---- Étapes du miroir de suivi (dérivées des timestamps réels) ----
+        const steps = [
+          { key: 'accepted', label: t('tracking', 'stAccepted') || 'Offre acceptée', at: mission.acceptedAt, threshold: 1 },
+          { key: 'paid', label: t('tracking', 'stPaid') || 'Paiement sécurisé', at: mission.depositPaidAt, threshold: 2 },
+          { key: 'transit', label: t('tracking', 'stTransit') || 'En route', at: null as string | null | undefined, threshold: 3 },
+          { key: 'arrived', label: t('tracking', 'stArrived') || 'Arrivé sur place', at: mission.arrivedAt, threshold: 4 },
+          { key: 'progress', label: t('tracking', 'stProgress') || 'Intervention en cours', at: mission.startedAt, threshold: 4 },
+          { key: 'done', label: t('tracking', 'stDone') || 'Terminée + photos', at: mission.completedAt, threshold: 5 },
+        ];
+        const doneCount = steps.filter((st) => cur >= st.threshold).length;
+        const frontier = Math.max(0, doneCount - 1); // dernière étape franchie = « vous êtes ici »
+
+        // ---- Carte « prochaine action » : contenu piloté par le statut ----
+        type Primary = { label: string; onClick: () => void; disabled?: boolean } | null;
+        let title = '';
+        let subtitle = '';
+        let primary: Primary = null;
+        let secondary: Primary = null;
+        let waiting = false; // état d'attente (pas de bouton principal)
+
+        const goCompletion = () => {
+          setActiveTab('details');
+          setTimeout(() => document.getElementById('finalisation')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+        };
+        const goOffer = () => {
+          setActiveTab('details');
+          setTimeout(() => document.getElementById('offre-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+        };
+
+        if (s === 'OPEN' || s === 'PENDING' || s === 'NEGOTIATING') {
+          title = t('tracking', 'prospectTitle') || 'Décrochez cette mission';
+          subtitle = t('tracking', 'prospectSub') || 'Envoyez votre offre — le client compare les offres reçues et choisit.';
+          primary = { label: t('tracking', 'btnOffer') || 'Faire une offre', onClick: goOffer };
+        } else if (s === 'ASSIGNED') {
+          title = t('tracking', 'assignedTitle') || 'Mission proposée';
+          subtitle = t('tracking', 'assignedSub') || 'Acceptez pour démarrer, ou déclinez si vous n’êtes pas disponible.';
+          primary = { label: t('tracking', 'btnAccept') || 'Accepter la mission', onClick: handleAcceptMission, disabled: actionLoading };
+          secondary = { label: t('tracking', 'btnDecline') || 'Décliner', onClick: handleDeclineMission, disabled: actionLoading };
+        } else if (s === 'PENDING_DEPOSIT') {
+          title = t('tracking', 'awaitPayTitle') || 'En attente du paiement du client';
+          subtitle = t('tracking', 'awaitPaySub') || 'Le client doit sécuriser le paiement sur Krafolt avant que vous puissiez vous mettre en route.';
+          waiting = true;
+        } else if (s === 'ACCEPTED' || s === 'PAID' || s === 'DEPOSIT_PAID') {
+          title = t('tracking', 'startTitle') || 'Prêt à intervenir';
+          subtitle = clientFirst
+            ? `${t('tracking', 'startSubName') || 'Mettez-vous en route vers'} ${clientFirst}. ${t('tracking', 'startSubTail') || 'Le client est prévenu en temps réel.'}`
+            : (t('tracking', 'startSub') || 'Mettez-vous en route — le client est prévenu en temps réel.');
+          primary = { label: t('tracking', 'btnStart') || 'Démarrer le trajet', onClick: handleStartMission, disabled: actionLoading };
+        } else if (s === 'IN_TRANSIT') {
+          title = t('tracking', 'transitTitle') || 'En route vers le client';
+          subtitle = t('tracking', 'transitSub') || 'Confirmez votre arrivée sur place pour démarrer l’intervention.';
+          primary = { label: t('tracking', 'btnArrive') || 'Je suis arrivé sur place', onClick: handleArriveMission, disabled: actionLoading };
+        } else if (s === 'IN_PROGRESS' || s === 'ARRIVED') {
+          title = t('tracking', 'completeTitle') || 'Intervention en cours';
+          subtitle = t('tracking', 'completeSub') || 'Une fois le travail fini : ajoutez les photos « après » (obligatoires) et terminez.';
+          primary = { label: t('tracking', 'btnComplete') || 'Terminer l’intervention', onClick: goCompletion };
+        } else if (s === 'COMPLETED') {
+          title = t('tracking', 'completedTitle') || 'En attente de validation du client';
+          const auto = fmt(mission.retractionExpiresAt);
+          subtitle = auto
+            ? `${t('tracking', 'completedSubAuto') || 'Sans action de sa part, la mission se valide automatiquement le'} ${auto}${t('tracking', 'completedSubTail') || ' — votre paiement est alors libéré.'}`
+            : (t('tracking', 'completedSub') || 'Le client valide le travail, puis votre paiement est libéré. Validation automatique sous 48h.');
+          waiting = true;
+        } else if (s === 'VALIDATED' || s === 'AUTO_VALIDATED') {
+          title = t('tracking', 'validatedTitle') || 'Mission validée — paiement libéré';
+          subtitle = t('tracking', 'validatedSub') || 'Bravo ! Le montant net vous est versé selon votre calendrier de virements.';
+          waiting = true;
+        } else if (isDisputed) {
+          title = t('tracking', 'disputedTitle') || 'Litige en cours';
+          subtitle = t('tracking', 'disputedSub') || 'Notre équipe examine la situation. Répondez aux demandes depuis la messagerie Krafolt.';
+          waiting = true;
+        } else if (isCancelled) {
+          title = t('tracking', 'cancelledTitle') || 'Mission annulée';
+          subtitle = t('tracking', 'cancelledSub') || 'Cette mission n’est plus active.';
+          waiting = true;
+        }
+
+        // Boutons secondaires « utilitaires » (contact + itinéraire) une fois le contact révélé.
+        const canContact = isActiveJob && !!mission.client?.phone;
+        const canRoute = mission.latitude != null && mission.longitude != null;
+
         return (
-          <div className="mb-6 rounded-2xl bg-foreground p-6 text-background">
-            <div className="font-display text-[11px] font-bold uppercase tracking-wider text-background/60">{t('missions', 'step') || 'Étape'} {active}/5 · {stepLabels[active]}</div>
-            <h1 className="font-display mt-1.5 text-2xl font-extrabold leading-tight">{headline}</h1>
-            <p className="mt-1.5 text-sm text-background/70">{sub}</p>
-            <div className="mt-4 flex gap-1.5">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <span key={n} className={`h-1 flex-1 rounded-full ${active >= n ? 'bg-background' : 'bg-background/25'}`} />
-              ))}
+          <div className="mb-6 grid gap-4 lg:grid-cols-3">
+            {/* Colonne principale : action + timeline */}
+            <div className="space-y-4 lg:col-span-2">
+              {/* Carte PROCHAINE ACTION (proéminente, bloc sombre) */}
+              <div className="rounded-2xl bg-foreground p-6 text-background">
+                <div className="font-display text-[11px] font-bold uppercase tracking-wider text-background/60">
+                  {waiting
+                    ? (t('tracking', 'statusLabel') || 'Suivi')
+                    : (t('tracking', 'nextAction') || 'Votre prochaine action')}
+                  {isActiveJob && !isCancelled && !isDisputed && (
+                    <> {' · '}{t('tracking', 'stepShort') || 'Étape'} {Math.min(doneCount || 1, 5)}/5</>
+                  )}
+                </div>
+                <h1 className="font-display mt-1.5 text-2xl font-extrabold leading-tight">{title}</h1>
+                <p className="mt-1.5 text-sm text-background/70">{subtitle}</p>
+
+                {(primary || secondary || canContact || canRoute) && (
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {primary && (
+                      <Button
+                        onClick={primary.onClick}
+                        disabled={primary.disabled}
+                        className="bg-background text-foreground hover:bg-background/90"
+                      >
+                        {actionLoading && primary.disabled
+                          ? (t('common', 'loading') || 'Chargement...')
+                          : primary.label}
+                      </Button>
+                    )}
+                    {secondary && (
+                      <Button
+                        variant="outline"
+                        onClick={secondary.onClick}
+                        disabled={secondary.disabled}
+                        className="border-background/30 bg-transparent text-background hover:bg-background/10"
+                      >
+                        {secondary.label}
+                      </Button>
+                    )}
+                    {canContact && (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(`tel:${mission.client.phone}`)}
+                        className="border-background/30 bg-transparent text-background hover:bg-background/10"
+                      >
+                        {t('tracking', 'btnContact') || 'Contacter le client'}
+                      </Button>
+                    )}
+                    {canRoute && isActiveJob && (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(`https://maps.google.com/?q=${mission.latitude},${mission.longitude}`, '_blank')}
+                        className="border-background/30 bg-transparent text-background hover:bg-background/10"
+                      >
+                        {t('tracking', 'btnRoute') || 'Itinéraire'}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* TIMELINE MIROIR — déroulé réel de la mission */}
+              {isActiveJob && (
+                <Card>
+                  <CardContent className="py-5">
+                    <div className="mb-4 font-display text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {t('tracking', 'timelineTitle') || 'Déroulé de la mission'}
+                    </div>
+                    <ol className="space-y-0">
+                      {steps.map((st, i) => {
+                        const done = cur >= st.threshold;
+                        const isHere = i === frontier;
+                        const last = i === steps.length - 1;
+                        return (
+                          <li key={st.key} className="relative flex gap-3 pb-5 last:pb-0">
+                            {/* Ligne verticale de liaison */}
+                            {!last && (
+                              <span
+                                className={`absolute left-[7px] top-4 h-full w-0.5 ${cur > st.threshold ? 'bg-foreground' : 'bg-border'}`}
+                              />
+                            )}
+                            {/* Puce */}
+                            <span
+                              className={`relative z-10 mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                                done
+                                  ? 'border-foreground bg-foreground'
+                                  : 'border-border bg-background'
+                              } ${isHere ? 'ring-4 ring-foreground/10' : ''}`}
+                            >
+                              {done && <span className="h-1.5 w-1.5 rounded-full bg-background" />}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className={`text-sm ${isHere ? 'font-bold text-foreground' : done ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                                {st.label}
+                                {isHere && !last && (
+                                  <span className="ml-2 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-background">
+                                    {t('tracking', 'youAreHere') || 'En cours'}
+                                  </span>
+                                )}
+                              </div>
+                              {fmt(st.at) && (
+                                <div className="text-xs text-muted-foreground">{fmt(st.at)}</div>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+
+            {/* Colonne latérale : net à percevoir + rappel Krafolt */}
+            <aside className="space-y-4">
+              {isActiveJob && (
+                <Card className="bg-card">
+                  <CardContent className="py-5">
+                    <div className="font-display text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {t('tracking', 'netTitle') || 'Net à percevoir'}
+                    </div>
+                    {grossValid ? (
+                      <>
+                        <div className="mt-2 text-3xl font-extrabold text-foreground">
+                          {netEstimate!.toLocaleString('fr-FR')}€
+                          <span className="ml-2 align-middle text-xs font-medium text-muted-foreground">
+                            {t('tracking', 'estimateTag') || '· estimation'}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {t('tracking', 'netFormula') || 'Prix convenu'} {gross!.toLocaleString('fr-FR')}€ −{' '}
+                          {t('tracking', 'netCommission') || 'commission plateforme 10%'}
+                        </p>
+                        <p className="mt-2 text-xs font-medium text-foreground">
+                          {t('tracking', 'netVersed') || 'Versé à la validation du client.'}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mt-2 text-2xl font-extrabold text-foreground">
+                          {t('tracking', 'netUnknown') || 'Défini à l’acceptation'}
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {t('tracking', 'netUnknownSub') || 'Le montant net (prix convenu − commission plateforme) s’affichera dès votre offre acceptée.'}
+                        </p>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Rappel discret anti-désintermédiation */}
+              {isActiveJob && (
+                <div className="rounded-2xl border border-border bg-muted/50 p-4">
+                  <div className="text-xs font-semibold text-foreground">
+                    {t('tracking', 'protectTitle') || 'Vous êtes couvert sur Krafolt'}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t('tracking', 'protectBody') ||
+                      'Gardez échanges et paiement sur Krafolt : paiement sécurisé, garantie et litiges pris en charge. Régler en direct annule votre protection.'}
+                  </p>
+                </div>
+              )}
+            </aside>
           </div>
         );
       })()}
-
-      {/* Action Buttons based on status */}
-      <Card className="mb-6">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              {mission.status === 'OPEN' &&
-                (t('artisan', 'openMissionHint') ||
-                  'Mission ouverte. Envoyez votre offre ci-dessous — le client compare et choisit.')}
-              {mission.status === 'ASSIGNED' &&
-                (t('artisan', 'assignedMissionHint') ||
-                  'You have been assigned to this mission. Accept or decline.')}
-              {mission.status === 'ACCEPTED' &&
-                (t('artisan', 'acceptedMissionHint') || 'Mission accepted. Start when ready.')}
-              {mission.status === 'IN_TRANSIT' &&
-                (t('artisan', 'inTransitMissionHint') ||
-                  'En route vers le client. Confirmez votre arrivée sur place pour démarrer le travail.')}
-              {mission.status === 'IN_PROGRESS' &&
-                (t('artisan', 'inProgressMissionHint') ||
-                  'Mission in progress. Complete when finished.')}
-              {mission.status === 'COMPLETED' &&
-                (t('artisan', 'completedMissionHint') || 'Mission completed successfully!')}
-            </div>
-            <div className="flex gap-2">
-              {mission.status === 'ASSIGNED' && (
-                <>
-                  <Button variant="outline" onClick={handleDeclineMission} disabled={actionLoading}>
-                    {t('artisan', 'decline') || 'Decline'}
-                  </Button>
-                  <Button onClick={handleAcceptMission} disabled={actionLoading}>
-                    {t('artisan', 'accept') || 'Accept'}
-                  </Button>
-                </>
-              )}
-              {mission.status === 'ACCEPTED' && (
-                <Button
-                  onClick={handleStartMission}
-                  disabled={actionLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {t('artisan', 'startMission') || 'Start Mission'}
-                </Button>
-              )}
-              {mission.status === 'IN_TRANSIT' && (
-                <Button
-                  onClick={handleArriveMission}
-                  disabled={actionLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {t('artisan', 'markArrival') || 'Je suis arrivé sur place'}
-                </Button>
-              )}
-              {mission.status === 'IN_PROGRESS' && (
-                <Button
-                  onClick={handleCompleteMission}
-                  disabled={actionLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {t('artisan', 'completeMission') || 'Complete Mission'}
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 border-b">
@@ -755,7 +970,7 @@ export default function MissionDetailPage() {
 
           {/* Negotiation Section */}
           {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
-            <Card className="md:col-span-2">
+            <Card id="offre-section" className="md:col-span-2 scroll-mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {t('offers', 'makeOfferTitle') || 'Faire une offre'}
@@ -1251,7 +1466,7 @@ export default function MissionDetailPage() {
 
           {/* Completion Section (for IN_PROGRESS status) */}
           {mission.status === 'IN_PROGRESS' && (
-            <Card className="md:col-span-2">
+            <Card id="finalisation" className="md:col-span-2 scroll-mt-6">
               <CardHeader>
                 <CardTitle>{t('artisan', 'completeWork') || 'Finaliser la mission'}</CardTitle>
                 <CardDescription>
