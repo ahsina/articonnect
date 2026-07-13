@@ -1,11 +1,24 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { SiretVerificationResult } from '../dto/verification.dto';
 
 /**
+ * Marqueur interne (non destiné à l'affichage) placé dans `warnings` lorsqu'une
+ * vérification n'a PAS pu être tranchée automatiquement (clé absente = mock, ou
+ * panne réseau/API). L'orchestrateur le lit pour poser le statut MANUAL_REVIEW
+ * au lieu de REJECTED (on ne rejette jamais une entreprise sur une panne).
+ */
+export const MANUAL_REVIEW_MARKER = 'MANUAL_REVIEW_REQUIRED';
+
+/**
  * Service for verifying French SIRET numbers via INSEE Sirene API
  * API Documentation: https://api.insee.fr/catalogue/site/themes/wso2/subthemes/insee/pages/item-info.jag?name=Sirene&version=V3&provider=insee
+ *
+ * CONNECTEUR AUTOMATIQUE :
+ *  - Si un jeton INSEE est présent (INSEE_API_TOKEN | INSEE_SIRENE_API_KEY | INSEE_API_KEY)
+ *    → vrai appel HTTP au registre Sirene, décision VERIFIED / REJECTED sur l'état réel.
+ *  - Sinon → repli mock (fail-closed) marqué pour revue manuelle (MANUAL_REVIEW).
  */
 @Injectable()
 export class SiretVerificationService {
@@ -15,7 +28,14 @@ export class SiretVerificationService {
 
   constructor(private configService: ConfigService) {
     this.inseeApiUrl = this.configService.get<string>('INSEE_API_URL') || 'https://api.insee.fr/entreprises/sirene/V3';
-    this.inseeToken = this.configService.get<string>('INSEE_API_TOKEN') || '';
+    // Convention établie dans le code/.env.example : INSEE_API_TOKEN.
+    // On accepte aussi INSEE_SIRENE_API_KEY / INSEE_API_KEY (alias documentés) pour
+    // rester compatible avec la nomenclature « clé API par pays ».
+    this.inseeToken =
+      this.configService.get<string>('INSEE_API_TOKEN') ||
+      this.configService.get<string>('INSEE_SIRENE_API_KEY') ||
+      this.configService.get<string>('INSEE_API_KEY') ||
+      '';
   }
 
   /**
@@ -53,8 +73,12 @@ export class SiretVerificationService {
   async verifySiret(siret: string, companyName?: string): Promise<SiretVerificationResult> {
     const cleanSiret = siret.replace(/\s/g, '');
 
-    // Validate format first
-    if (!this.validateSiretFormat(cleanSiret)) {
+    // Gate de format STRICT = 14 chiffres, AVANT tout appel.
+    // NB : on ne bloque volontairement PAS sur le seul checksum de Luhn ici — c'est le
+    // registre INSEE qui fait autorité sur la validité réelle. Bloquer sur Luhn causait
+    // le bug « Format SIRET invalide » sur des SIRET pourtant à 14 chiffres (ex. cas
+    // historiques type La Poste dont le SIREN ne satisfait pas Luhn).
+    if (!/^\d{14}$/.test(cleanSiret)) {
       return {
         verified: false,
         siret: cleanSiret,
@@ -70,10 +94,17 @@ export class SiretVerificationService {
       };
     }
 
-    // If no API token configured, return mock verification for development
+    // Luhn = contrôle indicatif (warning), pas bloquant.
+    const luhnWarnings = this.validateLuhnAlgorithm(cleanSiret)
+      ? []
+      : ['Checksum SIRET (Luhn) non conforme — vérification via le registre INSEE'];
+
+    // Pas de jeton INSEE → repli mock (fail-closed) marqué pour revue manuelle.
     if (!this.inseeToken) {
-      this.logger.warn('INSEE_API_TOKEN not configured, using mock verification');
-      return this.mockSiretVerification(cleanSiret, companyName);
+      this.logger.warn(
+        `INSEE: clé absente (INSEE_API_TOKEN) → mock / MANUAL_REVIEW pour SIRET ${cleanSiret}`,
+      );
+      return this.mockSiretVerification(cleanSiret, companyName, luhnWarnings);
     }
 
     try {
@@ -89,8 +120,12 @@ export class SiretVerificationService {
       const uniteLegale = etablissement.uniteLegale;
       const adresseEtablissement = etablissement.adresseEtablissement;
 
-      // Check if establishment is active
-      const isActive = etablissement.etatAdministratifEtablissement === 'A';
+      // État administratif : champ direct ou, à défaut, dernière période connue.
+      const etat =
+        etablissement.etatAdministratifEtablissement ??
+        etablissement.periodesEtablissement?.[0]?.etatAdministratifEtablissement;
+      // 'A' = Actif → VERIFIED ; 'F' = Fermé → REJECTED.
+      const isActive = etat === 'A';
 
       // Build address
       const address = [
@@ -113,8 +148,13 @@ export class SiretVerificationService {
           companyName.toLowerCase().includes(registeredName.toLowerCase())
         : true;
 
+      const verified = isActive && nameMatch;
+      this.logger.log(
+        `INSEE: SIRET ${cleanSiret} état=${etat ?? '?'} → ${verified ? 'VERIFIED' : 'REJECTED'}`,
+      );
+
       return {
-        verified: isActive && nameMatch,
+        verified,
         siret: cleanSiret,
         siren: etablissement.siren,
         companyName: registeredName,
@@ -125,34 +165,42 @@ export class SiretVerificationService {
         nafCode: etablissement.activitePrincipaleEtablissement,
         nafLabel: etablissement.activitePrincipaleEtablissementLibelle || '',
         employeeCount: etablissement.trancheEffectifsEtablissement,
-        errors: isActive && nameMatch ? [] : ['Établissement inactif ou nom non correspondant'],
-        warnings: !nameMatch ? ['Le nom de l\'entreprise ne correspond pas exactement'] : [],
+        errors: verified ? [] : ['Établissement inactif ou nom non correspondant'],
+        warnings: [
+          ...luhnWarnings,
+          ...(!nameMatch ? ['Le nom de l\'entreprise ne correspond pas exactement'] : []),
+        ],
       };
     } catch (error) {
       this.logger.error(`Failed to verify SIRET ${cleanSiret}:`, error.message);
 
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          return {
-            verified: false,
-            siret: cleanSiret,
-            siren: cleanSiret.substring(0, 9),
-            companyName: '',
-            legalForm: '',
-            address: '',
-            isActive: false,
-            creationDate: new Date(),
-            nafCode: '',
-            nafLabel: '',
-            errors: ['SIRET non trouvé dans la base INSEE'],
-          };
-        }
+      // 404 = SIRET inexistant dans la base INSEE → REJECTED (décision ferme).
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        this.logger.log(`INSEE: SIRET ${cleanSiret} introuvable (404) → REJECTED`);
+        return {
+          verified: false,
+          siret: cleanSiret,
+          siren: cleanSiret.substring(0, 9),
+          companyName: '',
+          legalForm: '',
+          address: '',
+          isActive: false,
+          creationDate: new Date(),
+          nafCode: '',
+          nafLabel: '',
+          errors: ['SIRET non trouvé dans la base INSEE'],
+        };
       }
 
-      throw new HttpException(
-        'Erreur lors de la vérification SIRET avec l\'API INSEE',
-        HttpStatus.SERVICE_UNAVAILABLE,
+      // Toute autre erreur (réseau, 5xx, timeout, jeton expiré) : on NE bloque PAS et on
+      // NE rejette PAS l'entreprise sur une panne → repli mock marqué MANUAL_REVIEW.
+      this.logger.warn(
+        `INSEE: appel indisponible pour SIRET ${cleanSiret} (${error.message}) → MANUAL_REVIEW`,
       );
+      return this.mockSiretVerification(cleanSiret, companyName, [
+        ...luhnWarnings,
+        'API INSEE indisponible au moment du contrôle',
+      ]);
     }
   }
 
@@ -162,9 +210,12 @@ export class SiretVerificationService {
   private mockSiretVerification(
     siret: string,
     companyName?: string,
+    extraWarnings: string[] = [],
   ): SiretVerificationResult {
     return {
-      // SÉCURITÉ : fail-closed — sans token INSEE, on NE valide PAS automatiquement (vérif manuelle admin).
+      // SÉCURITÉ : fail-closed — sans token INSEE (ou API indisponible), on NE valide PAS
+      // automatiquement. Le marqueur MANUAL_REVIEW indique à l'orchestrateur de router vers
+      // une revue manuelle admin (statut MANUAL_REVIEW) plutôt qu'un rejet ferme.
       verified: false,
       siret,
       siren: siret.substring(0, 9),
@@ -176,7 +227,11 @@ export class SiretVerificationService {
       nafCode: '4321A',
       nafLabel: 'Travaux d\'installation électrique',
       employeeCount: '1 à 2 salariés',
-      warnings: ['⚠️ MOCK MODE: INSEE API not configured'],
+      warnings: [
+        '⚠️ MOCK MODE: INSEE API not configured',
+        MANUAL_REVIEW_MARKER,
+        ...extraWarnings,
+      ],
     };
   }
 

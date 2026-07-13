@@ -1,21 +1,34 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { RcsVerificationResult } from '../dto/verification.dto';
+import { MANUAL_REVIEW_MARKER } from './siret-verification.service';
 
 /**
  * Service for verifying Luxembourg RCS (Registre de Commerce et des Sociétés) numbers
  * API Documentation: https://data.public.lu/en/datasets/registre-de-commerce-et-des-societes-entreprises/
+ *
+ * CONNECTEUR AUTOMATIQUE :
+ *  - Si une clé RCS/LBR est présente (RCS_API_KEY | LBR_API_KEY) → appel authentifié
+ *    au registre luxembourgeois (header `X-API-Key`), décision sur l'état réel (ACTIVE).
+ *  - Sinon → l'open-data est tenté puis repli mock marqué MANUAL_REVIEW
+ *    (comportement historique conservé : pas de rejet sur indisponibilité).
  */
 @Injectable()
 export class RcsVerificationService {
   private readonly logger = new Logger(RcsVerificationService.name);
   private readonly rcsApiUrl: string;
   private readonly lbrApiUrl: string;
+  private readonly rcsApiKey: string;
 
   constructor(private configService: ConfigService) {
     this.rcsApiUrl = this.configService.get<string>('RCS_API_URL') || 'https://data.public.lu/api/3/action';
     this.lbrApiUrl = this.configService.get<string>('LBR_API_URL') || 'https://www.lbr.lu/mjrcs/jsp';
+    // Clé d'accès au registre RCS/LBR (LBR — Luxembourg Business Registers). Alias : LBR_API_KEY.
+    this.rcsApiKey =
+      this.configService.get<string>('RCS_API_KEY') ||
+      this.configService.get<string>('LBR_API_KEY') ||
+      '';
   }
 
   /**
@@ -51,7 +64,15 @@ export class RcsVerificationService {
       };
     }
 
-    // Try Luxembourg open data API
+    if (this.rcsApiKey) {
+      this.logger.log(`RCS: clé présente → appel authentifié pour ${cleanRcs}`);
+    } else {
+      this.logger.warn(
+        `RCS: clé absente (RCS_API_KEY) → open-data puis repli mock / MANUAL_REVIEW pour ${cleanRcs}`,
+      );
+    }
+
+    // Try Luxembourg open data API. Le header d'authentification n'est ajouté que si une clé existe.
     try {
       const response = await axios.get(`${this.rcsApiUrl}/datastore_search`, {
         params: {
@@ -59,6 +80,7 @@ export class RcsVerificationService {
           q: cleanRcs,
           limit: 1,
         },
+        headers: this.rcsApiKey ? { 'X-API-Key': this.rcsApiKey } : {},
         timeout: 10000,
       });
 
@@ -70,20 +92,29 @@ export class RcsVerificationService {
             companyName.toLowerCase().includes(record.name?.toLowerCase())
           : true;
 
+        const isActive = record.status === 'ACTIVE';
+        const verified = isActive && nameMatch;
+        this.logger.log(
+          `RCS: ${cleanRcs} statut=${record.status ?? '?'} → ${verified ? 'VERIFIED' : 'REJECTED'}`,
+        );
+
         return {
-          verified: record.status === 'ACTIVE' && nameMatch,
+          verified,
           rcsNumber: cleanRcs,
           companyName: record.name || '',
           legalForm: record.legal_form || '',
           address: record.address || '',
-          isActive: record.status === 'ACTIVE',
+          isActive,
           registrationDate: new Date(record.registration_date),
           naceCode: record.nace_code,
-          errors: [],
+          errors: verified ? [] : ['Entreprise inactive ou nom non correspondant'],
         };
       }
+      // Aucun enregistrement trouvé : on ne tranche pas → repli mock / MANUAL_REVIEW.
+      this.logger.warn(`RCS: aucun enregistrement pour ${cleanRcs} → MANUAL_REVIEW`);
     } catch (error) {
-      this.logger.warn(`Luxembourg RCS API unavailable, using mock verification: ${error.message}`);
+      // Panne réseau/API : on NE rejette PAS → repli mock / MANUAL_REVIEW.
+      this.logger.warn(`RCS: open-data indisponible (${error.message}) → MANUAL_REVIEW`);
     }
 
     // Fallback to mock verification
@@ -110,7 +141,7 @@ export class RcsVerificationService {
       isActive: true,
       registrationDate: new Date('2020-01-01'),
       naceCode: '43.21',
-      warnings: ['⚠️ MOCK MODE: Luxembourg RCS API not fully integrated'],
+      warnings: ['⚠️ MOCK MODE: Luxembourg RCS API not fully integrated', MANUAL_REVIEW_MARKER],
     };
   }
 

@@ -1,19 +1,33 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { KboVerificationResult } from '../dto/verification.dto';
+import { MANUAL_REVIEW_MARKER } from './siret-verification.service';
 
 /**
  * Service for verifying Belgian KBO/BCE (Kruispuntbank van Ondernemingen) numbers
  * API Documentation: https://kbopub.economie.fgov.be/kbopub/api/
+ *
+ * CONNECTEUR AUTOMATIQUE :
+ *  - Si une clé KBO est présente (KBO_API_KEY | KBO_API_TOKEN) → appel authentifié
+ *    au registre KBO/BCE (header `X-API-Key`), décision sur l'état réel (AC = actif).
+ *  - Sinon → l'endpoint ouvert est tenté puis repli mock marqué MANUAL_REVIEW
+ *    (comportement historique conservé : on ne rejette pas sur indisponibilité).
  */
 @Injectable()
 export class KboVerificationService {
   private readonly logger = new Logger(KboVerificationService.name);
   private readonly kboApiUrl: string;
+  private readonly kboApiKey: string;
 
   constructor(private configService: ConfigService) {
     this.kboApiUrl = this.configService.get<string>('KBO_API_URL') || 'https://kbopub.economie.fgov.be/kbopub/api/v1';
+    // Clé d'accès au registre KBO/BCE (l'accès réel nécessite un enregistrement auprès
+    // du SPF Économie). Alias accepté : KBO_API_TOKEN.
+    this.kboApiKey =
+      this.configService.get<string>('KBO_API_KEY') ||
+      this.configService.get<string>('KBO_API_TOKEN') ||
+      '';
   }
 
   /**
@@ -77,19 +91,28 @@ export class KboVerificationService {
       };
     }
 
+    if (this.kboApiKey) {
+      this.logger.log(`KBO: clé présente → appel authentifié pour ${cleanKbo}`);
+    } else {
+      this.logger.warn(
+        `KBO: clé absente (KBO_API_KEY) → endpoint ouvert puis repli mock / MANUAL_REVIEW pour ${cleanKbo}`,
+      );
+    }
+
     try {
-      // Call KBO Open Data API
+      // Call KBO/BCE API. Le header d'authentification n'est ajouté que si une clé est fournie.
       const response = await axios.get(`${this.kboApiUrl}/enterprise/${cleanKbo}`, {
         headers: {
           Accept: 'application/json',
+          ...(this.kboApiKey ? { 'X-API-Key': this.kboApiKey } : {}),
         },
         timeout: 10000,
       });
 
       const enterprise = response.data;
 
-      // Check if enterprise is active
-      const isActive = enterprise.Status === 'AC'; // AC = Active
+      // Check if enterprise is active — AC = Active ; tout autre statut (ST/radié…) → REJECTED
+      const isActive = enterprise.Status === 'AC';
 
       // Get latest denomination
       const denomination =
@@ -109,8 +132,13 @@ export class KboVerificationService {
           companyName.toLowerCase().includes(denomination.toLowerCase())
         : true;
 
+      const verified = isActive && nameMatch;
+      this.logger.log(
+        `KBO: ${cleanKbo} statut=${enterprise.Status ?? '?'} → ${verified ? 'VERIFIED' : 'REJECTED'}`,
+      );
+
       return {
-        verified: isActive && nameMatch,
+        verified,
         kboNumber: cleanKbo,
         companyName: denomination,
         legalForm: enterprise.JuridicalForm || '',
@@ -119,29 +147,29 @@ export class KboVerificationService {
         startDate: new Date(enterprise.StartDate),
         naceCode: enterprise.Activity?.[0]?.NaceCode,
         vatNumber: this.formatBelgianVat(cleanKbo),
-        errors: isActive && nameMatch ? [] : ['Entreprise inactive ou nom non correspondant'],
+        errors: verified ? [] : ['Entreprise inactive ou nom non correspondant'],
         warnings: !nameMatch ? ['Le nom de l\'entreprise ne correspond pas exactement'] : [],
       };
     } catch (error) {
       this.logger.error(`Failed to verify KBO ${cleanKbo}:`, error.message);
 
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          return {
-            verified: false,
-            kboNumber: cleanKbo,
-            companyName: '',
-            legalForm: '',
-            address: '',
-            isActive: false,
-            startDate: new Date(),
-            errors: ['Numéro KBO non trouvé dans la base belge'],
-          };
-        }
+      // 404 = entreprise inexistante → REJECTED (décision ferme).
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        this.logger.log(`KBO: ${cleanKbo} introuvable (404) → REJECTED`);
+        return {
+          verified: false,
+          kboNumber: cleanKbo,
+          companyName: '',
+          legalForm: '',
+          address: '',
+          isActive: false,
+          startDate: new Date(),
+          errors: ['Numéro KBO non trouvé dans la base belge'],
+        };
       }
 
-      // Fallback to mock verification if API fails
-      this.logger.warn('KBO API unavailable, using mock verification');
+      // Panne réseau/5xx/timeout : on NE rejette PAS → repli mock marqué MANUAL_REVIEW.
+      this.logger.warn(`KBO API indisponible (${error.message}) → MANUAL_REVIEW`);
       return this.mockKboVerification(cleanKbo, companyName);
     }
   }
@@ -188,7 +216,7 @@ export class KboVerificationService {
       startDate: new Date('2020-01-01'),
       naceCode: '43210',
       vatNumber: this.formatBelgianVat(kboNumber),
-      warnings: ['⚠️ MOCK MODE: KBO API not fully integrated'],
+      warnings: ['⚠️ MOCK MODE: KBO API not fully integrated', MANUAL_REVIEW_MARKER],
     };
   }
 }

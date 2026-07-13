@@ -6,7 +6,10 @@ import {
   BusinessVerificationResult,
   VerificationStatus,
 } from '../dto/verification.dto';
-import { SiretVerificationService } from './siret-verification.service';
+import {
+  SiretVerificationService,
+  MANUAL_REVIEW_MARKER,
+} from './siret-verification.service';
 import { RcsVerificationService } from './rcs-verification.service';
 import { KboVerificationService } from './kbo-verification.service';
 
@@ -145,14 +148,28 @@ export class BusinessVerificationService {
   async verifyArtisan(artisanId: string, dto: VerifyBusinessDto): Promise<void> {
     const result = await this.verifyBusiness(dto);
 
+    // Un contrôle qui n'a PAS pu être tranché automatiquement (clé absente = mock,
+    // ou panne API) porte le marqueur MANUAL_REVIEW_MARKER dans ses warnings : on
+    // route alors vers MANUAL_REVIEW (revue admin) plutôt qu'un rejet ferme. Seul un
+    // registre officiel disant « fermé / introuvable » produit un vrai REJECTED.
+    const warnings = result.warnings || [];
+    const needsManualReview =
+      !result.verified && warnings.includes(MANUAL_REVIEW_MARKER);
+
     const status = result.verified
       ? VerificationStatus.VERIFIED
-      : VerificationStatus.REJECTED;
+      : needsManualReview
+        ? VerificationStatus.MANUAL_REVIEW
+        : VerificationStatus.REJECTED;
+
+    // Le marqueur est interne : on ne le persiste pas dans les warnings affichés.
+    const persistedWarnings = warnings.filter((w) => w !== MANUAL_REVIEW_MARKER);
 
     // Update artisan profile with verification result
     await this.prisma.artisanProfile.update({
       where: { userId: artisanId },
       data: {
+        // `businessVerified` (badge) n'est vrai que sur un VERIFIED avéré.
         businessVerified: result.verified,
         businessVerifiedAt: result.verified ? new Date() : null,
         businessVerificationStatus: status,
@@ -163,7 +180,7 @@ export class BusinessVerificationService {
         businessRegistrationNumber: result.registrationNumber,
         businessCountry: dto.country,
         businessVerificationErrors: result.errors || [],
-        businessVerificationWarnings: result.warnings || [],
+        businessVerificationWarnings: persistedWarnings,
       },
     });
 
