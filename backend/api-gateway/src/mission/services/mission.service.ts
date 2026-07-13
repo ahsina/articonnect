@@ -450,6 +450,22 @@ export class MissionService {
       },
       include: {
         client: { select: { firstName: true, lastName: true } },
+        // Signal de concurrence : nombre total d'offres reçues (jointure agrégée, pas de N+1).
+        // Anti-désintermédiation : on n'expose QUE le compteur, jamais les offres des concurrents.
+        _count: { select: { negotiations: true } },
+        // L'offre éventuelle de l'artisan courant sur chaque mission (sa propre offre → OK à exposer).
+        // Filtrée côté SQL par senderId, jointure incluse dans la même requête (pas de N+1).
+        negotiations: {
+          where: { senderId: artisanId },
+          select: {
+            id: true,
+            proposedPrice: true,
+            accepted: true,
+            expiresAt: true,
+            viewedAt: true,
+          },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -458,7 +474,9 @@ export class MissionService {
     // Si l'artisan n'a pas de géoloc utilisable, on renvoie les missions ouvertes récentes
     // (mieux vaut voir les missions que d'avoir une liste vide → l'artisan ne peut plus offrir).
     const hasLocation = !!latitude && !!longitude && !(latitude === 0 && longitude === 0);
-    if (!hasLocation) return missions;
+    if (!hasLocation) {
+      return missions.map((m) => this.enrichMissionForDiscovery(m, null));
+    }
 
     const filtered = missions.filter((mission) => {
       if (mission.latitude == null || mission.longitude == null) return true; // mission sans géo -> visible
@@ -469,7 +487,69 @@ export class MissionService {
     const result = filtered.length > 0 ? filtered : missions;
     // Ces missions sont OUVERTES (non attribuées, non payées) : on n'expose que la zone approximative
     // (ville + lat/lng arrondis). L'adresse exacte n'est révélée à l'artisan assigné qu'après escrow.
-    return result.map((m) => this.approximateMissionLocation(m));
+    // distanceKm est calculé sur la position EXACTE (avant floutage) puis la localisation est approximée.
+    return result.map((m) =>
+      this.approximateMissionLocation(
+        this.enrichMissionForDiscovery(m, { latitude, longitude }),
+      ),
+    );
+  }
+
+  /**
+   * Enrichit une mission de découverte pour l'écran artisan « Trouver des missions » :
+   *  - `offersCount` : nombre d'offres reçues (signal de concurrence, compteur seul — pas d'identités/montants tiers).
+   *  - `myOffer`     : résumé de l'offre de l'artisan courant s'il en a déjà une, sinon `null`.
+   *  - `distanceKm`  : distance depuis l'origine fournie (position exacte de la mission), arrondie à 0,1 km,
+   *                    ou `null` si pas de géoloc / mission sans coordonnées.
+   * Retire les champs bruts de jointure (`_count`, `negotiations`) pour ne rien laisser fuiter.
+   */
+  private enrichMissionForDiscovery(
+    mission: any,
+    origin: { latitude: number; longitude: number } | null,
+  ) {
+    const { _count, negotiations, ...rest } = mission;
+    const offersCount: number = _count?.negotiations ?? 0;
+
+    const own = Array.isArray(negotiations) ? negotiations[0] : null;
+    const myOffer = own
+      ? {
+          id: own.id,
+          proposedPrice: Number(own.proposedPrice),
+          status: this.deriveNegotiationStatus(own),
+        }
+      : null;
+
+    let distanceKm: number | null = null;
+    if (origin && mission.latitude != null && mission.longitude != null) {
+      distanceKm =
+        Math.round(
+          this.calculateDistance(
+            origin.latitude,
+            origin.longitude,
+            mission.latitude,
+            mission.longitude,
+          ) * 10,
+        ) / 10;
+    }
+
+    return { ...rest, offersCount, myOffer, distanceKm };
+  }
+
+  /**
+   * Statut dérivé d'une offre (même logique/format que negotiation.service.deriveStatus) :
+   *   accepted === true → ACCEPTED ; accepted === false → REJECTED ;
+   *   sinon en attente : expirée → EXPIRED ; déjà consultée → VIEWED ; sinon → SENT.
+   */
+  private deriveNegotiationStatus(neg: {
+    accepted?: boolean | null;
+    expiresAt?: Date | null;
+    viewedAt?: Date | null;
+  }): 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'VIEWED' | 'SENT' {
+    if (neg.accepted === true) return 'ACCEPTED';
+    if (neg.accepted === false) return 'REJECTED';
+    if (neg.expiresAt && new Date() > neg.expiresAt) return 'EXPIRED';
+    if (neg.viewedAt) return 'VIEWED';
+    return 'SENT';
   }
 
   /**
