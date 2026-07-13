@@ -85,17 +85,29 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         .trim();
     };
 
-    let result: any = allTranslations[language];
-
-    for (const k of keys) {
-      if (result && typeof result === 'object' && k in result) {
-        result = result[k];
-      } else {
-        return humanize(key !== undefined ? key : keyOrCategory);
+    // Recherche la clé dans le dictionnaire d'une langue donnée. Renvoie undefined si absente.
+    const lookup = (lang: Language): string | undefined => {
+      let result: any = allTranslations[lang];
+      for (const k of keys) {
+        if (result && typeof result === 'object' && k in result) {
+          result = result[k];
+        } else {
+          return undefined;
+        }
       }
-    }
+      return typeof result === 'string' ? result : undefined;
+    };
 
-    return typeof result === 'string' ? result : humanize(key !== undefined ? key : keyOrCategory);
+    // Chaîne de repli i18n : langue courante → français (langue de base) → humanisation.
+    // Ainsi une clé absente d'une traduction (de/nl/es/it/pt) retombe sur le FR au lieu d'afficher
+    // une clé « humanisée » ; l'humanisation ne sert que de dernier recours (clé absente partout).
+    const found = lookup(language);
+    if (found !== undefined) return found;
+    if (language !== 'fr') {
+      const base = lookup('fr');
+      if (base !== undefined) return base;
+    }
+    return humanize(key !== undefined ? key : keyOrCategory);
   };
 
   return (
