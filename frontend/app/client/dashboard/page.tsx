@@ -2,7 +2,7 @@
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,12 @@ import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mission, MissionStatus } from '@/types/mission';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ClipboardList, Hammer, ShoppingCart, LogOut, Wrench, HardHat, Building2, Menu, X } from 'lucide-react';
+import { translateMissionStatus } from '@/lib/utils/enum-translations';
+import {
+  ClipboardList, Hammer, ShoppingCart, LogOut, Wrench, HardHat, Building2, Menu, X,
+  CreditCard, CheckCircle2, Truck, GitCompare, ArrowRight,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface ClientProfile {
   clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
@@ -21,6 +26,32 @@ interface ClientProfile {
   vatNumber?: string;
   industry?: string;
 }
+
+// GET /missions renvoie plus de champs que le type Mission de base : on enrichit localement
+// avec ce dont la file d'actions a besoin (dates de paiement / validation).
+interface DashMission extends Mission {
+  depositPaidAt?: string | null;
+  completedAt?: string | null;
+  validatedAt?: string | null;
+  autoValidatedAt?: string | null;
+  scheduledFor?: string | null;
+  clientBudget?: number | null;
+}
+
+// Une carte de la file « À traiter maintenant ».
+interface ActionItem {
+  id: string;          // clé unique (missionId + type)
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  cta: string;
+  href: string;
+  urgent: boolean;     // action « argent »/urgente → mise en avant (bordure noire)
+  priority: number;    // ordre de tri (plus petit = plus haut)
+  dueBadge?: string;   // badge « J-x » (auto-validation)
+}
+
+const MAX_ACTIONS = 6;
 
 const STATUS_BADGES: Record<MissionStatus, string> = {
   PENDING: 'bg-amber-100 text-amber-800',
@@ -42,10 +73,26 @@ export default function ClientDashboard() {
   const { t } = useLanguage();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missions, setMissions] = useState<DashMission[]>([]);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Nombre d'offres reçues (d'artisans) par mission ouverte — chargé après coup, non bloquant.
+  const [offerCounts, setOfferCounts] = useState<Record<string, number>>({});
+
+  // i18n : t() « humanise » la clé quand elle est absente ; on détecte ce cas pour retomber sur le
+  // FR fourni. Tous les nouveaux textes passent par td() → le FR s'affiche tant que les clés du
+  // namespace « dashboardClient » ne sont pas ajoutées.
+  const humanizeKey = (s: string): string =>
+    s
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/[._-]+/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .trim();
+  const td = (key: string, fr: string): string => {
+    const v = t('dashboardClient', key);
+    return !v || v === humanizeKey(key) ? fr : v;
+  };
 
   useEffect(() => {
     loadDashboard();
@@ -59,12 +106,122 @@ export default function ClientDashboard() {
       ]);
       setMissions(missionsData);
       setClientProfile(profileData);
+      loadOfferCounts(missionsData);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // GET /missions ne renvoie pas le nombre d'offres : on le récupère via getNegotiations pour les
+  // missions ouvertes (PENDING/NEGOTIATING) et on ne compte que les offres reçues d'artisans
+  // (senderId !== moi). Même approche que la page liste des missions. Non bloquant.
+  const loadOfferCounts = async (data: DashMission[]) => {
+    const open = data.filter((m) => m.status === 'PENDING' || m.status === 'NEGOTIATING');
+    if (open.length === 0) return;
+    try {
+      const me = await userApi.getProfile().catch(() => null);
+      const myId: string | undefined = me?.id;
+      const entries = await Promise.all(
+        open.map(async (m) => {
+          try {
+            const negs = await missionsApi.getNegotiations(m.id);
+            const list: Array<{ senderId?: string }> = Array.isArray(negs) ? negs : [];
+            const received = myId ? list.filter((n) => n.senderId !== myId).length : list.length;
+            return [m.id, received] as const;
+          } catch {
+            return [m.id, 0] as const;
+          }
+        })
+      );
+      setOfferCounts(Object.fromEntries(entries));
+    } catch (error) {
+      console.error('Error loading offer counts:', error);
+    }
+  };
+
+  // File d'actions « À traiter maintenant » dérivée des missions + du nombre d'offres reçues.
+  const actions = useMemo<ActionItem[]>(() => {
+    const items: ActionItem[] = [];
+    for (const m of missions) {
+      // Un paiement à sécuriser (argent) : offre acceptée, prix convenu, acompte pas encore payé.
+      if (
+        (m.status === 'ACCEPTED' || m.status === 'PENDING_DEPOSIT') &&
+        m.agreedPrice &&
+        !m.depositPaidAt
+      ) {
+        items.push({
+          id: `${m.id}-pay`,
+          icon: CreditCard,
+          title: td('actionPayTitle', 'Un paiement à sécuriser'),
+          subtitle: `${m.title} · ${m.agreedPrice}€`,
+          cta: td('actionPayCta', 'Payer'),
+          href: `/client/payment/${m.id}`,
+          urgent: true,
+          priority: 1,
+        });
+        continue;
+      }
+      // Un travail à valider (argent bloqué) : mission terminée, ni validée ni auto-validée.
+      if (m.status === 'COMPLETED' && !m.validatedAt && !m.autoValidatedAt) {
+        let dueBadge: string | undefined;
+        if (m.completedAt) {
+          const deadline = new Date(new Date(m.completedAt).getTime() + 7 * 24 * 60 * 60 * 1000);
+          const days = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+          dueBadge = `J-${days}`;
+        }
+        items.push({
+          id: `${m.id}-validate`,
+          icon: CheckCircle2,
+          title: td('actionValidateTitle', 'Un travail à valider'),
+          subtitle: m.title,
+          cta: td('actionValidateCta', 'Valider'),
+          href: `/client/missions/${m.id}`,
+          urgent: true,
+          priority: 2,
+          dueBadge,
+        });
+        continue;
+      }
+      // N offres à comparer : mission ouverte ayant reçu des offres d'artisans.
+      if ((m.status === 'PENDING' || m.status === 'NEGOTIATING') && (offerCounts[m.id] || 0) > 0) {
+        const n = offerCounts[m.id];
+        items.push({
+          id: `${m.id}-offers`,
+          icon: GitCompare,
+          title:
+            n > 1
+              ? `${n} ${td('actionOffersTitle', 'offres à comparer')}`
+              : `${n} ${td('actionOfferTitle', 'offre à comparer')}`,
+          subtitle: m.title,
+          cta: td('actionOffersCta', 'Comparer'),
+          href: `/client/missions/${m.id}`,
+          urgent: false,
+          priority: 3,
+        });
+        continue;
+      }
+      // Intervention en cours : artisan en route ou sur place.
+      if (m.status === 'IN_TRANSIT' || m.status === 'IN_PROGRESS') {
+        items.push({
+          id: `${m.id}-track`,
+          icon: Truck,
+          title: td('actionTrackTitle', 'Intervention en cours'),
+          subtitle: `${m.title} · ${translateMissionStatus(m.status, t)}`,
+          cta: td('actionTrackCta', 'Suivre'),
+          href: `/client/missions/${m.id}`,
+          urgent: false,
+          priority: 4,
+        });
+        continue;
+      }
+    }
+    return items.sort((a, b) => a.priority - b.priority);
+  }, [missions, offerCounts]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const visibleActions = actions.slice(0, MAX_ACTIONS);
+  const overflowCount = actions.length - visibleActions.length;
 
   const isProfessional = clientProfile?.clientType === 'PROFESSIONAL';
 
@@ -187,6 +344,83 @@ export default function ClientDashboard() {
           </div>
         </div>
 
+        {/* À traiter maintenant — file d'actions prioritaires */}
+        <div className="mb-6">
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="text-2xl font-bold text-foreground">
+              {td('toHandleNow', 'À traiter maintenant')}
+            </h2>
+            {actions.length > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {actions.length} {actions.length > 1 ? td('actionsPlural', 'actions') : td('actionSingular', 'action')}
+              </span>
+            )}
+          </div>
+
+          {actions.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-6 flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
+              <div>
+                <p className="font-semibold text-foreground">{td('allCaughtUp', 'Tout est à jour')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {td('allCaughtUpDesc', 'Aucune action requise pour le moment.')}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {visibleActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <div
+                    key={action.id}
+                    className={`bg-card rounded-2xl p-4 flex items-center gap-4 transition ${
+                      action.urgent
+                        ? 'border-2 border-foreground'
+                        : 'border border-border hover:border-primary'
+                    }`}
+                  >
+                    <div
+                      className={`h-11 w-11 shrink-0 rounded-xl flex items-center justify-center ${
+                        action.urgent ? 'bg-foreground text-background' : 'bg-muted text-foreground'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-foreground truncate">{action.title}</h3>
+                        {action.dueBadge && (
+                          <Badge className="bg-amber-100 text-amber-800">{action.dueBadge}</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{action.subtitle}</p>
+                    </div>
+                    <Link href={action.href} className="shrink-0">
+                      <Button
+                        size="sm"
+                        variant={action.urgent ? 'default' : 'outline'}
+                        rightIcon={<ArrowRight className="h-4 w-4" />}
+                      >
+                        {action.cta}
+                      </Button>
+                    </Link>
+                  </div>
+                );
+              })}
+
+              {overflowCount > 0 && (
+                <Link
+                  href="/client/missions"
+                  className="block text-center text-sm font-medium text-primary hover:underline py-2"
+                >
+                  + {overflowCount} {td('moreActions', 'autres à traiter')} →
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <Link
@@ -257,13 +491,24 @@ export default function ClientDashboard() {
                       )}
                     </div>
                     <div className="text-right">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(
-                          mission.status
-                        )}`}
-                      >
-                        {t('clientDashboard', `status_${mission.status}`)}
-                      </span>
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {(mission.status === 'PENDING' || mission.status === 'NEGOTIATING') &&
+                          (offerCounts[mission.id] || 0) > 0 && (
+                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-foreground text-background">
+                              {offerCounts[mission.id]}{' '}
+                              {offerCounts[mission.id] > 1
+                                ? td('offersToCompareShort', 'offres')
+                                : td('offerToCompareShort', 'offre')}
+                            </span>
+                          )}
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(
+                            mission.status
+                          )}`}
+                        >
+                          {translateMissionStatus(mission.status, t)}
+                        </span>
+                      </div>
                       {mission.agreedPrice && (
                         <div className="text-lg font-bold text-foreground mt-2">
                           {mission.agreedPrice}€
