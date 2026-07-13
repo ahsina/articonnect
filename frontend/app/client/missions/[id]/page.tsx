@@ -1,7 +1,7 @@
 'use client';
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
-import { MapPin, Star, ShieldCheck, Clock, Phone, Truck, Check, MessageSquare, Lock } from 'lucide-react';
+import { MapPin, Star, ShieldCheck, Clock, Phone, Truck, Check, MessageSquare, Lock, Camera, X, AlertTriangle, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { reviewsApi } from '@/lib/api/reviews';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translateMissionStatus, translateOfferStatus } from '@/lib/utils/enum-translations';
@@ -148,6 +149,19 @@ export default function MissionDetailsPage() {
   const { t } = useLanguage();
   const missionId = params.id as string;
 
+  // Traduction locale namespacée « validate » (copie du helper de artisan/discover) : renvoie la
+  // valeur i18n si elle existe, sinon le fallback FR (t() « humanise » les clés absentes → on détecte ce cas).
+  const humanizeKey = (s: string): string =>
+    s
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/[._-]+/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .trim();
+  const td = (key: string, fr: string): string => {
+    const v = t('validate', key);
+    return v === humanizeKey(key) ? fr : v;
+  };
+
   const [mission, setMission] = useState<Mission | null>(null);
   const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
@@ -175,6 +189,18 @@ export default function MissionDetailsPage() {
   const [offerToAccept, setOfferToAccept] = useState<Negotiation | null>(null);
   const [offerToReject, setOfferToReject] = useState<Negotiation | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  // Modale « Valider le travail » (remplace le confirm natif) : note + commentaire facultatifs.
+  const [showValidateModal, setShowValidateModal] = useState(false);
+  const [validateRating, setValidateRating] = useState(0);
+  const [validateComment, setValidateComment] = useState('');
+  const [validateLoading, setValidateLoading] = useState(false);
+  // Modale « Signaler un problème » (remplace le prompt natif) : motif + description + photos-preuve.
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeDescription, setDisputeDescription] = useState('');
+  const [disputePhotos, setDisputePhotos] = useState<string[]>([]);
+  const [disputeUploading, setDisputeUploading] = useState(false);
+  const [disputeLoading, setDisputeLoading] = useState(false);
 
   useEffect(() => {
     if (missionId) {
@@ -278,47 +304,141 @@ export default function MissionDetailsPage() {
     }
   };
 
-  const handleValidate = async () => {
-    if (!confirm(t('validation', 'confirmValidate') || 'Confirmer que le travail est satisfaisant ?')) {
-      return;
-    }
+  // Ouvre la modale de validation (l'action « argent » se confirme dans handleConfirmValidate).
+  const handleValidate = () => {
+    setValidateRating(0);
+    setValidateComment('');
+    setShowValidateModal(true);
+  };
 
+  // Confirme la validation : libère le séquestre vers l'artisan, puis poste l'avis facultatif.
+  const handleConfirmValidate = async () => {
+    setValidateLoading(true);
     try {
-      await missionsApi.validate(missionId);
+      // NB : le backend /missions/:id/validate ignore le corps ; la note/l'avis sont enregistrés
+      // séparément via /reviews. On passe tout de même la note (compat. signature, no-op côté serveur).
+      await missionsApi.validate(missionId, validateRating || undefined);
+
+      // Avis facultatif : posté seulement si le client a mis une note (best-effort, non bloquant).
+      if (validateRating >= 1) {
+        try {
+          await reviewsApi.create({
+            missionId,
+            overallRating: validateRating,
+            comment: validateComment.trim(),
+          });
+        } catch (reviewError) {
+          console.warn('Review submission failed (non-blocking):', reviewError);
+        }
+      }
+
       toast({
         title: t('common', 'success'),
-        description: t('validation', 'workValidated') || 'Travail validé avec succès',
+        description: td('workValidated', 'Travail validé — le paiement a été libéré à l’artisan.'),
       });
+      setShowValidateModal(false);
       loadData();
-      setShowReviewForm(true);
+      // Si le client n'a pas noté ici, on lui propose le formulaire d'avis complet.
+      if (validateRating < 1) {
+        setShowReviewForm(true);
+      }
     } catch (error) {
       console.error('Error validating mission:', error);
       toast({
         title: t('common', 'error'),
-        description: t('validation', 'validateError') || 'Erreur lors de la validation',
+        description: td('validateError', 'Erreur lors de la validation. Réessayez.'),
         variant: 'destructive',
       });
+    } finally {
+      setValidateLoading(false);
     }
   };
 
-  const handleDispute = async () => {
-    const reason = prompt(t('validation', 'disputeReason') || 'Décrivez le problème:');
-    if (!reason) return;
+  // Ouvre la modale de signalement (motif + description + photos-preuve).
+  const handleDispute = () => {
+    setDisputeReason('');
+    setDisputeDescription('');
+    setDisputePhotos([]);
+    setShowDisputeModal(true);
+  };
 
+  // Motifs de litige proposés (le label FR sert de « reason » envoyé au backend).
+  const disputeReasons: { value: string; label: string }[] = [
+    { value: 'nonConforme', label: td('reasonNonConforme', 'Travail non conforme / incomplet') },
+    { value: 'malfacon', label: td('reasonMalfacon', 'Malfaçon / dégât') },
+    { value: 'noShow', label: td('reasonNoShow', 'Artisan non venu') },
+    { value: 'montant', label: td('reasonMontant', 'Montant contesté') },
+    { value: 'autre', label: td('reasonAutre', 'Autre') },
+  ];
+
+  // Upload de photos-preuve vers S3/MinIO (réutilise missionsApi.uploadPhoto) → stocke les URLs.
+  const handleDisputePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setDisputeUploading(true);
     try {
-      await missionsApi.dispute(missionId, reason);
+      for (const file of files) {
+        const { url } = await missionsApi.uploadPhoto(file);
+        if (url) setDisputePhotos((prev) => [...prev, url]);
+      }
+    } catch (error) {
+      console.error('Error uploading evidence photo:', error);
+      toast({
+        title: t('common', 'error'),
+        description: td('photoUploadError', 'Échec de l’envoi d’une photo. Réessayez.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setDisputeUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  // Confirme le signalement : crée le litige puis attache les photos comme preuves structurées.
+  const handleConfirmDispute = async () => {
+    if (!disputeReason || disputeDescription.trim().length === 0) return;
+    const reasonLabel = disputeReasons.find((r) => r.value === disputeReason)?.label
+      || td('reasonAutre', 'Autre');
+    setDisputeLoading(true);
+    try {
+      // Le DTO /disputes n'accepte pas les pièces jointes à la création : on garde donc les URLs
+      // dans la description (jamais perdues), et on les rattache ensuite comme preuves structurées.
+      const descriptionWithPhotos = disputePhotos.length > 0
+        ? `${disputeDescription.trim()}\n\n${td('evidencePhotosLabel', 'Photos-preuve')} :\n${disputePhotos.join('\n')}`
+        : disputeDescription.trim();
+
+      const dispute: any = await missionsApi.dispute(missionId, reasonLabel, descriptionWithPhotos);
+
+      // Best-effort : rattache chaque photo comme preuve via POST /disputes/:id/evidence.
+      if (dispute?.id && disputePhotos.length > 0) {
+        for (const url of disputePhotos) {
+          try {
+            await apiClient.post(`/disputes/${dispute.id}/evidence`, {
+              type: 'PHOTO',
+              url,
+              description: reasonLabel,
+            });
+          } catch (evidenceError) {
+            console.warn('Evidence attach failed (kept in description):', evidenceError);
+          }
+        }
+      }
+
       toast({
         title: t('common', 'success'),
-        description: t('validation', 'disputeCreated') || 'Réclamation enregistrée',
+        description: td('disputeCreated', 'Signalement envoyé. Un médiateur va examiner votre dossier.'),
       });
+      setShowDisputeModal(false);
       loadData();
     } catch (error) {
       console.error('Error creating dispute:', error);
       toast({
         title: t('common', 'error'),
-        description: t('validation', 'disputeError') || 'Erreur',
+        description: td('disputeError', 'Erreur lors de l’envoi du signalement. Réessayez.'),
         variant: 'destructive',
       });
+    } finally {
+      setDisputeLoading(false);
     }
   };
 
@@ -1811,6 +1931,249 @@ export default function MissionDetailsPage() {
                   className="flex-1"
                 >
                   {t('negotiations', 'reject') || 'Refuser'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modale « VALIDER LE TRAVAIL » — remplace le confirm() : récap + note/avis + réassurance séquestre. */}
+      {showValidateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display">
+                <Check className="h-5 w-5 text-green-600" strokeWidth={2.5} />
+                {td('validateTitle', 'Valider le travail')}
+              </CardTitle>
+              <CardDescription>
+                {td('validateDesc', 'Vérifiez le résultat, puis confirmez pour libérer le paiement à l’artisan.')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Récapitulatif : prestation, artisan, montant libéré */}
+              <div className="space-y-2 rounded-xl border border-border p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-muted-foreground">{td('recapService', 'Prestation')}</span>
+                  <span className="text-right font-semibold text-foreground">{mission.title}</span>
+                </div>
+                {artisanDisplayName && (
+                  <div className="flex items-start justify-between gap-3 border-t border-border pt-2">
+                    <span className="text-muted-foreground">{td('recapArtisan', 'Artisan')}</span>
+                    <span className="text-right font-semibold text-foreground">{artisanDisplayName}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
+                  <span className="text-muted-foreground">{td('recapReleased', 'Montant libéré')}</span>
+                  <span className="font-display text-lg font-extrabold text-foreground">
+                    {fmtEur(mission.agreedPrice ?? escrowAmount)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Note en étoiles (facultative) */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  {td('rateLabel', 'Votre note')} <span className="font-normal text-muted-foreground">({td('optional', 'facultatif')})</span>
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setValidateRating(n === validateRating ? 0 : n)}
+                      className="p-0.5 transition-transform hover:scale-110"
+                      aria-label={`${n} ${td('stars', 'étoiles')}`}
+                    >
+                      <Star
+                        className={`h-7 w-7 ${n <= validateRating ? 'fill-amber-400 text-amber-400' : 'text-border'}`}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+                  ))}
+                  {validateRating > 0 && (
+                    <span className="ml-1 text-sm font-bold text-foreground">{validateRating}/5</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Commentaire (facultatif) */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {td('commentLabel', 'Commentaire')} <span className="font-normal text-muted-foreground">({td('optional', 'facultatif')})</span>
+                </label>
+                <textarea
+                  value={validateComment}
+                  onChange={(e) => setValidateComment(e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  rows={3}
+                  placeholder={td('commentPlaceholder', 'Partagez votre expérience avec cet artisan…')}
+                />
+              </div>
+
+              {/* Réassurance séquestre + caractère définitif */}
+              <div className="flex items-start gap-2 rounded-xl bg-green-100/60 p-3 text-sm text-foreground">
+                <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-700" strokeWidth={2} />
+                <span>
+                  {td('validateReassurancePrefix', 'En validant,')}{' '}
+                  <span className="font-bold">{fmtEur(mission.agreedPrice ?? escrowAmount)}</span>{' '}
+                  {td('validateReassuranceSuffix', 'sont versés à l’artisan. Cette action est définitive.')}
+                </span>
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowValidateModal(false)}
+                  disabled={validateLoading}
+                  className="flex-1"
+                >
+                  {t('common', 'back') || 'Retour'}
+                </Button>
+                <Button
+                  onClick={handleConfirmValidate}
+                  disabled={validateLoading}
+                  className="flex-1"
+                >
+                  {validateLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="mr-1.5 h-4 w-4" strokeWidth={2.5} />
+                      {td('validateAndRelease', 'Valider et libérer')} {fmtEur(mission.agreedPrice ?? escrowAmount)}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modale « SIGNALER UN PROBLÈME » — remplace le prompt() : motif + description + photos-preuve. */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display text-red-600">
+                <AlertTriangle className="h-5 w-5" strokeWidth={2.2} />
+                {td('disputeTitle', 'Signaler un problème')}
+              </CardTitle>
+              <CardDescription>
+                {td('disputeModalDesc', 'Décrivez le problème et joignez des photos. Un médiateur examinera votre dossier.')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Motif */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {td('reasonLabel', 'Motif')} *
+                </label>
+                <select
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="" disabled>
+                    {td('reasonSelect', 'Choisissez un motif…')}
+                  </option>
+                  {disputeReasons.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description (requise) */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {td('descriptionLabel', 'Description du problème')} *
+                </label>
+                <textarea
+                  value={disputeDescription}
+                  onChange={(e) => setDisputeDescription(e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows={4}
+                  placeholder={td('descriptionPlaceholder', 'Expliquez précisément ce qui ne va pas…')}
+                />
+              </div>
+
+              {/* Photos-preuve */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  {td('evidenceLabel', 'Photos-preuve')} <span className="font-normal text-muted-foreground">({td('optional', 'facultatif')})</span>
+                </label>
+                {disputePhotos.length > 0 && (
+                  <div className="mb-2 grid grid-cols-3 gap-2">
+                    {disputePhotos.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Preuve ${index + 1}`}
+                          className="h-20 w-full rounded-lg border border-border object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setDisputePhotos((prev) => prev.filter((_, i) => i !== index))}
+                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background shadow"
+                          aria-label={td('removePhoto', 'Retirer la photo')}
+                        >
+                          <X className="h-3 w-3" strokeWidth={3} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted">
+                  {disputeUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                  {disputeUploading
+                    ? (t('common', 'loading') || 'Chargement…')
+                    : td('addPhotos', 'Ajouter des photos')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleDisputePhotoUpload}
+                    disabled={disputeUploading}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Réassurance séquestre / médiation */}
+              <div className="flex items-start gap-2 rounded-xl bg-muted/60 p-3 text-sm text-foreground">
+                <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" strokeWidth={2} />
+                <span>
+                  {td('disputeReassurancePrefix', 'Vos')}{' '}
+                  <span className="font-bold">{fmtEur(mission.agreedPrice ?? escrowAmount)}</span>{' '}
+                  {td('disputeReassuranceSuffix', 'restent bloqués sous séquestre. Un médiateur tranche : remboursement ou résolution équitable.')}
+                </span>
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDisputeModal(false)}
+                  disabled={disputeLoading || disputeUploading}
+                  className="flex-1"
+                >
+                  {t('common', 'back') || 'Retour'}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmDispute}
+                  disabled={disputeLoading || disputeUploading || !disputeReason || disputeDescription.trim().length === 0}
+                  className="flex-1"
+                >
+                  {disputeLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    td('sendDispute', 'Envoyer le signalement')
+                  )}
                 </Button>
               </div>
             </CardContent>
