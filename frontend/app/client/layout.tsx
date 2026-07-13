@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { userApi } from '@/lib/api/user';
 import { useAuth } from '@/contexts/AuthContext';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Hammer, Heart, Receipt, Scale,
-  Bell, Settings, Building2, Menu, X, LogOut, type LucideIcon,
+  Settings, Building2, Menu, X, LogOut, type LucideIcon,
 } from 'lucide-react';
 
 interface ClientProfile {
@@ -100,11 +101,7 @@ function ClientHeader() {
           {/* User Info & Actions */}
           <div className="flex items-center gap-1 sm:gap-3 shrink-0">
             <LanguageSwitcher />
-            <Link href="/client/notifications" aria-label="Notifications">
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-            </Link>
+            <NotificationBell />
             <Link href="/client/settings" aria-label="Paramètres">
               <Button variant="ghost" size="icon">
                 <Settings className="h-5 w-5" />

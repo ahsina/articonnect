@@ -3,12 +3,63 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/lib/hooks/useNotifications';
 import { Badge } from '../ui/badge';
 import { NotificationSkeleton } from '../ui/skeleton';
+import {
+  Coins, CheckCircle2, XCircle, Briefcase, BadgeCheck, CreditCard, Star,
+  MessageSquare, AtSign, Clock, AlertTriangle, ShieldCheck, ShieldAlert,
+  Navigation, Bell, type LucideIcon,
+} from 'lucide-react';
+
+// Mappe un `type` de notification (enum backend NotificationType) vers une icône lucide et
+// une couleur, pour que chaque notification soit identifiable d'un coup d'œil.
+// Couleurs (selon la maquette) : offre/négociation → bleu · paiement → noir ·
+// mission acceptée/validée → vert · en route/tracking + avertissements → ambre ·
+// message → violet · refus/annulation → rouge · défaut/système → gris.
+interface NotifVisual {
+  Icon: LucideIcon;
+  color: string; // classe texte (couleur de l'icône)
+  bg: string;    // classe fond de la pastille d'icône
+}
+
+const NOTIFICATION_VISUALS: Record<string, NotifVisual> = {
+  // Offres / négociation → bleu
+  NEGOTIATION_NEW: { Icon: Coins, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+  NEW_MISSION: { Icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+  // Acceptations / validations → vert
+  NEGOTIATION_ACCEPTED: { Icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10' },
+  MISSION_ACCEPTED: { Icon: CheckCircle2, color: 'text-success', bg: 'bg-success/10' },
+  MISSION_COMPLETED: { Icon: BadgeCheck, color: 'text-success', bg: 'bg-success/10' },
+  KYC_VERIFIED: { Icon: ShieldCheck, color: 'text-success', bg: 'bg-success/10' },
+  // Refus / annulations → rouge
+  NEGOTIATION_REJECTED: { Icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/10' },
+  MISSION_CANCELLED: { Icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/10' },
+  CERTIFICATION_EXPIRED: { Icon: AlertTriangle, color: 'text-destructive', bg: 'bg-destructive/10' },
+  // Paiement → noir
+  PAYMENT_RECEIVED: { Icon: CreditCard, color: 'text-foreground', bg: 'bg-foreground/10' },
+  // Messages → violet
+  MESSAGE_NEW: { Icon: MessageSquare, color: 'text-violet-600', bg: 'bg-violet-500/10' },
+  CHAT_MESSAGE: { Icon: MessageSquare, color: 'text-violet-600', bg: 'bg-violet-500/10' },
+  CHAT_MENTION: { Icon: AtSign, color: 'text-violet-600', bg: 'bg-violet-500/10' },
+  // Avertissements / tracking → ambre
+  REVIEW_NEW: { Icon: Star, color: 'text-warning', bg: 'bg-warning/10' },
+  CERTIFICATION_EXPIRING: { Icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
+  KYC_REQUIRES_INPUT: { Icon: ShieldAlert, color: 'text-warning', bg: 'bg-warning/10' },
+  TRACKING_UPDATE: { Icon: Navigation, color: 'text-warning', bg: 'bg-warning/10' },
+  MISSION_EN_ROUTE: { Icon: Navigation, color: 'text-warning', bg: 'bg-warning/10' },
+};
+
+const DEFAULT_VISUAL: NotifVisual = { Icon: Bell, color: 'text-muted-foreground', bg: 'bg-muted' };
+
+function getNotificationVisual(type: string): NotifVisual {
+  return NOTIFICATION_VISUALS[type] || DEFAULT_VISUAL;
+}
 
 export function NotificationBell() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -20,6 +71,14 @@ export function NotificationBell() {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
+
+  // Page « liste complète » selon le rôle courant (fallback public /notifications).
+  const listHref =
+    user?.role === 'ARTISAN'
+      ? '/artisan/notifications'
+      : user?.role === 'CLIENT'
+        ? '/client/notifications'
+        : '/notifications';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -37,25 +96,8 @@ export function NotificationBell() {
       await markAsRead(notification.id);
     }
     setIsOpen(false);
-    if (notification.link) {
-      router.push(notification.link);
-    }
-  };
-
-  const getNotificationIcon = (type: string) => {
-    const icons: any = {
-      MISSION_NEW: '📋',
-      MISSION_ACCEPTED: '✅',
-      MISSION_COMPLETED: '🎉',
-      MISSION_CANCELLED: '❌',
-      NEGOTIATION_NEW: '💰',
-      NEGOTIATION_ACCEPTED: '🤝',
-      NEGOTIATION_REJECTED: '🚫',
-      PAYMENT_RECEIVED: '💳',
-      REVIEW_NEW: '⭐',
-      MESSAGE_NEW: '💬',
-    };
-    return icons[type] || '📢';
+    // Route vers le lien de la notif, sinon vers la page liste du rôle (robuste si link absent).
+    router.push(notification.link || listHref);
   };
 
   const formatTime = (dateString: string) => {
@@ -131,17 +173,30 @@ export function NotificationBell() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {notifications.map((notification) => (
+                {notifications.map((notification) => {
+                  const visual = getNotificationVisual(notification.type);
+                  const Icon = visual.Icon;
+                  return (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
-                      !notification.read ? 'bg-primary/10' : ''
+                    className={`relative p-4 hover:bg-accent cursor-pointer transition-colors ${
+                      !notification.read ? 'bg-primary/5' : ''
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
+                    {/* Pastille « non lu » (barre latérale) */}
+                    {!notification.read && (
+                      <span
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r"
+                        aria-hidden="true"
+                      />
+                    )}
                     <div className="flex items-start gap-3">
-                      <span className="text-2xl flex-shrink-0">
-                        {getNotificationIcon(notification.type)}
+                      <span
+                        className={`flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-full ${visual.bg} ${visual.color}`}
+                        aria-hidden="true"
+                      >
+                        <Icon className="h-5 w-5" />
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
@@ -186,7 +241,8 @@ export function NotificationBell() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -196,7 +252,7 @@ export function NotificationBell() {
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  router.push('/notifications');
+                  router.push(listHref);
                 }}
                 className="text-sm text-primary hover:text-primary font-medium"
               >

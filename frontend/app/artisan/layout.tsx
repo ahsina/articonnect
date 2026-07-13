@@ -1,6 +1,7 @@
 'use client';
 
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -206,6 +207,8 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                 <p className="text-sm font-medium truncate">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
+              {/* Cloche notifications (desktop / sidebar déployée) */}
+              <NotificationBell />
             </div>
           </div>
         )}
@@ -324,6 +327,10 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">K</span>
             <span className="font-display font-bold">Krafolt Pro</span>
           </button>
+          {/* Cloche notifications (mobile) */}
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
         </div>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
