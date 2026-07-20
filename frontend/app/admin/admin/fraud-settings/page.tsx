@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, FraudProtectionConfig } from '@/lib/api/admin';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -212,24 +211,6 @@ export default function FraudSettingsPage() {
     }
   };
 
-  const getColorClasses = (color: string, enabled: boolean) => {
-    if (!enabled) return 'bg-muted border-border';
-
-    const colors: Record<string, string> = {
-      blue: 'bg-primary/10 border-primary/20',
-      yellow: 'bg-amber-100',
-      green: 'bg-green-100 border-green-500/30',
-      purple: 'bg-purple-100',
-      red: 'bg-red-100',
-      indigo: 'bg-primary/10 border-primary/20',
-      teal: 'bg-teal-500/10 border-teal-500/20',
-      orange: 'bg-amber-100',
-      gray: 'bg-background border-border',
-    };
-
-    return colors[color] || colors.blue;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -241,26 +222,30 @@ export default function FraudSettingsPage() {
   if (!config) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-600">{error || t('adminFraudSettings', 'loadSettingsFailed')}</div>
+        <div className="text-destructive">{error || t('adminFraudSettings', 'loadSettingsFailed')}</div>
       </div>
     );
   }
 
+  const enabledCount = fraudFeatures.filter((f) => config[f.key] as boolean).length;
+
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div className="flex items-start gap-4">
             <button
               onClick={() => router.push('/admin/admin/dashboard')}
-              className="text-muted-foreground hover:text-foreground"
+              className="inline-flex h-10 items-center rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted"
             >
               {t('adminFraudSettings', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{t('adminFraudSettings', 'pageTitle')}</h1>
-              <p className="text-muted-foreground mt-2">
+              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+                {t('adminFraudSettings', 'pageTitle')}
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
                 {t('adminFraudSettings', 'pageSubtitle')}
               </p>
             </div>
@@ -269,172 +254,166 @@ export default function FraudSettingsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
+          <div className="mb-6 rounded-xl border border-border bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'featuresEnabled')}</p>
-                  <p className="text-3xl font-bold text-foreground">
-                    {fraudFeatures.filter((f) => config[f.key] as boolean).length}
-                  </p>
-                </div>
-                <span className="text-4xl"></span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'featuresDisabled')}</p>
-                  <p className="text-3xl font-bold text-muted-foreground">
-                    {fraudFeatures.filter((f) => !(config[f.key] as boolean)).length}
-                  </p>
-                </div>
-                <span className="text-4xl">⏸</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFraudSettings', 'lastUpdated')}</p>
-                  <p className="text-lg font-semibold text-foreground">
-                    {new Date(config.updatedAt).toLocaleDateString('fr-FR')}
-                  </p>
-                </div>
-                <span className="text-4xl"></span>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t('adminFraudSettings', 'featuresEnabled')}
+            </p>
+            <p className="mt-2 font-display text-3xl font-bold text-success">{enabledCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t('adminFraudSettings', 'featuresDisabled')}
+            </p>
+            <p className="mt-2 font-display text-3xl font-bold text-muted-foreground">
+              {fraudFeatures.length - enabledCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t('adminFraudSettings', 'lastUpdated')}
+            </p>
+            <p className="mt-2 font-display text-xl font-semibold text-foreground">
+              {new Date(config.updatedAt).toLocaleDateString('fr-FR')}
+            </p>
+          </div>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {fraudFeatures.map((feature) => {
             const isEnabled = config[feature.key] as boolean;
             const isSaving = saving === feature.key;
 
             return (
-              <Card
+              <div
                 key={feature.key}
-                className={`transition-all duration-200 border-2 ${getColorClasses(feature.color, isEnabled)}`}
+                className="flex flex-col rounded-2xl border border-border bg-card"
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{feature.icon}</span>
-                      <div>
-                        <CardTitle className="text-lg">{t('adminFraudSettings', feature.titleKey)}</CardTitle>
-                        <CardDescription className="mt-1">{t('adminFraudSettings', feature.descriptionKey)}</CardDescription>
-                      </div>
-                    </div>
+                {/* Card header */}
+                <div className="flex items-start justify-between gap-4 border-b border-border p-5">
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      {isSaving && (
-                        <span className="text-sm text-muted-foreground animate-pulse">{t('adminFraudSettings', 'saving')}</span>
-                      )}
-                      <Switch
-                        checked={isEnabled}
-                        onChange={() => handleToggle(feature, !isEnabled)}
-                        disabled={isSaving}
-                      />
+                      <h2 className="font-display text-base font-semibold text-foreground">
+                        {t('adminFraudSettings', feature.titleKey)}
+                      </h2>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          isEnabled
+                            ? 'bg-success/10 text-success'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {isEnabled
+                          ? t('adminFraudSettings', 'featuresEnabled')
+                          : t('adminFraudSettings', 'featuresDisabled')}
+                      </span>
                     </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t('adminFraudSettings', feature.descriptionKey)}
+                    </p>
                   </div>
-                </CardHeader>
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    {isSaving && (
+                      <span className="animate-pulse text-xs text-muted-foreground">
+                        {t('adminFraudSettings', 'saving')}
+                      </span>
+                    )}
+                    <Switch
+                      checked={isEnabled}
+                      onChange={() => handleToggle(feature, !isEnabled)}
+                      disabled={isSaving}
+                    />
+                  </div>
+                </div>
 
+                {/* Card body */}
                 {isEnabled && (feature.thresholdKey || feature.autoActionKey) && (
-                  <CardContent>
-                    <div className="space-y-4 pt-2 border-t border-border">
-                      {feature.thresholdKey && (
-                        <div>
-                          <label className="block text-sm font-medium text-foreground mb-1">
-                            {t('adminFraudSettings', feature.thresholdLabelKey!)}
-                          </label>
-                          <Input
-                            type="number"
-                            value={config[feature.thresholdKey] as number}
-                            onChange={(e) =>
-                              handleThresholdChange(feature.thresholdKey!, e.target.value)
-                            }
-                            disabled={saving === feature.thresholdKey}
-                            className="w-full max-w-xs"
-                          />
-                        </div>
-                      )}
-
-                      {feature.autoActionKey && (
-                        <Switch
-                          label={t('adminFraudSettings', feature.autoActionLabelKey!)}
-                          checked={config[feature.autoActionKey] as boolean}
-                          onChange={() =>
-                            handleAutoActionToggle(
-                              feature.autoActionKey!,
-                              !(config[feature.autoActionKey!] as boolean),
-                            )
+                  <div className="space-y-4 p-5">
+                    {feature.thresholdKey && (
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-foreground">
+                          {t('adminFraudSettings', feature.thresholdLabelKey!)}
+                        </label>
+                        <Input
+                          type="number"
+                          value={config[feature.thresholdKey] as number}
+                          onChange={(e) =>
+                            handleThresholdChange(feature.thresholdKey!, e.target.value)
                           }
-                          disabled={saving === feature.autoActionKey}
+                          disabled={saving === feature.thresholdKey}
+                          className="h-10 w-full max-w-xs rounded-xl border-border bg-card focus:border-foreground"
                         />
-                      )}
-                    </div>
-                  </CardContent>
+                      </div>
+                    )}
+
+                    {feature.autoActionKey && (
+                      <Switch
+                        label={t('adminFraudSettings', feature.autoActionLabelKey!)}
+                        checked={config[feature.autoActionKey] as boolean}
+                        onChange={() =>
+                          handleAutoActionToggle(
+                            feature.autoActionKey!,
+                            !(config[feature.autoActionKey!] as boolean),
+                          )
+                        }
+                        disabled={saving === feature.autoActionKey}
+                      />
+                    )}
+                  </div>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>
 
         {/* Alert Configuration */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <span className="text-2xl"></span>
+        <div className="mt-8 rounded-2xl border border-border bg-card">
+          <div className="border-b border-border p-5">
+            <h2 className="font-display text-base font-semibold text-foreground">
               {t('adminFraudSettings', 'alertNotifications')}
-            </CardTitle>
-            <CardDescription>
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
               {t('adminFraudSettings', 'alertNotificationsDesc')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Switch
-                label={t('adminFraudSettings', 'enableAlertEmails')}
-                description={t('adminFraudSettings', 'enableAlertEmailsDesc')}
-                checked={config.fraudAlertEmailEnabled}
-                onChange={() =>
-                  handleAutoActionToggle('fraudAlertEmailEnabled', !config.fraudAlertEmailEnabled)
-                }
-                disabled={saving === 'fraudAlertEmailEnabled'}
-              />
+            </p>
+          </div>
+          <div className="space-y-4 p-5">
+            <Switch
+              label={t('adminFraudSettings', 'enableAlertEmails')}
+              description={t('adminFraudSettings', 'enableAlertEmailsDesc')}
+              checked={config.fraudAlertEmailEnabled}
+              onChange={() =>
+                handleAutoActionToggle('fraudAlertEmailEnabled', !config.fraudAlertEmailEnabled)
+              }
+              disabled={saving === 'fraudAlertEmailEnabled'}
+            />
 
-              {config.fraudAlertEmailEnabled && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    {t('adminFraudSettings', 'alertEmailAddress')}
-                  </label>
-                  <Input
-                    type="email"
-                    value={config.fraudAlertEmail}
-                    onChange={(e) =>
-                      adminApi
-                        .updateFraudSettings({ fraudAlertEmail: e.target.value })
-                        .then(setConfig)
-                    }
-                    placeholder="security@yourcompany.com"
-                    className="max-w-md"
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            {config.fraudAlertEmailEnabled && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {t('adminFraudSettings', 'alertEmailAddress')}
+                </label>
+                <Input
+                  type="email"
+                  value={config.fraudAlertEmail}
+                  onChange={(e) =>
+                    adminApi
+                      .updateFraudSettings({ fraudAlertEmail: e.target.value })
+                      .then(setConfig)
+                  }
+                  placeholder="security@yourcompany.com"
+                  className="h-10 max-w-md rounded-xl border-border bg-card focus:border-foreground"
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

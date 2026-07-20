@@ -3,7 +3,9 @@ export const metadata = { title: 'Politique cookies — Krafolt' };
 export default function CookiesPage() {
   return (
     <>
+      <p className="!mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document juridique</p>
       <h1>Politique de gestion des cookies</h1>
+      <p className="!mt-1 text-sm text-muted-foreground">Version en vigueur au 1er juin 2026 · Applicable LU · FR · BE</p>
       <p>
         Krafolt utilise des cookies et technologies similaires pour faire fonctionner la Plateforme, sécuriser
         votre session et, avec votre consentement, mesurer l&apos;audience.

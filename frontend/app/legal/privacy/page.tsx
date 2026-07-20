@@ -3,7 +3,9 @@ export const metadata = { title: 'Politique de confidentialité (RGPD) — Krafo
 export default function PrivacyPage() {
   return (
     <>
+      <p className="!mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document juridique</p>
       <h1>Politique de confidentialité</h1>
+      <p className="!mt-1 text-sm text-muted-foreground">Version en vigueur au 1er juin 2026 · Applicable LU · FR · BE</p>
       <p>
         Krafolt traite vos données personnelles conformément au Règlement (UE) 2016/679 (« RGPD ») et aux lois
         nationales applicables (LU/FR/BE).

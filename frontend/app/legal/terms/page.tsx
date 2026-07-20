@@ -3,7 +3,9 @@ export const metadata = { title: 'CGU / CGV — Krafolt' };
 export default function TermsPage() {
   return (
     <>
+      <p className="!mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document juridique</p>
       <h1>Conditions Générales d&apos;Utilisation et de Vente</h1>
+      <p className="!mt-1 text-sm text-muted-foreground">Version en vigueur au 1er juin 2026 · Applicable LU · FR · BE</p>
 
       <h2>1. Objet</h2>
       <p>

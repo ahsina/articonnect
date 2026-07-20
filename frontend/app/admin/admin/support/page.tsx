@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, RefreshCw, Search, X, Send } from 'lucide-react';
 import apiClient from '@/lib/api/client';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // ----- Types (miroir de la réponse GET /support/admin/tickets et /support/tickets/:id) -----
 interface TicketUser {
@@ -89,46 +93,46 @@ const CATEGORY_LABEL: Record<string, string> = {
   OTHER: 'Autre',
 };
 
-function statusColor(status: string) {
+function statusColor(status: string): BadgeProps['variant'] {
   switch (status) {
     case 'OPEN':
-      return 'bg-amber-100 text-amber-800';
+      return 'warning';
     case 'IN_PROGRESS':
-      return 'bg-primary/10 text-primary';
+      return 'info';
     case 'WAITING_FOR_CUSTOMER':
-      return 'bg-blue-100 text-blue-700';
+      return 'secondary';
     case 'WAITING_FOR_SUPPORT':
-      return 'bg-purple-100 text-purple-700';
+      return 'warning';
     case 'RESOLVED':
-      return 'bg-green-100 text-green-700';
+      return 'success';
     case 'CLOSED':
-      return 'bg-muted text-muted-foreground';
+      return 'secondary';
     default:
-      return 'bg-muted text-foreground';
+      return 'secondary';
   }
 }
-function priorityColor(priority: string) {
+function priorityColor(priority: string): BadgeProps['variant'] {
   switch (priority) {
     case 'URGENT':
-      return 'bg-red-100 text-red-700';
+      return 'destructive';
     case 'HIGH':
-      return 'bg-amber-100 text-amber-800';
+      return 'warning';
     case 'MEDIUM':
-      return 'bg-yellow-100 text-yellow-700';
+      return 'info';
     case 'LOW':
-      return 'bg-green-100 text-green-700';
+      return 'success';
     default:
-      return 'bg-muted text-foreground';
+      return 'secondary';
   }
 }
-function slaColor(status?: string) {
+function slaColor(status?: string): BadgeProps['variant'] {
   switch (status) {
     case 'BREACHED':
-      return 'bg-red-100 text-red-700';
+      return 'error';
     case 'AT_RISK':
-      return 'bg-amber-100 text-amber-800';
+      return 'warning';
     default:
-      return 'bg-green-100 text-green-700';
+      return 'success';
   }
 }
 
@@ -239,236 +243,252 @@ export default function SupportInboxPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/admin/admin/dashboard')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              ← Retour
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Inbox support</h1>
-              <p className="text-muted-foreground mt-1">
-                Tous les tickets de support, tous utilisateurs confondus.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={loadTickets}
-            disabled={loading}
-            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent disabled:opacity-50"
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.push('/admin/admin/dashboard')}
+            aria-label="Retour"
           >
-            {loading ? 'Chargement…' : 'Rafraîchir'}
-          </button>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Inbox support
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tous les tickets de support, tous utilisateurs confondus.
+            </p>
+          </div>
         </div>
+        <Button variant="outline" onClick={loadTickets} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? 'Chargement…' : 'Rafraîchir'}
+        </Button>
+      </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">{error}</div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          {[
-            { label: 'Total', value: stats.total, cls: 'text-foreground' },
-            { label: 'Ouverts', value: stats.open, cls: 'text-foreground' },
-            { label: 'Attente support', value: stats.waiting, cls: 'text-primary' },
-            { label: 'Urgents', value: stats.urgent, cls: 'text-red-600' },
-            { label: 'Non assignés', value: stats.unassigned, cls: 'text-amber-600' },
-            { label: 'Résolus (page)', value: stats.resolved, cls: 'text-green-600' },
-          ].map((s) => (
-            <Card key={s.label}>
-              <CardContent className="p-4 text-center">
-                <p className={`text-2xl font-bold ${s.cls}`}>{s.value}</p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-              </CardContent>
-            </Card>
-          ))}
+      {error && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
         </div>
+      )}
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-end">
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1">Statut</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-border rounded-md bg-card"
-                >
-                  <option value="">Tous</option>
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1">Priorité</label>
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="px-3 py-2 border border-border rounded-md bg-card"
-                >
-                  <option value="">Toutes</option>
-                  {PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                      {PRIORITY_LABEL[p]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1">Catégorie</label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="px-3 py-2 border border-border rounded-md bg-card"
-                >
-                  <option value="">Toutes</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {CATEGORY_LABEL[c]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 min-w-[180px]">
-                <label className="block text-sm text-muted-foreground mb-1">Recherche</label>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadTickets()}
-                  placeholder="N° de ticket ou sujet"
-                  className="w-full px-3 py-2 border border-border rounded-md bg-card"
-                />
-              </div>
-              <button
-                onClick={loadTickets}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {[
+          { label: 'Total', value: stats.total, cls: 'text-foreground' },
+          { label: 'Ouverts', value: stats.open, cls: 'text-foreground' },
+          { label: 'Attente support', value: stats.waiting, cls: 'text-warning' },
+          { label: 'Urgents', value: stats.urgent, cls: 'text-destructive' },
+          { label: 'Non assignés', value: stats.unassigned, cls: 'text-warning' },
+          { label: 'Résolus (page)', value: stats.resolved, cls: 'text-success' },
+        ].map((s) => (
+          <Card key={s.label} className="p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {s.label}
+            </p>
+            <p className={`mt-2 font-display text-3xl font-extrabold tracking-tight ${s.cls}`}>
+              {s.value}
+            </p>
+          </Card>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Statut
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
               >
-                Rechercher
-              </button>
-              <button
-                onClick={() => {
-                  setStatusFilter('');
-                  setPriorityFilter('');
-                  setCategoryFilter('');
-                  setSearch('');
-                }}
-                className="px-4 py-2 text-muted-foreground hover:text-foreground"
-              >
-                Réinitialiser
-              </button>
+                <option value="">Tous</option>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </option>
+                ))}
+              </select>
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Priorité
+              </label>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+              >
+                <option value="">Toutes</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_LABEL[p]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Catégorie
+              </label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+              >
+                <option value="">Toutes</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_LABEL[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Recherche
+              </label>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadTickets()}
+                placeholder="N° de ticket ou sujet"
+                leftIcon={<Search className="h-4 w-4" />}
+              />
+            </div>
+            <Button onClick={loadTickets}>Rechercher</Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setStatusFilter('');
+                setPriorityFilter('');
+                setCategoryFilter('');
+                setSearch('');
+              }}
+            >
+              Réinitialiser
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* List */}
-        <Card>
-          <CardContent className="p-0">
-            {loading && tickets.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">Chargement…</div>
-            ) : tickets.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p className="text-lg font-medium">Aucun ticket</p>
-                <p className="text-sm mt-2">Aucun ticket ne correspond aux filtres.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {tickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    onClick={() => openTicket(ticket.id)}
-                    className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {ticket.ticketNumber}
-                          </span>
-                          <span className={`px-2 py-0.5 text-xs rounded ${statusColor(ticket.status)}`}>
-                            {STATUS_LABEL[ticket.status] ?? ticket.status}
-                          </span>
-                          <span className={`px-2 py-0.5 text-xs rounded ${priorityColor(ticket.priority)}`}>
-                            {PRIORITY_LABEL[ticket.priority] ?? ticket.priority}
-                          </span>
-                          <span className="px-2 py-0.5 text-xs rounded bg-muted text-muted-foreground">
-                            {CATEGORY_LABEL[ticket.category] ?? ticket.category}
-                          </span>
-                        </div>
-                        <h3 className="font-semibold text-foreground truncate">{ticket.subject}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-1">{ticket.description}</p>
-                        <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                          {ticket.user && (
-                            <span>
-                              Par {ticket.user.firstName} {ticket.user.lastName}
-                              {ticket.user.email ? ` (${ticket.user.email})` : ''}
-                            </span>
-                          )}
+      {/* List */}
+      <Card>
+        <CardContent className="p-0">
+          {loading && tickets.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">Chargement…</div>
+          ) : tickets.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              <p className="font-display text-lg font-semibold text-foreground">Aucun ticket</p>
+              <p className="mt-2">Aucun ticket ne correspond aux filtres.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {tickets.map((ticket) => (
+                <button
+                  key={ticket.id}
+                  type="button"
+                  onClick={() => openTicket(ticket.id)}
+                  className="w-full text-left p-4 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {ticket.ticketNumber}
+                        </span>
+                        <Badge variant={statusColor(ticket.status)}>
+                          {STATUS_LABEL[ticket.status] ?? ticket.status}
+                        </Badge>
+                        <Badge variant={priorityColor(ticket.priority)}>
+                          {PRIORITY_LABEL[ticket.priority] ?? ticket.priority}
+                        </Badge>
+                        <Badge variant="outline">
+                          {CATEGORY_LABEL[ticket.category] ?? ticket.category}
+                        </Badge>
+                      </div>
+                      <h3 className="font-display font-semibold text-foreground truncate">
+                        {ticket.subject}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {ticket.description}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                        {ticket.user && (
                           <span>
-                            Assigné à{' '}
-                            {ticket.assignedTo
-                              ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}`
-                              : '—'}
+                            Par {ticket.user.firstName} {ticket.user.lastName}
+                            {ticket.user.email ? ` (${ticket.user.email})` : ''}
                           </span>
-                          <span>{ticket._count?.messages ?? 0} message(s)</span>
-                          <span>{new Date(ticket.createdAt).toLocaleString('fr-FR')}</span>
-                        </div>
+                        )}
+                        <span>
+                          Assigné à{' '}
+                          {ticket.assignedTo
+                            ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}`
+                            : '—'}
+                        </span>
+                        <span>{ticket._count?.messages ?? 0} message(s)</span>
+                        <span>{new Date(ticket.createdAt).toLocaleString('fr-FR')}</span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <p className="text-sm text-muted-foreground mt-3">
-          {tickets.length} affiché(s) sur {meta.total} au total.
-        </p>
-      </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <p className="text-sm text-muted-foreground">
+        {tickets.length} affiché(s) sur {meta.total} au total.
+      </p>
 
       {/* Detail modal */}
       {selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden p-0">
             {/* Modal header */}
-            <div className="p-6 border-b border-border sticky top-0 bg-card z-10">
+            <div className="border-b border-border bg-card p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs text-muted-foreground">{selected.ticketNumber}</p>
-                  <h2 className="text-xl font-semibold text-foreground">{selected.subject}</h2>
+                  <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
+                    {selected.subject}
+                  </h2>
                   {selected.user && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {selected.user.firstName} {selected.user.lastName}
                       {selected.user.email ? ` · ${selected.user.email}` : ''}
                     </p>
                   )}
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setSelected(null)}
-                  className="text-muted-foreground hover:text-foreground text-2xl leading-none"
                   aria-label="Fermer"
                 >
-                  ×
-                </button>
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
 
               {/* Status / priority controls */}
-              <div className="mt-4 flex flex-wrap gap-4 items-end">
+              <div className="mt-4 flex flex-wrap items-end gap-4">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Statut</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    Statut
+                  </label>
                   <select
                     value={selected.status}
                     disabled={savingMeta}
                     onChange={(e) => updateMeta({ status: e.target.value })}
-                    className="px-3 py-1.5 border border-border rounded-md bg-card text-sm"
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground disabled:opacity-50"
                   >
                     {STATUSES.map((s) => (
                       <option key={s} value={s}>
@@ -478,12 +498,14 @@ export default function SupportInboxPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Priorité</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    Priorité
+                  </label>
                   <select
                     value={selected.priority}
                     disabled={savingMeta}
                     onChange={(e) => updateMeta({ priority: e.target.value })}
-                    className="px-3 py-1.5 border border-border rounded-md bg-card text-sm"
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground disabled:opacity-50"
                   >
                     {PRIORITIES.map((p) => (
                       <option key={p} value={p}>
@@ -493,28 +515,30 @@ export default function SupportInboxPage() {
                   </select>
                 </div>
                 {selected.slaStatus && (
-                  <div className="flex gap-2 items-center">
-                    <span className={`px-2 py-1 text-xs rounded ${slaColor(selected.slaStatus.firstResponse?.status)}`}>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={slaColor(selected.slaStatus.firstResponse?.status)}>
                       1re réponse : {selected.slaStatus.firstResponse?.status}
-                    </span>
-                    <span className={`px-2 py-1 text-xs rounded ${slaColor(selected.slaStatus.resolution?.status)}`}>
+                    </Badge>
+                    <Badge variant={slaColor(selected.slaStatus.resolution?.status)}>
                       Résolution : {selected.slaStatus.resolution?.status}
-                    </span>
+                    </Badge>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Conversation */}
-            <div className="p-6 space-y-4">
+            <div className="flex-1 space-y-4 overflow-y-auto p-6">
               {detailLoading ? (
-                <p className="text-muted-foreground text-center py-6">Chargement…</p>
+                <div className="py-12 text-center text-sm text-muted-foreground">Chargement…</div>
               ) : (
                 <>
                   {/* Original description */}
-                  <div className="p-3 rounded-lg bg-background border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">Demande initiale</p>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{selected.description}</p>
+                  <div className="rounded-2xl border border-border bg-muted p-3">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">Demande initiale</p>
+                    <p className="whitespace-pre-wrap text-sm text-foreground">
+                      {selected.description}
+                    </p>
                   </div>
 
                   {selected.messages?.length ? (
@@ -523,25 +547,37 @@ export default function SupportInboxPage() {
                       return (
                         <div
                           key={m.id}
-                          className={`p-3 rounded-lg ${
+                          className={`rounded-2xl p-3 ${
                             m.isInternal
-                              ? 'bg-amber-50 border border-amber-200'
+                              ? 'border border-warning/30 bg-warning/10'
                               : fromAdmin
-                                ? 'bg-primary/5 border border-primary/20'
-                                : 'bg-background border border-border'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-foreground'
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-foreground">
+                          <div className="mb-1 flex items-center justify-between gap-3">
+                            <span
+                              className={`text-xs font-medium ${
+                                fromAdmin && !m.isInternal
+                                  ? 'text-primary-foreground/80'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
                               {m.sender ? `${m.sender.firstName} ${m.sender.lastName}` : 'Système'}
                               {fromAdmin ? ' · Support' : ''}
                               {m.isInternal ? ' · Note interne' : ''}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span
+                              className={`text-xs ${
+                                fromAdmin && !m.isInternal
+                                  ? 'text-primary-foreground/70'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
                               {new Date(m.createdAt).toLocaleString('fr-FR')}
                             </span>
                           </div>
-                          <p className="text-sm text-foreground whitespace-pre-wrap">{m.content}</p>
+                          <p className="whitespace-pre-wrap text-sm">{m.content}</p>
                         </div>
                       );
                     })
@@ -553,16 +589,16 @@ export default function SupportInboxPage() {
             </div>
 
             {/* Reply box */}
-            <div className="p-6 border-t border-border sticky bottom-0 bg-card">
+            <div className="border-t border-border bg-card p-4">
               <textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 placeholder="Répondre au client…"
                 rows={3}
-                className="w-full px-3 py-2 border border-border rounded-md bg-card resize-y"
+                className="w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground resize-y"
               />
-              <div className="flex items-center justify-between mt-3">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={isInternal}
@@ -571,23 +607,17 @@ export default function SupportInboxPage() {
                   Note interne (invisible pour le client)
                 </label>
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="px-4 py-2 text-muted-foreground hover:text-foreground"
-                  >
+                  <Button variant="ghost" onClick={() => setSelected(null)}>
                     Fermer
-                  </button>
-                  <button
-                    onClick={sendReply}
-                    disabled={!reply.trim() || sending}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                  >
+                  </Button>
+                  <Button onClick={sendReply} disabled={!reply.trim() || sending}>
+                    <Send className="h-4 w-4" />
                     {sending ? 'Envoi…' : isInternal ? 'Ajouter la note' : 'Envoyer'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

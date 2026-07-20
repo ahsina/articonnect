@@ -118,7 +118,7 @@ export default function WorkingHoursPage() {
     <div className="p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-display font-bold tracking-tight text-foreground">
           {t('artisan', 'workingHours') || 'Working Hours'}
         </h1>
         <p className="text-muted-foreground">
@@ -128,13 +128,13 @@ export default function WorkingHoursPage() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">
+      <Card className="mb-6 rounded-2xl shadow-sm">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-lg font-display">
             {t('artisan', 'quickActions') || 'Quick Actions'}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -189,15 +189,25 @@ export default function WorkingHoursPage() {
       </Card>
 
       {/* Working Hours Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('artisan', 'weeklySchedule') || 'Weekly Schedule'}</CardTitle>
-          <CardDescription>
-            {t('artisan', 'scheduleDesc') || 'Toggle days and set your available hours'}
-          </CardDescription>
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="border-b border-border flex flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="font-display">{t('artisan', 'weeklySchedule') || 'Weekly Schedule'}</CardTitle>
+            <CardDescription>
+              {t('artisan', 'scheduleDesc') || 'Toggle days and set your available hours'}
+            </CardDescription>
+          </div>
+          <Button onClick={handleSave} disabled={saving} size="sm">
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12l5 5L20 6" />
+            </svg>
+            {saving
+              ? t('common', 'saving') || 'Saving...'
+              : t('common', 'saveChanges') || 'Save Changes'}
+          </Button>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="pt-4">
+          <div className="space-y-2">
             {DAYS.map((day) => {
               const hours = workingHours.find((h) => h.dayOfWeek === day.value);
               if (!hours) return null;
@@ -205,30 +215,31 @@ export default function WorkingHoursPage() {
               return (
                 <div
                   key={day.value}
-                  className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
-                    hours.isEnabled ? 'bg-card border-border' : 'bg-background border-border'
+                  className={`flex flex-wrap items-center gap-4 p-4 rounded-xl border transition-colors ${
+                    hours.isEnabled ? 'bg-card border-border' : 'bg-muted/40 border-border'
                   }`}
                 >
                   {/* Toggle */}
                   <button
                     onClick={() => handleToggleDay(day.value)}
-                    className={`w-12 h-6 rounded-full transition-colors ${
-                      hours.isEnabled ? 'bg-primary' : 'bg-gray-300'
+                    aria-pressed={hours.isEnabled}
+                    className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+                      hours.isEnabled ? 'bg-primary' : 'bg-muted-foreground/30'
                     }`}
                   >
-                    <div
-                      className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${
-                        hours.isEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-card shadow transform transition-transform ${
+                        hours.isEnabled ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
 
                   {/* Day Name */}
-                  <div className="w-24 font-medium text-foreground">{day.label}</div>
+                  <div className="w-24 font-semibold text-foreground">{day.label}</div>
 
                   {/* Time Inputs */}
                   {hours.isEnabled ? (
-                    <div className="flex items-center gap-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 flex-1">
                       <Input
                         type="time"
                         value={hours.startTime}
@@ -248,7 +259,7 @@ export default function WorkingHoursPage() {
                         onClick={() => handleApplyToAll(hours.startTime, hours.endTime)}
                         title={t('artisan', 'applyToAll') || 'Apply to all enabled days'}
                       >
-                        
+                        {t('artisan', 'applyToAll') || 'Apply to all enabled days'}
                       </Button>
                     </div>
                   ) : (
@@ -260,24 +271,21 @@ export default function WorkingHoursPage() {
               );
             })}
           </div>
-
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving
-                ? t('common', 'saving') || 'Saving...'
-                : t('common', 'saveChanges') || 'Save Changes'}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
       {/* Info Card */}
-      <Card className="mt-6">
+      <Card className="mt-6 rounded-2xl shadow-sm bg-muted/40 border-border">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <span className="text-2xl"></span>
+            <div className="w-9 h-9 rounded-xl bg-card flex items-center justify-center flex-shrink-0">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </div>
             <div>
-              <h4 className="font-medium text-foreground">{t('artisan', 'tip') || 'Tip'}</h4>
+              <h4 className="font-display font-bold text-foreground">{t('artisan', 'tip') || 'Tip'}</h4>
               <p className="text-sm text-muted-foreground">
                 {t('artisan', 'workingHoursTip') ||
                   'Setting accurate working hours helps clients book appointments at convenient times and improves your visibility in search results.'}

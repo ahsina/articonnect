@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { companyApi, CreateCompanyDto } from '@/lib/api/company';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { Users, TrendingUp, BadgeCheck, Building2, MapPin } from 'lucide-react';
 
 export default function CreateCompanyPage() {
   const { t } = useLanguage();
@@ -66,10 +67,10 @@ export default function CreateCompanyPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-3xl mx-auto">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
           {t('company', 'createCompany') || 'Create Company'}
         </h1>
         <p className="text-muted-foreground">
@@ -79,60 +80,65 @@ export default function CreateCompanyPage() {
       </div>
 
       {/* Benefits Card */}
-      <Card className="mb-6 bg-muted border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-primary">
-            {t('company', 'whyCreateCompany') || 'Why Create a Company?'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-4 bg-card rounded-lg">
-              <div className="text-2xl mb-2"></div>
-              <h4 className="font-medium text-foreground">
-                {t('company', 'hireEmployees') || 'Hire Employees'}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {t('company', 'hireEmployeesDesc') ||
-                  'Add technicians, managers, and contractors to your team'}
-              </p>
-            </div>
-            <div className="p-4 bg-card rounded-lg">
-              <div className="text-2xl mb-2"></div>
-              <h4 className="font-medium text-foreground">
-                {t('company', 'scaleUp') || 'Scale Your Business'}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {t('company', 'scaleUpDesc') || 'Take on more missions and grow your revenue'}
-              </p>
-            </div>
-            <div className="p-4 bg-card rounded-lg">
-              <div className="text-2xl mb-2"></div>
-              <h4 className="font-medium text-foreground">
-                {t('company', 'professionalProfile') || 'Professional Profile'}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {t('company', 'professionalProfileDesc') ||
-                  'Build credibility with a company presence'}
-              </p>
-            </div>
+      <div className="mb-8 rounded-2xl bg-primary p-6 text-primary-foreground">
+        <h2 className="font-display text-lg font-bold">
+          {t('company', 'whyCreateCompany') || 'Why Create a Company?'}
+        </h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl bg-primary-foreground/10 p-4">
+            <Users className="mb-2 h-6 w-6" />
+            <h4 className="font-display font-bold">
+              {t('company', 'hireEmployees') || 'Hire Employees'}
+            </h4>
+            <p className="mt-1 text-sm opacity-80">
+              {t('company', 'hireEmployeesDesc') ||
+                'Add technicians, managers, and contractors to your team'}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="rounded-xl bg-primary-foreground/10 p-4">
+            <TrendingUp className="mb-2 h-6 w-6" />
+            <h4 className="font-display font-bold">
+              {t('company', 'scaleUp') || 'Scale Your Business'}
+            </h4>
+            <p className="mt-1 text-sm opacity-80">
+              {t('company', 'scaleUpDesc') || 'Take on more missions and grow your revenue'}
+            </p>
+          </div>
+          <div className="rounded-xl bg-primary-foreground/10 p-4">
+            <BadgeCheck className="mb-2 h-6 w-6" />
+            <h4 className="font-display font-bold">
+              {t('company', 'professionalProfile') || 'Professional Profile'}
+            </h4>
+            <p className="mt-1 text-sm opacity-80">
+              {t('company', 'professionalProfileDesc') ||
+                'Build credibility with a company presence'}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
-        <Card className="mb-6">
+        <Card className="mb-6 rounded-2xl border-border">
           <CardHeader>
-            <CardTitle>{t('company', 'companyInfo') || 'Company Information'}</CardTitle>
-            <CardDescription>
-              {t('company', 'companyInfoDesc') || 'Basic information about your company'}
-            </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted">
+                <Building2 className="h-5 w-5 text-foreground" />
+              </div>
+              <div>
+                <CardTitle className="font-display text-lg font-bold">
+                  {t('company', 'companyInfo') || 'Company Information'}
+                </CardTitle>
+                <CardDescription>
+                  {t('company', 'companyInfoDesc') || 'Basic information about your company'}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'companyName') || 'Company Name'} *
                 </label>
                 <Input
@@ -143,7 +149,7 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'siret') || 'SIRET / RCS / KBO Number'} *
                 </label>
                 <Input
@@ -157,7 +163,7 @@ export default function CreateCompanyPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'vatNumber') || 'VAT Number'}
                 </label>
                 <Input
@@ -167,7 +173,7 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'website') || 'Website'}
                 </label>
                 <Input
@@ -180,14 +186,14 @@ export default function CreateCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1.5">
                 {t('company', 'description') || 'Description'}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder={
                   t('company', 'descriptionPlaceholder') || 'Describe your company services...'
                 }
@@ -196,16 +202,25 @@ export default function CreateCompanyPage() {
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
+        <Card className="mb-6 rounded-2xl border-border">
           <CardHeader>
-            <CardTitle>{t('company', 'location') || 'Location'}</CardTitle>
-            <CardDescription>
-              {t('company', 'locationDesc') || 'Where is your company based?'}
-            </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted">
+                <MapPin className="h-5 w-5 text-foreground" />
+              </div>
+              <div>
+                <CardTitle className="font-display text-lg font-bold">
+                  {t('company', 'location') || 'Location'}
+                </CardTitle>
+                <CardDescription>
+                  {t('company', 'locationDesc') || 'Where is your company based?'}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1.5">
                 {t('company', 'address') || 'Address'} *
               </label>
               <Input
@@ -218,7 +233,7 @@ export default function CreateCompanyPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'city') || 'City'} *
                 </label>
                 <Input
@@ -229,7 +244,7 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'postalCode') || 'Postal Code'} *
                 </label>
                 <Input
@@ -240,13 +255,13 @@ export default function CreateCompanyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'country') || 'Country'} *
                 </label>
                 <select
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 >
                   <option value="LU">Luxembourg</option>
@@ -257,7 +272,7 @@ export default function CreateCompanyPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1.5">
                 {t('company', 'serviceRadius') || 'Service Radius (km)'} *
               </label>
               <Input
@@ -269,7 +284,7 @@ export default function CreateCompanyPage() {
                 min="1"
                 max="100"
               />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1.5">
                 {t('company', 'serviceRadiusDesc') || 'Maximum distance your company serves'}
               </p>
             </div>
@@ -277,7 +292,7 @@ export default function CreateCompanyPage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex gap-4 justify-end">
+        <div className="flex gap-3 justify-end">
           <Button type="button" variant="outline" onClick={() => { if (window.history.length > 1) router.back(); else router.push('/artisan/company/dashboard'); }}>
             {t('common', 'cancel') || 'Cancel'}
           </Button>

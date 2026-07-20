@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { employeeApi, CompanyEmployee, EmployeeShift } from '@/lib/api/employee';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
@@ -159,21 +158,22 @@ export default function EmployeeShiftsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-[1180px] mx-auto">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
+            size="sm"
             onClick={() => router.push(`/artisan/company/employees/${employeeId}`)}
           >
-            {t('common', 'back') || 'Back'}
+            ‹ {t('common', 'back') || 'Back'}
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-display font-extrabold tracking-tight text-foreground">
               {t('company', 'shiftSchedule') || 'Shift Schedule'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {employee?.user.firstName} {employee?.user.lastName}
             </p>
           </div>
@@ -184,39 +184,42 @@ export default function EmployeeShiftsPage() {
       </div>
 
       {/* Week Navigation */}
-      <Card className="mb-6">
+      <Card className="mb-6 rounded-2xl">
         <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={() => navigateWeek('prev')}>
-              {t('company', 'previousWeek') || 'Previous Week'}
+          <div className="flex items-center justify-between gap-4">
+            <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
+              ‹ {t('company', 'previousWeek') || 'Previous Week'}
             </Button>
             <div className="text-center">
-              <div className="font-semibold text-lg">
+              <div className="font-display font-extrabold text-base tracking-tight text-foreground">
                 {selectedWeek.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
-              <div className="text-sm text-muted-foreground">
-                {selectedWeek.toLocaleDateString()} - {weekDates[6].toLocaleDateString()}
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {selectedWeek.toLocaleDateString()} – {weekDates[6].toLocaleDateString()}
               </div>
             </div>
-            <Button variant="outline" onClick={() => navigateWeek('next')}>
-              {t('company', 'nextWeek') || 'Next Week'} 
+            <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
+              {t('company', 'nextWeek') || 'Next Week'} ›
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Weekly Calendar */}
-      <Card>
+      <Card className="rounded-2xl overflow-hidden">
         <CardContent className="p-0">
-          <div className="grid grid-cols-7 border-b">
+          <div className="grid grid-cols-7 border-b border-border">
             {dayNames.map((day, index) => (
-              <div key={day} className="p-3 text-center border-r last:border-r-0 bg-background">
-                <div className="font-medium text-foreground">{day}</div>
-                <div className="text-sm text-muted-foreground">{weekDates[index].getDate()}</div>
+              <div
+                key={day}
+                className="p-3 text-center border-r border-border last:border-r-0 bg-muted"
+              >
+                <div className="font-semibold text-[13px] text-foreground">{day}</div>
+                <div className="text-xs text-muted-foreground">{weekDates[index].getDate()}</div>
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 min-h-[400px]">
+          <div className="grid grid-cols-7">
             {weekDates.map((date, index) => {
               const dateShifts = getShiftsForDate(date);
               const isToday = date.toDateString() === new Date().toDateString();
@@ -225,29 +228,25 @@ export default function EmployeeShiftsPage() {
               return (
                 <div
                   key={index}
-                  className={`border-r last:border-r-0 p-2 ${isToday ? 'bg-primary/10' : isPast ? 'bg-background' : ''}`}
+                  className={`border-r border-border last:border-r-0 p-2 min-h-[230px] flex flex-col gap-2 ${isToday ? 'bg-primary/5 ring-1 ring-inset ring-primary/40' : isPast ? 'bg-muted/40' : ''}`}
                 >
                   {dateShifts.length > 0 ? (
-                    <div className="space-y-2">
-                      {dateShifts.map((shift) => (
-                        <div
-                          key={shift.id}
-                          className={`p-2 rounded border ${getShiftTypeColor(shift.type)} text-xs`}
-                        >
-                          <div className="font-medium">
-                            {shift.startTime} - {shift.endTime}
-                          </div>
-                          <div className="text-xs opacity-75">{shift.type}</div>
-                          {shift.notes && (
-                            <div className="text-xs mt-1 truncate">{shift.notes}</div>
-                          )}
+                    dateShifts.map((shift) => (
+                      <div
+                        key={shift.id}
+                        className={`px-2.5 py-2 rounded-lg border ${getShiftTypeColor(shift.type)}`}
+                      >
+                        <div className="font-bold text-xs">
+                          {shift.startTime}–{shift.endTime}
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-[10.5px] opacity-80">{shift.type}</div>
+                        {shift.notes && (
+                          <div className="text-[10.5px] mt-1 truncate opacity-80">{shift.notes}</div>
+                        )}
+                      </div>
+                    ))
                   ) : (
-                    <div className="h-full flex items-center justify-center text-muted-foreground text-xs">
-                      {t('company', 'noShifts') || 'No shifts'}
-                    </div>
+                    <div className="m-auto text-muted-foreground text-xs">—</div>
                   )}
                 </div>
               );
@@ -257,27 +256,29 @@ export default function EmployeeShiftsPage() {
       </Card>
 
       {/* Shift Type Legend */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">{t('company', 'shiftTypes') || 'Shift Types'}</CardTitle>
+      <Card className="mt-6 rounded-2xl">
+        <CardHeader className="border-b border-border py-4">
+          <CardTitle className="text-base font-display font-extrabold tracking-tight">
+            {t('company', 'shiftTypes') || 'Shift Types'}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
+        <CardContent className="pt-5">
+          <div className="flex flex-wrap gap-5 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-primary/10 border border-primary/20" />
-              <span className="text-sm">{t('company', 'regular') || 'Regular'}</span>
+              <span className="w-3.5 h-2 rounded-sm bg-primary" />
+              <span>{t('company', 'regular') || 'Regular'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-amber-100 border" />
-              <span className="text-sm">{t('company', 'overtime') || 'Overtime'}</span>
+              <span className="w-3.5 h-2 rounded-sm bg-amber-500" />
+              <span>{t('company', 'overtime') || 'Overtime'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-purple-100 border" />
-              <span className="text-sm">{t('company', 'onCall') || 'On Call'}</span>
+              <span className="w-3.5 h-2 rounded-sm bg-purple-600" />
+              <span>{t('company', 'onCall') || 'On Call'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-100 border" />
-              <span className="text-sm">{t('company', 'training') || 'Training'}</span>
+              <span className="w-3.5 h-2 rounded-sm bg-success" />
+              <span>{t('company', 'training') || 'Training'}</span>
             </div>
           </div>
         </CardContent>
@@ -285,9 +286,11 @@ export default function EmployeeShiftsPage() {
 
       {/* Add Shift Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">{t('company', 'addShift') || 'Add Shift'}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl border border-border p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-xl font-display font-extrabold tracking-tight mb-4">
+              {t('company', 'addShift') || 'Add Shift'}
+            </h2>
 
             <div className="space-y-4">
               <div>

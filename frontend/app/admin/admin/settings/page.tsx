@@ -120,64 +120,73 @@ export default function SettingsOverviewPage() {
   const router = useRouter();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Page header */}
+      <div>
+        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+          Réglages de la plateforme
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Configurer les paramètres globaux de Krafolt.
+        </p>
+      </div>
+
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">13</p>
-              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configAreas')}</p>
-            </div>
-          </CardContent>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSettingsOverview', 'configAreas')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">13</p>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">200+</p>
-              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configurableSettings')}</p>
-            </div>
-          </CardContent>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSettingsOverview', 'configurableSettings')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">200+</p>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">{t('adminSettingsOverview', 'active')}</p>
-              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'platformStatus')}</p>
-            </div>
-          </CardContent>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSettingsOverview', 'platformStatus')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-success">
+            {t('adminSettingsOverview', 'active')}
+          </p>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">v1.0</p>
-              <p className="text-sm text-muted-foreground">{t('adminSettingsOverview', 'configVersion')}</p>
-            </div>
-          </CardContent>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSettingsOverview', 'configVersion')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">v1.0</p>
         </Card>
       </div>
 
       {/* Settings Categories */}
       {settingsCategories.map((category) => (
         <div key={category.titleKey}>
-          <h2 className="text-lg font-semibold text-foreground mb-2">{t('adminSettingsOverview', category.titleKey)}</h2>
-          <p className="text-sm text-muted-foreground mb-4">{t('adminSettingsOverview', category.descriptionKey)}</p>
+          <h2 className="font-display text-lg font-bold text-foreground">
+            {t('adminSettingsOverview', category.titleKey)}
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            {t('adminSettingsOverview', category.descriptionKey)}
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {category.items.map((item) => (
               <Card
                 key={item.href}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="group cursor-pointer p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
                 onClick={() => router.push(item.href)}
               >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{item.icon}</span>
-                    <CardTitle className="text-base">{t('adminSettingsOverview', item.labelKey)}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{t('adminSettingsOverview', item.descriptionKey)}</CardDescription>
-                </CardContent>
+                <h3 className="font-display text-base font-bold text-foreground">
+                  {t('adminSettingsOverview', item.labelKey)}
+                </h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {t('adminSettingsOverview', item.descriptionKey)}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-foreground">
+                  Configurer{' '}
+                  <span className="transition-transform group-hover:translate-x-0.5">›</span>
+                </span>
               </Card>
             ))}
           </div>
@@ -231,17 +240,17 @@ export default function SettingsOverviewPage() {
             ].map((change, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 bg-background rounded-lg"
+                className="flex items-center justify-between rounded-xl bg-muted/50 p-4"
               >
                 <div>
                   <p className="font-medium text-foreground">{change.setting}</p>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="text-red-500">{change.oldValue}</span>
-                    <span className="mx-2"></span>
-                    <span className="text-green-500">{change.newValue}</span>
+                  <p className="mt-0.5 text-sm">
+                    <span className="text-destructive">{change.oldValue}</span>
+                    <span className="mx-2 text-muted-foreground">→</span>
+                    <span className="text-success">{change.newValue}</span>
                   </p>
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
+                <div className="text-right text-xs text-muted-foreground">
                   <p>{change.changedBy}</p>
                   <p>{change.timestamp}</p>
                 </div>

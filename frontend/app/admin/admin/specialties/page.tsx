@@ -4,8 +4,11 @@ import { TradeIcon } from '@/components/shared/TradeIcon';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, Specialty, CreateSpecialtyDto, UpdateSpecialtyDto } from '@/lib/api/admin';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ArrowLeft, RefreshCw, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react';
 
 export default function SpecialtiesPage() {
   const { t } = useLanguage();
@@ -148,420 +151,426 @@ export default function SpecialtiesPage() {
     ? specialties.filter((s) => s.category === selectedCategory)
     : specialties;
 
-  // Group by category for display
-  const groupedSpecialties = filteredSpecialties.reduce(
-    (acc, specialty) => {
-      if (!acc[specialty.category]) {
-        acc[specialty.category] = [];
-      }
-      acc[specialty.category].push(specialty);
-      return acc;
-    },
-    {} as Record<string, Specialty[]>,
-  );
+  const inputClass =
+    'h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground';
+  const labelClass = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">{t('common', 'loading')}</div>
-      </div>
+      <div className="py-12 text-center text-sm text-muted-foreground">{t('common', 'loading')}</div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/admin/admin/dashboard')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {t('adminSpecialties', 'back')}
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{t('adminSpecialties', 'title')}</h1>
-              <p className="text-muted-foreground mt-1">{t('adminSpecialties', 'subtitle')}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={loadData}
-              className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
-            >
-              {t('adminSpecialties', 'refresh')}
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-            >
-              {t('adminSpecialties', 'addSpecialty')}
-            </button>
-          </div>
-        </div>
-
-        {/* Error Banner */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
-            {error}
-            <button onClick={() => setError(null)} className="ml-4 text-red-300 font-medium">
-              {t('adminSpecialties', 'dismiss')}
-            </button>
-          </div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'totalSpecialties')}</p>
-                  <p className="text-3xl font-bold text-primary">{specialties.length}</p>
-                </div>
-                <span className="text-4xl"></span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'categories')}</p>
-                  <p className="text-3xl font-bold text-foreground">{categories.length}</p>
-                </div>
-                <span className="text-4xl"></span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminSpecialties', 'active')}</p>
-                  <p className="text-3xl font-bold text-foreground">
-                    {specialties.filter((s) => s.isActive).length}
-                  </p>
-                </div>
-                <span className="text-4xl"></span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Category Filter */}
-        <div className="mb-6 flex flex-wrap gap-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex items-start gap-3">
           <button
-            onClick={() => setSelectedCategory('')}
-            className={`px-4 py-2 rounded-lg ${
-              selectedCategory === ''
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-foreground hover:bg-accent'
-            }`}
+            onClick={() => router.push('/admin/admin/dashboard')}
+            className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            title={t('adminSpecialties', 'back')}
           >
-            {t('adminSpecialties', 'allCategories')}
+            <ArrowLeft className="h-4 w-4" />
           </button>
+          <div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              {t('adminSpecialties', 'title')}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t('adminSpecialties', 'subtitle')}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadData} leftIcon={<RefreshCw className="h-4 w-4" />}>
+            {t('adminSpecialties', 'refresh')}
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)} leftIcon={<Plus className="h-4 w-4" />}>
+            {t('adminSpecialties', 'addSpecialty')}
+          </Button>
+        </div>
+      </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="font-semibold hover:opacity-70">
+            {t('adminSpecialties', 'dismiss')}
+          </button>
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSpecialties', 'totalSpecialties')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">
+            {specialties.length}
+          </p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSpecialties', 'categories')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">
+            {categories.length}
+          </p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSpecialties', 'active')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-success">
+            {specialties.filter((s) => s.isActive).length}
+          </p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminSpecialties', 'inactive')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">
+            {specialties.filter((s) => !s.isActive).length}
+          </p>
+        </Card>
+      </div>
+
+      {/* Category Filter */}
+      <Card className="p-5">
+        <label className={labelClass} htmlFor="category-filter">
+          {t('adminSpecialties', 'categories')}
+        </label>
+        <select
+          id="category-filter"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="h-10 w-full max-w-sm rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+        >
+          <option value="">{t('adminSpecialties', 'allCategories')}</option>
           {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-lg ${
-                selectedCategory === cat
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-foreground hover:bg-accent'
-              }`}
-            >
+            <option key={cat} value={cat}>
               {cat}
-            </button>
+            </option>
           ))}
+        </select>
+      </Card>
+
+      {/* Specialties Table */}
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-border p-5">
+          <h2 className="font-display text-base font-bold text-foreground">
+            {t('adminSpecialties', 'title')}
+          </h2>
+          <Badge variant="secondary">
+            {filteredSpecialties.length} {t('adminSpecialties', 'specialtiesWord')}
+          </Badge>
         </div>
 
-        {/* Specialties by Category */}
-        {Object.entries(groupedSpecialties).map(([category, specs]) => (
-          <Card key={category} className="mb-6">
-            <CardHeader>
-              <CardTitle>{category}</CardTitle>
-              <CardDescription>{specs.length} {t('adminSpecialties', 'specialtiesWord')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {specs.map((specialty) => (
-                  <div
-                    key={specialty.id}
-                    className={`p-4 border rounded-lg ${
-                      specialty.isActive
-                        ? 'border-border bg-card'
-                        : 'border-border bg-background opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
+        {filteredSpecialties.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            {t('adminSpecialties', 'noSpecialtiesFound')}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50 text-left">
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Métier
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Catégorie
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    {t('adminSpecialties', 'artisansWord')}
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    {t('adminSpecialties', 'created')}
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Statut
+                  </th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredSpecialties.map((specialty) => (
+                  <tr key={specialty.id} className="hover:bg-muted/40 transition-colors">
+                    <td className="px-4 py-3 align-middle">
                       <div className="flex items-center gap-3">
-                        <TradeIcon name={specialty.name} className="h-6 w-6 text-foreground" />
+                        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted">
+                          <TradeIcon name={specialty.name} className="h-5 w-5 text-foreground" />
+                        </span>
                         <div>
-                          <h4 className="font-medium text-foreground">{specialty.name}</h4>
+                          <div className="font-semibold text-foreground">{specialty.name}</div>
                           {specialty.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{specialty.description}</p>
-                          )}
-                          {specialty._count?.artisans !== undefined && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {specialty._count.artisans} {t('adminSpecialties', 'artisansWord')}
-                            </p>
+                            <div className="text-xs text-muted-foreground">{specialty.description}</div>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-1">
-                        <button
+                    </td>
+                    <td className="px-4 py-3 align-middle text-muted-foreground">{specialty.category}</td>
+                    <td className="px-4 py-3 align-middle text-foreground">
+                      {specialty._count?.artisans ?? 0}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-muted-foreground whitespace-nowrap">
+                      {formatDate(specialty.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant={specialty.isActive ? 'success' : 'secondary'}>
+                        {specialty.isActive
+                          ? t('adminSpecialties', 'active')
+                          : t('adminSpecialties', 'inactive')}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => openEditModal(specialty)}
-                          className="p-1 text-primary hover:text-primary"
-                          title={t('adminSpecialties', 'edit')}
+                          leftIcon={<Pencil className="h-3.5 w-3.5" />}
                         >
-                          
-                        </button>
-                        <button
+                          {t('adminSpecialties', 'edit')}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => {
                             setSelectedSpecialty(specialty);
                             setShowDeleteModal(true);
                           }}
-                          className="p-1 text-red-600 hover:text-red-700"
-                          title={t('adminSpecialties', 'delete')}
+                          leftIcon={<Trash2 className="h-3.5 w-3.5" />}
                         >
-                          
-                        </button>
+                          {t('adminSpecialties', 'delete')}
+                        </Button>
                       </div>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{t('adminSpecialties', 'created')}: {formatDate(specialty.createdAt)}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded ${
-                          specialty.isActive
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {specialty.isActive ? t('adminSpecialties', 'active') : t('adminSpecialties', 'inactive')}
-                      </span>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {filteredSpecialties.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              <span className="text-4xl block mb-2"></span>
-              <p>{t('adminSpecialties', 'noSpecialtiesFound')}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Create Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">{t('adminSpecialties', 'addNewSpecialty')}</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">{t('adminSpecialties', 'nameRequired')}</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder={t('adminSpecialties', 'namePlaceholder')}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('adminSpecialties', 'categoryRequired')}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      placeholder={t('adminSpecialties', 'categoryPlaceholder')}
-                      list="categories"
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                    <datalist id="categories">
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('adminSpecialties', 'description')}
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder={t('adminSpecialties', 'descriptionPlaceholder')}
-                      rows={3}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('adminSpecialties', 'iconEmoji')}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.icon}
-                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      placeholder="e.g., "
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(false);
-                      resetForm();
-                    }}
-                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
-                  >
-                    {t('adminSpecialties', 'cancel')}
-                  </button>
-                  <button
-                    onClick={handleCreate}
-                    disabled={processingId === 'create'}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {processingId === 'create' ? t('adminSpecialties', 'creating') : t('adminSpecialties', 'create')}
-                  </button>
-                </div>
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
         )}
+      </Card>
 
-        {/* Edit Modal */}
-        {showEditModal && selectedSpecialty && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">{t('adminSpecialties', 'editSpecialty')}</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">{t('adminSpecialties', 'nameRequired')}</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('adminSpecialties', 'categoryRequired')}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      list="categories-edit"
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                    <datalist id="categories-edit">
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('adminSpecialties', 'description')}
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {t('adminSpecialties', 'iconEmoji')}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.icon}
-                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setSelectedSpecialty(null);
-                      resetForm();
-                    }}
-                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
-                  >
-                    {t('adminSpecialties', 'cancel')}
-                  </button>
-                  <button
-                    onClick={handleUpdate}
-                    disabled={processingId === selectedSpecialty.id}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {processingId === selectedSpecialty.id ? t('adminSpecialties', 'saving') : t('adminSpecialties', 'saveChanges')}
-                  </button>
-                </div>
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold text-foreground">
+                {t('adminSpecialties', 'addNewSpecialty')}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  resetForm();
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'nameRequired')}</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={t('adminSpecialties', 'namePlaceholder')}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'categoryRequired')}</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder={t('adminSpecialties', 'categoryPlaceholder')}
+                  list="categories"
+                  className={inputClass}
+                />
+                <datalist id="categories">
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'description')}</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder={t('adminSpecialties', 'descriptionPlaceholder')}
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'iconEmoji')}</label>
+                <input
+                  type="text"
+                  value={formData.icon}
+                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                  placeholder="e.g., 🔧"
+                  className={inputClass}
+                />
               </div>
             </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  resetForm();
+                }}
+              >
+                {t('adminSpecialties', 'cancel')}
+              </Button>
+              <Button onClick={handleCreate} disabled={processingId === 'create'}>
+                {processingId === 'create'
+                  ? t('adminSpecialties', 'creating')
+                  : t('adminSpecialties', 'create')}
+              </Button>
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && selectedSpecialty && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-foreground mb-4">{t('adminSpecialties', 'deleteSpecialty')}</h2>
-                <p className="text-muted-foreground mb-4">
-                  {t('adminSpecialties', 'deleteConfirmPrefix')} <strong>{selectedSpecialty.name}</strong>{t('adminSpecialties', 'deleteConfirmSuffix')}
+      {/* Edit Modal */}
+      {showEditModal && selectedSpecialty && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold text-foreground">
+                {t('adminSpecialties', 'editSpecialty')}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedSpecialty(null);
+                  resetForm();
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'nameRequired')}</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'categoryRequired')}</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  list="categories-edit"
+                  className={inputClass}
+                />
+                <datalist id="categories-edit">
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'description')}</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{t('adminSpecialties', 'iconEmoji')}</label>
+                <input
+                  type="text"
+                  value={formData.icon}
+                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedSpecialty(null);
+                  resetForm();
+                }}
+              >
+                {t('adminSpecialties', 'cancel')}
+              </Button>
+              <Button onClick={handleUpdate} disabled={processingId === selectedSpecialty.id}>
+                {processingId === selectedSpecialty.id
+                  ? t('adminSpecialties', 'saving')
+                  : t('adminSpecialties', 'saveChanges')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedSpecialty && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <h2 className="mb-4 font-display text-lg font-bold text-foreground">
+              {t('adminSpecialties', 'deleteSpecialty')}
+            </h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              {t('adminSpecialties', 'deleteConfirmPrefix')}{' '}
+              <strong className="text-foreground">{selectedSpecialty.name}</strong>
+              {t('adminSpecialties', 'deleteConfirmSuffix')}
+            </p>
+            {selectedSpecialty._count?.artisans && selectedSpecialty._count.artisans > 0 && (
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <p>
+                  {t('adminSpecialties', 'warningPrefix')} {selectedSpecialty._count.artisans}{' '}
+                  {t('adminSpecialties', 'warningSuffix')}
                 </p>
-                {selectedSpecialty._count?.artisans && selectedSpecialty._count.artisans > 0 && (
-                  <div className="p-4 bg-amber-100 border rounded-lg mb-4">
-                    <p className="text-amber-800">
-                      {t('adminSpecialties', 'warningPrefix')} {selectedSpecialty._count.artisans} {t('adminSpecialties', 'warningSuffix')}
-                    </p>
-                  </div>
-                )}
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => {
-                      setShowDeleteModal(false);
-                      setSelectedSpecialty(null);
-                    }}
-                    className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
-                  >
-                    {t('adminSpecialties', 'cancel')}
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    disabled={processingId === selectedSpecialty.id}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                  >
-                    {processingId === selectedSpecialty.id ? t('adminSpecialties', 'deleting') : t('adminSpecialties', 'delete')}
-                  </button>
-                </div>
               </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedSpecialty(null);
+                }}
+              >
+                {t('adminSpecialties', 'cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={processingId === selectedSpecialty.id}
+              >
+                {processingId === selectedSpecialty.id
+                  ? t('adminSpecialties', 'deleting')
+                  : t('adminSpecialties', 'delete')}
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

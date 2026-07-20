@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi, Report } from '@/lib/api/admin';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -102,25 +103,14 @@ export default function ModerationPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: any }> = {
-      PENDING: { label: t('adminModeration', 'statusPending'), variant: 'default' },
-      REVIEWING: { label: t('adminModeration', 'statusReviewing'), variant: 'default' },
-      RESOLVED: { label: t('adminModeration', 'statusResolved'), variant: 'default' },
-      DISMISSED: { label: t('adminModeration', 'statusDismissed'), variant: 'default' },
+      PENDING: { label: t('adminModeration', 'statusPending'), variant: 'warning' },
+      REVIEWING: { label: t('adminModeration', 'statusReviewing'), variant: 'info' },
+      RESOLVED: { label: t('adminModeration', 'statusResolved'), variant: 'success' },
+      DISMISSED: { label: t('adminModeration', 'statusDismissed'), variant: 'secondary' },
     };
 
-    const config = statusMap[status] || { label: status, variant: 'default' };
+    const config = statusMap[status] || { label: status, variant: 'secondary' };
     return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const getReasonIcon = (reason: string) => {
-    const iconMap: Record<string, string> = {
-      SPAM: '',
-      INAPPROPRIATE: '',
-      FRAUD: '',
-      OFFENSIVE: '',
-      OTHER: '',
-    };
-    return iconMap[reason] || '';
   };
 
   const getTypeLabel = (type: string) => {
@@ -135,241 +125,293 @@ export default function ModerationPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">{t('adminModeration', 'loading')}</div>
+      <div className="py-12 text-center text-sm text-muted-foreground">
+        {t('adminModeration', 'loading')}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">{t('adminModeration', 'title')}</h1>
-          <p className="text-muted-foreground mt-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+            {t('adminModeration', 'title')}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             {t('adminModeration', 'subtitle')}
           </p>
         </div>
+        <Button variant="outline" onClick={loadReports}>
+          Actualiser
+        </Button>
+      </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          {['all', 'pending', 'reviewing', 'resolved', 'dismissed'].map(
-            (status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg ${
-                  filter === status
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card text-foreground border'
-                }`}
-              >
-                {status === 'all' ? t('adminModeration', 'filterAll') : status}
-              </button>
-            ),
-          )}
+      {/* Filter tabs */}
+      <div className="flex flex-wrap gap-2">
+        {['all', 'pending', 'reviewing', 'resolved', 'dismissed'].map((status) => (
+          <Button
+            key={status}
+            size="sm"
+            variant={filter === status ? 'default' : 'outline'}
+            className="rounded-full"
+            onClick={() => setFilter(status)}
+          >
+            {status === 'all' ? t('adminModeration', 'filterAll') : status}
+          </Button>
+        ))}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminModeration', 'totalReports')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-foreground">
+            {reports.length}
+          </p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminModeration', 'pending')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-warning">
+            {reports.filter((r) => r.status === 'PENDING').length}
+          </p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminModeration', 'inProgress')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-primary">
+            {reports.filter((r) => r.status === 'REVIEWING').length}
+          </p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('adminModeration', 'resolved')}
+          </p>
+          <p className="mt-2 font-display text-3xl font-extrabold tracking-tight text-success">
+            {reports.filter((r) => r.status === 'RESOLVED').length}
+          </p>
+        </Card>
+      </div>
+
+      {/* Reports table */}
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-border p-5">
+          <h2 className="font-display text-base font-bold text-foreground">
+            {t('adminModeration', 'reports')}
+          </h2>
+          <Badge variant="secondary">{reports.length} résultats</Badge>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">{t('adminModeration', 'totalReports')}</p>
-              <p className="text-3xl font-bold">{reports.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">{t('adminModeration', 'pending')}</p>
-              <p className="text-3xl font-bold text-foreground">
-                {reports.filter((r) => r.status === 'PENDING').length}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">{t('adminModeration', 'inProgress')}</p>
-              <p className="text-3xl font-bold text-primary">
-                {reports.filter((r) => r.status === 'REVIEWING').length}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">{t('adminModeration', 'resolved')}</p>
-              <p className="text-3xl font-bold text-foreground">
-                {reports.filter((r) => r.status === 'RESOLVED').length}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Reports List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('adminModeration', 'reports')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {reports.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('adminModeration', 'noReports')}
-              </div>
-            ) : (
-              <div className="space-y-4">
+        {reports.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            {t('adminModeration', 'noReports')}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50 text-left">
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    {t('adminModeration', 'description')}
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    {t('adminModeration', 'contentType')}
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    {t('adminModeration', 'reportedBy')}
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    {t('adminModeration', 'reportType')}
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Statut
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
                 {reports.map((report) => (
-                  <div
+                  <tr
                     key={report.id}
-                    className="p-4 border rounded-lg hover:bg-accent cursor-pointer"
+                    className="hover:bg-muted/40 transition-colors cursor-pointer"
                     onClick={() => setSelectedReport(report)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-2xl">
-                            {getReasonIcon(report.reason)}
-                          </span>
-                          <div>
-                            <p className="font-semibold text-foreground">
-                              {report.reason}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {t('adminModeration', 'typeLabel')} {getTypeLabel(report.reportedType)} • {t('adminModeration', 'byLabel')}{' '}
-                              {report.reporter.firstName}{' '}
-                              {report.reporter.lastName}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-foreground mb-2">
-                          {report.description}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(report.createdAt), {
-                            addSuffix: true,
-                            locale: fr,
-                          })}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {getStatusBadge(report.status)}
-                        <button
+                    <td className="px-4 py-3 align-middle">
+                      <p className="max-w-md truncate font-medium text-foreground">
+                        {report.description}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(report.createdAt), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant="outline">{getTypeLabel(report.reportedType)}</Badge>
+                    </td>
+                    <td className="px-4 py-3 align-middle whitespace-nowrap">
+                      <p className="font-medium text-foreground">
+                        {report.reporter.firstName} {report.reporter.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{report.reporter.email}</p>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-muted-foreground">
+                      {report.reason}
+                    </td>
+                    <td className="px-4 py-3 align-middle">{getStatusBadge(report.status)}</td>
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedReport(report);
+                          }}
+                        >
+                          {t('adminModeration', 'resolveReport')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDelete(report.id);
                           }}
-                          className="text-red-600 hover:text-red-700 text-sm"
                         >
                           {t('adminModeration', 'delete')}
-                        </button>
+                        </Button>
                       </div>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
-        {/* Resolution Modal */}
-        {selectedReport && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-2xl font-bold">{t('adminModeration', 'resolveReport')}</h2>
-                  <button
+      {/* Resolution Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card shadow-lg">
+            <div className="p-6">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <h2 className="font-display text-xl font-bold text-foreground">
+                  {t('adminModeration', 'resolveReport')}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedReport(null);
+                    setResolution('');
+                    setAction('');
+                  }}
+                >
+                  {t('adminModeration', 'cancel')}
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('adminModeration', 'reportType')}
+                  </p>
+                  <p className="text-sm text-foreground">{selectedReport.reason}</p>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('adminModeration', 'description')}
+                  </p>
+                  <p className="text-sm text-foreground">{selectedReport.description}</p>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('adminModeration', 'reportedBy')}
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {selectedReport.reporter.firstName} {selectedReport.reporter.lastName} (
+                    {selectedReport.reporter.email})
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('adminModeration', 'contentType')}
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {getTypeLabel(selectedReport.reportedType)}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-foreground">
+                    {t('adminModeration', 'actionToTake')}
+                  </label>
+                  <select
+                    value={action}
+                    onChange={(e) => setAction(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+                  >
+                    <option value="">{t('adminModeration', 'selectAction')}</option>
+                    <option value="DISMISS">{t('adminModeration', 'actionDismiss')}</option>
+                    <option value="WARNING">{t('adminModeration', 'actionWarning')}</option>
+                    <option value="CONTENT_REMOVED">
+                      {t('adminModeration', 'actionRemoveContent')}
+                    </option>
+                    <option value="USER_SUSPENDED">
+                      {t('adminModeration', 'actionSuspendUser')}
+                    </option>
+                    <option value="ACCOUNT_TERMINATED">
+                      {t('adminModeration', 'actionBanAccount')}
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-foreground">
+                    {t('adminModeration', 'resolution')}
+                  </label>
+                  <textarea
+                    value={resolution}
+                    onChange={(e) => setResolution(e.target.value)}
+                    placeholder={t('adminModeration', 'resolutionPlaceholder')}
+                    className="h-32 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-foreground"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button className="flex-1" onClick={handleResolve}>
+                    {t('adminModeration', 'resolve')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
                     onClick={() => {
                       setSelectedReport(null);
                       setResolution('');
                       setAction('');
                     }}
-                    className="text-muted-foreground hover:text-foreground"
                   >
-                    
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-semibold mb-1">{t('adminModeration', 'reportType')}</p>
-                    <p>{selectedReport.reason}</p>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold mb-1">{t('adminModeration', 'description')}</p>
-                    <p className="text-foreground">{selectedReport.description}</p>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold mb-1">{t('adminModeration', 'reportedBy')}</p>
-                    <p>
-                      {selectedReport.reporter.firstName}{' '}
-                      {selectedReport.reporter.lastName} (
-                      {selectedReport.reporter.email})
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold mb-1">{t('adminModeration', 'contentType')}</p>
-                    <p>{getTypeLabel(selectedReport.reportedType)}</p>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold mb-2">
-                      {t('adminModeration', 'actionToTake')}
-                    </label>
-                    <select
-                      value={action}
-                      onChange={(e) => setAction(e.target.value)}
-                      className="w-full p-2 border rounded-lg"
-                    >
-                      <option value="">{t('adminModeration', 'selectAction')}</option>
-                      <option value="DISMISS">{t('adminModeration', 'actionDismiss')}</option>
-                      <option value="WARNING">{t('adminModeration', 'actionWarning')}</option>
-                      <option value="CONTENT_REMOVED">{t('adminModeration', 'actionRemoveContent')}</option>
-                      <option value="USER_SUSPENDED">{t('adminModeration', 'actionSuspendUser')}</option>
-                      <option value="ACCOUNT_TERMINATED">
-                        {t('adminModeration', 'actionBanAccount')}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold mb-2">
-                      {t('adminModeration', 'resolution')}
-                    </label>
-                    <textarea
-                      value={resolution}
-                      onChange={(e) => setResolution(e.target.value)}
-                      placeholder={t('adminModeration', 'resolutionPlaceholder')}
-                      className="w-full p-3 border rounded-lg h-32"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={handleResolve}
-                      className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-lg hover:bg-primary/90"
-                    >
-                      {t('adminModeration', 'resolve')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedReport(null);
-                        setResolution('');
-                        setAction('');
-                      }}
-                      className="flex-1 bg-gray-300 text-foreground py-2 px-4 rounded-lg hover:bg-gray-400"
-                    >
-                      {t('adminModeration', 'cancel')}
-                    </button>
-                  </div>
+                    {t('adminModeration', 'cancel')}
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

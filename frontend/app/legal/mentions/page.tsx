@@ -3,7 +3,9 @@ export const metadata = { title: 'Mentions légales — Krafolt' };
 export default function MentionsPage() {
   return (
     <>
+      <p className="!mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document juridique</p>
       <h1>Mentions légales</h1>
+      <p className="!mt-1 text-sm text-muted-foreground">Version en vigueur au 1er juin 2026 · Applicable LU · FR · BE</p>
 
       <h2>Éditeur</h2>
       <p>

@@ -114,114 +114,157 @@ export default function AdminAccountingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            Export comptable
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Grand livre de la plateforme Krafolt : commissions perçues et TVA
-            collectée sur la période, exportables au format CSV.
-          </p>
-        </div>
+    <div className="p-6 sm:p-7 max-w-5xl">
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Export comptable
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
+          Grand livre de la plateforme Krafolt : commissions perçues et TVA
+          collectée sur la période, exportables au format CSV.
+        </p>
+      </div>
 
-        {/* Export card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Période à exporter</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Presets */}
+      {/* Export card */}
+      <Card className="rounded-2xl border-border shadow-sm mb-6 p-0 gap-0">
+        <CardHeader className="flex flex-col gap-0.5 border-b border-border px-5 py-4">
+          <CardTitle className="font-display text-base font-semibold">
+            Période à exporter
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Choisissez un intervalle ou un raccourci
+          </p>
+        </CardHeader>
+        <CardContent className="p-5 space-y-5">
+          {/* Presets */}
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              Raccourcis
+            </label>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPreset('thisMonth')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card hover:bg-muted"
+                onClick={() => setPreset('thisMonth')}
+              >
                 Ce mois-ci
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setPreset('lastMonth')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card hover:bg-muted"
+                onClick={() => setPreset('lastMonth')}
+              >
                 Mois dernier
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setPreset('thisYear')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card hover:bg-muted"
+                onClick={() => setPreset('thisYear')}
+              >
                 Cette année
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setPreset('lastYear')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl border-border bg-card hover:bg-muted"
+                onClick={() => setPreset('lastYear')}
+              >
                 Année dernière
               </Button>
             </div>
+          </div>
 
-            {/* Date pickers */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Date de début
-                </label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  max={endDate || undefined}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Date de fin
-                </label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
+          {/* Date pickers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Date de début
+              </label>
+              <Input
+                type="date"
+                className="rounded-xl border-border"
+                value={startDate}
+                max={endDate || undefined}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
-
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <p className="text-sm text-muted-foreground">
-                Le fichier contient une ligne par écriture (facture finalisée) et
-                une ligne de totaux.
-              </p>
-              <Button onClick={handleExport} disabled={exporting}>
-                {exporting ? 'Génération…' : 'Exporter le CSV'}
-              </Button>
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Date de fin
+              </label>
+              <Input
+                type="date"
+                className="rounded-xl border-border"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Legend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contenu du grand livre</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="text-sm text-muted-foreground space-y-2">
-              <li>
-                <span className="font-medium text-foreground">Date</span> — date
-                d&apos;émission de l&apos;écriture.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Type / Référence</span>{' '}
-                — nature (mission, marketplace, no-show) et numéro de facture.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Montant HT / TVA</span>{' '}
-                — base hors taxe et TVA collectée.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Commission</span> —
-                revenu perçu par la plateforme Krafolt.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Net</span> — montant
-                reversé à l&apos;artisan.
-              </li>
-            </ul>
-            <p className="text-xs text-muted-foreground mt-4">
-              Seules les factures finalisées (émises, payées, en retard) sont
-              incluses ; les brouillons et factures annulées sont exclus.
+          <div className="flex items-center justify-between gap-4 flex-wrap border-t border-border pt-4">
+            <p className="text-sm text-muted-foreground max-w-xl">
+              Le fichier contient une ligne par écriture (facture finalisée) et
+              une ligne de totaux. Nom généré :{' '}
+              <span className="font-mono text-xs text-foreground">
+                krafolt-grand-livre-{startDate}-{endDate}.csv
+              </span>
             </p>
-          </CardContent>
-        </Card>
-      </div>
+            <Button
+              onClick={handleExport}
+              disabled={exporting}
+              className="rounded-xl bg-primary text-primary-foreground"
+            >
+              {exporting ? 'Génération…' : 'Exporter le CSV'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Legend */}
+      <Card className="rounded-2xl border-border shadow-sm p-0 gap-0">
+        <CardHeader className="border-b border-border px-5 py-4">
+          <CardTitle className="font-display text-base font-semibold">
+            Contenu du grand livre
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-5">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm text-muted-foreground">
+            <li className="relative pl-4 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-sm before:bg-foreground">
+              <span className="font-semibold text-foreground">Date</span> — date
+              d&apos;émission de l&apos;écriture.
+            </li>
+            <li className="relative pl-4 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-sm before:bg-foreground">
+              <span className="font-semibold text-foreground">
+                Type / Référence
+              </span>{' '}
+              — nature (mission, marketplace, no-show) et numéro de facture.
+            </li>
+            <li className="relative pl-4 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-sm before:bg-foreground">
+              <span className="font-semibold text-foreground">
+                Montant HT / TVA
+              </span>{' '}
+              — base hors taxe et TVA collectée.
+            </li>
+            <li className="relative pl-4 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-sm before:bg-foreground">
+              <span className="font-semibold text-foreground">Commission</span> —
+              revenu perçu par la plateforme Krafolt.
+            </li>
+            <li className="relative pl-4 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-sm before:bg-foreground">
+              <span className="font-semibold text-foreground">Net</span> — montant
+              reversé à l&apos;artisan.
+            </li>
+          </ul>
+          <p className="text-xs text-muted-foreground mt-4 border-t border-border pt-4">
+            Seules les factures finalisées (émises, payées, en retard) sont
+            incluses ; les brouillons et factures annulées sont exclus.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

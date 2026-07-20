@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Megaphone, Send, Users, Info } from 'lucide-react';
 import apiClient from '@/lib/api/client';
-import { Card, CardContent } from '@/components/ui/card';
 
 // ----- Audience (miroir de CreateAnnouncementDto.audience côté backend) -----
 const AUDIENCES = [
@@ -78,23 +77,26 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center gap-4">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        {/* Page header */}
+        <div className="mb-6 flex items-center gap-4">
           <button
             onClick={() => router.push('/admin/admin/dashboard')}
-            className="text-muted-foreground hover:text-foreground"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-muted"
           >
             ← Retour
           </button>
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Megaphone className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Annonces plateforme</h1>
-              <p className="text-muted-foreground mt-1">
-                Diffusez un message (maintenance, information globale) à tous les utilisateurs.
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+                Annonces
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Diffusez un message (maintenance, information globale) aux utilisateurs de la
+                plateforme.
               </p>
             </div>
           </div>
@@ -102,40 +104,46 @@ export default function AnnouncementsPage() {
 
         {/* Success banner */}
         {result && (
-          <Card className="mb-6 border-green-200 bg-green-50">
-            <CardContent className="p-4">
-              <p className="font-medium text-green-800">Annonce envoyée</p>
-              <p className="text-sm text-green-700 mt-1">
-                {result.successful} notification(s) livrée(s)
-                {result.failed > 0 ? `, ${result.failed} échec(s)` : ''} sur{' '}
-                {result.total} destinataire(s).
-              </p>
-            </CardContent>
-          </Card>
+          <div className="mb-6 rounded-2xl border border-success/30 bg-success/10 p-4">
+            <p className="font-semibold text-success">Annonce envoyée</p>
+            <p className="mt-1 text-sm text-success/90">
+              {result.successful} notification(s) livrée(s)
+              {result.failed > 0 ? `, ${result.failed} échec(s)` : ''} sur {result.total}{' '}
+              destinataire(s).
+            </p>
+          </div>
         )}
 
         {/* Error banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* Info note */}
-        <div className="mb-6 flex items-start gap-3 p-4 rounded-lg bg-muted text-sm text-muted-foreground">
-          <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+          <Info className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <p>
-            Chaque destinataire reçoit une notification (visible dans la cloche) et une
-            alerte temps réel s’il est connecté. Action tracée dans le journal d’audit.
+            Chaque destinataire reçoit une notification (visible dans la cloche) et une alerte
+            temps réel s’il est connecté. Action tracée dans le journal d’audit.
           </p>
         </div>
 
-        {/* Form */}
-        <Card>
-          <CardContent className="p-6 space-y-5">
+        {/* Form card */}
+        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+            <h2 className="font-display font-semibold text-foreground">Nouvelle annonce</h2>
+            <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-xs font-semibold text-blue-600">
+              Notification in-app
+            </span>
+          </div>
+
+          <div className="space-y-5 p-5 sm:p-6">
+            {/* Titre */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Titre <span className="text-red-500">*</span>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
+                Titre <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
@@ -143,14 +151,15 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={120}
                 placeholder="Ex : Maintenance planifiée ce soir"
-                className="w-full px-3 py-2 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-foreground focus:border-foreground focus:outline-none"
               />
-              <p className="text-xs text-muted-foreground mt-1">{title.length}/120</p>
+              <p className="mt-1.5 text-xs text-muted-foreground">{title.length}/120 caractères</p>
             </div>
 
+            {/* Message */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Message <span className="text-red-500">*</span>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
+                Message <span className="text-destructive">*</span>
               </label>
               <textarea
                 value={message}
@@ -158,13 +167,14 @@ export default function AnnouncementsPage() {
                 maxLength={1000}
                 rows={5}
                 placeholder="Le contenu de votre annonce…"
-                className="w-full px-3 py-2 border border-border rounded-md bg-card resize-y focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full resize-y rounded-xl border border-border bg-card px-3 py-2.5 text-foreground focus:border-foreground focus:outline-none"
               />
-              <p className="text-xs text-muted-foreground mt-1">{message.length}/1000</p>
+              <p className="mt-1.5 text-xs text-muted-foreground">{message.length}/1000</p>
             </div>
 
+            {/* Lien */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
                 Lien (optionnel)
               </label>
               <input
@@ -173,31 +183,47 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setLink(e.target.value)}
                 maxLength={500}
                 placeholder="Ex : /maintenance"
-                className="w-full px-3 py-2 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-foreground focus:border-foreground focus:outline-none"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 Ouvert au clic sur la notification.
               </p>
             </div>
 
+            {/* Destinataires */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
                 Destinataires
               </label>
-              <select
-                value={audience}
-                onChange={(e) => setAudience(e.target.value as Audience)}
-                className="w-full px-3 py-2 border border-border rounded-md bg-card focus:outline-none focus:ring-2 focus:ring-primary/40"
-              >
-                {AUDIENCES.map((a) => (
-                  <option key={a.value} value={a.value}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                {AUDIENCES.map((a) => {
+                  const selected = audience === a.value;
+                  return (
+                    <label
+                      key={a.value}
+                      className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-medium ${
+                        selected
+                          ? 'border-foreground bg-muted text-foreground'
+                          : 'border-border bg-card text-foreground hover:bg-muted/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="audience"
+                        value={a.value}
+                        checked={selected}
+                        onChange={(e) => setAudience(e.target.value as Audience)}
+                        className="accent-foreground"
+                      />
+                      {a.label}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            {/* Footer */}
+            <div className="flex justify-end pt-2">
               <button
                 onClick={() => {
                   setError(null);
@@ -205,48 +231,49 @@ export default function AnnouncementsPage() {
                   setConfirming(true);
                 }}
                 disabled={!canSend}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
                 Envoyer l’annonce
               </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Confirmation modal */}
       {confirming && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+            <div className="border-b border-border p-6">
+              <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
                 <Users className="h-5 w-5" />
                 Confirmer la diffusion
               </h2>
             </div>
-            <div className="p-6 space-y-3">
+            <div className="space-y-3 p-6">
               <p className="text-sm text-muted-foreground">
-                Cette annonce sera envoyée à : <strong className="text-foreground">{audienceLabel}</strong>.
-                Cette action est irréversible.
+                Cette annonce sera envoyée à :{' '}
+                <strong className="text-foreground">{audienceLabel}</strong>. Cette action est
+                irréversible.
               </p>
-              <div className="p-3 rounded-lg bg-background border border-border">
+              <div className="rounded-xl border border-border bg-background p-3">
                 <p className="font-semibold text-foreground">{title}</p>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{message}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{message}</p>
               </div>
             </div>
-            <div className="p-6 border-t border-border flex justify-end gap-3">
+            <div className="flex justify-end gap-3 border-t border-border p-6">
               <button
                 onClick={() => setConfirming(false)}
                 disabled={sending}
-                className="px-4 py-2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                className="inline-flex items-center rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
               >
                 Annuler
               </button>
               <button
                 onClick={send}
                 disabled={sending}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
                 {sending ? 'Envoi…' : 'Confirmer et envoyer'}

@@ -124,34 +124,34 @@ export default function CompanySettingsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-[1180px] mx-auto">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-display font-extrabold tracking-tight text-foreground">
           {t('company', 'companySettings') || 'Company Settings'}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {t('company', 'manageSettings') || 'Manage your company configuration'}
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b">
+      <div className="flex gap-1 mb-6 border-b border-border">
         <button
           onClick={() => setActiveTab('general')}
-          className={`px-4 py-2 font-medium ${activeTab === 'general' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-1 mr-5 py-3 font-semibold border-b-2 transition-colors ${activeTab === 'general' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
         >
           {t('company', 'general') || 'General'}
         </button>
         <button
           onClick={() => setActiveTab('commission')}
-          className={`px-4 py-2 font-medium ${activeTab === 'commission' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-1 mr-5 py-3 font-semibold border-b-2 transition-colors ${activeTab === 'commission' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
         >
           {t('company', 'commission') || 'Commission & Payouts'}
         </button>
         <button
           onClick={() => setActiveTab('notifications')}
-          className={`px-4 py-2 font-medium ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-1 mr-5 py-3 font-semibold border-b-2 transition-colors ${activeTab === 'notifications' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
         >
           {t('company', 'notifications') || 'Notifications'}
         </button>
@@ -159,9 +159,11 @@ export default function CompanySettingsPage() {
 
       {/* General Settings */}
       {activeTab === 'general' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('company', 'generalSettings') || 'General Settings'}</CardTitle>
+        <Card className="rounded-2xl">
+          <CardHeader className="border-b border-border py-4">
+            <CardTitle className="text-base font-display font-extrabold tracking-tight">
+              {t('company', 'generalSettings') || 'General Settings'}
+            </CardTitle>
             <CardDescription>
               {t('company', 'generalSettingsDesc') || 'Basic company information'}
             </CardDescription>
@@ -246,9 +248,9 @@ export default function CompanySettingsPage() {
 
       {/* Commission Settings */}
       {activeTab === 'commission' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
+        <Card className="rounded-2xl">
+          <CardHeader className="border-b border-border py-4">
+            <CardTitle className="text-base font-display font-extrabold tracking-tight">
               {t('company', 'commissionSettings') || 'Commission & Payout Settings'}
             </CardTitle>
             <CardDescription>
@@ -311,54 +313,66 @@ export default function CompanySettingsPage() {
               </select>
             </div>
 
-            <div className="space-y-3 pt-4">
-              <h4 className="font-medium text-foreground">
+            <div className="pt-4 border-t border-border">
+              <h4 className="font-semibold text-sm text-foreground mb-1">
                 {t('company', 'missionAssignment') || 'Mission Assignment'}
               </h4>
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.autoAssignMissions || false}
-                  onChange={(e) =>
-                    setSettingsForm({ ...settingsForm, autoAssignMissions: e.target.checked })
-                  }
-                  className="w-4 h-4 text-primary rounded"
-                />
+              <label className="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
                 <span className="text-sm text-foreground">
                   {t('company', 'autoAssign') || 'Auto-assign missions based on availability'}
                 </span>
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.autoAssignMissions || false}
+                    onChange={(e) =>
+                      setSettingsForm({ ...settingsForm, autoAssignMissions: e.target.checked })
+                    }
+                    className="peer sr-only"
+                  />
+                  <span className="w-11 h-6 rounded-full bg-muted-foreground/30 peer-checked:bg-primary transition-colors" />
+                  <span className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+                </span>
               </label>
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.requireManagerApproval || false}
-                  onChange={(e) =>
-                    setSettingsForm({ ...settingsForm, requireManagerApproval: e.target.checked })
-                  }
-                  className="w-4 h-4 text-primary rounded"
-                />
+              <label className="flex items-center justify-between gap-3 py-2.5 border-t border-border cursor-pointer">
                 <span className="text-sm text-foreground">
                   {t('company', 'requireApproval') ||
                     'Require manager approval for mission acceptance'}
                 </span>
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.requireManagerApproval || false}
+                    onChange={(e) =>
+                      setSettingsForm({ ...settingsForm, requireManagerApproval: e.target.checked })
+                    }
+                    className="peer sr-only"
+                  />
+                  <span className="w-11 h-6 rounded-full bg-muted-foreground/30 peer-checked:bg-primary transition-colors" />
+                  <span className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+                </span>
               </label>
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.allowEmployeeSelfAssignment || false}
-                  onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      allowEmployeeSelfAssignment: e.target.checked,
-                    })
-                  }
-                  className="w-4 h-4 text-primary rounded"
-                />
+              <label className="flex items-center justify-between gap-3 py-2.5 border-t border-border cursor-pointer">
                 <span className="text-sm text-foreground">
                   {t('company', 'selfAssignment') || 'Allow employees to claim unassigned missions'}
+                </span>
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.allowEmployeeSelfAssignment || false}
+                    onChange={(e) =>
+                      setSettingsForm({
+                        ...settingsForm,
+                        allowEmployeeSelfAssignment: e.target.checked,
+                      })
+                    }
+                    className="peer sr-only"
+                  />
+                  <span className="w-11 h-6 rounded-full bg-muted-foreground/30 peer-checked:bg-primary transition-colors" />
+                  <span className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
                 </span>
               </label>
             </div>
@@ -376,61 +390,75 @@ export default function CompanySettingsPage() {
 
       {/* Notification Settings */}
       {activeTab === 'notifications' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('company', 'notificationSettings') || 'Notification Settings'}</CardTitle>
+        <Card className="rounded-2xl">
+          <CardHeader className="border-b border-border py-4">
+            <CardTitle className="text-base font-display font-extrabold tracking-tight">
+              {t('company', 'notificationSettings') || 'Notification Settings'}
+            </CardTitle>
             <CardDescription>
               {t('company', 'notificationSettingsDesc') ||
                 'Configure who gets notified about company events'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.notifyOwnerOnNewMission || false}
-                  onChange={(e) =>
-                    setSettingsForm({ ...settingsForm, notifyOwnerOnNewMission: e.target.checked })
-                  }
-                  className="w-4 h-4 text-primary rounded"
-                />
+            <div>
+              <label className="flex items-center justify-between gap-3 py-2.5 cursor-pointer">
                 <span className="text-sm text-foreground">
                   {t('company', 'notifyOwner') || 'Notify owner on new missions'}
                 </span>
-              </label>
-
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.notifyManagerOnNewMission || false}
-                  onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      notifyManagerOnNewMission: e.target.checked,
-                    })
-                  }
-                  className="w-4 h-4 text-primary rounded"
-                />
-                <span className="text-sm text-foreground">
-                  {t('company', 'notifyManager') || 'Notify managers on new missions'}
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.notifyOwnerOnNewMission || false}
+                    onChange={(e) =>
+                      setSettingsForm({ ...settingsForm, notifyOwnerOnNewMission: e.target.checked })
+                    }
+                    className="peer sr-only"
+                  />
+                  <span className="w-11 h-6 rounded-full bg-muted-foreground/30 peer-checked:bg-primary transition-colors" />
+                  <span className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
                 </span>
               </label>
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.notifyEmployeeOnAssignment || false}
-                  onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      notifyEmployeeOnAssignment: e.target.checked,
-                    })
-                  }
-                  className="w-4 h-4 text-primary rounded"
-                />
+              <label className="flex items-center justify-between gap-3 py-2.5 border-t border-border cursor-pointer">
+                <span className="text-sm text-foreground">
+                  {t('company', 'notifyManager') || 'Notify managers on new missions'}
+                </span>
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.notifyManagerOnNewMission || false}
+                    onChange={(e) =>
+                      setSettingsForm({
+                        ...settingsForm,
+                        notifyManagerOnNewMission: e.target.checked,
+                      })
+                    }
+                    className="peer sr-only"
+                  />
+                  <span className="w-11 h-6 rounded-full bg-muted-foreground/30 peer-checked:bg-primary transition-colors" />
+                  <span className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+                </span>
+              </label>
+
+              <label className="flex items-center justify-between gap-3 py-2.5 border-t border-border cursor-pointer">
                 <span className="text-sm text-foreground">
                   {t('company', 'notifyEmployee') || 'Notify employees when assigned to missions'}
+                </span>
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.notifyEmployeeOnAssignment || false}
+                    onChange={(e) =>
+                      setSettingsForm({
+                        ...settingsForm,
+                        notifyEmployeeOnAssignment: e.target.checked,
+                      })
+                    }
+                    className="peer sr-only"
+                  />
+                  <span className="w-11 h-6 rounded-full bg-muted-foreground/30 peer-checked:bg-primary transition-colors" />
+                  <span className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
                 </span>
               </label>
             </div>

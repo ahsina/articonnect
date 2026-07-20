@@ -59,8 +59,8 @@ export default function EmployeeChatPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">{t('employeeChat', 'loading')}</p>
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-border border-t-foreground"></div>
+          <p className="mt-4 text-sm text-muted-foreground">{t('employeeChat', 'loading')}</p>
         </div>
       </div>
     );
@@ -69,19 +69,19 @@ export default function EmployeeChatPage() {
   if (error || !userData?.companyId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+            <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-foreground mb-2">{t('employeeChat', 'accessDenied')}</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="mb-2 font-display text-xl font-bold text-foreground">{t('employeeChat', 'accessDenied')}</h1>
+          <p className="mb-6 text-muted-foreground">
             {error || t('employeeChat', 'mustBeEmployee')}
           </p>
           <a
             href="/"
-            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {t('employeeChat', 'backHome')}
           </a>
@@ -92,11 +92,11 @@ export default function EmployeeChatPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">{t('employeeChat', 'teamMessaging')}</h1>
-          <p className="text-muted-foreground">{t('employeeChat', 'teamMessagingDesc')}</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">{t('employeeChat', 'teamMessaging')}</h1>
+          <p className="mt-1 text-muted-foreground">{t('employeeChat', 'teamMessagingDesc')}</p>
         </div>
 
         {/* Chat Component */}

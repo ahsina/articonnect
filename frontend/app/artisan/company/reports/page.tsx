@@ -68,26 +68,28 @@ export default function CompanyReportsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-[1180px] mx-auto">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-display font-extrabold tracking-tight text-foreground">
             {t('company', 'reports') || 'Reports & Analytics'}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t('company', 'reportsDesc') || 'View your company performance metrics'}
           </p>
         </div>
-        <Button variant="outline" onClick={handleExport}>{t('company', 'exportReport') || 'Export Report'}</Button>
+        <Button variant="outline" onClick={handleExport}>
+          {t('company', 'exportReport') || 'Export Report'}
+        </Button>
       </div>
 
       {/* Date Range Filter */}
-      <Card className="mb-6">
+      <Card className="mb-6 rounded-2xl">
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-foreground">
-              {t('company', 'dateRange') || 'Date Range'}:
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-foreground">
+              {t('company', 'dateRange') || 'Date Range'} :
             </span>
             <Input
               type="date"
@@ -102,7 +104,9 @@ export default function CompanyReportsPage() {
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
               className="w-40"
             />
-            <Button size="sm" onClick={() => loadData()}>{t('common', 'apply') || 'Apply'}</Button>
+            <Button size="sm" onClick={() => loadData()}>
+              {t('common', 'apply') || 'Apply'}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -111,145 +115,150 @@ export default function CompanyReportsPage() {
       {stats && (
         <>
           <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <Card className="bg-muted border-primary/20">
-              <CardContent className="p-4">
-                <div className="text-sm text-primary">
+            <Card className="rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="text-[12.5px] font-semibold text-muted-foreground">
                   {t('company', 'totalRevenue') || 'Total Revenue'}
                 </div>
-                <div className="text-2xl font-bold text-primary">
+                <div className="text-[28px] font-display font-extrabold tracking-tight text-foreground mt-2">
                   {formatCurrency(stats.totalRevenue)}
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-muted">
-              <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">
+            <Card className="rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="text-[12.5px] font-semibold text-muted-foreground">
                   {t('company', 'completedMissions') || 'Completed Missions'}
                 </div>
-                <div className="text-2xl font-bold text-foreground">{stats.completedMissions}</div>
+                <div className="text-[28px] font-display font-extrabold tracking-tight text-foreground mt-2">
+                  {stats.completedMissions}
+                </div>
               </CardContent>
             </Card>
-            <Card className="bg-muted">
-              <CardContent className="p-4">
-                <div className="text-sm text-yellow-600">
+            <Card className="rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="text-[12.5px] font-semibold text-muted-foreground">
                   {t('company', 'averageRating') || 'Average Rating'}
                 </div>
-                <div className="text-2xl font-bold text-foreground">
-                  {Number(stats.averageRating).toFixed(1)}
+                <div className="text-[28px] font-display font-extrabold tracking-tight text-foreground mt-2">
+                  {Number(stats.averageRating).toFixed(1)} ★
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-muted">
-              <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">
+            <Card className="rounded-2xl">
+              <CardContent className="p-[18px]">
+                <div className="text-[12.5px] font-semibold text-muted-foreground">
                   {t('company', 'totalReviews') || 'Total Reviews'}
                 </div>
-                <div className="text-2xl font-bold text-foreground">{stats.totalReviews}</div>
+                <div className="text-[28px] font-display font-extrabold tracking-tight text-foreground mt-2">
+                  {stats.totalReviews}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Performance Metrics */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('company', 'missionMetrics') || 'Mission Metrics'}</CardTitle>
+            <Card className="rounded-2xl">
+              <CardHeader className="border-b border-border py-4">
+                <CardTitle className="text-base font-display font-extrabold tracking-tight">
+                  {t('company', 'missionMetrics') || 'Mission Metrics'}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">
-                      {t('company', 'totalMissions') || 'Total Missions'}
-                    </span>
-                    <span className="font-bold text-foreground">{stats.totalMissions}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">
-                      {t('company', 'completedMissions') || 'Completed'}
-                    </span>
-                    <span className="font-bold text-green-600">{stats.completedMissions}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">
-                      {t('company', 'activeMissions') || 'Active'}
-                    </span>
-                    <span className="font-bold text-primary">{stats.activeMissions}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-muted-foreground">
-                      {t('company', 'completionRate') || 'Completion Rate'}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {stats.totalMissions > 0
-                        ? ((stats.completedMissions / stats.totalMissions) * 100).toFixed(1)
-                        : 0}
-                      %
-                    </span>
-                  </div>
+              <CardContent className="px-5 py-2">
+                <div className="flex justify-between items-center py-2.5 border-b border-border">
+                  <span className="text-muted-foreground">
+                    {t('company', 'totalMissions') || 'Total Missions'}
+                  </span>
+                  <span className="font-semibold text-foreground">{stats.totalMissions}</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-border">
+                  <span className="text-muted-foreground">
+                    {t('company', 'completedMissions') || 'Completed'}
+                  </span>
+                  <span className="font-semibold text-success">{stats.completedMissions}</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-border">
+                  <span className="text-muted-foreground">
+                    {t('company', 'activeMissions') || 'Active'}
+                  </span>
+                  <span className="font-semibold text-primary">{stats.activeMissions}</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5">
+                  <span className="text-muted-foreground">
+                    {t('company', 'completionRate') || 'Completion Rate'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {stats.totalMissions > 0
+                      ? ((stats.completedMissions / stats.totalMissions) * 100).toFixed(1)
+                      : 0}
+                    %
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('company', 'revenueMetrics') || 'Revenue Metrics'}</CardTitle>
+            <Card className="rounded-2xl">
+              <CardHeader className="border-b border-border py-4">
+                <CardTitle className="text-base font-display font-extrabold tracking-tight">
+                  {t('company', 'revenueMetrics') || 'Revenue Metrics'}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">
-                      {t('company', 'totalRevenue') || 'Total Revenue'}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {formatCurrency(stats.totalRevenue)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">
-                      {t('company', 'avgPerMission') || 'Avg per Mission'}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {formatCurrency(
-                        stats.completedMissions > 0
-                          ? stats.totalRevenue / stats.completedMissions
-                          : 0,
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">
-                      {t('company', 'employees') || 'Employees'}
-                    </span>
-                    <span className="font-bold text-foreground">{stats.employeeCount}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-muted-foreground">
-                      {t('company', 'revenuePerEmployee') || 'Revenue per Employee'}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {formatCurrency(
-                        stats.employeeCount > 0 ? stats.totalRevenue / stats.employeeCount : 0,
-                      )}
-                    </span>
-                  </div>
+              <CardContent className="px-5 py-2">
+                <div className="flex justify-between items-center py-2.5 border-b border-border">
+                  <span className="text-muted-foreground">
+                    {t('company', 'totalRevenue') || 'Total Revenue'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {formatCurrency(stats.totalRevenue)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-border">
+                  <span className="text-muted-foreground">
+                    {t('company', 'avgPerMission') || 'Avg per Mission'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {formatCurrency(
+                      stats.completedMissions > 0
+                        ? stats.totalRevenue / stats.completedMissions
+                        : 0,
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-border">
+                  <span className="text-muted-foreground">
+                    {t('company', 'employees') || 'Employees'}
+                  </span>
+                  <span className="font-semibold text-foreground">{stats.employeeCount}</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5">
+                  <span className="text-muted-foreground">
+                    {t('company', 'revenuePerEmployee') || 'Revenue per Employee'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {formatCurrency(
+                      stats.employeeCount > 0 ? stats.totalRevenue / stats.employeeCount : 0,
+                    )}
+                  </span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Charts Placeholder */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('company', 'revenueChart') || 'Revenue Over Time'}</CardTitle>
+          <Card className="rounded-2xl">
+            <CardHeader className="border-b border-border py-4">
+              <CardTitle className="text-base font-display font-extrabold tracking-tight">
+                {t('company', 'revenueChart') || 'Revenue Over Time'}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="text-4xl mb-2"></div>
-                  <p>
+            <CardContent className="pt-5">
+              <div className="h-64 bg-muted rounded-xl flex items-center justify-center">
+                <div className="text-center text-muted-foreground px-6">
+                  <p className="font-semibold text-foreground">
                     {t('company', 'chartPlaceholder') || 'Chart visualization would appear here'}
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm mt-1">
                     {t('company', 'integrateCharts') ||
                       'Integrate with a charting library for interactive graphs'}
                   </p>

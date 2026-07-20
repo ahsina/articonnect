@@ -21,23 +21,23 @@ export default function PhoneSettingsPage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-md mx-auto px-4">
-        <div className="mb-6">
+      <div className="mx-auto max-w-md px-4">
+        <div className="mb-5">
           <button
             onClick={handleCancel}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             {t('common', 'back') || 'Retour'}
           </button>
         </div>
 
-        <h1 className="text-2xl font-bold text-foreground mb-2">
+        <h1 className="mb-2 font-display text-2xl font-extrabold tracking-tight text-foreground">
           {t('settings', 'phoneTitle') || 'Verification du telephone'}
         </h1>
-        <p className="text-muted-foreground mb-6">
+        <p className="mb-6 text-muted-foreground">
           {t('settings', 'phoneDescription') || 'Verifiez votre numero de telephone pour securiser votre compte et recevoir des notifications importantes.'}
         </p>
 
@@ -47,31 +47,31 @@ export default function PhoneSettingsPage() {
           required={false}
         />
 
-        <div className="mt-6 p-4 bg-primary/10 rounded-lg">
-          <h3 className="font-medium text-primary mb-2">
+        <div className="mt-6 rounded-2xl bg-muted p-5">
+          <h3 className="mb-3 font-semibold text-foreground">
             {t('settings', 'whyVerifyPhone') || 'Pourquoi verifier votre telephone ?'}
           </h3>
-          <ul className="text-sm text-primary space-y-1">
-            <li className="flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <ul className="space-y-2.5 text-sm text-foreground">
+            <li className="flex items-start gap-2.5">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               {t('settings', 'phoneReason1') || 'Accepter des missions (obligatoire pour les artisans)'}
             </li>
-            <li className="flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <li className="flex items-start gap-2.5">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               {t('settings', 'phoneReason2') || 'Recevoir des alertes SMS importantes'}
             </li>
-            <li className="flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <li className="flex items-start gap-2.5">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               {t('settings', 'phoneReason3') || 'Recuperation de compte securisee'}
             </li>
-            <li className="flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <li className="flex items-start gap-2.5">
+              <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               {t('settings', 'phoneReason4') || 'Contact direct en cas d\'urgence'}

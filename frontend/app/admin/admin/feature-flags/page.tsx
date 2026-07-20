@@ -9,7 +9,6 @@ import {
   FeatureFlagStatus,
   CreateFeatureFlagDto,
 } from '@/lib/api/admin';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -149,29 +148,14 @@ export default function FeatureFlagsPage() {
     }
   };
 
-  const getTypeIcon = (type: FeatureFlagType) => {
-    switch (type) {
-      case FeatureFlagType.BOOLEAN:
-        return '';
-      case FeatureFlagType.PERCENTAGE:
-        return '';
-      case FeatureFlagType.USER_LIST:
-        return '';
-      case FeatureFlagType.ENVIRONMENT:
-        return '';
-      default:
-        return '';
-    }
-  };
-
   const getStatusColor = (status: FeatureFlagStatus) => {
     switch (status) {
       case FeatureFlagStatus.ACTIVE:
-        return 'bg-green-100 text-green-700';
+        return 'bg-success/10 text-success';
       case FeatureFlagStatus.INACTIVE:
         return 'bg-muted text-muted-foreground';
       case FeatureFlagStatus.ARCHIVED:
-        return 'bg-red-100 text-red-600';
+        return 'bg-destructive/10 text-destructive';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -204,24 +188,24 @@ export default function FeatureFlagsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div className="flex items-start gap-4">
             <button
               onClick={() => router.push('/admin/admin/dashboard')}
-              className="text-muted-foreground hover:text-foreground"
+              className="mt-1 text-sm text-muted-foreground hover:text-foreground"
             >
               {t('adminFeatureFlags', 'back')}
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{t('adminFeatureFlags', 'title')}</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="font-display text-3xl font-bold text-foreground">{t('adminFeatureFlags', 'title')}</h1>
+              <p className="text-muted-foreground mt-1 text-sm">
                 {t('adminFeatureFlags', 'subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {t('adminFeatureFlags', 'newFlag')}
           </button>
@@ -229,192 +213,154 @@ export default function FeatureFlagsPage() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">
+          <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'totalFlags')}</p>
-                  <p className="text-3xl font-bold text-foreground">{flags.length}</p>
-                </div>
-                <span className="text-3xl"></span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'enabled')}</p>
-                  <p className="text-3xl font-bold text-foreground">
-                    {flags.filter((f) => f.value.enabled).length}
-                  </p>
-                </div>
-                <span className="text-3xl"></span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'disabled')}</p>
-                  <p className="text-3xl font-bold text-muted-foreground">
-                    {flags.filter((f) => !f.value.enabled).length}
-                  </p>
-                </div>
-                <span className="text-3xl">⏸</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'percentageRollouts')}</p>
-                  <p className="text-3xl font-bold text-foreground">
-                    {flags.filter((f) => f.type === FeatureFlagType.PERCENTAGE).length}
-                  </p>
-                </div>
-                <span className="text-3xl"></span>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4 mb-6">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('adminFeatureFlags', 'totalFlags')}</p>
+            <p className="mt-2 font-display text-3xl font-bold text-foreground">{flags.length}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('adminFeatureFlags', 'enabled')}</p>
+            <p className="mt-2 font-display text-3xl font-bold text-success">
+              {flags.filter((f) => f.value.enabled).length}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('adminFeatureFlags', 'disabled')}</p>
+            <p className="mt-2 font-display text-3xl font-bold text-muted-foreground">
+              {flags.filter((f) => !f.value.enabled).length}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('adminFeatureFlags', 'percentageRollouts')}</p>
+            <p className="mt-2 font-display text-3xl font-bold text-warning">
+              {flags.filter((f) => f.type === FeatureFlagType.PERCENTAGE).length}
+            </p>
+          </div>
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-accent'}`}
-                >
-                  {t('adminFeatureFlags', 'filterAll')} ({flags.length})
-                </button>
-                <button
-                  onClick={() => setFilter('active')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'active' ? 'bg-green-600 text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
-                >
-                  {t('adminFeatureFlags', 'enabled')} ({flags.filter((f) => f.value.enabled).length})
-                </button>
-                <button
-                  onClick={() => setFilter('inactive')}
-                  className={`px-4 py-2 rounded-lg ${filter === 'inactive' ? 'bg-gray-600 text-white' : 'bg-muted text-foreground hover:bg-accent'}`}
-                >
-                  {t('adminFeatureFlags', 'disabled')} ({flags.filter((f) => !f.value.enabled).length})
-                </button>
-              </div>
-              <Input
-                placeholder={t('adminFeatureFlags', 'searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-xs"
-              />
+        <div className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilter('all')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-foreground hover:bg-muted'}`}
+              >
+                {t('adminFeatureFlags', 'filterAll')} ({flags.length})
+              </button>
+              <button
+                onClick={() => setFilter('active')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium ${filter === 'active' ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-foreground hover:bg-muted'}`}
+              >
+                {t('adminFeatureFlags', 'enabled')} ({flags.filter((f) => f.value.enabled).length})
+              </button>
+              <button
+                onClick={() => setFilter('inactive')}
+                className={`rounded-xl px-4 py-2 text-sm font-medium ${filter === 'inactive' ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-foreground hover:bg-muted'}`}
+              >
+                {t('adminFeatureFlags', 'disabled')} ({flags.filter((f) => !f.value.enabled).length})
+              </button>
             </div>
-          </CardContent>
-        </Card>
+            <Input
+              placeholder={t('adminFeatureFlags', 'searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-xs"
+            />
+          </div>
+        </div>
 
         {/* Flags List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filteredFlags.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <span className="text-6xl mb-4 block"></span>
-                <h3 className="text-lg font-medium text-foreground mb-2">{t('adminFeatureFlags', 'noFlagsFound')}</h3>
-                <p className="text-muted-foreground">{t('adminFeatureFlags', 'noFlagsHint')}</p>
-              </CardContent>
-            </Card>
+            <div className="rounded-2xl border border-border bg-card p-12 text-center">
+              <h3 className="mb-2 font-display text-lg font-semibold text-foreground">{t('adminFeatureFlags', 'noFlagsFound')}</h3>
+              <p className="text-sm text-muted-foreground">{t('adminFeatureFlags', 'noFlagsHint')}</p>
+            </div>
           ) : (
             filteredFlags.map((flag) => (
-              <Card
+              <div
                 key={flag.key}
-                className={`${flag.value.enabled ? 'border-green-200' : 'border-border'}`}
+                className={`rounded-2xl border bg-card p-5 ${flag.value.enabled ? 'border-success/30' : 'border-border'}`}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <span className="text-3xl">{getTypeIcon(flag.type)}</span>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className="font-semibold text-foreground">{flag.name}</h3>
-                          <span
-                            className={`px-2 py-0.5 text-xs rounded ${getStatusColor(flag.status)}`}
-                          >
-                            {flag.status}
-                          </span>
-                          <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded">
-                            {flag.type}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          <code className="bg-muted px-2 py-0.5 rounded">{flag.key}</code>
-                        </p>
-                        {flag.description && (
-                          <p className="text-sm text-muted-foreground">{flag.description}</p>
-                        )}
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {flag.type === FeatureFlagType.PERCENTAGE && (
-                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                              {flag.value.percentage}% {t('adminFeatureFlags', 'rollout')}
-                            </span>
-                          )}
-                          {flag.type === FeatureFlagType.USER_LIST &&
-                            flag.value.allowedUsers &&
-                            flag.value.allowedUsers.length > 0 && (
-                              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                {flag.value.allowedUsers.length} {t('adminFeatureFlags', 'usersAllowed')}
-                              </span>
-                            )}
-                          {flag.metadata?.tags?.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-3">
-                          {t('adminFeatureFlags', 'updated')}: {new Date(flag.updatedAt).toLocaleString('fr-FR')}
-                          {flag.updatedBy && ` by ${flag.updatedBy.slice(0, 8)}...`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Switch
-                        checked={flag.value.enabled}
-                        onChange={() => handleToggle(flag)}
-                        disabled={actionLoading === flag.key}
-                      />
-                      <button
-                        onClick={() => handleDelete(flag.key)}
-                        disabled={actionLoading === flag.key}
-                        className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-foreground">{flag.name}</h3>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(flag.status)}`}
                       >
-                        {t('adminFeatureFlags', 'delete')}
-                      </button>
+                        {flag.status}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        {flag.type}
+                      </span>
                     </div>
+                    <p className="mb-2">
+                      <code className="rounded bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">{flag.key}</code>
+                    </p>
+                    {flag.description && (
+                      <p className="text-sm text-muted-foreground">{flag.description}</p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {flag.type === FeatureFlagType.PERCENTAGE && (
+                        <span className="rounded-full bg-blue-600/10 px-2 py-1 text-xs font-medium text-blue-600">
+                          {flag.value.percentage}% {t('adminFeatureFlags', 'rollout')}
+                        </span>
+                      )}
+                      {flag.type === FeatureFlagType.USER_LIST &&
+                        flag.value.allowedUsers &&
+                        flag.value.allowedUsers.length > 0 && (
+                          <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                            {flag.value.allowedUsers.length} {t('adminFeatureFlags', 'usersAllowed')}
+                          </span>
+                        )}
+                      {flag.metadata?.tags?.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {t('adminFeatureFlags', 'updated')}: {new Date(flag.updatedAt).toLocaleString('fr-FR')}
+                      {flag.updatedBy && ` by ${flag.updatedBy.slice(0, 8)}...`}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex shrink-0 items-center gap-4">
+                    <Switch
+                      checked={flag.value.enabled}
+                      onChange={() => handleToggle(flag)}
+                      disabled={actionLoading === flag.key}
+                    />
+                    <button
+                      onClick={() => handleDelete(flag.key)}
+                      disabled={actionLoading === flag.key}
+                      className="text-sm font-medium text-destructive hover:text-destructive/80 disabled:opacity-50"
+                    >
+                      {t('adminFeatureFlags', 'delete')}
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))
           )}
         </div>
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-2xl border border-border shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-border">
-                <h2 className="text-xl font-semibold">{t('adminFeatureFlags', 'createTitle')}</h2>
+                <h2 className="font-display text-xl font-semibold text-foreground">{t('adminFeatureFlags', 'createTitle')}</h2>
               </div>
               <div className="p-6 space-y-4">
                 <Input
@@ -516,20 +462,20 @@ export default function FeatureFlagsPage() {
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </div>
-              <div className="p-6 border-t border-border flex justify-end gap-4">
+              <div className="p-6 border-t border-border flex justify-end gap-3">
                 <button
                   onClick={() => {
                     setShowCreateModal(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-muted-foreground hover:text-foreground"
+                  className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
                 >
                   {t('adminFeatureFlags', 'cancel')}
                 </button>
                 <button
                   onClick={handleCreateFlag}
                   disabled={!formData.key || !formData.name || actionLoading === 'create'}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {actionLoading === 'create' ? t('adminFeatureFlags', 'creating') : t('adminFeatureFlags', 'createFlag')}
                 </button>

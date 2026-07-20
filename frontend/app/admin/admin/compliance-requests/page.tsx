@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api/client';
-import { Card, CardContent } from '@/components/ui/card';
 
 // ----- Types (miroir de GET /compliance/admin/gdpr/requests et /requests/:userId) -----
 interface GdprRequest {
@@ -60,16 +59,20 @@ const OUTCOME_LABEL: Record<string, string> = OUTCOMES.reduce(
 function outcomeColor(outcome?: string | null) {
   switch (outcome) {
     case 'ANONYMIZED':
-      return 'bg-green-100 text-green-700';
+      return 'bg-success/10 text-success';
     case 'EXPORTED':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-blue-600/10 text-blue-600';
     case 'REJECTED':
-      return 'bg-red-100 text-red-700';
+      return 'bg-destructive/10 text-destructive';
     case 'INFO':
       return 'bg-muted text-muted-foreground';
     default:
       return 'bg-muted text-muted-foreground';
   }
+}
+
+function initials(first?: string, last?: string) {
+  return `${(first?.[0] ?? '').toUpperCase()}${(last?.[0] ?? '').toUpperCase()}` || '?';
 }
 
 export default function ComplianceRequestsPage() {
@@ -153,16 +156,18 @@ export default function ComplianceRequestsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
             <button
               onClick={() => router.push('/admin/admin/dashboard')}
-              className="text-muted-foreground hover:text-foreground"
+              className="mt-1 text-muted-foreground hover:text-foreground"
             >
               ← Retour
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Demandes RGPD</h1>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+                Demandes RGPD
+              </h1>
               <p className="text-muted-foreground mt-1">
                 Droit à l’effacement : demandes de suppression de compte en attente et leur traitement.
               </p>
@@ -171,156 +176,270 @@ export default function ComplianceRequestsPage() {
           <button
             onClick={load}
             disabled={loading}
-            className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
           >
             {loading ? 'Chargement…' : 'Rafraîchir'}
           </button>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border rounded-lg text-red-700">{error}</div>
+          <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            {error}
+          </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'En attente', value: stats.total, cls: 'text-foreground' },
-            { label: 'Délai dépassé', value: stats.overdue, cls: 'text-red-600' },
-            { label: 'Tracées', value: stats.processed, cls: 'text-green-600' },
-            { label: 'Non traitées', value: stats.untouched, cls: 'text-amber-600' },
+            { label: 'Délai dépassé', value: stats.overdue, cls: 'text-destructive' },
+            { label: 'Tracées', value: stats.processed, cls: 'text-success' },
+            { label: 'Non traitées', value: stats.untouched, cls: 'text-warning' },
           ].map((s) => (
-            <Card key={s.label}>
-              <CardContent className="p-4 text-center">
-                <p className={`text-2xl font-bold ${s.cls}`}>{s.value}</p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-              </CardContent>
-            </Card>
+            <div
+              key={s.label}
+              className="rounded-2xl border border-border bg-card p-5"
+            >
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {s.label}
+              </p>
+              <p className={`font-display mt-2 text-3xl font-bold tracking-tight ${s.cls}`}>
+                {s.value}
+              </p>
+            </div>
           ))}
         </div>
 
+        {/* Legal note */}
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
+          <svg
+            className="mt-0.5 h-5 w-5 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          <div>
+            <b>Délai légal RGPD : 1 mois (30 jours)</b> à compter de la réception de la demande
+            (art. 12 §3 du RGPD), prolongeable de 2 mois pour les demandes complexes avec information
+            motivée du demandeur. Toute décision est horodatée et conservée au registre.
+          </div>
+        </div>
+
         {/* List */}
-        <Card>
-          <CardContent className="p-0">
-            {loading && requests.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">Chargement…</div>
-            ) : requests.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p className="text-lg font-medium">Aucune demande en attente</p>
-                <p className="text-sm mt-2">
-                  Aucun utilisateur n’a de demande de suppression RGPD en cours.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {requests.map((r) => (
-                  <div
-                    key={r.userId}
-                    onClick={() => openRequest(r.userId)}
-                    className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground truncate">
-                            {r.firstName} {r.lastName}
-                          </h3>
-                          <span className="px-2 py-0.5 text-xs rounded bg-muted text-muted-foreground">
-                            {r.role}
-                          </span>
-                          {r.overdue ? (
-                            <span className="px-2 py-0.5 text-xs rounded bg-red-100 text-red-700">
-                              Délai dépassé
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-800">
-                              {r.daysRemaining != null ? `${r.daysRemaining} j restants` : 'En attente'}
-                            </span>
-                          )}
-                          {r.processed && (
-                            <span className={`px-2 py-0.5 text-xs rounded ${outcomeColor(r.lastOutcome)}`}>
-                              {r.lastOutcome ? OUTCOME_LABEL[r.lastOutcome] ?? r.lastOutcome : 'Tracé'}
-                            </span>
-                          )}
+        <div className="rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+            <h2 className="font-display text-base font-bold text-foreground">Demandes reçues</h2>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+              {requests.length} résultat{requests.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          {loading && requests.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">Chargement…</div>
+          ) : requests.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <p className="text-lg font-medium text-foreground">Aucune demande en attente</p>
+              <p className="mt-2 text-sm">
+                Aucun utilisateur n’a de demande de suppression RGPD en cours.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted text-left">
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Demandeur
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Rôle
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Demandé le
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Échéance
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Statut
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Traçabilité
+                    </th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((r) => (
+                    <tr
+                      key={r.userId}
+                      onClick={() => openRequest(r.userId)}
+                      className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/50"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                            {initials(r.firstName, r.lastName)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground truncate">
+                              {r.firstName} {r.lastName}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">{r.email}</div>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{r.email}</p>
-                        <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                          <span>
-                            Demandé le{' '}
-                            {r.requestedAt ? new Date(r.requestedAt).toLocaleString('fr-FR') : '—'}
-                          </span>
-                          <span>
-                            Effacement prévu le{' '}
-                            {r.scheduledFor ? new Date(r.scheduledFor).toLocaleDateString('fr-FR') : '—'}
-                          </span>
-                          {r.processedCount > 0 && <span>{r.processedCount} trace(s)</span>}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                          {r.role}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 font-mono text-xs text-muted-foreground">
+                        {r.requestedAt ? new Date(r.requestedAt).toLocaleDateString('fr-FR') : '—'}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-mono text-xs text-muted-foreground">
+                          {r.scheduledFor
+                            ? new Date(r.scheduledFor).toLocaleDateString('fr-FR')
+                            : '—'}
                         </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openRequest(r.userId);
-                        }}
-                        className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90 whitespace-nowrap"
-                      >
-                        Traiter
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <p className="text-sm text-muted-foreground mt-3">
+                        {r.overdue ? (
+                          <span className="mt-1 inline-block rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                            En retard
+                          </span>
+                        ) : (
+                          r.daysRemaining != null && (
+                            <span className="mt-1 inline-block rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
+                              {r.daysRemaining} j restants
+                            </span>
+                          )
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {r.overdue ? (
+                          <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+                            Délai dépassé
+                          </span>
+                        ) : r.processed ? (
+                          <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
+                            Tracée
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
+                            En attente
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {r.processed ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${outcomeColor(
+                                r.lastOutcome,
+                              )}`}
+                            >
+                              {r.lastOutcome
+                                ? OUTCOME_LABEL[r.lastOutcome] ?? r.lastOutcome
+                                : 'Tracé'}
+                            </span>
+                            {r.processedCount > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {r.processedCount} trace(s)
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRequest(r.userId);
+                          }}
+                          className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                        >
+                          Traiter
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground">
           {requests.length} demande(s) en attente.
         </p>
       </div>
 
       {/* Detail / process modal */}
       {selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-border sticky top-0 bg-card z-10 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">
-                  {selected.firstName} {selected.lastName}
-                </h2>
-                <p className="text-sm text-muted-foreground">{selected.email}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card shadow-xl">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-card p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                  {initials(selected.firstName, selected.lastName)}
+                </div>
+                <div>
+                  <h2 className="font-display text-xl font-bold text-foreground">
+                    {selected.firstName} {selected.lastName}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{selected.email}</p>
+                </div>
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-muted-foreground hover:text-foreground text-2xl leading-none"
+                className="text-2xl leading-none text-muted-foreground hover:text-foreground"
                 aria-label="Fermer"
               >
                 ×
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="space-y-4 p-6">
               {detailLoading ? (
-                <p className="text-muted-foreground text-center py-6">Chargement…</p>
+                <p className="py-6 text-center text-muted-foreground">Chargement…</p>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-background rounded-lg border border-border">
+                  <div className="grid grid-cols-2 gap-4 rounded-2xl border border-border bg-muted/50 p-4">
                     <div>
-                      <p className="text-xs text-muted-foreground">Rôle</p>
-                      <p className="font-medium text-foreground">{selected.role}</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Rôle</p>
+                      <p className="mt-1 font-medium text-foreground">{selected.role}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Statut du compte</p>
-                      <p className="font-medium text-foreground">{selected.status}</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Statut du compte
+                      </p>
+                      <p className="mt-1 font-medium text-foreground">{selected.status}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Demandé le</p>
-                      <p className="font-medium text-foreground">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Demandé le
+                      </p>
+                      <p className="mt-1 font-medium text-foreground">
                         {selected.requestedAt
                           ? new Date(selected.requestedAt).toLocaleString('fr-FR')
                           : '—'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Effacement prévu</p>
-                      <p className={`font-medium ${selected.overdue ? 'text-red-600' : 'text-foreground'}`}>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Effacement prévu
+                      </p>
+                      <p
+                        className={`mt-1 font-medium ${
+                          selected.overdue ? 'text-destructive' : 'text-foreground'
+                        }`}
+                      >
                         {selected.scheduledFor
                           ? new Date(selected.scheduledFor).toLocaleString('fr-FR')
                           : '—'}
@@ -329,7 +448,7 @@ export default function ComplianceRequestsPage() {
                   </div>
 
                   {!selected.pending && (
-                    <div className="p-3 rounded-lg bg-muted text-sm text-muted-foreground">
+                    <div className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
                       Cet utilisateur n’a plus de demande de suppression active (elle a peut-être été
                       annulée). Les traces ci-dessous restent consultables.
                     </div>
@@ -337,25 +456,31 @@ export default function ComplianceRequestsPage() {
 
                   {/* History */}
                   <div>
-                    <h3 className="font-medium text-foreground mb-2">Historique de traitement</h3>
+                    <h3 className="mb-2 font-display font-semibold text-foreground">
+                      Historique de traitement
+                    </h3>
                     {selected.history?.length ? (
                       <div className="space-y-2">
                         {selected.history.map((h) => (
                           <div
                             key={h.id}
-                            className="p-3 rounded-lg bg-background border border-border"
+                            className="rounded-xl border border-border bg-card p-3"
                           >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className={`px-2 py-0.5 text-xs rounded ${outcomeColor(h.outcome)}`}>
+                            <div className="mb-1 flex items-center justify-between">
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${outcomeColor(
+                                  h.outcome,
+                                )}`}
+                              >
                                 {h.outcome ? OUTCOME_LABEL[h.outcome] ?? h.outcome : 'Trace'}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="font-mono text-xs text-muted-foreground">
                                 {new Date(h.createdAt).toLocaleString('fr-FR')}
                               </span>
                             </div>
                             {h.notes && <p className="text-sm text-foreground">{h.notes}</p>}
                             {h.processedBy && (
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="mt-1 font-mono text-xs text-muted-foreground">
                                 Par admin {h.processedBy.slice(0, 8)}…
                               </p>
                             )}
@@ -369,16 +494,18 @@ export default function ComplianceRequestsPage() {
 
                   {/* Process form */}
                   <div className="border-t border-border pt-4">
-                    <h3 className="font-medium text-foreground mb-2">Tracer une décision</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
+                    <h3 className="mb-2 font-display font-semibold text-foreground">
+                      Tracer une décision
+                    </h3>
+                    <p className="mb-3 text-xs text-muted-foreground">
                       Enregistre une décision horodatée au registre RGPD (aucune donnée n’est effacée
                       par cette action).
                     </p>
-                    <label className="block text-sm text-muted-foreground mb-1">Issue</label>
+                    <label className="mb-1 block text-sm text-muted-foreground">Issue</label>
                     <select
                       value={outcome}
                       onChange={(e) => setOutcome(e.target.value)}
-                      className="w-full px-3 py-2 border border-border rounded-md bg-card mb-3"
+                      className="mb-3 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
                     >
                       {OUTCOMES.map((o) => (
                         <option key={o.value} value={o.value}>
@@ -386,30 +513,32 @@ export default function ComplianceRequestsPage() {
                         </option>
                       ))}
                     </select>
-                    <label className="block text-sm text-muted-foreground mb-1">Notes (optionnel)</label>
+                    <label className="mb-1 block text-sm text-muted-foreground">
+                      Notes (optionnel)
+                    </label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       rows={3}
                       placeholder="Détails de la décision…"
-                      className="w-full px-3 py-2 border border-border rounded-md bg-card resize-y"
+                      className="w-full resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm"
                     />
                   </div>
                 </>
               )}
             </div>
 
-            <div className="p-6 border-t border-border flex justify-end gap-3 sticky bottom-0 bg-card">
+            <div className="sticky bottom-0 flex justify-end gap-3 border-t border-border bg-card p-6">
               <button
                 onClick={() => setSelected(null)}
-                className="px-4 py-2 text-muted-foreground hover:text-foreground"
+                className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
               >
                 Fermer
               </button>
               <button
                 onClick={process}
                 disabled={processing || detailLoading}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {processing ? 'Enregistrement…' : 'Enregistrer la trace'}
               </button>

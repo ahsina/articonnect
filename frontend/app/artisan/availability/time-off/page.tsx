@@ -10,9 +10,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  APPROVED: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-700',
+  PENDING: 'bg-warning/15 text-warning hover:bg-warning/15',
+  APPROVED: 'bg-success/10 text-success hover:bg-success/10',
+  REJECTED: 'bg-destructive/10 text-destructive hover:bg-destructive/10',
 };
 
 export default function TimeOffPage() {
@@ -130,12 +130,41 @@ export default function TimeOffPage() {
   );
   const pastTimeOffs = timeOffs.filter((t) => isPast(t.endDate));
 
+  const CalendarIcon = ({ muted }: { muted?: boolean }) => (
+    <div
+      className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+        muted ? 'bg-muted' : 'bg-primary/10'
+      }`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className={`w-5 h-5 ${muted ? 'text-muted-foreground' : 'text-primary'}`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M3 9h18M8 2v4M16 2v4" />
+      </svg>
+    </div>
+  );
+
+  const pendingCount = timeOffs.filter((to) => to.status === 'PENDING').length;
+  const approvedDaysThisYear = timeOffs
+    .filter((to) => to.status === 'APPROVED' && new Date(to.startDate).getFullYear() === new Date().getFullYear())
+    .reduce((sum, to) => sum + calculateDays(to.startDate, to.endDate), 0);
+  const nextAbsence = [...upcomingTimeOffs].sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+  )[0];
+
   return (
     <div className="p-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-display font-bold tracking-tight text-foreground">
             {t('artisan', 'timeOff') || 'Time Off'}
           </h1>
           <p className="text-muted-foreground">
@@ -143,33 +172,58 @@ export default function TimeOffPage() {
           </p>
         </div>
         <Button onClick={() => setShowModal(true)}>
-          + {t('artisan', 'requestTimeOff') || 'Request Time Off'}
+          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          {t('artisan', 'requestTimeOff') || 'Request Time Off'}
         </Button>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-muted-foreground">Jours posés ({new Date().getFullYear()})</div>
+            <div className="mt-2 text-3xl font-display font-bold tracking-tight text-foreground">{approvedDaysThisYear}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-muted-foreground">En attente</div>
+            <div className="mt-2 text-3xl font-display font-bold tracking-tight text-foreground">{pendingCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="p-5">
+            <div className="text-sm font-semibold text-muted-foreground">Prochaine absence</div>
+            <div className="mt-2 text-2xl font-display font-bold tracking-tight text-foreground">
+              {nextAbsence ? formatDate(nextAbsence.startDate) : '—'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Upcoming Time Off */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('artisan', 'upcomingTimeOff') || 'Upcoming & Current'}</CardTitle>
+      <Card className="mb-6 rounded-2xl shadow-sm">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="font-display">{t('artisan', 'upcomingTimeOff') || 'Upcoming & Current'}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {upcomingTimeOffs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {t('artisan', 'noUpcomingTimeOff') || 'No upcoming time off scheduled'}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-1">
               {upcomingTimeOffs.map((timeOff) => (
                 <div
                   key={timeOff.id}
-                  className="flex items-center justify-between p-4 bg-background rounded-lg"
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-accent transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
-                      
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <CalendarIcon />
+                    <div className="min-w-0">
+                      <div className="font-semibold text-foreground">
                         {formatDate(timeOff.startDate)} - {formatDate(timeOff.endDate)}
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -178,7 +232,7 @@ export default function TimeOffPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-shrink-0">
                     <Badge className={STATUS_COLORS[timeOff.status]}>{timeOff.status}</Badge>
                     {timeOff.status === 'PENDING' && (
                       <Button
@@ -199,23 +253,21 @@ export default function TimeOffPage() {
 
       {/* Past Time Off */}
       {pastTimeOffs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('artisan', 'pastTimeOff') || 'Past Time Off'}</CardTitle>
+        <Card className="rounded-2xl shadow-sm">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="font-display">{t('artisan', 'pastTimeOff') || 'Past Time Off'}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="pt-4">
+            <div className="space-y-1 opacity-70">
               {pastTimeOffs.map((timeOff) => (
                 <div
                   key={timeOff.id}
-                  className="flex items-center justify-between p-4 bg-background rounded-lg opacity-60"
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-accent transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-2xl">
-                      
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <CalendarIcon muted />
+                    <div className="min-w-0">
+                      <div className="font-semibold text-foreground">
                         {formatDate(timeOff.startDate)} - {formatDate(timeOff.endDate)}
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -234,10 +286,10 @@ export default function TimeOffPage() {
 
       {/* Request Time Off Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md rounded-2xl shadow-lg">
             <CardHeader>
-              <CardTitle>{t('artisan', 'requestTimeOff') || 'Request Time Off'}</CardTitle>
+              <CardTitle className="font-display">{t('artisan', 'requestTimeOff') || 'Request Time Off'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>

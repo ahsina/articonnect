@@ -160,7 +160,7 @@ export default function AvailabilityCalendarPage() {
     <div className="p-4 sm:p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-display font-bold tracking-tight text-foreground">
           {t('artisan', 'availabilityCalendar') || 'Availability Calendar'}
         </h1>
         <p className="text-muted-foreground">
@@ -169,33 +169,37 @@ export default function AvailabilityCalendarPage() {
       </div>
 
       {/* Calendar */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={handlePrevMonth}>
-              
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="border-b border-border">
+          <div className="flex items-center justify-between gap-3">
+            <Button variant="outline" size="icon" onClick={handlePrevMonth} aria-label="Mois précédent">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
             </Button>
-            <CardTitle>{formatMonthYear(currentMonth)}</CardTitle>
-            <Button variant="outline" onClick={handleNextMonth}>
-              
+            <CardTitle className="flex-1 text-center font-display">{formatMonthYear(currentMonth)}</CardTitle>
+            <Button variant="outline" size="icon" onClick={handleNextMonth} aria-label="Mois suivant">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {/* Days of week header */}
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1.5">
             {DAYS_OF_WEEK.map((day) => (
-              <div key={day} className="text-center text-xs sm:text-sm font-medium text-muted-foreground py-1 sm:py-2 truncate">
+              <div key={day} className="text-center text-[11px] sm:text-xs font-bold uppercase tracking-wide text-muted-foreground py-1 sm:py-2 truncate">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {getDaysInMonth().map((date, index) => {
               if (!date) {
-                return <div key={`empty-${index}`} className="h-16 sm:h-24 bg-background rounded-lg" />;
+                return <div key={`empty-${index}`} className="h-16 sm:h-24 bg-muted/40 rounded-xl border border-border" />;
               }
 
               const daySlots = getSlotsForDate(date);
@@ -206,26 +210,26 @@ export default function AvailabilityCalendarPage() {
                 <div
                   key={date.toISOString()}
                   onClick={() => !isPast(date) && handleDateClick(date)}
-                  className={`h-16 sm:h-24 p-1 sm:p-2 rounded-lg border transition-colors overflow-hidden ${
+                  className={`h-16 sm:h-24 p-1.5 sm:p-2 rounded-xl border flex flex-col gap-1 transition-colors overflow-hidden ${
                     isPast(date)
-                      ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                      ? 'bg-muted/40 text-muted-foreground border-border cursor-not-allowed'
                       : isToday(date)
-                        ? 'border-primary bg-primary/10 cursor-pointer hover:bg-primary/10'
+                        ? 'border-primary ring-1 ring-primary bg-card cursor-pointer hover:bg-accent'
                         : 'border-border bg-card cursor-pointer hover:bg-accent'
                   }`}
                 >
-                  <div className={`text-xs sm:text-sm font-medium ${isToday(date) ? 'text-primary' : ''}`}>
+                  <div className={`text-xs sm:text-sm font-bold ${isToday(date) ? 'text-foreground' : 'text-foreground'}`}>
                     {date.getDate()}
                   </div>
-                  <div className="mt-1 space-y-1">
+                  <div className="space-y-1">
                     {hasAvailable && (
-                      <div className="w-full h-1 bg-green-400 rounded" title="Available" />
+                      <div className="w-full h-1 bg-success rounded-full" title="Available" />
                     )}
                     {hasUnavailable && (
-                      <div className="w-full h-1 bg-red-400 rounded" title="Unavailable" />
+                      <div className="w-full h-1 bg-destructive rounded-full" title="Unavailable" />
                     )}
                     {daySlots.length > 0 && (
-                      <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                      <div className="text-[10px] sm:text-xs font-semibold text-muted-foreground truncate">
                         {daySlots.length} <span className="hidden sm:inline">slot(s)</span>
                       </div>
                     )}
@@ -236,13 +240,13 @@ export default function AvailabilityCalendarPage() {
           </div>
 
           {/* Legend */}
-          <div className="mt-4 flex gap-4 text-sm">
+          <div className="mt-4 flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-2 bg-green-400 rounded" />
+              <div className="w-3.5 h-2 bg-success rounded-full" />
               <span className="text-muted-foreground">{t('artisan', 'available') || 'Available'}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-2 bg-red-400 rounded" />
+              <div className="w-3.5 h-2 bg-destructive rounded-full" />
               <span className="text-muted-foreground">{t('artisan', 'unavailable') || 'Unavailable'}</span>
             </div>
           </div>
@@ -251,9 +255,9 @@ export default function AvailabilityCalendarPage() {
 
       {/* Selected Date Slots */}
       {selectedDate && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>
+        <Card className="mt-6 rounded-2xl shadow-sm">
+          <CardHeader className="border-b border-border">
+            <CardTitle className="font-display">
               {selectedDate.toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'long',
@@ -261,35 +265,38 @@ export default function AvailabilityCalendarPage() {
               })}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {getSlotsForDate(selectedDate).length === 0 ? (
               <p className="text-muted-foreground">
                 {t('artisan', 'noSlotsForDate') || 'No availability slots for this date'}
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {getSlotsForDate(selectedDate).map((slot) => (
                   <div
                     key={slot.id}
-                    className="flex items-center justify-between p-3 bg-background rounded-lg"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-accent transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <Badge
                         className={
                           slot.isAvailable
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-success/10 text-success hover:bg-success/10'
+                            : 'bg-destructive/10 text-destructive hover:bg-destructive/10'
                         }
                       >
+                        <span className={`w-1.5 h-1.5 rounded-full ${slot.isAvailable ? 'bg-success' : 'bg-destructive'}`} />
                         {slot.isAvailable ? 'Available' : 'Unavailable'}
                       </Badge>
-                      <span className="font-medium">
+                      <span className="font-semibold whitespace-nowrap">
                         {slot.startTime} - {slot.endTime}
                       </span>
-                      {slot.notes && <span className="text-sm text-muted-foreground">({slot.notes})</span>}
+                      {slot.notes && <span className="text-sm text-muted-foreground truncate">({slot.notes})</span>}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteSlot(slot.id)}>
-                      
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSlot(slot.id)} aria-label="Supprimer le créneau">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13h10l1-13" />
+                      </svg>
                     </Button>
                   </div>
                 ))}
@@ -301,10 +308,10 @@ export default function AvailabilityCalendarPage() {
 
       {/* Add Slot Modal */}
       {showModal && selectedDate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md rounded-2xl shadow-lg">
             <CardHeader>
-              <CardTitle>{t('artisan', 'addAvailability') || 'Add Availability'}</CardTitle>
+              <CardTitle className="font-display">{t('artisan', 'addAvailability') || 'Add Availability'}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {selectedDate.toLocaleDateString('en-US', {
                   weekday: 'long',

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api/client';
 import { Category } from '@/lib/api/marketplace';
-import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Settings, Ban, CheckCircle2, Trash2, RotateCcw } from 'lucide-react';
 
 interface CategoryForm {
@@ -189,23 +188,23 @@ export default function AdminCategoriesPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div className="mb-6 flex items-end justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Catégories produit</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-3xl font-display font-bold text-foreground">Catégories produit</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
               Créez, modifiez et activez/désactivez les catégories du marketplace.
             </p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={loadData}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-accent"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
             >
               <RotateCcw className="h-4 w-4" /> Rafraîchir
             </button>
             <button
               onClick={openCreate}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="h-4 w-4" /> Nouvelle catégorie
             </button>
@@ -214,7 +213,7 @@ export default function AdminCategoriesPage() {
 
         {/* Error banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-lg text-red-700 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-destructive">
             <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-4 font-medium">
               Fermer
@@ -223,140 +222,142 @@ export default function AdminCategoriesPage() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-3xl font-bold text-primary">{categories.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Actives</p>
-              <p className="text-3xl font-bold text-foreground">{activeCount}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Désactivées</p>
-              <p className="text-3xl font-bold text-foreground">
-                {categories.length - activeCount}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total</p>
+            <p className="mt-2 text-3xl font-display font-bold text-foreground">{categories.length}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Actives</p>
+            <p className="mt-2 text-3xl font-display font-bold text-success">{activeCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Désactivées</p>
+            <p className="mt-2 text-3xl font-display font-bold text-foreground">
+              {categories.length - activeCount}
+            </p>
+          </div>
         </div>
 
         {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="px-4 py-3 font-medium">Nom</th>
-                    <th className="px-4 py-3 font-medium">Slug</th>
-                    <th className="px-4 py-3 font-medium">Parent</th>
-                    <th className="px-4 py-3 font-medium">Produits</th>
-                    <th className="px-4 py-3 font-medium">Statut</th>
-                    <th className="px-4 py-3 font-medium text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categories.map((cat) => (
-                    <tr
-                      key={cat.id}
-                      className={`border-b border-border last:border-0 ${
-                        cat.active ? '' : 'opacity-60'
-                      }`}
-                    >
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-2 font-medium text-foreground">
-                          {cat.icon && <span>{cat.icon}</span>}
-                          {cat.name}
-                        </span>
-                        {cat.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {cat.description}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{cat.slug}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {parentName(cat.parentId) || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {cat._count?.products ?? 0}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-xs ${
-                            cat.active
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {cat.active ? 'Active' : 'Désactivée'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => openEdit(cat)}
-                            disabled={processingId === cat.id}
-                            className="p-2 text-foreground hover:bg-accent rounded-lg disabled:opacity-50"
-                            title="Modifier"
-                          >
-                            <Settings className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => toggleActive(cat)}
-                            disabled={processingId === cat.id}
-                            className="p-2 text-foreground hover:bg-accent rounded-lg disabled:opacity-50"
-                            title={cat.active ? 'Désactiver' : 'Activer'}
-                          >
-                            {cat.active ? (
-                              <Ban className="h-4 w-4" />
-                            ) : (
-                              <CheckCircle2 className="h-4 w-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => setToDelete(cat)}
-                            disabled={processingId === cat.id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+        <div className="rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+            <h2 className="font-display text-base font-bold text-foreground">Toutes les catégories</h2>
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              {categories.length} catégorie(s)
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted text-left">
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nom catégorie</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Slug</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Parent</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Produits</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Statut</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr
+                    key={cat.id}
+                    className={`border-b border-border last:border-0 hover:bg-muted/50 ${
+                      cat.active ? '' : 'opacity-60'
+                    }`}
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted text-lg">
+                          {cat.icon || '📦'}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {categories.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                        Aucune catégorie.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                        <div>
+                          <div className="font-semibold text-foreground">{cat.name}</div>
+                          {cat.description && (
+                            <div className="text-xs text-muted-foreground">{cat.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-xs text-muted-foreground">{cat.slug}</td>
+                    <td className="px-5 py-3.5 text-muted-foreground">
+                      {parentName(cat.parentId) || '—'}
+                    </td>
+                    <td className="px-5 py-3.5 text-muted-foreground">
+                      {cat._count?.products ?? 0}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          cat.active
+                            ? 'bg-success/10 text-success'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {cat.active ? 'Active' : 'Désactivée'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openEdit(cat)}
+                          disabled={processingId === cat.id}
+                          className="rounded-lg p-2 text-foreground hover:bg-muted disabled:opacity-50"
+                          title="Modifier"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => toggleActive(cat)}
+                          disabled={processingId === cat.id}
+                          className="rounded-lg p-2 text-foreground hover:bg-muted disabled:opacity-50"
+                          title={cat.active ? 'Désactiver' : 'Activer'}
+                        >
+                          {cat.active ? (
+                            <Ban className="h-4 w-4" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setToDelete(cat)}
+                          disabled={processingId === cat.id}
+                          className="rounded-lg p-2 text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {categories.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
+                      Aucune catégorie.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Create / Edit modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
+            <div className="border-b border-border px-6 py-4">
+              <h2 className="font-display text-lg font-bold text-foreground">
                 {editing ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
               </h2>
+            </div>
+            <div className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="mb-1 block text-sm font-medium text-foreground">
                     Nom *
                   </label>
                   <input
@@ -364,11 +365,11 @@ export default function AdminCategoriesPage() {
                     value={form.name}
                     onChange={(e) => onNameChange(e.target.value)}
                     placeholder="ex : Menuiserie"
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="h-10 w-full rounded-xl border border-border bg-card px-3 outline-none focus:border-foreground focus:ring-2 focus:ring-foreground/10"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="mb-1 block text-sm font-medium text-foreground">
                     Slug *
                   </label>
                   <input
@@ -379,22 +380,22 @@ export default function AdminCategoriesPage() {
                       setForm({ ...form, slug: slugify(e.target.value) });
                     }}
                     placeholder="ex : menuiserie"
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="h-10 w-full rounded-xl border border-border bg-card px-3 font-mono text-sm outline-none focus:border-foreground focus:ring-2 focus:ring-foreground/10"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="mb-1 block text-sm font-medium text-foreground">
                     Description
                   </label>
                   <textarea
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2 outline-none focus:border-foreground focus:ring-2 focus:ring-foreground/10"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="mb-1 block text-sm font-medium text-foreground">
                     Icône (emoji ou nom)
                   </label>
                   <input
@@ -402,18 +403,18 @@ export default function AdminCategoriesPage() {
                     value={form.icon}
                     onChange={(e) => setForm({ ...form, icon: e.target.value })}
                     placeholder="ex : 🔨"
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="h-10 w-full rounded-xl border border-border bg-card px-3 outline-none focus:border-foreground focus:ring-2 focus:ring-foreground/10"
                   />
                 </div>
                 {!editing && (
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="mb-1 block text-sm font-medium text-foreground">
                       Catégorie parente
                     </label>
                     <select
                       value={form.parentId}
                       onChange={(e) => setForm({ ...form, parentId: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-primary"
+                      className="h-10 w-full rounded-xl border border-border bg-card px-3 outline-none focus:border-foreground focus:ring-2 focus:ring-foreground/10"
                     >
                       <option value="">Aucune (catégorie racine)</option>
                       {topLevel.map((c) => (
@@ -425,21 +426,21 @@ export default function AdminCategoriesPage() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={() => {
                     setShowForm(false);
                     setEditing(null);
                     setForm(emptyForm);
                   }}
-                  className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
+                  className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={processingId === 'submit'}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                  className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {processingId === 'submit'
                     ? 'Enregistrement…'
@@ -456,16 +457,18 @@ export default function AdminCategoriesPage() {
       {/* Delete confirmation modal */}
       {toDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
+            <div className="border-b border-border px-6 py-4">
+              <h2 className="font-display text-lg font-bold text-foreground">
                 Supprimer la catégorie
               </h2>
-              <p className="text-muted-foreground mb-4">
-                Confirmer la suppression de <strong>{toDelete.name}</strong> ?
+            </div>
+            <div className="p-6">
+              <p className="mb-4 text-muted-foreground">
+                Confirmer la suppression de <strong className="text-foreground">{toDelete.name}</strong> ?
               </p>
               {(toDelete._count?.products ?? 0) > 0 && (
-                <div className="p-4 bg-amber-100 border border-amber-200 rounded-lg mb-4 text-amber-800 text-sm">
+                <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
                   Cette catégorie contient {toDelete._count?.products} produit(s). Elle
                   sera <strong>désactivée</strong> (et non supprimée) afin de préserver
                   l'historique des ventes.
@@ -474,14 +477,14 @@ export default function AdminCategoriesPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setToDelete(null)}
-                  className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-accent"
+                  className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={processingId === toDelete.id}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  className="rounded-xl border border-destructive/30 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-50"
                 >
                   {processingId === toDelete.id ? 'Suppression…' : 'Supprimer'}
                 </button>

@@ -15,6 +15,7 @@ import {
 import { employeeApi, InviteEmployeeDto } from '@/lib/api/employee';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { Plus, Users, UserCheck, Clock, ShieldCheck, Trash2, X } from 'lucide-react';
 
 const ROLE_COLORS: Record<string, string> = {
   OWNER: 'bg-purple-100 text-purple-700',
@@ -163,65 +164,69 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-6xl mx-auto">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
             {t('company', 'employees') || 'Employees'}
           </h1>
           <p className="text-muted-foreground">
             {t('company', 'manageTeam') || 'Manage your team members'}
           </p>
         </div>
-        <Button onClick={() => setShowInviteModal(true)}>
-          + {t('company', 'inviteEmployee') || 'Invite Employee'}
+        <Button className="w-full sm:w-auto shrink-0" onClick={() => setShowInviteModal(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t('company', 'inviteEmployee') || 'Invite Employee'}
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">{t('company', 'totalEmployees') || 'Total'}</div>
-            <div className="text-2xl font-bold text-foreground">{employees.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">
-              {t('company', 'activeEmployees') || 'Active'}
-            </div>
-            <div className="text-2xl font-bold text-foreground">
-              {employees.filter((e) => e.status === 'ACTIVE').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">
-              {t('company', 'pendingInvitations') || 'Pending'}
-            </div>
-            <div className="text-2xl font-bold text-foreground">
-              {employees.filter((e) => e.status === 'PENDING_INVITATION').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">{t('company', 'managers') || 'Managers'}</div>
-            <div className="text-2xl font-bold text-primary">
-              {employees.filter((e) => ['OWNER', 'MANAGER'].includes(e.role)).length}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <Users className="mb-3 h-5 w-5 text-muted-foreground" />
+          <div className="font-display text-2xl font-extrabold text-foreground">
+            {employees.length}
+          </div>
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('company', 'totalEmployees') || 'Total'}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <UserCheck className="mb-3 h-5 w-5 text-success" />
+          <div className="font-display text-2xl font-extrabold text-foreground">
+            {employees.filter((e) => e.status === 'ACTIVE').length}
+          </div>
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('company', 'activeEmployees') || 'Active'}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <Clock className="mb-3 h-5 w-5 text-warning" />
+          <div className="font-display text-2xl font-extrabold text-foreground">
+            {employees.filter((e) => e.status === 'PENDING_INVITATION').length}
+          </div>
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('company', 'pendingInvitations') || 'Pending'}
+          </div>
+        </div>
+        <div className="rounded-2xl bg-primary p-5 text-primary-foreground">
+          <ShieldCheck className="mb-3 h-5 w-5 opacity-80" />
+          <div className="font-display text-2xl font-extrabold">
+            {employees.filter((e) => ['OWNER', 'MANAGER'].includes(e.role)).length}
+          </div>
+          <div className="text-xs font-medium opacity-80">
+            {t('company', 'managers') || 'Managers'}
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-6">
+      <div className="mb-6 flex gap-2">
         <Button
           variant={filter === 'all' ? 'default' : 'outline'}
           size="sm"
+          className="rounded-full"
           onClick={() => setFilter('all')}
         >
           {t('common', 'all') || 'All'}
@@ -229,6 +234,7 @@ export default function EmployeesPage() {
         <Button
           variant={filter === 'ACTIVE' ? 'default' : 'outline'}
           size="sm"
+          className="rounded-full"
           onClick={() => setFilter('ACTIVE')}
         >
           {t('company', 'active') || 'Active'}
@@ -236,6 +242,7 @@ export default function EmployeesPage() {
         <Button
           variant={filter === 'PENDING_INVITATION' ? 'default' : 'outline'}
           size="sm"
+          className="rounded-full"
           onClick={() => setFilter('PENDING_INVITATION')}
         >
           {t('company', 'pending') || 'Pending'}
@@ -243,85 +250,101 @@ export default function EmployeesPage() {
       </div>
 
       {/* Employees List */}
-      <Card>
-        <CardContent className="p-0">
-          {filteredEmployees.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {t('company', 'noEmployeesFound') || 'No employees found'}
+      {filteredEmployees.length === 0 ? (
+        <Card className="rounded-2xl border-border">
+          <CardContent className="flex flex-col items-center py-14 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+              <Users className="h-7 w-7 text-muted-foreground" />
             </div>
-          ) : (
-            <div className="divide-y">
-              {filteredEmployees.map((employee) => (
-                <div key={employee.id} className="p-4 hover:bg-accent">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {employee.user?.firstName?.[0]}
-                        {employee.user?.lastName?.[0]}
-                      </div>
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {employee.user?.firstName} {employee.user?.lastName}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{employee.user?.email}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={ROLE_COLORS[employee.role]}>{employee.role}</Badge>
-                          <Badge className={STATUS_COLORS[employee.status]}>
-                            {employee.status.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {employee.paymentModel} • {employee.commissionRate}%
-                          </span>
-                        </div>
-                      </div>
+            <p className="text-muted-foreground">
+              {t('company', 'noEmployeesFound') || 'No employees found'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredEmployees.map((employee) => (
+            <Card key={employee.id} className="rounded-2xl border-border">
+              <CardContent className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted font-display text-lg font-bold text-foreground shrink-0">
+                      {employee.user?.firstName?.[0]}
+                      {employee.user?.lastName?.[0]}
                     </div>
-                    <div className="flex items-center gap-2">
-                      {employee.status === 'PENDING_INVITATION' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleResendInvitation(employee.id)}
-                        >
-                          {t('company', 'resend') || 'Resend'}
-                        </Button>
-                      )}
-                      {employee.role !== 'OWNER' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveEmployee(employee.id)}
-                        >
-                          
-                        </Button>
-                      )}
+                    <div className="min-w-0">
+                      <div className="font-display font-bold text-foreground">
+                        {employee.user?.firstName} {employee.user?.lastName}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{employee.user?.email}</div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Badge className={ROLE_COLORS[employee.role]}>{employee.role}</Badge>
+                        <Badge className={STATUS_COLORS[employee.status]}>
+                          {employee.status.replace('_', ' ')}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {employee.paymentModel} • {employee.commissionRate}%
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  {employee.specialties && employee.specialties.length > 0 && (
-                    <div className="mt-2 ml-16 flex gap-1 flex-wrap">
-                      {employee.specialties.map((spec) => (
-                        <Badge key={spec.id} variant="outline" className="text-xs">
-                          {spec.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {employee.status === 'PENDING_INVITATION' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() => handleResendInvitation(employee.id)}
+                      >
+                        {t('company', 'resend') || 'Resend'}
+                      </Button>
+                    )}
+                    {employee.role !== 'OWNER' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-xl text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveEmployee(employee.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                {employee.specialties && employee.specialties.length > 0 && (
+                  <div className="mt-3 ml-16 flex flex-wrap gap-1.5">
+                    {employee.specialties.map((spec) => (
+                      <Badge key={spec.id} variant="outline" className="text-xs">
+                        {spec.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>{t('company', 'inviteEmployee') || 'Invite Employee'}</CardTitle>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md rounded-2xl border-border">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="font-display text-lg font-bold">
+                {t('company', 'inviteEmployee') || 'Invite Employee'}
+              </CardTitle>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={t('common', 'cancel') || 'Cancel'}
+              >
+                <X className="h-5 w-5" />
+              </button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'email') || 'Email'} *
                 </label>
                 <Input
@@ -330,13 +353,13 @@ export default function EmployeesPage() {
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                   placeholder="employee@example.com"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1.5">
                   {t('company', 'emailNote') || 'User must already have an artisan account'}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'role') || 'Role'} *
                 </label>
                 <select
@@ -344,7 +367,7 @@ export default function EmployeesPage() {
                   onChange={(e) =>
                     setInviteForm({ ...inviteForm, role: e.target.value as EmployeeRole })
                   }
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="TECHNICIAN">{t('company', 'technician') || 'Technician'}</option>
                   <option value="SUPERVISOR">{t('company', 'supervisor') || 'Supervisor'}</option>
@@ -354,7 +377,7 @@ export default function EmployeesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   {t('company', 'paymentModel') || 'Payment Model'} *
                 </label>
                 <select
@@ -362,7 +385,7 @@ export default function EmployeesPage() {
                   onChange={(e) =>
                     setInviteForm({ ...inviteForm, paymentModel: e.target.value as PaymentModel })
                   }
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="COMMISSION">
                     {t('company', 'commission') || 'Commission Only'}
@@ -375,7 +398,7 @@ export default function EmployeesPage() {
               {(inviteForm.paymentModel === 'COMMISSION' ||
                 inviteForm.paymentModel === 'HYBRID') && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
                     {t('company', 'commissionRate') || 'Commission Rate (%)'} *
                   </label>
                   <Input
@@ -392,7 +415,7 @@ export default function EmployeesPage() {
 
               {(inviteForm.paymentModel === 'SALARY' || inviteForm.paymentModel === 'HYBRID') && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
                     {t('company', 'baseSalary') || 'Base Salary (€/month)'} *
                   </label>
                   <Input
@@ -406,7 +429,7 @@ export default function EmployeesPage() {
                 </div>
               )}
 
-              <div className="flex gap-2 justify-end pt-4">
+              <div className="flex gap-2 justify-end pt-2">
                 <Button variant="outline" onClick={() => setShowInviteModal(false)}>
                   {t('common', 'cancel') || 'Cancel'}
                 </Button>

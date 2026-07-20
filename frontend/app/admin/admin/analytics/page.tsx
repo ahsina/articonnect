@@ -109,77 +109,59 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground">
               {t('admin', 'detailedAnalytics')}
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-1.5 text-sm">
               {t('admin', 'platformInsights')}
             </p>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setDays(7)}
-              className={`px-4 py-2 rounded-lg ${
-                days === 7
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-foreground border'
-              }`}
-            >
-              {t('admin', 'lastDays').replace('{days}', '7')}
-            </button>
-            <button
-              onClick={() => setDays(30)}
-              className={`px-4 py-2 rounded-lg ${
-                days === 30
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-foreground border'
-              }`}
-            >
-              {t('admin', 'lastDays').replace('{days}', '30')}
-            </button>
-            <button
-              onClick={() => setDays(90)}
-              className={`px-4 py-2 rounded-lg ${
-                days === 90
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-foreground border'
-              }`}
-            >
-              {t('admin', 'lastDays').replace('{days}', '90')}
-            </button>
+          <div className="inline-flex gap-1 rounded-xl border border-border bg-muted p-1">
+            {[7, 30, 90].map((d) => (
+              <button
+                key={d}
+                onClick={() => setDays(d)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition ${
+                  days === d
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('admin', 'lastDays').replace('{days}', String(d))}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Revenue Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
           <MetricCard
             title={t('admin', 'revenueTotal')}
             value={`${(Number(metrics.revenue.total) || 0).toLocaleString('fr-FR')}€`}
             trend={metrics.revenue.growth}
-            color="green"
+            accent="success"
           />
           <MetricCard
             title={t('admin', 'thisMonth')}
             value={`${(Number(metrics.revenue.thisMonth) || 0).toLocaleString('fr-FR')}€`}
-            color="blue"
+            accent="blue"
           />
           <MetricCard
             title={t('admin', 'thisWeek')}
             value={`${(Number(metrics.revenue.thisWeek) || 0).toLocaleString('fr-FR')}€`}
-            color="purple"
           />
           <MetricCard
             title={t('admin', 'today')}
             value={`${(Number(metrics.revenue.today) || 0).toLocaleString('fr-FR')}€`}
-            color="yellow"
+            accent="warning"
           />
         </div>
 
         {/* Time Series Chart */}
-        <Card className="mb-8">
+        <Card className="mb-6 rounded-2xl border border-border bg-card">
           <CardHeader>
             <CardTitle>{t('adminAnalytics', 'evolutionPrefix')} ({days} {t('adminAnalytics', 'evolutionSuffix')})</CardTitle>
           </CardHeader>
@@ -222,9 +204,9 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Mission Status Pie Chart */}
-          <Card>
+          <Card className="rounded-2xl border border-border bg-card">
             <CardHeader>
               <CardTitle>{t('adminAnalytics', 'missionStatus')}</CardTitle>
             </CardHeader>
@@ -251,7 +233,7 @@ export default function AnalyticsPage() {
               <div className="mt-4 text-center">
                 <p className="text-sm text-muted-foreground">
                   {t('adminAnalytics', 'completionRate')}:{' '}
-                  <span className="font-bold text-green-600">
+                  <span className="font-bold text-success">
                     {metrics.missions.completionRate}%
                   </span>
                 </p>
@@ -266,7 +248,7 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* User Distribution */}
-          <Card>
+          <Card className="rounded-2xl border border-border bg-card">
             <CardHeader>
               <CardTitle>{t('adminAnalytics', 'userDistribution')}</CardTitle>
             </CardHeader>
@@ -313,9 +295,9 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Additional Metrics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Dispute Stats */}
-          <Card>
+          <Card className="rounded-2xl border border-border bg-card">
             <CardHeader>
               <CardTitle>{t('adminAnalytics', 'disputes')}</CardTitle>
             </CardHeader>
@@ -349,7 +331,7 @@ export default function AnalyticsPage() {
           </Card>
 
           {/* No-Show Stats */}
-          <Card>
+          <Card className="rounded-2xl border border-border bg-card">
             <CardHeader>
               <CardTitle>{t('adminAnalytics', 'noShows')}</CardTitle>
             </CardHeader>
@@ -377,7 +359,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Payment Stats */}
-        <Card className="mb-8">
+        <Card className="mb-6 rounded-2xl border border-border bg-card">
           <CardHeader>
             <CardTitle>{t('adminAnalytics', 'paymentStats')}</CardTitle>
           </CardHeader>
@@ -418,49 +400,49 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Top Artisans */}
-        <Card>
+        <Card className="rounded-2xl border border-border bg-card">
           <CardHeader>
             <CardTitle>{t('adminAnalytics', 'topArtisans')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4">{t('adminAnalytics', 'rank')}</th>
-                    <th className="text-left py-3 px-4">{t('adminAnalytics', 'name')}</th>
-                    <th className="text-center py-3 px-4">
+                  <tr className="bg-muted">
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('adminAnalytics', 'rank')}</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('adminAnalytics', 'name')}</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t('adminAnalytics', 'completedMissions')}
                     </th>
-                    <th className="text-center py-3 px-4">{t('adminAnalytics', 'rating')}</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('adminAnalytics', 'rating')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topArtisans.map((artisan, index) => (
-                    <tr key={artisan.id} className="border-b hover:bg-accent">
+                    <tr key={artisan.id} className="border-b border-border hover:bg-muted/50">
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${
+                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${
                             index === 0
-                              ? 'bg-amber-100 text-amber-800'
+                              ? 'bg-warning/10 text-warning'
                               : index === 1
                               ? 'bg-muted text-foreground'
                               : index === 2
-                              ? 'bg-amber-100 text-amber-800'
+                              ? 'bg-warning/10 text-warning'
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
                           {index + 1}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-medium">{artisan.name}</td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3 px-4 font-semibold text-foreground">{artisan.name}</td>
+                      <td className="py-3 px-4 text-center text-foreground">
                         {artisan.completedMissions}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span className="inline-flex items-center gap-1">
-                          <span className="text-foreground"></span>
-                          <span className="font-semibold">
+                          <span className="text-warning"></span>
+                          <span className="font-semibold text-foreground">
                             {(Number(artisan.rating) || 0).toFixed(1)}
                           </span>
                         </span>
@@ -481,37 +463,35 @@ function MetricCard({
   title,
   value,
   trend,
-  color = 'blue',
+  accent,
 }: {
   title: string;
   value: string;
   trend?: number;
-  color?: string;
+  accent?: 'success' | 'warning' | 'blue';
 }) {
   const { t } = useLanguage();
-  // Charte Uber : cartes KPI monochromes (plus d'aplats pastel).
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-card', green: 'bg-card', yellow: 'bg-card', purple: 'bg-card', red: 'bg-card',
+  const accentClasses: Record<string, string> = {
+    success: 'text-success',
+    warning: 'text-warning',
+    blue: 'text-blue-600',
   };
+  const valueColor = accent ? accentClasses[accent] : 'text-foreground';
 
   return (
-    <Card className={`${colorClasses[color]} border`}>
-      <CardContent className="p-6">
-        <p className="text-sm font-medium text-muted-foreground mb-2">{title}</p>
-        <p className="text-3xl font-bold text-foreground">{value}</p>
-        {trend !== undefined && (
-          <p
-            className={`text-sm mt-2 flex items-center gap-1 ${
-              trend >= 0 ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            <span>{trend >= 0 ? '' : ''}</span>
-            <span>
-              {(Number(Math.abs(trend)) || 0).toFixed(1)}% {t('adminAnalytics', 'vsLastMonth')}
-            </span>
-          </p>
-        )}
-      </CardContent>
-    </Card>
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className={`font-display text-3xl font-extrabold mt-2 ${valueColor}`}>{value}</p>
+      {trend !== undefined && (
+        <p
+          className={`text-xs font-semibold mt-1.5 ${
+            trend >= 0 ? 'text-success' : 'text-destructive'
+          }`}
+        >
+          {trend >= 0 ? '+' : '−'}
+          {(Number(Math.abs(trend)) || 0).toFixed(1)}% {t('adminAnalytics', 'vsLastMonth')}
+        </p>
+      )}
+    </div>
   );
 }

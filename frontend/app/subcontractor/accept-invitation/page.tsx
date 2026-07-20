@@ -142,7 +142,7 @@ function AcceptInvitationInner() {
       break;
 
     case 'no-token':
-      icon = <XCircle className="h-10 w-10 text-red-600" />;
+      icon = <XCircle className="h-10 w-10 text-destructive" />;
       title = t('subcontractor', 'invalidInvitation') || 'Lien invalide';
       description =
         t('subcontractor', 'noTokenHint') ||
@@ -159,7 +159,7 @@ function AcceptInvitationInner() {
       break;
 
     case 'success':
-      icon = <CheckCircle2 className="h-10 w-10 text-green-600" />;
+      icon = <CheckCircle2 className="h-10 w-10 text-success" />;
       title = t('subcontractor', 'invitationAccepted') || 'Invitation acceptée';
       description =
         t('subcontractor', 'invitationAcceptedHint') ||
@@ -176,7 +176,7 @@ function AcceptInvitationInner() {
       break;
 
     case 'already':
-      icon = <CheckCircle2 className="h-10 w-10 text-green-600" />;
+      icon = <CheckCircle2 className="h-10 w-10 text-success" />;
       title = t('subcontractor', 'invitationAlready') || 'Invitation déjà traitée';
       description =
         t('subcontractor', 'invitationAlreadyHint') ||
@@ -193,7 +193,7 @@ function AcceptInvitationInner() {
       break;
 
     case 'invalid':
-      icon = <XCircle className="h-10 w-10 text-red-600" />;
+      icon = <XCircle className="h-10 w-10 text-destructive" />;
       title = t('subcontractor', 'invitationInvalid') || 'Invitation invalide ou expirée';
       description =
         t('subcontractor', 'invitationInvalidHint') ||
@@ -211,7 +211,7 @@ function AcceptInvitationInner() {
 
     case 'error':
     default:
-      icon = <XCircle className="h-10 w-10 text-red-600" />;
+      icon = <XCircle className="h-10 w-10 text-destructive" />;
       title = t('common', 'error') || 'Une erreur est survenue';
       description =
         t('subcontractor', 'acceptError') ||
@@ -235,14 +235,15 @@ function AcceptInvitationInner() {
 
   return (
     <div className="min-h-screen bg-muted flex items-center justify-center p-4">
-      <Card className="w-full max-w-md rounded-2xl border-[#EDEDED]">
+      <Card className="w-full max-w-md rounded-2xl border-border shadow-sm">
         <CardHeader className="space-y-3">
+          <p className="text-center font-display text-lg font-extrabold text-foreground">Krafolt</p>
           <div className="flex items-center justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white border border-[#EDEDED] shadow-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
               {icon}
             </div>
           </div>
-          <CardTitle className="text-center text-xl">{title}</CardTitle>
+          <CardTitle className="text-center font-display text-xl">{title}</CardTitle>
           <CardDescription className="text-center">{description}</CardDescription>
         </CardHeader>
         {actions && <CardContent>{actions}</CardContent>}
