@@ -62,6 +62,22 @@ export class ArtisanService {
       if (dto[k] !== undefined) data[k] = dto[k];
     }
     if (dto.hourlyRate !== undefined) data.hourlyRate = dto.hourlyRate;
+
+    // Métiers (relation many-to-many `specialties`). Le formulaire peut envoyer soit des IDs
+    // (uuid) soit des noms de métiers. On RÉSOUT chaque valeur vers un enregistrement Specialty
+    // réellement existant AVANT de faire un `set`. Cela corrige la sauvegarde du profil : sans
+    // cette résolution, un `connect`/`set` sur des identifiants inexistants (slugs "plomberie",
+    // métiers non seedés) faisait échouer Prisma avec « Expected N records to be connected,
+    // found only 0 ». Les valeurs non résolues sont simplement ignorées (jamais d'erreur).
+    if (Array.isArray(dto.specialtyIds)) {
+      const wanted = dto.specialtyIds.map((v: any) => String(v));
+      const wantedIds = new Set(wanted);
+      const wantedNames = new Set(wanted.map((v: string) => v.trim().toLowerCase()));
+      const all = await this.prisma.specialty.findMany({ select: { id: true, name: true } });
+      const resolved = all.filter((s) => wantedIds.has(s.id) || wantedNames.has(s.name.trim().toLowerCase()));
+      data.specialties = { set: resolved.map((s) => ({ id: s.id })) };
+    }
+
     const updated = await this.prisma.artisanProfile.update({ where: { id: p.id }, data });
     return { ...updated, hourlyRate: updated.hourlyRate != null ? Number(updated.hourlyRate) : undefined, rating: Number(updated.rating ?? 0) };
   }

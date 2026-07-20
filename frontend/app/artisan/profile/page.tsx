@@ -9,7 +9,44 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { artisanApi, ArtisanProfile, UpdateArtisanProfileDto, Specialty } from '@/lib/api/artisan';
+import { specialtyApi } from '@/lib/api/specialty';
 import { userApi } from '@/lib/api/user';
+
+// #10 — Le numéro d'entreprise dépend du PAYS de la société (le « SIRET » n'existe qu'en France).
+// Libellé + exemple + validation s'adaptent au pays choisi (LU / FR / BE). Le back déduit le pays
+// à partir du format du numéro et le stocke (businessCountry + siret/businessRegistrationNumber).
+const COMPANY_NUMBER_META: Record<
+  'LU' | 'FR' | 'BE',
+  { label: string; placeholder: string; hint: string; test: (v: string) => boolean }
+> = {
+  LU: {
+    label: "Matricule / N° RCS",
+    placeholder: 'B123456',
+    hint: 'Luxembourg : matricule RCS (une lettre suivie de 5 à 7 chiffres, ex. B123456).',
+    test: (v) => /^[A-Za-z]\d{5,7}$/.test(v.replace(/\s/g, '')),
+  },
+  FR: {
+    label: 'SIRET',
+    placeholder: '123 456 789 00012',
+    hint: 'France : numéro SIRET à 14 chiffres.',
+    test: (v) => /^\d{14}$/.test(v.replace(/\s/g, '')),
+  },
+  BE: {
+    label: 'N° BCE / KBO',
+    placeholder: '0123 456 789',
+    hint: 'Belgique : numéro BCE/KBO à 10 chiffres.',
+    test: (v) => /^\d{10}$/.test(v.replace(/\s/g, '')),
+  },
+};
+
+// Libellé du numéro d'entreprise dans la fiche existante, d'après le pays enregistré.
+function companyNumberLabel(country?: string): string {
+  const c = (country || '').toUpperCase();
+  if (c === 'FR' || c === 'FRANCE') return 'SIRET';
+  if (c === 'BE' || c === 'BELGIUM' || c === 'BELGIQUE') return 'N° BCE / KBO';
+  if (c === 'LU' || c === 'LUXEMBOURG') return 'Matricule / N° RCS';
+  return "Numéro d'entreprise";
+}
 import { useToast } from '@/hooks/use-toast';
 import { translateBadgeType } from '@/lib/utils/enum-translations';
 
@@ -38,6 +75,7 @@ function ArtisanProfileContent() {
   const [setupForm, setSetupForm] = useState({
     companyName: '',
     siret: '',
+    businessCountry: 'LU' as 'LU' | 'FR' | 'BE',
     description: '',
     specialties: [] as string[],
     phone: '',
@@ -49,18 +87,14 @@ function ArtisanProfileContent() {
     hourlyRate: '',
   });
 
-  const SPECIALTIES = [
-    { id: 'plomberie', name: t('artisan', 'plumbing') || 'Plumbing', icon: '' },
-    { id: 'electricite', name: t('artisan', 'electricity') || 'Electrical', icon: '' },
-    { id: 'peinture', name: t('artisan', 'painting') || 'Painting', icon: '' },
-    { id: 'menuiserie', name: t('artisan', 'carpentry') || 'Carpentry', icon: '' },
-    { id: 'maconnerie', name: t('artisan', 'masonry') || 'Masonry', icon: '' },
-    { id: 'jardinage', name: t('artisan', 'gardening') || 'Gardening', icon: '' },
-    { id: 'climatisation', name: t('artisan', 'airConditioning') || 'HVAC', icon: '' },
-    { id: 'serrurerie', name: t('artisan', 'locksmith') || 'Locksmith', icon: '' },
-  ];
+  // #11 — Les métiers proposés proviennent des VRAIS enregistrements Specialty (UUID réels).
+  // Auparavant le formulaire envoyait des slugs codés en dur ("plomberie", "maconnerie"…) qui ne
+  // correspondaient à aucun enregistrement → `connect` Prisma échouait (« Expected N records to be
+  // connected, found only 0 »). On charge donc la liste réelle et on envoie de vrais UUID.
+  const [availableSpecialties, setAvailableSpecialties] = useState<Specialty[]>([]);
 
   useEffect(() => {
+    loadSpecialties();
     if (!isSetup) {
       loadProfile();
       loadBadges();
@@ -68,6 +102,16 @@ function ArtisanProfileContent() {
       setLoading(false);
     }
   }, [isSetup]);
+
+  const loadSpecialties = async () => {
+    try {
+      const data = await specialtyApi.getAll();
+      // On écarte les enregistrements de test (« Spec 1782… ») pour ne proposer que de vrais métiers.
+      setAvailableSpecialties((data || []).filter((s) => !/^spec\s*\d+$/i.test(s.name)));
+    } catch (error) {
+      console.error('Error loading specialties:', error);
+    }
+  };
 
   const loadBadges = async () => {
     try {
@@ -173,8 +217,15 @@ function ArtisanProfileContent() {
     e.preventDefault();
     setError('');
 
+    const numberMeta = COMPANY_NUMBER_META[setupForm.businessCountry] || COMPANY_NUMBER_META.LU;
+
     if (!setupForm.companyName || !setupForm.siret) {
-      setError(t('artisan', 'companyRequired') || 'Company name and SIRET are required');
+      setError("Le nom de la société et le numéro d'entreprise sont obligatoires");
+      return;
+    }
+
+    if (!numberMeta.test(setupForm.siret)) {
+      setError(`Numéro d'entreprise invalide. ${numberMeta.hint}`);
       return;
     }
 
@@ -206,7 +257,7 @@ function ArtisanProfileContent() {
 
       await userApi.createArtisanProfile({
         companyName: setupForm.companyName,
-        siret: setupForm.siret,
+        siret: setupForm.siret.replace(/\s/g, ''),
         description: setupForm.description || undefined,
         baseAddress,
         latitude: coords.lat,
@@ -285,17 +336,36 @@ function ArtisanProfileContent() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      {t('artisan', 'siret') || 'SIRET / Business ID'} *
+                      Pays de la société *
+                    </label>
+                    <select
+                      value={setupForm.businessCountry}
+                      onChange={(e) =>
+                        setSetupForm({ ...setupForm, businessCountry: e.target.value as 'LU' | 'FR' | 'BE' })
+                      }
+                      className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="LU">Luxembourg</option>
+                      <option value="FR">France</option>
+                      <option value="BE">Belgique</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      {COMPANY_NUMBER_META[setupForm.businessCountry].label} *
                     </label>
                     <Input
                       value={setupForm.siret}
                       onChange={(e) => setSetupForm({ ...setupForm, siret: e.target.value })}
-                      placeholder="123 456 789 00012"
+                      placeholder={COMPANY_NUMBER_META[setupForm.businessCountry].placeholder}
                       required
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {COMPANY_NUMBER_META[setupForm.businessCountry].hint}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
@@ -330,23 +400,29 @@ function ArtisanProfileContent() {
                 <CardTitle>{t('artisan', 'specialties') || 'Specialties'} *</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {SPECIALTIES.map((specialty) => (
-                    <button
-                      key={specialty.id}
-                      type="button"
-                      onClick={() => handleSpecialtyToggle(specialty.id)}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        setupForm.specialties.includes(specialty.id)
-                          ? 'border-blue-600 bg-primary/10'
-                          : 'border-border hover:border-border'
-                      }`}
-                    >
-                      <TradeIcon name={specialty.name} className="mb-2 h-7 w-7" />
-                      <div className="text-sm font-medium text-foreground">{specialty.name}</div>
-                    </button>
-                  ))}
-                </div>
+                {availableSpecialties.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">
+                    {t('common', 'loading') || 'Chargement...'}
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {availableSpecialties.map((specialty) => (
+                      <button
+                        key={specialty.id}
+                        type="button"
+                        onClick={() => handleSpecialtyToggle(specialty.id)}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          setupForm.specialties.includes(specialty.id)
+                            ? 'border-blue-600 bg-primary/10'
+                            : 'border-border hover:border-border'
+                        }`}
+                      >
+                        <TradeIcon name={specialty.name} className="mb-2 h-7 w-7" />
+                        <div className="text-sm font-medium text-foreground">{specialty.name}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -910,6 +986,47 @@ function ArtisanProfileContent() {
               </div>
             </div>
 
+            {/* Métiers (#11) — éditables et persistés via PUT /artisan/profile (specialtyIds réels) */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                {t('artisan', 'specialties') || 'Métiers'}
+              </label>
+              {availableSpecialties.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t('common', 'loading') || 'Chargement...'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {availableSpecialties.map((specialty) => {
+                    const selected = (editForm.specialtyIds || []).includes(specialty.id);
+                    return (
+                      <button
+                        key={specialty.id}
+                        type="button"
+                        onClick={() =>
+                          setEditForm((prev) => {
+                            const cur = prev.specialtyIds || [];
+                            return {
+                              ...prev,
+                              specialtyIds: cur.includes(specialty.id)
+                                ? cur.filter((id) => id !== specialty.id)
+                                : [...cur, specialty.id],
+                            };
+                          })
+                        }
+                        className={`p-3 rounded-lg border-2 transition-all ${
+                          selected ? 'border-blue-600 bg-primary/10' : 'border-border hover:border-border'
+                        }`}
+                      >
+                        <TradeIcon name={specialty.name} className="mb-1 h-6 w-6" />
+                        <div className="text-sm font-medium text-foreground">{specialty.name}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end pt-4 border-t">
               <Button onClick={handleSave} disabled={saving}>
                 {saving
@@ -935,7 +1052,7 @@ function ArtisanProfileContent() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="p-4 bg-background rounded-lg">
                   <div className="text-sm text-muted-foreground">
-                    {t('artisan', 'siret') || 'SIRET Number'}
+                    {companyNumberLabel(profile.businessCountry)}
                   </div>
                   <div className="font-mono font-medium">{profile.siret}</div>
                 </div>

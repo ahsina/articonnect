@@ -24,12 +24,43 @@ interface ProductFormProps {
 
 const STATUSES: ProductStatus[] = ['DRAFT', 'ACTIVE', 'INACTIVE', 'SOLD_OUT'];
 
+// Types d'image réellement acceptés par le backend (détection par magic bytes côté serveur).
+// On les valide AUSSI côté client pour donner un message clair AVANT l'appel réseau et éviter
+// que l'utilisateur ne choisisse un SVG / HEIC (photo iPhone) qui serait rejeté par le serveur.
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ACCEPTED_IMAGE_ACCEPT = ACCEPTED_IMAGE_TYPES.join(',');
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 Mo (aligné sur S3Service.maxFileSizes.image)
+
+/**
+ * Aplati une arborescence de catégories (racines + sous-catégories) en une liste plate,
+ * dédupliquée par id et triée par nom. Robuste que le backend renvoie une liste plate
+ * (findAll) OU un arbre imbriqué (getTree) : dans les deux cas TOUTES les catégories
+ * (pas seulement les racines) sont proposées dans le sélecteur.
+ */
+function flattenCategories(categories: Category[]): Category[] {
+  const seen = new Map<string, Category>();
+  const walk = (list?: Category[]) => {
+    for (const c of list || []) {
+      if (c && c.id && !seen.has(c.id)) seen.set(c.id, c);
+      if (c?.children?.length) walk(c.children);
+    }
+  };
+  walk(categories);
+  return Array.from(seen.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }),
+  );
+}
+
 export default function ProductForm({ product, categories, onClose, onSaved }: ProductFormProps) {
   const { t } = useLanguage();
   const isEdit = !!product;
 
+  // Liste plate, dédupliquée et triée de TOUTES les catégories (racines + sous-catégories).
+  const categoryOptions = flattenCategories(categories);
+
   // Le backend renvoie categoryId (uuid). Le champ `category` du DTO accepte id OU slug.
-  const initialCategory = product?.categoryId || product?.category || categories[0]?.id || '';
+  const initialCategory =
+    product?.categoryId || product?.category || categoryOptions[0]?.id || '';
 
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
@@ -57,6 +88,23 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+
+    // Validation client AVANT l'appel réseau : type réellement accepté + taille.
+    // Donne un message clair (français) plutôt qu'un échec serveur opaque, notamment pour
+    // les SVG / HEIC (photos iPhone) que le backend rejette (détection par magic bytes).
+    for (const file of Array.from(files)) {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setError(
+          `Format non pris en charge (${file.name}). Formats acceptés : JPEG, PNG, WebP ou GIF.`,
+        );
+        return;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        setError(`Image trop volumineuse (${file.name}). Taille maximale : 5 Mo.`);
+        return;
+      }
+    }
+
     setUploading(true);
     setError(null);
     try {
@@ -66,8 +114,14 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
         uploaded.push(url);
       }
       setImages((prev) => [...prev, ...uploaded]);
-    } catch (e) {
-      setError(t('artisan', 'uploadError') || "Échec de l'upload de la photo");
+    } catch (e: any) {
+      // Remonte le motif exact renvoyé par le backend (ex : type non autorisé, antivirus)
+      // au lieu d'un message générique noyant la cause.
+      const msg = e?.response?.data?.message;
+      setError(
+        (Array.isArray(msg) ? msg.join(', ') : msg) ||
+          "Échec de l'envoi de la photo. Réessayez avec une image JPEG, PNG, WebP ou GIF (max 5 Mo).",
+      );
     } finally {
       setUploading(false);
     }
@@ -196,8 +250,8 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
                 onChange={(e) => setCategory(e.target.value)}
                 className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                {categories.length === 0 && <option value="">—</option>}
-                {categories.map((c) => (
+                {categoryOptions.length === 0 && <option value="">—</option>}
+                {categoryOptions.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -243,7 +297,7 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
                 <span className="text-[10px]">{t('artisan', 'upload') || 'Uploader'}</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={ACCEPTED_IMAGE_ACCEPT}
                   multiple
                   className="hidden"
                   disabled={uploading}

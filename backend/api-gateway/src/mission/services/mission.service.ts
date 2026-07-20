@@ -443,6 +443,14 @@ export class MissionService {
   ) {
     // Missions OUVERTES (non assignées) découvrables : PENDING **et** NEGOTIATING (une mission avec
     // déjà une offre reste ouverte à d'autres offres — cf. offres comparables).
+    //
+    // ⚠️ IMPORTANT (bug rayon) : le filtre distance est fait EN JS (Haversine), donc on doit ramener
+    // TOUTES les missions ouvertes candidates AVANT de filtrer par rayon. Un `take` bas appliqué ici
+    // (ex. 50) + `orderBy createdAt desc` couperait les missions les plus ANCIENNES : si >50 missions
+    // ouvertes existent, des chantiers proches mais anciens ne seraient JAMAIS récupérés, donc jamais
+    // affichés — quel que soit le rayon. On borne donc haut (garde-fou payload) et on filtre ensuite.
+    const CANDIDATE_CAP = 1000; // garde-fou requête (le volume de missions ouvertes est intrinsèquement borné)
+    const RESULT_CAP = 200; // garde-fou payload après filtrage rayon (généreux : toutes les missions du rayon visibles)
     const missions = await this.prisma.mission.findMany({
       where: {
         status: { in: [MissionStatus.PENDING, MissionStatus.NEGOTIATING] },
@@ -468,14 +476,14 @@ export class MissionService {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: CANDIDATE_CAP,
     });
 
     // Si l'artisan n'a pas de géoloc utilisable, on renvoie les missions ouvertes récentes
     // (mieux vaut voir les missions que d'avoir une liste vide → l'artisan ne peut plus offrir).
     const hasLocation = !!latitude && !!longitude && !(latitude === 0 && longitude === 0);
     if (!hasLocation) {
-      return missions.map((m) => this.enrichMissionForDiscovery(m, null));
+      return missions.slice(0, RESULT_CAP).map((m) => this.enrichMissionForDiscovery(m, null));
     }
 
     const filtered = missions.filter((mission) => {
@@ -483,8 +491,10 @@ export class MissionService {
       return this.calculateDistance(latitude, longitude, mission.latitude, mission.longitude) <= radiusKm;
     });
 
-    // Fallback : si le rayon exclut tout, on renvoie quand même les missions ouvertes récentes.
-    const result = filtered.length > 0 ? filtered : missions;
+    // On RESPECTE le rayon : pas de fallback « tout renvoyer » (il faisait apparaître des missions à
+    // 300 km sur un rayon de 5 km, et cassait la monotonie « élargir le rayon = plus de missions »).
+    // Une liste vide est légitime — le front affiche un état vide avec un CTA « élargir le rayon ».
+    const result = filtered.slice(0, RESULT_CAP);
     // Ces missions sont OUVERTES (non attribuées, non payées) : on n'expose que la zone approximative
     // (ville + lat/lng arrondis). L'adresse exacte n'est révélée à l'artisan assigné qu'après escrow.
     // distanceKm est calculé sur la position EXACTE (avant floutage) puis la localisation est approximée.

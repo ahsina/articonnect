@@ -129,7 +129,7 @@ export default function ArtisanShopPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="outline" onClick={() => router.push('/artisan/products/shipping')}>
                 <Truck className="h-4 w-4 mr-1" />
-                {t('artisan', 'shipping') || 'Livraison'}
+                Livraison
               </Button>
               <Button
                 onClick={() => {

@@ -207,8 +207,9 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
                 <p className="text-sm font-medium truncate">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
-              {/* Cloche notifications (desktop / sidebar déployée) */}
-              <NotificationBell />
+              {/* Cloche notifications (desktop / sidebar déployée) — sidebar étroite À GAUCHE :
+                  le panneau doit s'ouvrir vers la DROITE (align="left") pour ne pas déborder hors écran. */}
+              <NotificationBell align="left" />
             </div>
           </div>
         )}

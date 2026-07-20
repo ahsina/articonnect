@@ -57,7 +57,14 @@ function getNotificationVisual(type: string): NotifVisual {
   return NOTIFICATION_VISUALS[type] || DEFAULT_VISUAL;
 }
 
-export function NotificationBell() {
+// `align` = bord d'ancrage du panneau par rapport à la cloche :
+//  - 'right' (défaut) : le panneau s'ouvre vers la GAUCHE (bord droit aligné). Correct depuis une
+//    top-bar/Navbar où la cloche est à DROITE de l'écran (client, Navbar, top-bar mobile artisan).
+//  - 'left' : le panneau s'ouvre vers la DROITE (bord gauche aligné). Nécessaire depuis la SIDEBAR
+//    artisan (cloche à gauche/étroite) : avec 'right', un panneau de 384px déborderait hors écran.
+// La largeur est bornée par la fenêtre (jamais plus large que le viewport) et la hauteur est plafonnée
+// au viewport avec scroll interne — robuste quel que soit le contexte (sidebar étroite ou top-bar).
+export function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' } = {}) {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -147,11 +154,11 @@ export function NotificationBell() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-full max-w-[90vw] sm:w-96 bg-card rounded-lg shadow-xl border border-border z-50"
+          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} mt-2 w-[min(24rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[85vh] flex flex-col bg-card rounded-lg shadow-xl border border-border z-50`}
           role="dialog"
           aria-label={t('notificationBell', 'panelLabel') || 'Panneau de notifications'}
         >
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-border">
             <h3 className="text-lg font-semibold text-foreground">{t('notificationBell', 'notifications') || 'Notifications'}</h3>
             {unreadCount > 0 && (
               <button
@@ -163,7 +170,7 @@ export function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {loading ? (
               <NotificationSkeleton />
             ) : notifications.length === 0 ? (
@@ -248,7 +255,7 @@ export function NotificationBell() {
           </div>
 
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-border text-center">
+            <div className="flex-shrink-0 p-3 border-t border-border text-center">
               <button
                 onClick={() => {
                   setIsOpen(false);
