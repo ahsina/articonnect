@@ -391,15 +391,31 @@ export class MissionService {
       throw new NotFoundException('Mission introuvable');
     }
 
-    if (mission.status !== MissionStatus.PENDING) {
+    // « LE CLIENT CHOISIT » : un artisan ne peut PAS s'auto-assigner une mission OUVERTE.
+    // Sur une mission ouverte (PENDING / NEGOTIATING, non attribuée), l'artisan doit FAIRE UNE OFFRE
+    // (POST /missions/:id/negotiations) ; le client compare les offres reçues et retient celle qu'il
+    // veut (PUT /missions/negotiations/:id/accept). acceptMission ne reste légitime QUE si le client a
+    // DÉJÀ attribué cette mission à cet artisan (mission.artisanId === artisanId) — attribution directe.
+    if (mission.artisanId !== artisanId) {
+      throw new ForbiddenException({
+        message:
+          "Vous ne pouvez pas vous attribuer cette mission. Faites une offre : le client compare les offres reçues et choisit la sienne.",
+        code: 'OPEN_MISSION_MAKE_OFFER',
+      });
+    }
+
+    // Mission déjà attribuée à cet artisan par le client : on ne confirme que depuis un état encore
+    // ouvert (pas une mission déjà en cours, terminée ou annulée).
+    const acceptableStatuses: MissionStatus[] = [MissionStatus.PENDING, MissionStatus.NEGOTIATING];
+    if (!acceptableStatuses.includes(mission.status)) {
       throw new BadRequestException('Cette mission n\'est plus disponible');
     }
 
-    // ATOMIQUE (anti-race) : la mission n'est attribuée que si elle est ENCORE PENDING au moment de
-    // l'update. Deux artisans qui acceptent en parallèle -> un seul gagne (count===1), l'autre échoue.
+    // ATOMIQUE (anti-race) : la confirmation ne s'applique que si la mission est ENCORE attribuée à cet
+    // artisan ET dans un état ouvert au moment de l'update. Un changement concurrent -> count===0 -> 400.
     const claimed = await this.prisma.mission.updateMany({
-      where: { id: missionId, status: MissionStatus.PENDING },
-      data: { artisanId, status: MissionStatus.NEGOTIATING },
+      where: { id: missionId, artisanId, status: { in: acceptableStatuses } },
+      data: { status: MissionStatus.NEGOTIATING },
     });
     if (claimed.count === 0) {
       throw new BadRequestException('Cette mission n\'est plus disponible');

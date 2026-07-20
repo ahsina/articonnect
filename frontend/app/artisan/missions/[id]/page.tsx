@@ -136,6 +136,9 @@ export default function MissionDetailPage() {
   });
   // Offre tout juste envoyée : sert à afficher l'écran de confirmation (statut + expiration réels).
   const [sentOffer, setSentOffer] = useState<Negotiation | null>(null);
+  // Offre en cours de MODIFICATION (id) : si défini, le formulaire édite une offre existante (PATCH)
+  // au lieu d'en créer une nouvelle (POST). Réutilise le même formulaire d'offre.
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string>('');
 
@@ -371,8 +374,7 @@ export default function MissionDetailPage() {
 
     setNegotiationLoading(true);
     try {
-      const response = await apiClient.post(`/missions/${missionId}/negotiations`, {
-        missionId,
+      const payload = {
         proposedPrice: parseFloat(negotiationForm.proposedPrice),
         laborCost: negotiationForm.laborCost ? parseFloat(negotiationForm.laborCost) : undefined,
         materialCost: negotiationForm.materialCost ? parseFloat(negotiationForm.materialCost) : undefined,
@@ -380,15 +382,22 @@ export default function MissionDetailPage() {
         availability: resolvedAvailability || undefined,
         estimatedDuration: negotiationForm.estimatedDuration || undefined,
         message: negotiationForm.message || undefined,
-      });
+      };
+      // MODIFICATION d'une offre existante (PATCH) vs nouvelle offre (POST).
+      const response = editingOfferId
+        ? await apiClient.patch(`/missions/negotiations/${editingOfferId}`, payload)
+        : await apiClient.post(`/missions/${missionId}/negotiations`, { missionId, ...payload });
       toast({
         title: t('common', 'success') || 'Success',
-        description: t('negotiations', 'offerSent') || 'Offre envoyée',
+        description: editingOfferId
+          ? t('offers', 'offerUpdated') || 'Offre mise à jour'
+          : t('negotiations', 'offerSent') || 'Offre envoyée',
         variant: 'success',
       });
       setShowNegotiationForm(false);
-      // Confirmation claire : on garde une trace de l'offre envoyée (statut + expiresAt réels).
+      // Confirmation claire : on garde une trace de l'offre (statut + expiresAt réels).
       setSentOffer(response.data ?? null);
+      setEditingOfferId(null);
       setNegotiationForm({
         proposedPrice: '',
         laborCost: '',
@@ -401,15 +410,38 @@ export default function MissionDetailPage() {
       });
       loadMission();
     } catch (error) {
-      console.error('Error creating negotiation:', error);
+      console.error('Error submitting negotiation:', error);
+      const backendMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast({
         title: t('common', 'error') || 'Error',
-        description: t('negotiations', 'sendError') || 'Erreur lors de l\'envoi',
+        description: backendMsg || t('negotiations', 'sendError') || 'Erreur lors de l\'envoi',
         variant: 'destructive',
       });
     } finally {
       setNegotiationLoading(false);
     }
+  };
+
+  // Pré-remplit le formulaire d'offre avec une offre existante et l'ouvre en mode MODIFICATION.
+  const handleEditOffer = (neg: Negotiation) => {
+    // Presets connus du sélecteur de disponibilité ; toute autre valeur -> saisie « date précise ».
+    const availPresets = ['Dès demain matin', 'Sous 48h', 'Cette semaine', 'À convenir'];
+    const av = neg.availability || '';
+    const isPreset = availPresets.includes(av);
+    setNegotiationForm({
+      proposedPrice: neg.proposedPrice != null ? String(neg.proposedPrice) : '',
+      laborCost: neg.laborCost != null ? String(neg.laborCost) : '',
+      materialCost: neg.materialCost != null ? String(neg.materialCost) : '',
+      travelCost: neg.travelCost != null ? String(neg.travelCost) : '',
+      availability: av ? (isPreset ? av : '__custom__') : '',
+      availabilityCustom: av && !isPreset ? av : '',
+      estimatedDuration: neg.estimatedDuration || '',
+      message: neg.message || '',
+    });
+    setEditingOfferId(neg.id);
+    setSentOffer(null);
+    setShowNegotiationForm(true);
+    setTimeout(() => document.getElementById('offre-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
   const handleAcceptNegotiation = async (negotiationId: string) => {
@@ -1129,6 +1161,22 @@ export default function MissionDetailPage() {
                               </p>
                             )}
 
+                            {/* Modifier MON offre tant qu'elle n'est pas validée (SENT/VIEWED) */}
+                            {isFromMe && isPending && !isExpired &&
+                              (derivedStatus === 'SENT' || derivedStatus === 'VIEWED') && (
+                              <div className="mt-3 pt-3 border-t">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditOffer(neg)}
+                                  disabled={negotiationLoading}
+                                  className="w-full"
+                                >
+                                  {t('offers', 'editOffer') || 'Modifier mon offre'}
+                                </Button>
+                              </div>
+                            )}
+
                             {/* Actions pour une contre-offre en attente venant du client */}
                             {isLastAndPending && !isFromMe && (
                               <div className="flex gap-2 mt-3 pt-3 border-t">
@@ -1363,11 +1411,13 @@ export default function MissionDetailPage() {
                       >
                         {negotiationLoading
                           ? t('common', 'loading') || 'Chargement...'
-                          : t('negotiations', 'sendOffer') || 'Envoyer l\'offre'}
+                          : editingOfferId
+                            ? t('offers', 'saveChanges') || 'Enregistrer les modifications'
+                            : t('negotiations', 'sendOffer') || 'Envoyer l\'offre'}
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => setShowNegotiationForm(false)}
+                        onClick={() => { setShowNegotiationForm(false); setEditingOfferId(null); }}
                         disabled={negotiationLoading}
                       >
                         {t('common', 'cancel') || 'Annuler'}

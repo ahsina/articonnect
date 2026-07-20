@@ -94,6 +94,12 @@ export const missionsApi = {
     return response.data;
   },
 
+  // Modifier son offre tant qu'elle n'est pas validée (artisan) — PATCH partiel.
+  updateNegotiation: async (negotiationId: string, data: Record<string, unknown>) => {
+    const response = await apiClient.patch(`/missions/negotiations/${negotiationId}`, data);
+    return response.data;
+  },
+
   acceptNegotiation: async (negotiationId: string, accepted: boolean, rejectedReason?: string) => {
     const response = await apiClient.put(`/missions/negotiations/${negotiationId}/accept`, {
       accepted,

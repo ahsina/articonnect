@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateNegotiationDto, AcceptNegotiationDto } from '../dto/negotiation.dto';
+import { CreateNegotiationDto, AcceptNegotiationDto, UpdateNegotiationDto } from '../dto/negotiation.dto';
 import { NotificationService } from '../../notification/services/notification.service';
 import { MissionType, MissionStatus, NotificationType } from '@prisma/client';
 import { PriceAnomalyDetectorService } from '../../fraud/services/price-anomaly-detector.service';
@@ -175,6 +175,98 @@ export class NegotiationService {
     );
 
     return this.withStatus(negotiation);
+  }
+
+  /**
+   * MODIFIER SON OFFRE tant qu'elle n'est pas validée (artisan).
+   * Gardes :
+   *  - l'appelant DOIT être l'auteur de l'offre (senderId === userId) ;
+   *  - l'offre doit être ENCORE EN ATTENTE (accepted === null : ni acceptée ni refusée) ;
+   *  - l'offre ne doit pas être EXPIRÉE.
+   * Le message (s'il est fourni) repasse le filtre anti-coordonnées (comme à la création).
+   * Ne touche PAS receiverId/missionId/expiresAt : on ne modifie que le contenu de l'offre.
+   */
+  async update(userId: string, negotiationId: string, dto: UpdateNegotiationDto) {
+    const negotiation = await this.prisma.negotiation.findUnique({
+      where: { id: negotiationId },
+    });
+
+    if (!negotiation) {
+      throw new NotFoundException('Offre introuvable');
+    }
+
+    // Seul l'AUTEUR de l'offre peut la modifier.
+    if (negotiation.senderId !== userId) {
+      throw new ForbiddenException('Vous ne pouvez modifier que vos propres offres.');
+    }
+
+    // Offre déjà traitée (acceptée ou refusée) : figée.
+    if (negotiation.accepted !== null) {
+      throw new ConflictException(
+        'Cette offre a déjà été traitée (acceptée ou refusée) : elle ne peut plus être modifiée.'
+      );
+    }
+
+    // Offre expirée : on ne modifie pas une offre périmée (l'artisan doit en refaire une).
+    if (negotiation.expiresAt && new Date() > negotiation.expiresAt) {
+      throw new BadRequestException(
+        'Cette offre a expiré : elle ne peut plus être modifiée. Créez une nouvelle offre.'
+      );
+    }
+
+    // Anti-désintermédiation : le message repasse le MÊME filtre anti-coordonnées qu'à la création.
+    // Violation HIGH -> 400 explicite ; sinon on persiste la version filtrée (motifs MEDIUM masqués).
+    let messageUpdate: { message?: string } = {};
+    if (dto.message !== undefined) {
+      if (dto.message && dto.message.trim().length > 0) {
+        const filterResult = await this.contentFilter.filterContent(
+          dto.message,
+          userId,
+          'negotiation',
+        );
+        if (filterResult.isBlocked) {
+          throw new BadRequestException({
+            message:
+              'Votre offre contient des coordonnées interdites. Communiquez uniquement via Krafolt.',
+            code: 'CONTACT_INFO_BLOCKED',
+          });
+        }
+        messageUpdate.message =
+          filterResult.detectedPatterns.length > 0
+            ? filterResult.filteredContent
+            : dto.message;
+      } else {
+        // Message explicitement vidé.
+        messageUpdate.message = dto.message;
+      }
+    }
+
+    // PATCH partiel : on ne met à jour QUE les champs fournis (les `undefined` sont ignorés).
+    const updated = await this.prisma.negotiation.update({
+      where: { id: negotiationId },
+      data: {
+        ...(dto.proposedPrice !== undefined && { proposedPrice: dto.proposedPrice }),
+        ...(dto.laborCost !== undefined && { laborCost: dto.laborCost }),
+        ...(dto.materialCost !== undefined && { materialCost: dto.materialCost }),
+        ...(dto.travelCost !== undefined && { travelCost: dto.travelCost }),
+        ...(dto.availability !== undefined && { availability: dto.availability }),
+        ...(dto.estimatedDuration !== undefined && { estimatedDuration: dto.estimatedDuration }),
+        ...messageUpdate,
+      },
+    });
+
+    // Notifie le destinataire (le client) que l'offre a été révisée — best-effort, non bloquant.
+    try {
+      await this.notificationService.notifyNegotiationReceived(
+        negotiation.receiverId,
+        negotiation.missionId,
+        Number(updated.proposedPrice),
+      );
+    } catch (error) {
+      this.logger.error('Échec notification (offre modifiée) — non bloquant:', error);
+    }
+
+    return this.withStatus(updated);
   }
 
   /**

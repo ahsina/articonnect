@@ -119,6 +119,40 @@ export interface StripeOnboardingStatus {
   payoutsEnabled?: boolean;
 }
 
+// Analytics artisan — forme renvoyée par GET /artisan/analytics (données réelles DB).
+export interface ArtisanAnalytics {
+  earnings: {
+    total: number;
+    thisMonth: number;
+    lastMonth: number;
+    growth: number;
+    byMonth: Array<{ month: string; amount: number; missions?: number }>;
+  };
+  missions: {
+    total: number;
+    completed: number;
+    cancelled: number;
+    conversionRate: number;
+    byCategory: Array<{ category: string; count: number }>;
+    byStatus: Array<{ status: string; count: number }>;
+  };
+  performance: {
+    averageRating: number;
+    totalReviews: number;
+    responseTime: number;
+    completionRate: number;
+    repeatClientRate: number;
+  };
+  geography: {
+    topCities: Array<{ city: string; count: number; revenue: number }>;
+    averageDistance: number;
+  };
+  trends: {
+    peakHours: Array<{ hour: number; requests: number }>;
+    peakDays: Array<{ day: string; requests: number }>;
+  };
+}
+
 export interface UpdateArtisanProfileDto {
   companyName?: string;
   description?: string;
@@ -232,6 +266,12 @@ export const artisanApi = {
 
   getEarningsSummary: async (): Promise<EarningsSummary> => {
     const response = await apiClient.get('/artisan/earnings/summary');
+    return response.data;
+  },
+
+  // Analytics (données réelles calculées côté backend à partir des missions/avis/offres)
+  getAnalytics: async (): Promise<ArtisanAnalytics> => {
+    const response = await apiClient.get('/artisan/analytics');
     return response.data;
   },
 

@@ -86,6 +86,55 @@ export class CreateNegotiationDto {
   estimatedDuration?: string;
 }
 
+/**
+ * Modification d'une offre ENCORE EN ATTENTE par son auteur (artisan).
+ * Tous les champs sont optionnels : on ne met à jour que ceux fournis (PATCH partiel).
+ * Le contrôle « sender === utilisateur, accepted === null, non expirée » est fait dans le service.
+ * Le message repasse le filtre anti-coordonnées avant persistance (anti-désintermédiation).
+ */
+export class UpdateNegotiationDto {
+  @ApiProperty({ required: false, example: 150.5, description: 'Nouveau prix total proposé (minimum 1€)' })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  proposedPrice?: number;
+
+  @ApiProperty({ required: false, example: 120.0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  laborCost?: number;
+
+  @ApiProperty({ required: false, example: 50.0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  materialCost?: number;
+
+  @ApiProperty({ required: false, example: 30.0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  travelCost?: number;
+
+  @ApiProperty({ required: false, example: 'Offre revue' })
+  @IsOptional()
+  @IsString()
+  message?: string;
+
+  @ApiProperty({ required: false, example: 'Dès demain matin' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  availability?: string;
+
+  @ApiProperty({ required: false, example: '~1 journée' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  estimatedDuration?: string;
+}
+
 export class AcceptNegotiationDto {
   @ApiProperty()
   @IsBoolean()

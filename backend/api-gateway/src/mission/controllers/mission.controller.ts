@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Body,
   Param,
   UseGuards,
@@ -24,6 +25,7 @@ import {
 import {
   CreateNegotiationDto,
   AcceptNegotiationDto,
+  UpdateNegotiationDto,
 } from '../dto/negotiation.dto';
 import {
   SetupDepositDto,
@@ -168,6 +170,21 @@ export class MissionController {
     @Body() dto: AcceptNegotiationDto,
   ) {
     return this.negotiationService.accept(req.user.userId, negotiationId, dto);
+  }
+
+  @Patch('negotiations/:negotiationId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Modifier son offre tant qu\'elle n\'est pas validée (artisan)' })
+  @ApiResponse({ status: 200, description: 'Offre mise à jour' })
+  @ApiResponse({ status: 403, description: 'Vous ne pouvez modifier que vos propres offres' })
+  @ApiResponse({ status: 409, description: 'Offre déjà traitée (acceptée/refusée)' })
+  async updateNegotiation(
+    @Request() req,
+    @Param('negotiationId') negotiationId: string,
+    @Body() dto: UpdateNegotiationDto,
+  ) {
+    return this.negotiationService.update(req.user.userId, negotiationId, dto);
   }
 
   @Post(':id/decline')
