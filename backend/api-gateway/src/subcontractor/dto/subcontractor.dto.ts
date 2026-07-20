@@ -19,6 +19,13 @@ export enum SubcontractorStatus {
   TERMINATED = 'TERMINATED',
 }
 
+// Type juridique du sous-traitant : société (facturation TVA/entreprise) ou indépendant
+// (auto-entrepreneur / personne physique). Aligné sur l'enum Prisma SubcontractorType.
+export enum SubcontractorType {
+  COMPANY = 'COMPANY',
+  INDIVIDUAL = 'INDIVIDUAL',
+}
+
 export class CreateSubcontractorDto {
   @IsUUID()
   @IsOptional()
@@ -44,6 +51,11 @@ export class CreateSubcontractorDto {
   @IsOptional()
   externalSiret?: string;
 
+  // Type société / indépendant choisi à l'invitation (affichage badge + facturation).
+  @IsEnum(SubcontractorType)
+  @IsOptional()
+  subcontractorType?: SubcontractorType;
+
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -68,6 +80,11 @@ export class CreateSubcontractorDto {
 }
 
 export class UpdateSubcontractorDto {
+  // Type société / indépendant modifiable après coup (relation existante).
+  @IsEnum(SubcontractorType)
+  @IsOptional()
+  subcontractorType?: SubcontractorType;
+
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -122,10 +139,13 @@ export class CreateSubcontractorAssignmentDto {
   @Min(0)
   agreedAmount: number;
 
+  // Optionnel : si absent, createAssignment applique le defaultCommissionRate du sous-traitant
+  // (plancher plateforme toujours vérifié). Reste surchargeable au cas par cas.
   @IsNumber()
   @Min(0)
   @Max(100)
-  commissionRate: number;
+  @IsOptional()
+  commissionRate?: number;
 }
 
 export class UpdateAssignmentDto {

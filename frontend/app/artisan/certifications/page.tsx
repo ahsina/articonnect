@@ -15,6 +15,8 @@ export default function CertificationsPage() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [newCert, setNewCert] = useState({
     name: '',
     issuer: '',
@@ -48,12 +50,19 @@ export default function CertificationsPage() {
     }
 
     try {
-      await artisanApi.addCertification({
+      setSubmitting(true);
+      const created = await artisanApi.addCertification({
         name: newCert.name,
         issuer: newCert.issuer,
         issueDate: newCert.issueDate,
         expiryDate: newCert.expiryDate || undefined,
       });
+
+      // Upload optionnel du document justificatif (PDF ou image) → attaché au certif.
+      // Le badge « vérifié » reste conditionné à une validation admin.
+      if (certFile && created?.id) {
+        await artisanApi.uploadCertificationDocument(created.id, certFile);
+      }
 
       toast({
         title: t('common', 'success') || 'Success',
@@ -63,6 +72,7 @@ export default function CertificationsPage() {
 
       setShowModal(false);
       setNewCert({ name: '', issuer: '', issueDate: '', expiryDate: '' });
+      setCertFile(null);
       loadCertifications();
     } catch (error) {
       console.error('Error adding certification:', error);
@@ -71,6 +81,8 @@ export default function CertificationsPage() {
         description: t('artisan', 'certError') || 'Failed to add certification',
         variant: 'destructive',
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -318,11 +330,38 @@ export default function CertificationsPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  {t('artisan', 'certDocument') || 'Supporting document (PDF or image)'}
+                </label>
+                <Input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(e) => setCertFile(e.target.files?.[0] || null)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('artisan', 'certDocumentHint') ||
+                    'Optional. An admin reviews it before the "verified" badge appears.'}
+                </p>
+                {certFile && (
+                  <p className="text-xs text-foreground mt-1 truncate">{certFile.name}</p>
+                )}
+              </div>
+
               <div className="flex gap-2 justify-end pt-4">
-                <Button variant="outline" onClick={() => setShowModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowModal(false);
+                    setCertFile(null);
+                  }}
+                  disabled={submitting}
+                >
                   {t('common', 'cancel') || 'Cancel'}
                 </Button>
-                <Button onClick={handleCreate}>{t('common', 'add') || 'Add'}</Button>
+                <Button onClick={handleCreate} disabled={submitting}>
+                  {submitting ? t('common', 'loading') || 'Loading...' : t('common', 'add') || 'Add'}
+                </Button>
               </div>
             </CardContent>
           </Card>

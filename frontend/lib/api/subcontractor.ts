@@ -136,23 +136,54 @@ export interface SubcontractorAssignment {
   [key: string]: any;
 }
 
+/** Type juridique du sous-traitant : société ou indépendant. */
+export type SubcontractorType = 'COMPANY' | 'INDIVIDUAL';
+
+/** Stats agrégées par sous-traitant renvoyées par GET /subcontractors/overview (cockpit #17). */
+export interface SubcontractorStats {
+  /** Missions en cours (ASSIGNED + IN_PROGRESS). */
+  inProgress: number;
+  completed: number;
+  cancelled: number;
+  /** Net encore dû (€) = somme des nets des attributions non annulées, non versées. */
+  owedNet: number;
+  /** Fiabilité en % (terminées / (terminées + annulées)) ; null si aucune issue connue. */
+  reliability: number | null;
+  averageRating: number | null;
+  reviews: number;
+}
+
 /** Sous-traitant tel que vu par le donneur d'ordre. */
 export interface Subcontractor {
   id: string;
   status?: SubcontractorStatus;
   email?: string;
+  externalEmail?: string;
+  externalName?: string;
+  externalCompany?: string;
+  externalPhone?: string;
   companyName?: string;
   firstName?: string;
   lastName?: string;
   phone?: string;
   avatar?: string;
+  /** Société ou indépendant (badge + facturation). */
+  subcontractorType?: SubcontractorType | null;
+  /** Commission plateforme par défaut (%) négociée avec ce sous-traitant. */
+  defaultCommissionRate?: number | null;
+  specialties?: string[];
+  subcontractorUserId?: string | null;
   invitationToken?: string;
+  invitedAt?: string;
   invitationSentAt?: string;
   invitationAcceptedAt?: string;
+  totalMissions?: number;
   totalAssignments?: number;
   totalEarnings?: number;
   averageRating?: number;
   totalReviews?: number;
+  /** Présent seulement via GET /subcontractors/overview (cockpit). */
+  stats?: SubcontractorStats;
   user?: {
     id?: string;
     firstName?: string;
@@ -317,11 +348,33 @@ export interface InviteSubcontractorDto {
   externalCompany?: string;
   externalName?: string;
   externalPhone?: string;
+  /** Société ou indépendant. */
+  subcontractorType?: SubcontractorType;
+  /** Commission plateforme par défaut (%) proposée à ce sous-traitant. */
   defaultCommissionRate?: number;
   specialties?: string[];
   /** Message libre au partenaire → persisté sur `notes` côté back. */
   notes?: string;
   [key: string]: any;
+}
+
+/** Payload de mise à jour d'une relation de sous-traitance (type + commission par défaut). */
+export interface UpdateSubcontractorDto {
+  subcontractorType?: SubcontractorType;
+  defaultCommissionRate?: number;
+  specialties?: string[];
+  [key: string]: any;
+}
+
+/** Réponse de GET /subcontractors/overview (cockpit donneur d'ordre #17). */
+export interface SubcontractorOverview {
+  kpis: {
+    activeSubcontractors: number;
+    missionsInProgress: number;
+    totalOwedNet: number;
+    teamAverageRating: number | null;
+  };
+  subcontractors: Subcontractor[];
 }
 
 // Aligné sur le DTO backend RÉEL `CreateSubcontractorAssignmentDto` : le montant
@@ -333,7 +386,8 @@ export interface CreateSubcontractorAssignmentDto {
   role?: string;
   description?: string;
   agreedAmount: number;
-  commissionRate: number;
+  /** Optionnel : si absent, le back applique le defaultCommissionRate du sous-traitant. */
+  commissionRate?: number;
   [key: string]: any;
 }
 
@@ -769,9 +823,56 @@ export const subcontractorApi = {
       return response.data;
     },
 
+    // COCKPIT (#17) : KPI globaux + sous-traitants enrichis de leurs stats agrégées
+    // (en cours / terminées / net à payer / fiabilité), calculées côté back sur les
+    // attributions réelles. Les montants (Decimal) sont normalisés en number sûr.
+    getOverview: async (): Promise<SubcontractorOverview> => {
+      const response = await apiClient.get('/subcontractors/overview');
+      const raw = response.data || {};
+      const k = raw.kpis || {};
+      const subs = Array.isArray(raw.subcontractors) ? raw.subcontractors : [];
+      return {
+        kpis: {
+          activeSubcontractors: toNum(k.activeSubcontractors),
+          missionsInProgress: toNum(k.missionsInProgress),
+          totalOwedNet: toNum(k.totalOwedNet),
+          teamAverageRating:
+            k.teamAverageRating != null ? toNum(k.teamAverageRating) : null,
+        },
+        subcontractors: subs.map((s: any) => ({
+          ...s,
+          defaultCommissionRate:
+            s.defaultCommissionRate != null ? toNum(s.defaultCommissionRate) : null,
+          stats: s.stats
+            ? {
+                inProgress: toNum(s.stats.inProgress),
+                completed: toNum(s.stats.completed),
+                cancelled: toNum(s.stats.cancelled),
+                owedNet: toNum(s.stats.owedNet),
+                reliability:
+                  s.stats.reliability != null ? toNum(s.stats.reliability) : null,
+                averageRating:
+                  s.stats.averageRating != null ? toNum(s.stats.averageRating) : null,
+                reviews: toNum(s.stats.reviews),
+              }
+            : undefined,
+        })),
+      };
+    },
+
     // Inviter un nouveau sous-traitant (par email).
     invite: async (dto: InviteSubcontractorDto): Promise<Subcontractor> => {
       const response = await apiClient.post('/subcontractors', dto);
+      return response.data;
+    },
+
+    // Mettre à jour une relation de sous-traitance (type société/indépendant + commission
+    // par défaut). Le back applique le plancher plateforme sur la commission des attributions.
+    updateSubcontractor: async (
+      id: string,
+      dto: UpdateSubcontractorDto,
+    ): Promise<Subcontractor> => {
+      const response = await apiClient.put(`/subcontractors/${id}`, dto);
       return response.data;
     },
 
@@ -785,6 +886,26 @@ export const subcontractorApi = {
     acceptInvitation: async (token: string): Promise<Subcontractor> => {
       const response = await apiClient.post(
         `/subcontractors/accept-invitation/${token}`,
+      );
+      return response.data;
+    },
+
+    // Annuler / clôturer une relation de sous-traitance (invitation en attente ou active).
+    // Passe le statut à TERMINATED côté back (POST /subcontractors/:id/terminate).
+    terminate: async (id: string): Promise<Subcontractor> => {
+      const response = await apiClient.post(`/subcontractors/${id}/terminate`);
+      return response.data;
+    },
+
+    // CONTACT IN-APP du sous-traitant via le chat existant (aucune coordonnée exposée).
+    // `userId` = subcontractorUser.id (sous-traitants ayant un compte plateforme uniquement).
+    contactSubcontractor: async (dto: {
+      userId: string;
+      content: string;
+    }): Promise<{ id: string; [k: string]: any }> => {
+      const response = await apiClient.post(
+        `/chat/conversation/${dto.userId}/message`,
+        { content: dto.content },
       );
       return response.data;
     },

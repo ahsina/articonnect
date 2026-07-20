@@ -496,6 +496,30 @@ export interface Certification {
   };
 }
 
+/**
+ * Normalise la réponse backend (`issuer`, `document`, `artisan.user.*`) vers la
+ * forme attendue par l'UI admin (`issuingOrganization`, `documentUrl`, `artisan.firstName`...).
+ * Sans ce mapping, l'admin ne voit ni l'organisme émetteur, ni le nom de l'artisan,
+ * ni le lien vers le document justificatif (champs `undefined`).
+ */
+function mapCertification(c: any): Certification {
+  if (!c) return c;
+  return {
+    ...c,
+    issuingOrganization: c.issuingOrganization ?? c.issuer,
+    documentUrl: c.documentUrl ?? c.document,
+    artisanUserId: c.artisanUserId ?? c.artisan?.user?.id,
+    artisan: c.artisan
+      ? {
+          id: c.artisan.id,
+          firstName: c.artisan.firstName ?? c.artisan.user?.firstName,
+          lastName: c.artisan.lastName ?? c.artisan.user?.lastName,
+          email: c.artisan.email ?? c.artisan.user?.email,
+        }
+      : undefined,
+  };
+}
+
 // Specialty Types
 export interface Specialty {
   id: string;
@@ -1346,12 +1370,12 @@ export const adminApi = {
     const response = await apiClient.get('/certifications', {
       params: artisanUserId ? { artisanUserId } : undefined,
     });
-    return response.data;
+    return (response.data || []).map(mapCertification);
   },
 
   getCertification: async (id: string): Promise<Certification> => {
     const response = await apiClient.get(`/certifications/${id}`);
-    return response.data;
+    return mapCertification(response.data);
   },
 
   verifyCertification: async (id: string): Promise<Certification> => {

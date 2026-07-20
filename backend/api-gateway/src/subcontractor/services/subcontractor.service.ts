@@ -12,6 +12,10 @@ import {
   SubcontractorStatus,
 } from '../dto/subcontractor.dto';
 
+// Statuts d'attribution considérés comme « argent encore dû » au sous-traitant (non annulés,
+// non encore versés) pour le calcul du net à payer dans le cockpit donneur d'ordre.
+const OWED_ASSIGNMENT_STATUSES = ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'];
+
 @Injectable()
 export class SubcontractorService {
   private readonly logger = new Logger(SubcontractorService.name);
@@ -54,6 +58,7 @@ export class SubcontractorService {
         externalPhone: dto.externalPhone,
         externalCompany: dto.externalCompany,
         externalSiret: dto.externalSiret,
+        subcontractorType: dto.subcontractorType,
         invitationToken,
         invitedAt: new Date(),
         defaultCommissionRate: dto.defaultCommissionRate,
@@ -137,6 +142,124 @@ export class SubcontractorService {
     return rows.map((r) => this.stripInvitationToken(r));
   }
 
+  /**
+   * Net réellement dû au sous-traitant pour une attribution = agreedAmount − commission plateforme,
+   * commission = agreedAmount × max(commissionRate, plancher 5 %). MÊME formule et MÊME arrondi que
+   * settleAssignmentPayout / SubcontractorPortalService (source de vérité du versement Connect).
+   */
+  private computeNet(agreedAmount: unknown, commissionRate: unknown): number {
+    const gross = Number(agreedAmount) || 0;
+    const rate = Math.max(
+      Number(commissionRate) || 0,
+      SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION,
+    );
+    const net = gross - (gross * rate) / 100;
+    return Math.max(0, Math.round(net * 100) / 100);
+  }
+
+  /**
+   * COCKPIT DONNEUR D'ORDRE (#17). Agrège, à partir des attributions RÉELLES, les KPI globaux et les
+   * stats par sous-traitant que la maquette exige (en cours / terminées / net à payer / fiabilité).
+   * On exclut les relations TERMINATED (départs) mais on garde PENDING_INVITATION (état « invitation
+   * envoyée »). Le net à payer par sous-traitant est calculé ici (aucune colonne agrégée en base) :
+   * somme des nets des attributions non annulées et non encore PAID.
+   */
+  async getOverview(artisanId: string) {
+    const subs = await this.prisma.subcontractor.findMany({
+      where: { artisanId, status: { not: SubcontractorStatus.TERMINATED } },
+      include: {
+        subcontractorUser: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        assignments: {
+          select: {
+            agreedAmount: true,
+            commissionRate: true,
+            paymentStatus: true,
+            status: true,
+            rating: true,
+          },
+        },
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    });
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
+    const items = subs.map((s) => {
+      let inProgress = 0;
+      let completed = 0;
+      let cancelled = 0;
+      let owedNet = 0;
+      const ratings: number[] = [];
+
+      for (const a of s.assignments) {
+        if (a.status === 'IN_PROGRESS' || a.status === 'ASSIGNED') inProgress += 1;
+        if (a.status === 'COMPLETED') completed += 1;
+        if (a.status === 'CANCELLED') cancelled += 1;
+        if (
+          OWED_ASSIGNMENT_STATUSES.includes(a.status) &&
+          a.paymentStatus !== 'PAID'
+        ) {
+          owedNet += this.computeNet(a.agreedAmount, a.commissionRate);
+        }
+        if (a.rating) ratings.push(a.rating);
+      }
+
+      // Fiabilité = part des missions abouties (terminées) parmi les missions à issue connue
+      // (terminées + annulées). null si aucune issue encore (affiché « — » côté UI).
+      const terminal = completed + cancelled;
+      const reliability = terminal > 0 ? Math.round((completed / terminal) * 100) : null;
+      const avgRating =
+        ratings.length > 0
+          ? round2(ratings.reduce((x, y) => x + y, 0) / ratings.length)
+          : s.averageRating != null
+            ? Number(s.averageRating)
+            : null;
+
+      const { invitationToken: _t, assignments: _a, ...safe } = s as any;
+      return {
+        ...safe,
+        firstName: s.subcontractorUser?.firstName ?? null,
+        lastName: s.subcontractorUser?.lastName ?? null,
+        // Stats agrégées consommées par le cockpit.
+        stats: {
+          inProgress,
+          completed,
+          cancelled,
+          owedNet: round2(owedNet),
+          reliability,
+          averageRating: avgRating,
+          reviews: ratings.length,
+        },
+      };
+    });
+
+    // KPI globaux du header.
+    const activeSubcontractors = subs.filter(
+      (s) => s.status === SubcontractorStatus.ACTIVE,
+    ).length;
+    const missionsInProgress = items.reduce((sum, it) => sum + it.stats.inProgress, 0);
+    const totalOwedNet = round2(items.reduce((sum, it) => sum + it.stats.owedNet, 0));
+    const teamRatings = items
+      .map((it) => it.stats.averageRating)
+      .filter((r): r is number => typeof r === 'number' && r > 0);
+    const teamAverageRating =
+      teamRatings.length > 0
+        ? round2(teamRatings.reduce((x, y) => x + y, 0) / teamRatings.length)
+        : null;
+
+    return {
+      kpis: {
+        activeSubcontractors,
+        missionsInProgress,
+        totalOwedNet,
+        teamAverageRating,
+      },
+      subcontractors: items,
+    };
+  }
+
   async findOne(id: string, artisanId: string) {
     const subcontractor = await this.prisma.subcontractor.findUnique({
       where: { id },
@@ -206,6 +329,7 @@ export class SubcontractorService {
     return this.prisma.subcontractor.update({
       where: { id },
       data: {
+        subcontractorType: dto.subcontractorType,
         defaultCommissionRate: dto.defaultCommissionRate,
         paymentTerms: dto.paymentTerms,
         specialties: dto.specialties,
@@ -284,18 +408,27 @@ export class SubcontractorService {
       throw new ForbiddenException('Mission not found or access denied');
     }
 
+    // Taux effectif : celui fourni explicitement, sinon le defaultCommissionRate négocié avec ce
+    // sous-traitant (évite d'exiger le taux à chaque attribution). Reste surchargeable au cas par cas.
+    const defaultRate =
+      subcontractor.defaultCommissionRate != null
+        ? Number(subcontractor.defaultCommissionRate)
+        : null;
+    const effectiveRate = dto.commissionRate != null ? dto.commissionRate : defaultRate;
+
     // Anti-désintermédiation : une sous-traitance sous le PLANCHER de commission plateforme
     // (typiquement 0 %) est un canal de rémunération « 0 commission » invisible → ledger parallèle
     // + enregistrement illimité de contacts hors-plateforme. On ne se contente plus de flagger : on
     // REJETTE (400) tout taux strictement sous le plancher, tout en TRAÇANT la tentative (best-effort)
-    // pour la rendre visible au détecteur (AuditLog + signal leakage).
+    // pour la rendre visible au détecteur (AuditLog + signal leakage). Le plancher s'applique aussi au
+    // taux par défaut hérité du sous-traitant.
     if (
-      dto.commissionRate == null ||
-      dto.commissionRate < SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION
+      effectiveRate == null ||
+      effectiveRate < SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION
     ) {
       await this.flagLowCommissionAssignment(artisanId, null, dto);
       throw new BadRequestException(
-        `Le taux de commission de sous-traitance doit être au minimum de ${SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION} % (plancher plateforme). Taux fourni : ${dto.commissionRate ?? 'aucun'} %.`,
+        `Le taux de commission de sous-traitance doit être au minimum de ${SubcontractorService.PLATFORM_MIN_SUBCONTRACTOR_COMMISSION} % (plancher plateforme). Taux fourni : ${dto.commissionRate ?? defaultRate ?? 'aucun'} %.`,
       );
     }
 
@@ -306,7 +439,7 @@ export class SubcontractorService {
         role: dto.role,
         description: dto.description,
         agreedAmount: dto.agreedAmount,
-        commissionRate: dto.commissionRate,
+        commissionRate: effectiveRate,
       },
       include: {
         mission: {

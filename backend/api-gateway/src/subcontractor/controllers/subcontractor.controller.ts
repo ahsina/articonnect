@@ -39,6 +39,14 @@ export class SubcontractorController {
     return this.subcontractorService.findAll(req.user.userId, status);
   }
 
+  // Cockpit donneur d'ordre (#17) : KPI + stats agrégées par sous-traitant (net à payer, en cours,
+  // terminées, fiabilité). Déclaré avant la route :id (littéral, pas de collision avec le regex UUID).
+  @Get('overview')
+  @Roles('ARTISAN')
+  async getOverview(@Request() req) {
+    return this.subcontractorService.getOverview(req.user.userId);
+  }
+
   @Get(':id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})')
   @Roles('ARTISAN')
   async findOne(@Request() req, @Param('id') id: string) {

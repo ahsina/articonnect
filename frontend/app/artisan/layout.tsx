@@ -100,7 +100,10 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
     ...(hasCompany
       ? [
           {
-            label: t('navigation', 'company') || 'Company',
+            // « Mon entreprise (équipe) » : gestion salariés/équipe. Intitulé explicite pour
+            // lever la confusion avec « Profil » (identité de l'artisan). Affiché seulement si
+            // l'artisan a créé une société (hasCompany).
+            label: 'Mon entreprise (équipe)',
             icon: Building2,
             children: [
               { href: '/artisan/company/dashboard', label: t('navigation', 'companyDashboard') || 'Dashboard', icon: LayoutDashboard },

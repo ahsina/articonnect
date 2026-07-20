@@ -3227,6 +3227,11 @@ enum SubcontractorStatus {
   TERMINATED
 }
 
+enum SubcontractorType {
+  COMPANY
+  INDIVIDUAL
+}
+
 model Subcontractor {
   id        String @id @default(uuid())
   artisanId String // Primary artisan who hired the subcontractor
@@ -3242,6 +3247,9 @@ model Subcontractor {
   externalPhone   String?
   externalCompany String?
   externalSiret   String?
+
+  // Type : société ou indépendant (pour l'affichage + la facturation)
+  subcontractorType SubcontractorType?
 
   // Relationship
   status SubcontractorStatus @default(PENDING_INVITATION)
