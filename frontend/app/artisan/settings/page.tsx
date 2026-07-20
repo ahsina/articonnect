@@ -174,29 +174,41 @@ export default function ArtisanSettingsPage() {
     );
   }
 
+  const Toggle = ({ active, onClick }: { active: boolean; onClick: () => void }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative w-[46px] h-[26px] rounded-full transition-colors flex-shrink-0 ${active ? 'bg-primary' : 'bg-muted-foreground/25'}`}
+    >
+      <span
+        className={`absolute top-[3px] w-5 h-5 rounded-full bg-white shadow transition-all ${active ? 'left-[23px]' : 'left-[3px]'}`}
+      />
+    </button>
+  );
+
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-3xl mx-auto">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-3xl font-display font-extrabold tracking-tight text-foreground">
           {t('artisan', 'settings') || 'Settings'}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mt-1">
           {t('artisan', 'settingsDesc') || 'Manage your notification and account preferences'}
         </p>
       </div>
 
       {/* Notification Channels */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('artisan', 'notificationChannels') || 'Notification Channels'}</CardTitle>
+      <Card className="mb-5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-display">{t('artisan', 'notificationChannels') || 'Notification Channels'}</CardTitle>
           <CardDescription>
             {t('artisan', 'notificationChannelsDesc') ||
               'Choose how you want to receive notifications'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b">
+        <CardContent className="pt-2">
+          <div className="flex items-center justify-between gap-4 py-3.5 border-b border-border">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'emailNotifications') || 'Email Notifications'}
@@ -205,17 +217,10 @@ export default function ArtisanSettingsPage() {
                 {t('artisan', 'emailNotificationsDesc') || 'Receive notifications via email'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('emailNotifications')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.emailNotifications ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.emailNotifications ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.emailNotifications} onClick={() => handleToggle('emailNotifications')} />
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b">
+          <div className="flex items-center justify-between gap-4 py-3.5 border-b border-border">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'pushNotifications') || 'Push Notifications'}
@@ -225,17 +230,10 @@ export default function ArtisanSettingsPage() {
                   'Receive push notifications on your device'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('pushNotifications')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.pushNotifications ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.pushNotifications ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.pushNotifications} onClick={() => handleToggle('pushNotifications')} />
           </div>
 
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'smsNotifications') || 'SMS Notifications'}
@@ -244,25 +242,18 @@ export default function ArtisanSettingsPage() {
                 {t('artisan', 'smsNotificationsDesc') || 'Receive important alerts via SMS'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('smsNotifications')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.smsNotifications ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.smsNotifications ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.smsNotifications} onClick={() => handleToggle('smsNotifications')} />
           </div>
         </CardContent>
       </Card>
 
       {/* Phone Verification */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="mb-5">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-display">
             {t('settings', 'phoneVerification') || 'Phone Verification'}
             {phoneVerified && (
-              <Badge className="bg-green-100 text-green-700">
+              <Badge className="bg-success/10 text-success">
                 {t('settings', 'verified') || 'Verified'}
               </Badge>
             )}
@@ -272,16 +263,16 @@ export default function ArtisanSettingsPage() {
               'Verify your phone number to receive SMS notifications and improve account security'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-2">
           <div className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <Input
                 type="tel"
                 placeholder="+352 123 456 789"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 disabled={phoneVerified}
-                className="flex-1"
+                className="flex-1 min-w-[180px]"
               />
               {!phoneVerified && (
                 <Button
@@ -299,14 +290,14 @@ export default function ArtisanSettingsPage() {
             </div>
 
             {showVerificationInput && !phoneVerified && (
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <Input
                   type="text"
                   placeholder="123456"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   maxLength={6}
-                  className="flex-1"
+                  className="flex-1 min-w-[180px]"
                 />
                 <Button onClick={handleVerifyCode} disabled={verifying || verificationCode.length < 6}>
                   {verifying ? t('settings', 'verifying') || 'Verifying...' : t('settings', 'verify') || 'Verify'}
@@ -315,9 +306,11 @@ export default function ArtisanSettingsPage() {
             )}
 
             {phoneVerified && (
-              <div className="p-3 bg-green-100 border rounded-lg flex items-center gap-2">
-                <span className="text-green-600 text-lg"></span>
-                <span className="text-green-700 text-sm">
+              <div className="p-3 bg-success/10 border border-success/30 rounded-xl flex items-center gap-2.5">
+                <svg className="h-4 w-4 text-success flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                <span className="text-success text-sm">
                   {t('settings', 'phoneVerifiedMessage') || 'Your phone number is verified'}
                 </span>
               </div>
@@ -327,16 +320,16 @@ export default function ArtisanSettingsPage() {
       </Card>
 
       {/* Notification Types */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('artisan', 'notificationTypes') || 'Notification Types'}</CardTitle>
+      <Card className="mb-5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-display">{t('artisan', 'notificationTypes') || 'Notification Types'}</CardTitle>
           <CardDescription>
             {t('artisan', 'notificationTypesDesc') ||
               'Choose what types of notifications you want to receive'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b">
+        <CardContent className="pt-2">
+          <div className="flex items-center justify-between gap-4 py-3.5 border-b border-border">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'newMissionAlerts') || 'New Mission Alerts'}
@@ -346,17 +339,10 @@ export default function ArtisanSettingsPage() {
                   'Get notified when new missions are available nearby'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('newMissionAlerts')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.newMissionAlerts ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.newMissionAlerts ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.newMissionAlerts} onClick={() => handleToggle('newMissionAlerts')} />
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b">
+          <div className="flex items-center justify-between gap-4 py-3.5 border-b border-border">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'missionUpdates') || 'Mission Updates'}
@@ -365,17 +351,10 @@ export default function ArtisanSettingsPage() {
                 {t('artisan', 'missionUpdatesDesc') || 'Updates about your active missions'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('missionUpdates')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.missionUpdates ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.missionUpdates ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.missionUpdates} onClick={() => handleToggle('missionUpdates')} />
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b">
+          <div className="flex items-center justify-between gap-4 py-3.5 border-b border-border">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'paymentNotifications') || 'Payment Notifications'}
@@ -385,17 +364,10 @@ export default function ArtisanSettingsPage() {
                   'Notifications about payments and earnings'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('paymentNotifications')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.paymentNotifications ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.paymentNotifications ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.paymentNotifications} onClick={() => handleToggle('paymentNotifications')} />
           </div>
 
-          <div className="flex items-center justify-between py-3 border-b">
+          <div className="flex items-center justify-between gap-4 py-3.5 border-b border-border">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'reviewNotifications') || 'Review Notifications'}
@@ -405,17 +377,10 @@ export default function ArtisanSettingsPage() {
                   'Get notified when clients leave reviews'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('reviewNotifications')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.reviewNotifications ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.reviewNotifications ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.reviewNotifications} onClick={() => handleToggle('reviewNotifications')} />
           </div>
 
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between gap-4 py-3.5">
             <div>
               <div className="font-medium text-foreground">
                 {t('artisan', 'marketingEmails') || 'Marketing Emails'}
@@ -424,14 +389,7 @@ export default function ArtisanSettingsPage() {
                 {t('artisan', 'marketingEmailsDesc') || 'News, tips, and promotional content'}
               </div>
             </div>
-            <button
-              onClick={() => handleToggle('marketingEmails')}
-              className={`w-12 h-6 rounded-full transition-colors ${preferences.marketingEmails ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-card shadow transform transition-transform ${preferences.marketingEmails ? 'translate-x-6' : 'translate-x-0.5'}`}
-              />
-            </button>
+            <Toggle active={preferences.marketingEmails} onClick={() => handleToggle('marketingEmails')} />
           </div>
         </CardContent>
       </Card>

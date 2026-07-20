@@ -2,15 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { artisanApi } from '@/lib/api/artisan';
 import {
@@ -196,86 +187,100 @@ export default function ArtisanAnalyticsPage() {
     );
   }
 
+  const periodOptions: Array<{ v: '7d' | '30d' | '90d' | '1y'; label: string }> = [
+    { v: '7d', label: t('analytics', 'last7Days') || 'Last 7 days' },
+    { v: '30d', label: t('analytics', 'last30Days') || 'Last 30 days' },
+    { v: '90d', label: t('analytics', 'last90Days') || 'Last 90 days' },
+    { v: '1y', label: t('analytics', 'lastYear') || 'Last year' },
+  ];
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-[1180px] mx-auto">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-3xl font-display font-extrabold tracking-tight text-foreground">
             {t('analytics', 'title') || 'Analytics Dashboard'}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             {t('analytics', 'subtitle') || 'Track your performance and earnings'}
           </p>
         </div>
 
-        <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7d">{t('analytics', 'last7Days') || 'Last 7 days'}</SelectItem>
-            <SelectItem value="30d">{t('analytics', 'last30Days') || 'Last 30 days'}</SelectItem>
-            <SelectItem value="90d">{t('analytics', 'last90Days') || 'Last 90 days'}</SelectItem>
-            <SelectItem value="1y">{t('analytics', 'lastYear') || 'Last year'}</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Sélecteur de période (segmenté) */}
+        <div className="inline-flex bg-muted rounded-xl p-1 gap-0.5">
+          {periodOptions.map((opt) => (
+            <button
+              key={opt.v}
+              type="button"
+              onClick={() => setPeriod(opt.v)}
+              className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                period === opt.v
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground mb-1">
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="text-xs font-semibold text-muted-foreground mb-2">
               {t('analytics', 'totalEarnings') || 'Total Earnings'}
             </div>
-            <div className="text-3xl font-bold text-foreground">
+            <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground">
               {(Number(data.earnings.total) || 0).toLocaleString()}€
             </div>
-            <div className="flex items-center gap-1 mt-2">
-              <Badge className={data.earnings.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                {data.earnings.growth >= 0 ? '' : ''} {Math.abs(data.earnings.growth)}%
-              </Badge>
+            <div className="flex items-center gap-1.5 mt-2.5">
+              <span className={`text-xs font-semibold ${data.earnings.growth >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {data.earnings.growth >= 0 ? '▲' : '▼'} {Math.abs(data.earnings.growth)}%
+              </span>
               <span className="text-xs text-muted-foreground">{t('artisanAnalytics', 'vsLastMonth') || 'vs last month'}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-muted border-primary/20">
-          <CardContent className="p-4">
-            <div className="text-sm text-primary mb-1">
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-2">
+              <span className="w-2 h-2 rounded-full bg-primary inline-block" />
               {t('analytics', 'completedMissions') || 'Completed Missions'}
             </div>
-            <div className="text-3xl font-bold text-primary">{data.missions.completed}</div>
-            <div className="text-xs text-muted-foreground mt-2">
+            <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground">{data.missions.completed}</div>
+            <div className="text-xs font-semibold text-muted-foreground mt-2.5">
               {data.missions.conversionRate}% {t('analytics', 'conversionRate') || 'conversion rate'}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="text-sm text-foreground mb-1">
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="text-xs font-semibold text-muted-foreground mb-2">
               {t('analytics', 'averageRating') || 'Average Rating'}
             </div>
-            <div className="text-3xl font-bold text-foreground">
-              {data.performance.averageRating}
+            <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground">
+              {data.performance.averageRating} ★
             </div>
-            <div className="text-xs text-muted-foreground mt-2">
+            <div className="text-xs font-semibold text-muted-foreground mt-2.5">
               {data.performance.totalReviews} {t('analytics', 'reviews') || 'reviews'}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground mb-1">
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="text-xs font-semibold text-muted-foreground mb-2">
               {t('analytics', 'repeatClients') || 'Repeat Clients'}
             </div>
-            <div className="text-3xl font-bold text-foreground">
+            <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground">
               {data.performance.repeatClientRate}%
             </div>
-            <div className="text-xs text-muted-foreground mt-2">
+            <div className="text-xs font-semibold text-muted-foreground mt-2.5">
               {t('analytics', 'returnRate') || 'client return rate'}
             </div>
           </CardContent>
@@ -286,8 +291,8 @@ export default function ArtisanAnalyticsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Earnings Over Time */}
         <Card>
-          <CardHeader>
-            <CardTitle>{t('analytics', 'earningsOverTime') || 'Earnings Over Time'}</CardTitle>
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base font-display">{t('analytics', 'earningsOverTime') || 'Earnings Over Time'}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -310,8 +315,8 @@ export default function ArtisanAnalyticsPage() {
 
         {/* Missions by Category */}
         <Card>
-          <CardHeader>
-            <CardTitle>{t('analytics', 'missionsByCategory') || 'Missions by Category'}</CardTitle>
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base font-display">{t('analytics', 'missionsByCategory') || 'Missions by Category'}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -341,8 +346,8 @@ export default function ArtisanAnalyticsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Peak Hours */}
         <Card>
-          <CardHeader>
-            <CardTitle>{t('analytics', 'peakHours') || 'Peak Request Hours'}</CardTitle>
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base font-display">{t('analytics', 'peakHours') || 'Peak Request Hours'}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -351,7 +356,7 @@ export default function ArtisanAnalyticsPage() {
                 <XAxis dataKey="hour" tickFormatter={(h) => `${h}h`} />
                 <YAxis />
                 <Tooltip labelFormatter={(h) => `${h}:00`} />
-                <Bar dataKey="requests" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="requests" fill="#0F0F0F" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -359,8 +364,8 @@ export default function ArtisanAnalyticsPage() {
 
         {/* Peak Days */}
         <Card>
-          <CardHeader>
-            <CardTitle>{t('analytics', 'peakDays') || 'Requests by Day of Week'}</CardTitle>
+          <CardHeader className="border-b border-border pb-4">
+            <CardTitle className="text-base font-display">{t('analytics', 'peakDays') || 'Requests by Day of Week'}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -369,7 +374,7 @@ export default function ArtisanAnalyticsPage() {
                 <XAxis dataKey="day" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="requests" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="requests" fill="#0F0F0F" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -378,42 +383,42 @@ export default function ArtisanAnalyticsPage() {
 
       {/* Top Cities Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('analytics', 'topCities') || 'Top Cities by Revenue'}</CardTitle>
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-base font-display">{t('analytics', 'topCities') || 'Top Cities by Revenue'}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                     {t('analytics', 'city') || 'City'}
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">
+                  <th className="text-right py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                     {t('analytics', 'missions') || 'Missions'}
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">
+                  <th className="text-right py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                     {t('analytics', 'revenue') || 'Revenue'}
                   </th>
-                  <th className="text-right py-3 px-4 font-medium text-muted-foreground">
+                  <th className="text-right py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                     {t('analytics', 'avgPerMission') || 'Avg/Mission'}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {data.geography.topCities.map((city, index) => (
-                  <tr key={city.city} className="border-b hover:bg-accent">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{['', '', '', '4⃣', '5⃣'][index]}</span>
+                  <tr key={city.city} className="border-b border-border/60 last:border-0 hover:bg-muted/50">
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base w-5 text-center font-bold">{['🥇', '🥈', '🥉', '4', '5'][index] ?? index + 1}</span>
                         <span className="font-medium">{city.city}</span>
                       </div>
                     </td>
-                    <td className="text-right py-3 px-4">{city.count}</td>
-                    <td className="text-right py-3 px-4 font-medium text-foreground">
+                    <td className="text-right py-3.5 px-5 tabular-nums">{city.count}</td>
+                    <td className="text-right py-3.5 px-5 font-semibold text-foreground tabular-nums">
                       {(Number(city.revenue) || 0).toLocaleString()}€
                     </td>
-                    <td className="text-right py-3 px-4 text-muted-foreground">
+                    <td className="text-right py-3.5 px-5 text-muted-foreground tabular-nums">
                       {Math.round(city.revenue / city.count)}€
                     </td>
                   </tr>
@@ -426,35 +431,32 @@ export default function ArtisanAnalyticsPage() {
 
       {/* Performance Metrics */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('analytics', 'performanceMetrics') || 'Performance Metrics'}</CardTitle>
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-base font-display">{t('analytics', 'performanceMetrics') || 'Performance Metrics'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-background rounded-lg">
-              <div className="text-4xl mb-2"></div>
-              <div className="text-2xl font-bold text-foreground">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="text-center p-5 bg-muted rounded-2xl">
+              <div className="text-[23px] font-display font-extrabold tracking-tight text-foreground">
                 {data.performance.responseTime}h
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs font-semibold text-muted-foreground mt-1.5">
                 {t('analytics', 'avgResponseTime') || 'Avg Response Time'}
               </div>
             </div>
-            <div className="text-center p-4 bg-background rounded-lg">
-              <div className="text-4xl mb-2"></div>
-              <div className="text-2xl font-bold text-foreground">
+            <div className="text-center p-5 bg-muted rounded-2xl">
+              <div className="text-[23px] font-display font-extrabold tracking-tight text-foreground">
                 {data.performance.completionRate}%
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs font-semibold text-muted-foreground mt-1.5">
                 {t('analytics', 'completionRate') || 'Completion Rate'}
               </div>
             </div>
-            <div className="text-center p-4 bg-background rounded-lg">
-              <div className="text-4xl mb-2"></div>
-              <div className="text-2xl font-bold text-foreground">
+            <div className="text-center p-5 bg-muted rounded-2xl">
+              <div className="text-[23px] font-display font-extrabold tracking-tight text-foreground">
                 {data.geography.averageDistance} km
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs font-semibold text-muted-foreground mt-1.5">
                 {t('analytics', 'avgTravelDistance') || 'Avg Travel Distance'}
               </div>
             </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -369,62 +368,57 @@ export default function QuotationsPage() {
       {/* En-tête */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Devis</h1>
-          <p className="text-muted-foreground">Créez, envoyez et suivez vos devis formels.</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">Devis</h1>
+          <p className="text-muted-foreground">Créez, envoyez et suivez vos devis formels signés.</p>
         </div>
         <Button onClick={openCreate}>+ Créer un devis</Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Total</div>
-            <div className="text-2xl font-bold text-foreground">{stats?.total ?? '—'}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Envoyés</div>
-            <div className="text-2xl font-bold text-foreground">{stats?.sent ?? '—'}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Acceptés</div>
-            <div className="text-2xl font-bold text-foreground">{stats?.accepted ?? '—'}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Chiffre accepté</div>
-            <div className="text-2xl font-bold text-primary">
-              {stats ? formatCurrency(num(stats.totalAcceptedValue)) : '—'}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+          <div className="text-sm text-muted-foreground">Total devis</div>
+          <div className="font-display text-2xl font-extrabold text-foreground mt-1">{stats?.total ?? '—'}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+          <div className="text-sm text-muted-foreground">Envoyés</div>
+          <div className="font-display text-2xl font-extrabold text-foreground mt-1">{stats?.sent ?? '—'}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+          <div className="text-sm text-muted-foreground">Acceptés</div>
+          <div className="font-display text-2xl font-extrabold text-foreground mt-1">{stats?.accepted ?? '—'}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+          <div className="text-sm text-muted-foreground">Chiffre accepté</div>
+          <div className="font-display text-2xl font-extrabold text-success mt-1">
+            {stats ? formatCurrency(num(stats.totalAcceptedValue)) : '—'}
+          </div>
+        </div>
       </div>
 
       {/* Filtres */}
       <div className="flex flex-wrap gap-2 mb-6">
         {FILTERS.map((f) => (
-          <Button
+          <button
             key={f}
-            variant={filter === f ? 'default' : 'outline'}
-            size="sm"
             onClick={() => setFilter(f)}
+            className={`h-9 px-4 rounded-full border text-sm font-semibold transition-colors ${
+              filter === f
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card text-muted-foreground border-border hover:bg-muted'
+            }`}
           >
             {f === 'all' ? 'Tous' : STATUS_LABELS[f]}
-          </Button>
+          </button>
         ))}
       </div>
 
       {/* Liste */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Mes devis</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-card border border-border rounded-2xl shadow-sm">
+        <div className="px-6 pt-5 pb-1">
+          <h3 className="font-display text-lg font-bold text-foreground">Mes devis</h3>
+        </div>
+        <div className="px-4 pb-5">
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Chargement…</div>
           ) : quotes.length === 0 ? (
@@ -433,43 +427,41 @@ export default function QuotationsPage() {
               <p className="text-sm mt-2">Cliquez sur « Créer un devis » pour en envoyer un.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {quotes.map((q) => {
                 const clientName = q.client
                   ? [q.client.firstName, q.client.lastName].filter(Boolean).join(' ')
                   : '—';
                 return (
-                  <div key={q.id} className="p-4 border rounded-lg hover:bg-accent transition">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center flex-wrap gap-2 mb-1">
-                          <span className="font-mono text-xs text-muted-foreground">{q.quoteNumber}</span>
-                          <h4 className="font-medium text-foreground truncate">{q.title}</h4>
-                          <Badge className={STATUS_COLORS[q.status]}>{STATUS_LABELS[q.status]}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Client : {clientName}</p>
-                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>Créé le {formatDate(q.createdAt)}</span>
-                          <span>Valide jusqu&apos;au {formatDate(q.validUntil)}</span>
-                          <span>{q.lineItems?.length ?? 0} ligne(s)</span>
-                        </div>
+                  <div key={q.id} className="flex items-start gap-4 p-4 border border-border rounded-xl hover:bg-muted/40 transition">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center flex-wrap gap-2.5 mb-1">
+                        <span className="font-mono text-xs text-muted-foreground">{q.quoteNumber}</span>
+                        <h4 className="font-semibold text-foreground truncate">{q.title}</h4>
+                        <Badge className={STATUS_COLORS[q.status]}>{STATUS_LABELS[q.status]}</Badge>
                       </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xl font-bold text-foreground">{formatCurrency(num(q.totalAmount))}</div>
-                        <div className="text-xs text-muted-foreground">TVA {num(q.taxRate)}%</div>
-                        <div className="flex flex-col gap-2 mt-3">
-                          <a href={quoteApi.pdfUrl(q.id)} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="w-full">Télécharger le PDF</Button>
-                          </a>
-                          {q.missionId && (
-                            <Link href={`/artisan/missions/${q.missionId}`}>
-                              <Button variant="outline" size="sm" className="w-full">Voir mission</Button>
-                            </Link>
-                          )}
-                          {q.status === 'SENT' && (
-                            <Button size="sm" onClick={() => openSignature(q)}>Signer (pro)</Button>
-                          )}
-                        </div>
+                      <p className="text-sm text-muted-foreground">Client : {clientName}</p>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <span>Créé le {formatDate(q.createdAt)}</span>
+                        <span>Valide jusqu&apos;au {formatDate(q.validUntil)}</span>
+                        <span>{q.lineItems?.length ?? 0} ligne(s)</span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 min-w-[150px]">
+                      <div className="font-display text-xl font-extrabold text-foreground">{formatCurrency(num(q.totalAmount))}</div>
+                      <div className="text-xs text-muted-foreground">TVA {num(q.taxRate)}%</div>
+                      <div className="flex flex-col gap-2 mt-3">
+                        {q.status === 'SENT' && (
+                          <Button size="sm" onClick={() => openSignature(q)}>Signer (pro)</Button>
+                        )}
+                        <a href={quoteApi.pdfUrl(q.id)} target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="sm" className="w-full">Télécharger le PDF</Button>
+                        </a>
+                        {q.missionId && (
+                          <Link href={`/artisan/missions/${q.missionId}`}>
+                            <Button variant="outline" size="sm" className="w-full">Voir mission</Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -477,8 +469,8 @@ export default function QuotationsPage() {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ---------- Modal création ---------- */}
       {showCreate && (

@@ -5,13 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { artisanApi } from '@/lib/api/artisan';
 import apiClient from '@/lib/api/client';
@@ -167,35 +160,35 @@ export default function ArtisanTimeTrackingPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-[1180px] mx-auto">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-3xl font-display font-extrabold tracking-tight text-foreground">
             {t('timeTracking', 'title') || 'Time Tracking'}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             {t('timeTracking', 'subtitle') || 'Track your working hours and earnings'}
           </p>
         </div>
       </div>
 
       {/* Active Timer Card */}
-      <Card className={`${activeEntry ? 'bg-green-100 border-green-500/30' : 'bg-background'}`}>
+      <Card className={activeEntry ? 'bg-success/[0.08] border-success/25' : ''}>
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="text-base font-semibold font-display text-foreground">
                 {activeEntry
                   ? t('timeTracking', 'currentlyTracking') || 'Currently Tracking'
                   : t('timeTracking', 'startTracking') || 'Start Tracking'}
               </h3>
               {activeEntry ? (
-                <div className="mt-2">
-                  <div className="text-4xl font-mono font-bold text-green-600">
+                <div className="mt-1.5">
+                  <div className="text-[38px] leading-none font-display font-extrabold tracking-tight tabular-nums text-success">
                     {getElapsedTime()}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground mt-1.5">
                     {t('timeTracking', 'startedAt') || 'Started at'}: {activeEntry.startTime}
                   </p>
                 </div>
@@ -218,7 +211,7 @@ export default function ArtisanTimeTrackingPage() {
               ) : (
                 <Button
                   size="lg"
-                  className="bg-green-600 hover:bg-green-700 px-8"
+                  className="bg-success hover:bg-success/90 text-success-foreground px-8"
                   onClick={handleStartTimer}
                 >
                   {t('timeTracking', 'start') || 'Start'}
@@ -230,31 +223,34 @@ export default function ArtisanTimeTrackingPage() {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card className="bg-muted border-primary/20">
-          <CardContent className="p-4">
-            <div className="text-sm text-primary">{t('timeTracking', 'todayHours') || "Today's Hours"}</div>
-            <div className="text-2xl font-bold text-primary">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <span className="w-2 h-2 rounded-full bg-primary inline-block" />
+              {t('timeTracking', 'todayHours') || "Today's Hours"}
+            </div>
+            <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">
               {formatDuration(summary.find(s => s.date === new Date().toISOString().split('T')[0])?.totalHours || 0)}
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">{t('timeTracking', 'weekHours') || 'This Week'}</div>
-            <div className="text-2xl font-bold text-foreground">{formatDuration(totalWeekHours)}</div>
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="text-xs font-semibold text-muted-foreground">{t('timeTracking', 'weekHours') || 'This Week'}</div>
+            <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">{formatDuration(totalWeekHours)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
-            <div className="text-2xl font-bold text-foreground">{(Number(totalWeekEarnings) || 0).toFixed(2)} €</div>
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="text-xs font-semibold text-muted-foreground">{t('timeTracking', 'weekEarnings') || 'Week Earnings'}</div>
+            <div className="text-[23px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">{(Number(totalWeekEarnings) || 0).toFixed(2)} €</div>
           </CardContent>
         </Card>
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
-            <div className="text-2xl font-bold text-foreground">
+        <Card>
+          <CardContent className="p-[18px]">
+            <div className="text-xs font-semibold text-muted-foreground">{t('timeTracking', 'avgHourly') || 'Avg Hourly Rate'}</div>
+            <div className="text-[23px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">
               {totalWeekHours > 0 ? (totalWeekEarnings / totalWeekHours).toFixed(2) : 0} €/h
             </div>
           </CardContent>
@@ -264,8 +260,8 @@ export default function ArtisanTimeTrackingPage() {
       {/* Date Range Filter */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-foreground">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-foreground">
               {t('timeTracking', 'dateRange') || 'Date Range'}:
             </span>
             <Input
@@ -274,7 +270,7 @@ export default function ArtisanTimeTrackingPage() {
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
               className="w-40"
             />
-            <span className="text-muted-foreground">-</span>
+            <span className="text-muted-foreground">–</span>
             <Input
               type="date"
               value={dateRange.end}
@@ -290,48 +286,48 @@ export default function ArtisanTimeTrackingPage() {
 
       {/* Time Entries Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('timeTracking', 'entries') || 'Time Entries'}</CardTitle>
+        <CardHeader className="border-b border-border pb-4">
+          <CardTitle className="text-base font-display">{t('timeTracking', 'entries') || 'Time Entries'}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {entries.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-11 text-muted-foreground">
               {t('timeTracking', 'noEntries') || 'No time entries found for this period'}
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                       {t('timeTracking', 'date') || 'Date'}
                     </th>
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                    <th className="text-left py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                       {t('timeTracking', 'mission') || 'Mission'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
+                    <th className="text-center py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                       {t('timeTracking', 'time') || 'Time'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
+                    <th className="text-center py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                       {t('timeTracking', 'break') || 'Break'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
+                    <th className="text-center py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                       {t('timeTracking', 'total') || 'Total'}
                     </th>
-                    <th className="text-center py-3 px-4 font-medium text-muted-foreground">
+                    <th className="text-center py-3 px-5 text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
                       {t('timeTracking', 'status') || 'Status'}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {entries.map((entry) => (
-                    <tr key={entry.id} className="border-b hover:bg-accent">
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-foreground">
+                    <tr key={entry.id} className="border-b border-border/60 last:border-0 hover:bg-muted/50">
+                      <td className="py-3.5 px-5">
+                        <div className="font-semibold text-foreground">
                           {new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-5">
                         {entry.missionTitle ? (
                           <div>
                             <div className="font-medium text-foreground">{entry.missionTitle}</div>
@@ -340,26 +336,26 @@ export default function ArtisanTimeTrackingPage() {
                             )}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center text-foreground">
+                      <td className="py-3.5 px-5 text-center text-foreground tabular-nums">
                         {entry.startTime} - {entry.endTime || 'In progress'}
                       </td>
-                      <td className="py-3 px-4 text-center text-muted-foreground">
+                      <td className="py-3.5 px-5 text-center text-muted-foreground tabular-nums">
                         {entry.breakMinutes}min
                       </td>
-                      <td className="py-3 px-4 text-center font-bold text-foreground">
+                      <td className="py-3.5 px-5 text-center font-bold text-foreground tabular-nums">
                         {formatDuration(entry.totalHours)}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-5 text-center">
                         <Badge
                           className={
                             entry.status === 'APPROVED'
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-success/10 text-success'
                               : entry.status === 'COMPLETED'
-                              ? 'bg-primary/10 text-primary'
-                              : 'bg-amber-100 text-amber-800'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-warning/15 text-warning'
                           }
                         >
                           {translateTimeEntryStatus(entry.status, t)}

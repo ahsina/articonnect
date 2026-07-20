@@ -139,12 +139,12 @@ export default function ShippingPolicyPage() {
             <ArrowLeft className="h-4 w-4" />
             {t('artisan', 'backToShop') || 'Retour à la boutique'}
           </button>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
-              <Truck className="h-5 w-5 text-foreground" />
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted flex-shrink-0">
+              <Truck className="h-6 w-6 text-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
                 {t('artisan', 'shippingPolicy') || 'Politique de livraison'}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -161,13 +161,13 @@ export default function ShippingPolicyPage() {
             {t('common', 'loading') || 'Chargement…'}
           </div>
         ) : (
-          <Card>
+          <Card className="rounded-2xl border-border shadow-sm">
             <CardHeader>
-              <CardTitle>{t('artisan', 'shippingFees') || 'Frais de port'}</CardTitle>
+              <CardTitle className="font-display text-lg font-bold">{t('artisan', 'shippingFees') || 'Frais de port'}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               {/* Livraison gratuite */}
-              <div className="rounded-lg border border-border p-4">
+              <div className="rounded-xl border border-border p-4">
                 <Switch
                   checked={freeShipping}
                   onChange={(e) => setFreeShipping(e.target.checked)}
@@ -182,25 +182,29 @@ export default function ShippingPolicyPage() {
               {/* Forfait de port */}
               <div className={freeShipping ? 'opacity-50' : ''}>
                 <Label htmlFor="flatRate">{t('artisan', 'flatRate') || 'Forfait de port (€)'}</Label>
-                <Input
-                  id="flatRate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  inputMode="decimal"
-                  value={flatRate}
-                  disabled={freeShipping}
-                  onChange={(e) => setFlatRate(e.target.value)}
-                  placeholder="5.99"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
+                <div className="relative">
+                  <Input
+                    id="flatRate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    className="pr-9"
+                    value={flatRate}
+                    disabled={freeShipping}
+                    onChange={(e) => setFlatRate(e.target.value)}
+                    placeholder="5.99"
+                  />
+                  <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">€</span>
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   {t('artisan', 'flatRateHelp') ||
                     'Montant facturé au client pour la livraison de sa commande.'}
                 </p>
               </div>
 
               {/* Franco de port */}
-              <div className={`rounded-lg border border-border p-4 ${freeShipping ? 'opacity-50' : ''}`}>
+              <div className={`rounded-xl border border-border p-4 ${freeShipping ? 'opacity-50' : ''}`}>
                 <Switch
                   checked={hasThreshold}
                   disabled={freeShipping}
@@ -216,17 +220,21 @@ export default function ShippingPolicyPage() {
                     <Label htmlFor="freeThreshold">
                       {t('artisan', 'freeThresholdLabel') || 'Livraison offerte au-delà de (€)'}
                     </Label>
-                    <Input
-                      id="freeThreshold"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      value={freeThreshold}
-                      onChange={(e) => setFreeThreshold(e.target.value)}
-                      placeholder="50.00"
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <div className="relative">
+                      <Input
+                        id="freeThreshold"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        className="pr-9"
+                        value={freeThreshold}
+                        onChange={(e) => setFreeThreshold(e.target.value)}
+                        placeholder="50.00"
+                      />
+                      <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">€</span>
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground">
                       {t('artisan', 'freeThresholdFieldHelp') ||
                         'Au-delà de ce montant, la livraison est automatiquement offerte au client.'}
                     </p>

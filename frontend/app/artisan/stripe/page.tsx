@@ -58,25 +58,55 @@ export default function StripeOnboardingPage() {
     );
   }
 
+  const CapabilityTile = ({
+    enabled,
+    title,
+    desc,
+  }: {
+    enabled: boolean;
+    title: string;
+    desc?: string;
+  }) => (
+    <div
+      className={`rounded-2xl border p-4 ${enabled ? 'bg-success/[0.06] border-success/25' : 'bg-muted border-border'}`}
+    >
+      <div className="flex items-center gap-2.5 font-semibold text-sm">
+        <span
+          className={`w-[22px] h-[22px] rounded-full grid place-items-center flex-shrink-0 ${enabled ? 'bg-success text-white' : 'bg-border text-muted-foreground'}`}
+        >
+          {enabled ? (
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          ) : (
+            <span className="w-2.5 h-2.5 rounded-full border-2 border-current" />
+          )}
+        </span>
+        <span className={enabled ? 'text-foreground' : 'text-muted-foreground'}>{title}</span>
+      </div>
+      {desc && <div className="text-xs text-muted-foreground mt-1.5 ml-[32px]">{desc}</div>}
+    </div>
+  );
+
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-4xl mx-auto">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-3xl font-display font-extrabold tracking-tight text-foreground">
           {t('artisan', 'paymentSetup') || 'Payment Setup'}
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mt-1">
           {t('artisan', 'stripeDescription') ||
             'Set up Stripe Connect to receive payments for your services'}
         </p>
       </div>
 
       {/* Status Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="mb-5">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <CardTitle>
+              <CardTitle className="text-lg font-display">
                 {t('artisan', 'stripeConnectStatus') || 'Stripe Connect Status'}
               </CardTitle>
               <CardDescription>
@@ -84,11 +114,11 @@ export default function StripeOnboardingPage() {
               </CardDescription>
             </div>
             {status?.onboarded ? (
-              <Badge className="bg-green-100 text-green-700">
+              <Badge className="bg-success/10 text-success">
                 {t('artisan', 'active') || 'Active'}
               </Badge>
             ) : status?.accountId ? (
-              <Badge className="bg-amber-100 text-amber-800">
+              <Badge className="bg-warning/15 text-warning">
                 ⏳ {t('artisan', 'incomplete') || 'Incomplete'}
               </Badge>
             ) : (
@@ -101,34 +131,25 @@ export default function StripeOnboardingPage() {
         <CardContent>
           {status?.onboarded ? (
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="p-4 bg-green-100 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <span className="text-xl"></span>
-                    <span className="font-medium">
-                      {t('artisan', 'chargesEnabled') || 'Charges Enabled'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t('artisan', 'canReceivePayments') || 'You can receive payments from clients'}
-                  </p>
-                </div>
-                <div className="p-4 bg-green-100 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <span className="text-xl"></span>
-                    <span className="font-medium">
-                      {t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t('artisan', 'canReceivePayouts') ||
-                      'You can receive payouts to your bank account'}
-                  </p>
-                </div>
+              <div className="grid md:grid-cols-2 gap-3.5">
+                <CapabilityTile
+                  enabled
+                  title={t('artisan', 'chargesEnabled') || 'Charges Enabled'}
+                  desc={t('artisan', 'canReceivePayments') || 'You can receive payments from clients'}
+                />
+                <CapabilityTile
+                  enabled
+                  title={t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
+                  desc={
+                    t('artisan', 'canReceivePayouts') ||
+                    'You can receive payouts to your bank account'
+                  }
+                />
               </div>
-              <div className="p-4 bg-background rounded-lg">
+              <div className="bg-muted border border-border rounded-xl px-4 py-3">
                 <p className="text-sm text-muted-foreground">
-                  <strong>{t('artisan', 'accountId') || 'Account ID'}:</strong> {status.accountId}
+                  <strong className="text-foreground font-mono">{t('artisan', 'accountId') || 'Account ID'}:</strong>{' '}
+                  {status.accountId}
                 </p>
               </div>
               <Button variant="outline" onClick={handleRefreshOnboarding} disabled={creating}>
@@ -137,41 +158,39 @@ export default function StripeOnboardingPage() {
             </div>
           ) : status?.accountId ? (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-100 border rounded-lg">
-                <h4 className="font-medium text-amber-800">
-                  {t('artisan', 'onboardingIncomplete') || 'Onboarding Incomplete'}
-                </h4>
-                <p className="text-sm text-amber-800 mt-1">
-                  {t('artisan', 'completeOnboarding') ||
-                    'Please complete your Stripe onboarding to start receiving payments.'}
-                </p>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div
-                  className={`p-4 rounded-lg ${status.chargesEnabled ? 'bg-green-100' : 'bg-background'}`}
-                >
-                  <div
-                    className={`flex items-center gap-2 ${status.chargesEnabled ? 'text-green-700' : 'text-muted-foreground'}`}
-                  >
-                    <span className="text-xl">{status.chargesEnabled ? '' : '○'}</span>
-                    <span className="font-medium">
-                      {t('artisan', 'chargesEnabled') || 'Charges Enabled'}
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className={`p-4 rounded-lg ${status.payoutsEnabled ? 'bg-green-100' : 'bg-background'}`}
-                >
-                  <div
-                    className={`flex items-center gap-2 ${status.payoutsEnabled ? 'text-green-700' : 'text-muted-foreground'}`}
-                  >
-                    <span className="text-xl">{status.payoutsEnabled ? '' : '○'}</span>
-                    <span className="font-medium">
-                      {t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
-                    </span>
-                  </div>
+              <div className="flex gap-3 items-start bg-warning/10 border border-warning/35 rounded-2xl px-4 py-3.5">
+                <svg className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z" />
+                  <path d="M12 9v4M12 17h.01" />
+                </svg>
+                <div>
+                  <h4 className="font-semibold text-sm text-warning">
+                    {t('artisan', 'onboardingIncomplete') || 'Onboarding Incomplete'}
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {t('artisan', 'completeOnboarding') ||
+                      'Please complete your Stripe onboarding to start receiving payments.'}
+                  </p>
                 </div>
               </div>
+              <div className="grid md:grid-cols-2 gap-3.5">
+                <CapabilityTile
+                  enabled={!!status.chargesEnabled}
+                  title={t('artisan', 'chargesEnabled') || 'Charges Enabled'}
+                />
+                <CapabilityTile
+                  enabled={!!status.payoutsEnabled}
+                  title={t('artisan', 'payoutsEnabled') || 'Payouts Enabled'}
+                />
+              </div>
+              {status.accountId && (
+                <div className="bg-muted border border-border rounded-xl px-4 py-3">
+                  <p className="text-sm text-muted-foreground">
+                    <strong className="text-foreground font-mono">{t('artisan', 'accountId') || 'Account ID'}:</strong>{' '}
+                    {status.accountId}
+                  </p>
+                </div>
+              )}
               <Button onClick={handleRefreshOnboarding} disabled={creating}>
                 {creating
                   ? t('common', 'loading') || 'Loading...'
@@ -180,11 +199,11 @@ export default function StripeOnboardingPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                <h4 className="font-medium text-primary">
+              <div className="bg-primary/[0.06] border border-primary/15 rounded-2xl px-4 py-3.5">
+                <h4 className="font-semibold text-sm text-foreground">
                   {t('artisan', 'getStarted') || 'Get Started with Stripe'}
                 </h4>
-                <p className="text-sm text-primary mt-1">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {t('artisan', 'stripeGetStartedDesc') ||
                     'Connect your bank account to receive payments for completed missions.'}
                 </p>
@@ -200,33 +219,33 @@ export default function StripeOnboardingPage() {
       </Card>
 
       {/* Information Cards */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-5">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display">
               {t('artisan', 'howItWorks') || 'How It Works'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
+            <ul className="space-y-1">
+              <li className="flex items-start gap-3 py-2.5">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-foreground flex items-center justify-center text-xs font-bold font-display">
                   1
                 </span>
                 <p className="text-sm text-muted-foreground">
                   {t('artisan', 'step1') || 'Complete a mission for a client'}
                 </p>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
+              <li className="flex items-start gap-3 py-2.5">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-foreground flex items-center justify-center text-xs font-bold font-display">
                   2
                 </span>
                 <p className="text-sm text-muted-foreground">
                   {t('artisan', 'step2') || 'Client confirms completion and payment is processed'}
                 </p>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
+              <li className="flex items-start gap-3 py-2.5">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-foreground flex items-center justify-center text-xs font-bold font-display">
                   3
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -238,28 +257,28 @@ export default function StripeOnboardingPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t('artisan', 'fees') || 'Fees'}</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display">{t('artisan', 'fees') || 'Fees'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b">
+            <div>
+              <div className="flex justify-between items-center py-2.5 border-b border-border text-sm">
                 <span className="text-muted-foreground">
                   {t('artisan', 'platformFee') || 'Platform Commission'}
                 </span>
-                <span className="font-medium text-foreground">12%</span>
+                <span className="font-bold text-foreground">12%</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b">
+              <div className="flex justify-between items-center py-2.5 border-b border-border text-sm">
                 <span className="text-muted-foreground">
                   {t('artisan', 'stripeFee') || 'Stripe Processing'}
                 </span>
-                <span className="font-medium text-foreground">{t('artisanStripe', 'included') || 'Included'}</span>
+                <span className="font-bold text-foreground">{t('artisanStripe', 'included') || 'Included'}</span>
               </div>
-              <div className="flex justify-between items-center py-2">
+              <div className="flex justify-between items-center py-2.5 text-sm">
                 <span className="text-muted-foreground">
                   {t('artisan', 'yourEarnings') || 'Your Earnings'}
                 </span>
-                <span className="font-bold text-green-600">88%</span>
+                <span className="font-bold text-success">88%</span>
               </div>
             </div>
           </CardContent>

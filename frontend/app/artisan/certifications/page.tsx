@@ -125,29 +125,73 @@ export default function CertificationsPage() {
     );
   }
 
+  const verifiedCount = certifications.filter((c) => c.verified).length;
+  const expiredCount = certifications.filter((c) => isExpired(c.expiryDate)).length;
+  const expiringCount = certifications.filter(
+    (c) => isExpiringSoon(c.expiryDate) && !isExpired(c.expiryDate),
+  ).length;
+
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-[1180px] mx-auto">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-3xl font-display font-extrabold tracking-tight text-foreground">
             {t('artisan', 'certifications') || 'Certifications'}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             {t('artisan', 'manageCerts') || 'Manage your professional certifications'}
           </p>
         </div>
         <Button onClick={() => setShowModal(true)}>
-          + {t('artisan', 'addCertification') || 'Add Certification'}
+          <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          {t('artisan', 'addCertification') || 'Add Certification'}
         </Button>
       </div>
+
+      {/* KPI tiles */}
+      {certifications.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-[18px]">
+              <div className="text-xs font-semibold text-muted-foreground">{t('artisan', 'certifications') || 'Certifications'}</div>
+              <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">{certifications.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-[18px]">
+              <div className="text-xs font-semibold text-muted-foreground">{t('artisanCertifications', 'verified') || 'Verified'}</div>
+              <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">{verifiedCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-[18px]">
+              <div className="text-xs font-semibold text-muted-foreground">{t('artisanCertifications', 'expiringSoon') || 'Expiring Soon'}</div>
+              <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">{expiringCount}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-[18px]">
+              <div className="text-xs font-semibold text-muted-foreground">{t('artisanCertifications', 'expired') || 'Expired'}</div>
+              <div className="text-[28px] leading-none font-display font-extrabold tracking-tight text-foreground mt-2">{expiredCount}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Certifications List */}
       {certifications.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center">
-            <div className="text-5xl mb-4"></div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
+          <CardContent className="p-11 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-muted mx-auto mb-3 flex items-center justify-center">
+              <svg className="w-6 h-6 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="9" r="5.5" />
+                <path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold font-display text-foreground mb-2">
               {t('artisan', 'noCertifications') || 'No Certifications'}
             </h3>
             <p className="text-muted-foreground mb-4">
@@ -163,27 +207,30 @@ export default function CertificationsPage() {
         <div className="grid md:grid-cols-2 gap-4">
           {certifications.map((cert) => (
             <Card key={cert.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
-                      
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 bg-muted rounded-xl flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="9" r="5.5" />
+                        <path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5" />
+                      </svg>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-foreground">{cert.name}</h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-foreground">{cert.name}</h4>
                         {cert.verified && (
-                          <Badge className="bg-green-100 text-green-700">{t('artisanCertifications', 'verified') || 'Verified'}</Badge>
+                          <Badge className="bg-success/10 text-success">{t('artisanCertifications', 'verified') || 'Verified'}</Badge>
                         )}
                         {isExpired(cert.expiryDate) && (
-                          <Badge className="bg-red-100 text-red-700">{t('artisanCertifications', 'expired') || 'Expired'}</Badge>
+                          <Badge className="bg-destructive/10 text-destructive">{t('artisanCertifications', 'expired') || 'Expired'}</Badge>
                         )}
                         {isExpiringSoon(cert.expiryDate) && !isExpired(cert.expiryDate) && (
-                          <Badge className="bg-amber-100 text-amber-800">{t('artisanCertifications', 'expiringSoon') || 'Expiring Soon'}</Badge>
+                          <Badge className="bg-warning/15 text-warning">{t('artisanCertifications', 'expiringSoon') || 'Expiring Soon'}</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{cert.issuer}</p>
-                      <div className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-0.5">{cert.issuer}</p>
+                      <div className="text-xs text-muted-foreground mt-1">
                         {t('artisan', 'issued') || 'Issued'}: {formatDate(cert.issueDate)}
                         {cert.expiryDate && (
                           <span>
@@ -194,12 +241,14 @@ export default function CertificationsPage() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(cert.id)}>
-                    
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(cert.id)} aria-label={t('common', 'delete') || 'Delete'}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13h10l1-13" />
+                    </svg>
                   </Button>
                 </div>
                 {cert.document && (
-                  <div className="mt-3 pt-3 border-t">
+                  <div className="mt-3 pt-3 border-t border-border">
                     <a
                       href={cert.document}
                       target="_blank"
@@ -221,7 +270,7 @@ export default function CertificationsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle>{t('artisan', 'addCertification') || 'Add Certification'}</CardTitle>
+              <CardTitle className="text-lg font-display">{t('artisan', 'addCertification') || 'Add Certification'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>

@@ -219,7 +219,7 @@ function ArtisanMessagesContent() {
       <div className="bg-card border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-display font-extrabold tracking-tight text-foreground">
               {t('messages', 'title') || 'Messages'}
             </h1>
             <p className="text-muted-foreground">
@@ -227,7 +227,7 @@ function ArtisanMessagesContent() {
             </p>
           </div>
           {totalUnread > 0 && (
-            <Badge className="bg-primary">
+            <Badge className="bg-destructive/10 text-destructive">
               {totalUnread} {t('messages', 'unread') || 'unread'}
             </Badge>
           )}
@@ -238,13 +238,19 @@ function ArtisanMessagesContent() {
         {/* Conversations Sidebar */}
         <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 bg-card border-r border-border flex-col`}>
           {/* Search */}
-          <div className="p-4 border-b">
-            <Input
-              placeholder={t('messages', 'searchConversations') || 'Search conversations...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
+          <div className="p-3 border-b border-border">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4-4" />
+              </svg>
+              <Input
+                placeholder={t('messages', 'searchConversations') || 'Search conversations...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9"
+              />
+            </div>
           </div>
 
           {/* Connection Status */}
@@ -268,8 +274,8 @@ function ArtisanMessagesContent() {
                 <button
                   key={conv.userId}
                   onClick={() => setSelectedConversation(conv.userId)}
-                  className={`w-full p-4 flex items-start gap-3 hover:bg-accent border-b border-border transition-colors text-left ${
-                    selectedConversation === conv.userId ? 'bg-primary/10 border-l-4 border-l-blue-600' : ''
+                  className={`w-full p-4 flex items-start gap-3 hover:bg-muted/60 border-b border-border transition-colors text-left ${
+                    selectedConversation === conv.userId ? 'bg-muted border-l-[3px] border-l-foreground' : ''
                   }`}
                 >
                   <div className="relative">
@@ -367,10 +373,10 @@ function ArtisanMessagesContent() {
                     return (
                       <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                         <div
-                          className={`max-w-[75%] px-3.5 py-2 text-[14.5px] leading-snug shadow-sm ${
+                          className={`max-w-[75%] px-3.5 py-2 text-[14.5px] leading-snug ${
                             isOwn
-                              ? 'rounded-2xl rounded-br-md bg-foreground text-background'
-                              : 'rounded-2xl rounded-bl-md bg-card text-foreground'
+                              ? 'rounded-2xl rounded-br-md bg-foreground text-background shadow-sm'
+                              : 'rounded-2xl rounded-bl-md bg-card text-foreground border border-border'
                           }`}
                         >
                           <p className="break-words whitespace-pre-wrap">{message.content}</p>
@@ -414,7 +420,11 @@ function ArtisanMessagesContent() {
           ) : (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
-                <div className="text-6xl mb-4"></div>
+                <div className="w-14 h-14 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 5h16v11H9l-4 3v-3H4z" />
+                  </svg>
+                </div>
                 <p>{t('messages', 'selectConversation') || 'Select a conversation to start messaging'}</p>
               </div>
             </div>
