@@ -5,8 +5,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/ui/star-rating';
 import { userApi } from '@/lib/api/user';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -30,6 +28,16 @@ interface Artisan {
 }
 
 type ArtisanSortOption = 'rating' | 'distance' | 'price';
+
+// Dégradés de couverture des cartes (rotation par index) — purement décoratif.
+const COVER_GRADIENTS = [
+  'from-neutral-900 to-neutral-700',
+  'from-emerald-700 to-emerald-900',
+  'from-neutral-700 to-neutral-500',
+  'from-amber-700 to-amber-500',
+  'from-indigo-900 to-blue-600',
+  'from-rose-900 to-pink-700',
+];
 
 const SPECIALTIES = [
   { id: 'all', name: 'Tous', icon: '' },
@@ -148,57 +156,64 @@ export default function ArtisansListPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">{t('artisans', 'findArtisan')}</h1>
-          <p className="text-muted-foreground mt-2">
-            {filteredArtisans.length} {filteredArtisans.length > 1 ? t('common', 'artisan') + 's' : t('common', 'artisan')} {filteredArtisans.length > 1 ? t('artisans', 'availablePlural') : t('artisans', 'available')}
+        <div className="mb-5">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground">
+            {t('artisans', 'findArtisan')}
+          </h1>
+          <p className="text-muted-foreground mt-1.5">
+            {t('artisans', 'directorySubtitle') || 'Parcourez les professionnels vérifiés près de chez vous et invitez-les sur votre projet.'}
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="mb-8 space-y-4">
-          {/* Search Bar */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder={t('artisans', 'searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as ArtisanSortOption)}
-              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="rating">{t('artisans', 'topRated')}</option>
-              <option value="distance">{t('artisans', 'closest')}</option>
-              <option value="price">{t('artisans', 'cheapest')}</option>
-            </select>
+        {/* Search Bar */}
+        <div className="mb-4 flex flex-wrap items-center gap-2.5 rounded-2xl border border-border bg-card p-3 shadow-sm">
+          <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-xl border border-border bg-muted px-3.5 h-12">
+            <svg className="w-5 h-5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+            <input
+              placeholder={t('artisans', 'searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
           </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as ArtisanSortOption)}
+            className="h-12 rounded-xl border border-border bg-muted px-3.5 text-sm font-medium text-foreground outline-none focus:border-foreground"
+          >
+            <option value="rating">{t('artisans', 'topRated')}</option>
+            <option value="distance">{t('artisans', 'closest')}</option>
+            <option value="price">{t('artisans', 'cheapest')}</option>
+          </select>
+        </div>
 
-          {/* Specialty Filters */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {SPECIALTIES.map((specialty) => (
-              <button
-                key={specialty.id}
-                onClick={() => setSelectedSpecialty(specialty.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  selectedSpecialty === specialty.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card text-foreground hover:bg-accent'
-                }`}
-              >
-                <TradeIcon name={specialty.name} className="h-4 w-4" />
-                <span className="text-sm font-medium">{specialty.name}</span>
-              </button>
-            ))}
-          </div>
+        {/* Specialty Filters */}
+        <div className="mb-5 flex gap-2 overflow-x-auto pb-2">
+          {SPECIALTIES.map((specialty) => (
+            <button
+              key={specialty.id}
+              onClick={() => setSelectedSpecialty(specialty.id)}
+              className={`flex items-center gap-2 rounded-full border px-4 h-9 whitespace-nowrap text-sm font-semibold transition-colors ${
+                selectedSpecialty === specialty.id
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'bg-card text-muted-foreground border-border hover:bg-muted'
+              }`}
+            >
+              {specialty.id !== 'all' && <TradeIcon name={specialty.name} className="h-4 w-4" />}
+              <span>{specialty.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mb-4 text-sm text-muted-foreground">
+          <b className="text-foreground">{filteredArtisans.length}</b>{' '}
+          {filteredArtisans.length > 1 ? t('common', 'artisan') + 's' : t('common', 'artisan')}{' '}
+          {filteredArtisans.length > 1 ? t('artisans', 'availablePlural') : t('artisans', 'available')}
         </div>
 
         {/* Artisans Grid */}
         {filteredArtisans.length === 0 ? (
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">{t('artisans', 'noArtisansFound')}</p>
               <Button onClick={() => { setSearchQuery(''); setSelectedSpecialty('all'); }}>
@@ -207,103 +222,91 @@ export default function ArtisansListPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArtisans.map((artisan) => (
-              <Card key={artisan.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-lg font-semibold">
-                        {artisan.firstName?.[0]}
-                        {artisan.lastName?.[0]}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {artisan.artisanProfile.companyName}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {artisan.firstName} {artisan.lastName}
-                        </p>
-                      </div>
-                    </div>
-                    {artisan.artisanProfile.verified && (
-                      <Badge variant="success" className="text-xs">
-                        {t('artisans', 'verified')}
-                      </Badge>
-                    )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredArtisans.map((artisan, index) => (
+              <article
+                key={artisan.id}
+                className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                {/* Cover */}
+                <div className={`h-24 bg-gradient-to-br ${COVER_GRADIENTS[index % COVER_GRADIENTS.length]}`} />
+
+                <div className="flex flex-1 flex-col px-5 pb-5">
+                  {/* Avatar */}
+                  <div className="-mt-8 flex h-16 w-16 items-center justify-center rounded-2xl border-[3px] border-card bg-muted font-display text-xl font-extrabold text-foreground shadow-md">
+                    {artisan.firstName?.[0]}
+                    {artisan.lastName?.[0]}
                   </div>
 
+                  {/* Name + company */}
+                  <h3 className="mt-3 flex items-center gap-1.5 font-display text-[17px] font-extrabold text-foreground">
+                    {artisan.artisanProfile.companyName}
+                    {artisan.artisanProfile.verified && (
+                      <svg className="h-[17px] w-[17px] text-success shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 2 3.1-.3 1 3 2.5 1.9-1.3 2.8.6 3.1-3 1-1.6 2.7-3-.9-3 .9L6.6 18l-3-1 .6-3.1L2.9 11 5.4 9.1 6.4 6l3.1.3z" /><path d="M9 12l2 2 4-4" /></svg>
+                    )}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {artisan.firstName} {artisan.lastName}
+                  </p>
+
                   {/* Rating */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <StarRating
-                      rating={artisan.artisanProfile.rating}
-                      readonly
-                      size="sm"
-                    />
+                  <div className="mt-2 flex items-center gap-2">
+                    <StarRating rating={artisan.artisanProfile.rating} readonly size="sm" />
                     <span className="text-sm text-muted-foreground">
                       ({artisan.artisanProfile.reviewCount} {t('artisans', 'reviews')})
                     </span>
                   </div>
 
-                  {/* Description */}
-                  <p className="text-sm text-foreground mb-4 line-clamp-2">
-                    {artisan.artisanProfile.description}
-                  </p>
-
                   {/* Specialties */}
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="my-3 flex flex-wrap gap-1.5">
                     {artisan.artisanProfile.specialties.slice(0, 3).map((specialty) => {
                       const spec = SPECIALTIES.find((s) => s.id === specialty);
                       return (
-                        <Badge key={specialty} variant="default" className="text-xs inline-flex items-center gap-1">
-                          <TradeIcon name={spec?.name} className="h-3 w-3" /> {spec?.name}
-                        </Badge>
+                        <span
+                          key={specialty}
+                          className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground"
+                        >
+                          <TradeIcon name={spec?.name || specialty} className="h-3 w-3" /> {spec?.name || specialty}
+                        </span>
                       );
                     })}
                     {artisan.artisanProfile.specialties.length > 3 && (
-                      <Badge variant="default" className="text-xs">
+                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
                         +{artisan.artisanProfile.specialties.length - 3}
-                      </Badge>
+                      </span>
                     )}
                   </div>
 
-                  {/* Info */}
-                  <div className="space-y-2 mb-4 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span></span>
-                      <span>
-                        {artisan.artisanProfile.city}, {artisan.artisanProfile.country}
-                      </span>
-                      {artisan.distance && (
-                        <span className="text-primary">({artisan.distance} km)</span>
-                      )}
-                    </div>
+                  {/* Meta */}
+                  <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" /></svg>
+                      {artisan.artisanProfile.city}, {artisan.artisanProfile.country}
+                      {artisan.distance ? <span className="text-foreground">· {artisan.distance} km</span> : null}
+                    </span>
                     {artisan.artisanProfile.hourlyRate && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <span></span>
-                        <span>~{artisan.artisanProfile.hourlyRate}€/h</span>
-                      </div>
+                      <span>{t('artisans', 'fromPrice') || 'dès'} {artisan.artisanProfile.hourlyRate} €/h</span>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="mt-auto flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => router.push(`/client/artisans/${artisan.id}`)}
+                    >
+                      {t('artisans', 'viewProfile')}
+                    </Button>
                     <Button
                       className="flex-1"
                       onClick={() => handleContactArtisan(artisan.id)}
                     >
                       {t('common', 'contact')}
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push(`/client/artisans/${artisan.id}`)}
-                    >
-                      {t('artisans', 'viewProfile')}
-                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </article>
             ))}
           </div>
         )}

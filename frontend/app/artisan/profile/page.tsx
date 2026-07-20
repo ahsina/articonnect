@@ -469,94 +469,102 @@ function ArtisanProfileContent() {
 
   // Existing profile view
   return (
-    <div className="p-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {t('artisan', 'myProfile') || 'My Profile'}
-          </h1>
-          <p className="text-muted-foreground">
-            {t('artisan', 'manageProfile') || 'Manage your artisan profile and settings'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant={profile.available ? 'default' : 'outline'}
-            onClick={handleToggleAvailability}
-            className={profile.available ? 'bg-foreground hover:bg-foreground/90' : ''}
-          >
-            {profile.available ? `${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
-          </Button>
+    <div className="p-6 max-w-[1080px]">
+      {/* Hero header */}
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div className="h-28 bg-gradient-to-r from-foreground to-foreground/70" />
+        <div className="px-6 pb-6 flex flex-wrap items-end gap-5">
+          <div className="-mt-12 w-24 h-24 rounded-3xl border-4 border-card bg-muted grid place-items-center font-display font-extrabold text-3xl text-foreground shadow-md shrink-0">
+            {(profile.companyName || '?').trim().charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-[220px] pt-3.5">
+            <div className="flex items-center gap-2 text-2xl font-display font-extrabold text-foreground">
+              {profile.companyName}
+              {profile.businessVerified && (
+                <span className="inline-flex items-center gap-1 bg-success/10 text-success text-xs font-bold px-2.5 py-0.5 rounded-full">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  {t('artisan', 'verified') || 'Verified'}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <span className="text-warning">★</span> {(Number(profile.rating) || 0).toFixed(1)} · {profile.reviewCount} {t('artisanProfile', 'reviews')}
+              </span>
+              {profile.baseAddress && (
+                <span className="inline-flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                  {profile.baseAddress}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                {t('artisan', 'serviceRadius') || 'Service Area'} {profile.serviceRadius} km
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${profile.available ? 'bg-success' : 'bg-muted-foreground'}`} />
+                {profile.available ? `${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2.5 pt-3.5">
+            <Button
+              variant={profile.available ? 'default' : 'outline'}
+              onClick={handleToggleAvailability}
+              className={profile.available ? 'bg-foreground hover:bg-foreground/90' : ''}
+            >
+              {profile.available ? `${t('artisanProfile', 'available')}` : t('artisanProfile', 'unavailable')}
+            </Button>
+            <Button onClick={() => setActiveTab('edit')}>
+              {t('artisan', 'editProfile') || 'Edit Profile'}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary">{(Number(profile.rating) || 0).toFixed(1)}</div>
-              <div className="text-sm text-muted-foreground">{t('artisan', 'rating') || 'Rating'}</div>
-              <div className="text-xs text-muted-foreground">{profile.reviewCount} {t('artisanProfile', 'reviews')}</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-foreground">{profile.missionCount}</div>
-              <div className="text-sm text-muted-foreground">{t('artisan', 'missions') || 'Missions'}</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-foreground">{profile.serviceRadius}km</div>
-              <div className="text-sm text-muted-foreground">
-                {t('artisan', 'serviceRadius') || 'Service Area'}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-foreground">
-                {profile.certifications?.length || 0}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {t('artisan', 'certifications') || 'Certifications'}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5 text-center">
+          <div className="text-2xl font-display font-extrabold text-success">{(Number(profile.rating) || 0).toFixed(1)}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t('artisan', 'rating') || 'Rating'} · {profile.reviewCount} {t('artisanProfile', 'reviews')}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5 text-center">
+          <div className="text-2xl font-display font-extrabold text-foreground">{profile.missionCount}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t('artisan', 'missions') || 'Missions'}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5 text-center">
+          <div className="text-2xl font-display font-extrabold text-foreground">{profile.serviceRadius} km</div>
+          <div className="text-sm text-muted-foreground mt-1">{t('artisan', 'serviceRadius') || 'Service Area'}</div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl shadow-sm p-5 text-center">
+          <div className="text-2xl font-display font-extrabold text-foreground">{profile.certifications?.length || 0}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t('artisan', 'certifications') || 'Certifications'}</div>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b overflow-x-auto">
+      <div className="flex gap-1 mb-6 border-b border-border overflow-x-auto">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-medium ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-4 py-3 font-medium whitespace-nowrap -mb-px border-b-2 ${activeTab === 'overview' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground'}`}
         >
           {t('artisan', 'overview') || 'Overview'}
         </button>
         <button
           onClick={() => setActiveTab('badges')}
-          className={`px-4 py-2 font-medium ${activeTab === 'badges' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-4 py-3 font-medium whitespace-nowrap -mb-px border-b-2 ${activeTab === 'badges' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground'}`}
         >
           {t('artisan', 'badges') || 'Badges'} ({badges.length})
         </button>
         <button
           onClick={() => setActiveTab('edit')}
-          className={`px-4 py-2 font-medium ${activeTab === 'edit' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-4 py-3 font-medium whitespace-nowrap -mb-px border-b-2 ${activeTab === 'edit' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground'}`}
         >
           {t('artisan', 'editProfile') || 'Edit Profile'}
         </button>
         <button
           onClick={() => setActiveTab('business')}
-          className={`px-4 py-2 font-medium ${activeTab === 'business' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
+          className={`px-4 py-3 font-medium whitespace-nowrap -mb-px border-b-2 ${activeTab === 'business' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground'}`}
         >
           {t('artisan', 'businessInfo') || 'Business Info'}
         </button>
@@ -788,7 +796,7 @@ function ArtisanProfileContent() {
                     <div className="font-medium text-foreground">{t('artisanProfile', 'badgeVerifiedExpert')}</div>
                     <div className="text-sm text-muted-foreground">{t('artisanProfile', 'badgeVerifiedExpertDesc')}</div>
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-yellow-600 rounded-full" style={{ width: `${Math.min((profile?.certifications?.length || 0) / 5 * 100, 100)}%` }} />
+                      <div className="h-full bg-warning rounded-full" style={{ width: `${Math.min((profile?.certifications?.length || 0) / 5 * 100, 100)}%` }} />
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">{profile?.certifications?.length || 0} / 5</div>
                   </div>

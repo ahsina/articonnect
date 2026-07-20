@@ -44,12 +44,28 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-3xl"></span>
+            <div className="flex items-center justify-center gap-2.5 mb-4">
+              <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center">
+                <span className="text-2xl font-extrabold text-primary-foreground font-display">K</span>
+              </div>
+              <span className="font-display text-[22px] font-extrabold tracking-tight text-foreground">Krafolt</span>
+            </div>
+            <div className="flex items-center justify-center mb-2">
+              <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-success"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
               </div>
             </div>
-            <CardTitle className="text-2xl">{t('auth', 'emailSentTitle')}</CardTitle>
+            <CardTitle className="font-display text-2xl tracking-tight">{t('auth', 'emailSentTitle')}</CardTitle>
             <CardDescription>
               {t('auth', 'emailSentInfo')}
             </CardDescription>
@@ -73,12 +89,13 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-primary-foreground">K</span>
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-2xl font-extrabold text-primary-foreground font-display">K</span>
             </div>
+            <span className="font-display text-[22px] font-extrabold tracking-tight text-foreground">Krafolt</span>
           </div>
-          <CardTitle className="text-2xl text-center">{t('auth', 'forgotPasswordTitle')}</CardTitle>
+          <CardTitle className="font-display text-2xl text-center tracking-tight">{t('auth', 'forgotPasswordTitle')}</CardTitle>
           <CardDescription className="text-center">
             {t('auth', 'forgotPasswordSubtitle')}
           </CardDescription>

@@ -149,30 +149,45 @@ export default function TwoFactorAuthPage() {
     return (
       <div className="min-h-screen bg-background py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
             {t('common', 'back')}
-          </Button>
+          </button>
 
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
-              <CardTitle>{t('common', 'backupCodes')}</CardTitle>
+              <CardTitle className="font-display flex items-center gap-3">
+                {t('common', 'backupCodes')}
+                <span className="inline-flex items-center rounded-full bg-success/10 text-success text-xs font-bold px-2.5 py-0.5">
+                  {t('common', 'twoFactorEnabled') || '2FA activée'}
+                </span>
+              </CardTitle>
               <CardDescription>
                 {t('common', 'backupCodesDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-amber-100 border rounded-lg p-4">
-                <p className="text-sm text-amber-800 font-medium mb-2">
-                  {t('common', 'important')}
-                </p>
-                <p className="text-sm text-amber-800">
-                  {t('common', 'backupCodesWarning')}
-                </p>
+              <div className="flex gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4">
+                <svg className="w-5 h-5 shrink-0 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 9v4M12 17h.01" /></svg>
+                <div>
+                  <p className="text-sm font-semibold text-foreground mb-1">
+                    {t('common', 'important')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('common', 'backupCodesWarning')}
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 p-4 bg-background rounded-lg font-mono text-sm">
+              <div className="grid grid-cols-2 gap-3">
                 {backupCodes.map((code, index) => (
-                  <div key={index} className="p-2 bg-card border rounded text-center">
+                  <div
+                    key={index}
+                    className="rounded-xl border border-border bg-muted p-3 text-center font-mono text-sm tracking-wider"
+                  >
                     {code}
                   </div>
                 ))}
@@ -204,63 +219,69 @@ export default function TwoFactorAuthPage() {
     return (
       <div className="min-h-screen bg-background py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button variant="ghost" onClick={() => setShowSetup(false)} className="mb-6">
+          <button
+            onClick={() => setShowSetup(false)}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
             {t('common', 'back')}
-          </Button>
+          </button>
 
-          <Card>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground mb-1">
+            {t('common', 'setup2FA')}
+          </h1>
+          <p className="text-muted-foreground mb-6">{t('common', 'twoFactorDescription')}</p>
+
+          {/* Étape 1 : scan QR */}
+          <Card className="rounded-2xl shadow-sm mb-4">
             <CardHeader>
-              <CardTitle>{t('common', 'setup2FA')}</CardTitle>
-              <CardDescription>
-                {t('common', 'scanQRCode')}
-              </CardDescription>
+              <CardTitle className="font-display text-lg">1. {t('common', 'scanQRCode')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex justify-center bg-card p-6 rounded-lg border">
-                  <img src={qrCode} alt="QR Code 2FA" className="w-64 h-64" />
+            <CardContent>
+              <div className="flex flex-wrap items-center gap-6 rounded-2xl border border-border bg-muted p-5">
+                <div className="shrink-0 rounded-xl border border-border bg-card p-3">
+                  <img src={qrCode} alt="QR Code 2FA" className="h-40 w-40" />
                 </div>
-
-                <div className="bg-background p-4 rounded-lg">
-                  <p className="text-sm font-medium text-foreground mb-2">
+                <div className="min-w-[200px] flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-1.5">
                     {t('common', 'orEnterManually')}
                   </p>
-                  <code className="block p-3 bg-card border rounded text-center font-mono text-sm break-all">
+                  <code className="block break-all rounded-lg border border-border bg-card px-3.5 py-3 font-mono text-sm tracking-widest">
                     {secret}
                   </code>
-                </div>
-
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-                  <p className="text-sm text-primary">
-                    <strong>{t('common', 'recommendedApps')}</strong> Google Authenticator, Microsoft Authenticator, Authy
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    <strong className="text-foreground">{t('common', 'recommendedApps')}</strong> Google Authenticator, Microsoft Authenticator, Authy
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
+          {/* Étape 2 : code de vérif */}
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader>
+              <CardTitle className="font-display text-lg">2. {t('common', 'enterVerificationCode')}</CardTitle>
+            </CardHeader>
+            <CardContent>
               <form onSubmit={handleVerify2FA} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t('common', 'enterVerificationCode')}
-                  </label>
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    placeholder="123456"
-                    value={verifyToken}
-                    onChange={(e) => setVerifyToken(e.target.value.replace(/\D/g, ''))}
-                    required
-                    className="text-center text-2xl tracking-widest"
-                  />
-                </div>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={verifyToken}
+                  onChange={(e) => setVerifyToken(e.target.value.replace(/\D/g, ''))}
+                  required
+                  className="text-center text-2xl font-display font-bold tracking-[0.4em]"
+                />
 
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={loading || verifyToken.length !== 6}
                 >
-                  {loading ? t('common', 'verifying') : t('common', 'activate')}
+                  {loading ? t('common', 'verifying') : (t('common', 'activate2FA') || t('common', 'activate'))}
                 </Button>
               </form>
             </CardContent>
@@ -273,23 +294,40 @@ export default function TwoFactorAuthPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           {t('common', 'back')}
-        </Button>
+        </button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('common', 'twoFactorSettings')}</CardTitle>
-            <CardDescription>
-              {t('common', 'twoFactorDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-start justify-between p-4 bg-background rounded-lg">
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground mb-1">
+          {t('common', 'twoFactorSettings')}
+        </h1>
+        <p className="text-muted-foreground mb-6">{t('common', 'twoFactorDescription')}</p>
+
+        <Card className="rounded-2xl shadow-sm">
+          <CardContent className="space-y-6 pt-6">
+            <div className="flex items-start gap-4 rounded-2xl border border-border bg-muted p-4">
+              <span
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                  is2FAEnabled ? 'bg-success/15 text-success' : 'bg-card text-muted-foreground'
+                }`}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+              </span>
               <div className="flex-1">
-                <h3 className="font-medium text-foreground">
-                  {is2FAEnabled ? t('common', 'twoFactorEnabled') : t('common', 'twoFactorDisabled')}
-                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-display font-bold text-foreground">
+                    {is2FAEnabled ? t('common', 'twoFactorEnabled') : t('common', 'twoFactorDisabled')}
+                  </h3>
+                  {is2FAEnabled && (
+                    <span className="inline-flex items-center rounded-full bg-success/10 text-success text-xs font-bold px-2.5 py-0.5">
+                      {t('common', 'twoFactorEnabled') || 'Activée'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {is2FAEnabled
                     ? t('common', 'twoFactorEnabledDesc')

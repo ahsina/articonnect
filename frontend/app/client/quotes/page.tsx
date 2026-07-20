@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -89,59 +89,56 @@ export default function ClientQuotesPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Mes devis</h1>
-        <p className="text-muted-foreground">Les devis que vous avez reçus des artisans.</p>
-      </div>
+    <div className="min-h-screen bg-background py-9 px-4">
+      <div className="max-w-[1120px] mx-auto">
+        <div className="mb-6">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground">Mes devis</h1>
+          <p className="text-muted-foreground mt-1.5">Les devis que vous avez reçus des artisans.</p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Devis reçus</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Chargement…</div>
-          ) : quotes.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+        {loading ? (
+          <Card>
+            <CardContent className="text-center py-10 pt-10 text-muted-foreground">Chargement…</CardContent>
+          </Card>
+        ) : quotes.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-10 pt-10 text-muted-foreground">
               <p>Vous n&apos;avez pas encore reçu de devis.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {quotes.map((q) => {
-                const artisanName = q.artisan
-                  ? [q.artisan.firstName, q.artisan.lastName].filter(Boolean).join(' ')
-                  : 'Artisan';
-                return (
-                  <Link key={q.id} href={`/client/quotes/${q.id}`} className="block">
-                    <div className="p-4 border rounded-lg hover:bg-accent transition">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center flex-wrap gap-2 mb-1">
-                            <span className="font-mono text-xs text-muted-foreground">{q.quoteNumber}</span>
-                            <h4 className="font-medium text-foreground truncate">{q.title}</h4>
-                            <Badge className={STATUS_COLORS[q.status]}>{STATUS_LABELS[q.status]}</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">De : {artisanName}</p>
-                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <span>Reçu le {formatDate(q.sentAt || q.createdAt)}</span>
-                            <span>Valide jusqu&apos;au {formatDate(q.validUntil)}</span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-xl font-bold text-foreground">{formatCurrency(num(q.totalAmount))}</div>
-                          <div className="text-xs text-muted-foreground">dont TVA {formatCurrency(num(q.taxAmount))}</div>
-                          <Button variant="outline" size="sm" className="mt-2">Voir le devis</Button>
-                        </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="overflow-hidden">
+            {quotes.map((q, idx) => {
+              const artisanName = q.artisan
+                ? [q.artisan.firstName, q.artisan.lastName].filter(Boolean).join(' ')
+                : 'Artisan';
+              return (
+                <Link key={q.id} href={`/client/quotes/${q.id}`} className="block">
+                  <div className={`flex items-start justify-between gap-[18px] p-5 hover:bg-muted transition-colors ${idx > 0 ? 'border-t border-border' : ''}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center flex-wrap gap-2.5">
+                        <span className="font-mono text-[11.5px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">{q.quoteNumber}</span>
+                        <h4 className="font-display font-bold text-foreground truncate">{q.title}</h4>
+                        <Badge className={STATUS_COLORS[q.status]}>{STATUS_LABELS[q.status]}</Badge>
+                      </div>
+                      <p className="text-[13.5px] text-muted-foreground mt-1.5">De : {artisanName}</p>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-[13px] text-muted-foreground">
+                        <span>Reçu le {formatDate(q.sentAt || q.createdAt)}</span>
+                        <span>Valide jusqu&apos;au {formatDate(q.validUntil)}</span>
                       </div>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    <div className="text-right shrink-0">
+                      <div className="font-display text-xl font-extrabold text-foreground">{formatCurrency(num(q.totalAmount))}</div>
+                      <div className="text-xs text-muted-foreground">dont TVA {formatCurrency(num(q.taxAmount))}</div>
+                      <Button variant="outline" size="sm" className="mt-2.5">Voir le devis</Button>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

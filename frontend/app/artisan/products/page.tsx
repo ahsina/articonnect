@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -123,7 +122,7 @@ export default function ArtisanShopPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">{t('artisan', 'myShop') || 'Ma boutique'}</h1>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground mb-1">{t('artisan', 'myShop') || 'Ma boutique'}</h1>
             <p className="text-muted-foreground">{t('artisan', 'manageProducts') || 'Gérez vos produits, commandes et ventes'}</p>
           </div>
           {tab === 'products' && (
@@ -173,32 +172,24 @@ export default function ArtisanShopPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-sm text-muted-foreground">{t('artisan', 'totalProducts') || 'Total produits'}</div>
-                  <div className="text-2xl font-bold text-foreground">{products.length}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-sm text-muted-foreground">{t('artisan', 'active') || 'Actifs'}</div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {products.filter((p) => p.status === 'ACTIVE').length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-sm text-muted-foreground">{t('artisan', 'outOfStock') || 'Rupture'}</div>
-                  <div className="text-2xl font-bold text-foreground">{products.filter((p) => p.stock === 0).length}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-sm text-muted-foreground">{t('artisan', 'stockValue') || 'Valeur du stock'}</div>
-                  <div className="text-2xl font-bold text-primary">{(Number(stockValue) || 0).toFixed(0)}€</div>
-                </CardContent>
-              </Card>
+              <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+                <div className="text-sm text-muted-foreground">{t('artisan', 'totalProducts') || 'Total produits'}</div>
+                <div className="mt-1 font-display text-2xl font-extrabold tracking-tight text-foreground">{products.length}</div>
+              </div>
+              <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+                <div className="text-sm text-muted-foreground">{t('artisan', 'active') || 'Actifs'}</div>
+                <div className="mt-1 font-display text-2xl font-extrabold tracking-tight text-foreground">
+                  {products.filter((p) => p.status === 'ACTIVE').length}
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+                <div className="text-sm text-muted-foreground">{t('artisan', 'outOfStock') || 'Rupture'}</div>
+                <div className="mt-1 font-display text-2xl font-extrabold tracking-tight text-foreground">{products.filter((p) => p.stock === 0).length}</div>
+              </div>
+              <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+                <div className="text-sm text-muted-foreground">{t('artisan', 'stockValue') || 'Valeur du stock'}</div>
+                <div className="mt-1 font-display text-2xl font-extrabold tracking-tight text-success">{(Number(stockValue) || 0).toFixed(0)}€</div>
+              </div>
             </div>
 
             {loading ? (
@@ -207,100 +198,96 @@ export default function ArtisanShopPage() {
                 {t('common', 'loading') || 'Chargement…'}
               </div>
             ) : products.length === 0 ? (
-              <Card>
-                <CardContent className="p-10 text-center">
-                  <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground mb-4">{t('artisan', 'noProducts') || 'Vous n’avez pas encore de produit.'}</p>
-                  <Button
-                    onClick={() => {
-                      setEditing(null);
-                      setShowForm(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t('artisan', 'addFirstProduct') || 'Ajouter un premier produit'}
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="bg-card border border-border rounded-2xl shadow-sm p-10 text-center">
+                <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground mb-4">{t('artisan', 'noProducts') || 'Vous n’avez pas encore de produit.'}</p>
+                <Button
+                  onClick={() => {
+                    setEditing(null);
+                    setShowForm(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  {t('artisan', 'addFirstProduct') || 'Ajouter un premier produit'}
+                </Button>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {products.map((product) => (
-                  <Card key={product.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col sm:flex-row gap-6">
-                        <img
-                          src={product.images[0] || 'https://via.placeholder.com/150?text=Produit'}
-                          alt={product.name}
-                          className="w-full sm:w-32 h-32 object-cover rounded-lg border border-border"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-2 gap-2 flex-wrap">
-                            <div>
-                              <h3 className="text-xl font-semibold text-foreground">{product.name}</h3>
-                              <p className="text-sm text-muted-foreground">{categoryName(product)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={product.status === 'ACTIVE' ? 'success' : 'secondary'}>
-                                {t('productStatus', product.status) || product.status}
-                              </Badge>
-                              {product.stock === 0 && (
-                                <Badge variant="error">{t('artisan', 'outOfStockStatus') || 'Rupture'}</Badge>
-                              )}
-                            </div>
-                          </div>
+                  <div
+                    key={product.id}
+                    className="group bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md"
+                  >
+                    <div className="relative h-40 bg-muted">
+                      <img
+                        src={product.images[0] || 'https://via.placeholder.com/150?text=Produit'}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 left-3 flex items-center gap-2">
+                        <Badge variant={product.status === 'ACTIVE' ? 'success' : 'secondary'}>
+                          {t('productStatus', product.status) || product.status}
+                        </Badge>
+                        {product.stock === 0 && (
+                          <Badge variant="error">{t('artisan', 'outOfStockStatus') || 'Rupture'}</Badge>
+                        )}
+                      </div>
+                    </div>
 
-                          <p className="text-foreground mb-3 line-clamp-2">{product.description}</p>
+                    <div className="p-5 flex flex-col flex-1">
+                      <h3 className="font-display font-bold text-base text-foreground leading-snug">{product.name}</h3>
+                      <p className="text-sm text-muted-foreground">{categoryName(product)}</p>
 
-                          <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">{t('artisan', 'price') || 'Prix'}</span>
-                              <p className="font-semibold text-lg">{(Number(product.price) || 0).toFixed(2)}€</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">{t('artisan', 'stock') || 'Stock'}</span>
-                              <p className="font-semibold text-lg">{product.stock}</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">{t('artisan', 'value') || 'Valeur'}</span>
-                              <p className="font-semibold text-lg">
-                                {((Number(product.price) || 0) * (product.stock || 0)).toFixed(0)}€
-                              </p>
-                            </div>
-                          </div>
+                      <p className="text-sm text-foreground mt-3 line-clamp-2">{product.description}</p>
 
-                          <div className="flex flex-wrap gap-2">
-                            <Button variant="outline" size="sm" onClick={() => router.push(`/client/marketplace/${product.id}`)}>
-                              {t('artisan', 'view') || 'Voir'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditing(product);
-                                setShowForm(true);
-                              }}
-                            >
-                              {t('common', 'edit') || 'Modifier'}
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setReviewsFor(product)}>
-                              <Star className="h-4 w-4 mr-1" />
-                              {t('artisan', 'reviews') || 'Avis'}
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setVariantsFor(product)}>
-                              <Layers className="h-4 w-4 mr-1" />
-                              {t('artisan', 'variants') || 'Variantes'}
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleToggleActive(product)}>
-                              {product.status === 'ACTIVE' ? t('artisan', 'deactivate') || 'Désactiver' : t('artisan', 'activate') || 'Activer'}
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDelete(product)} className="text-destructive hover:text-destructive">
-                              {t('common', 'delete') || 'Supprimer'}
-                            </Button>
-                          </div>
+                      <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-border text-sm">
+                        <div>
+                          <span className="text-xs text-muted-foreground">{t('artisan', 'price') || 'Prix'}</span>
+                          <p className="font-display font-bold text-foreground">{(Number(product.price) || 0).toFixed(2)}€</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">{t('artisan', 'stock') || 'Stock'}</span>
+                          <p className="font-display font-bold text-foreground">{product.stock}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">{t('artisan', 'value') || 'Valeur'}</span>
+                          <p className="font-display font-bold text-foreground">
+                            {((Number(product.price) || 0) * (product.stock || 0)).toFixed(0)}€
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/client/marketplace/${product.id}`)}>
+                          {t('artisan', 'view') || 'Voir'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditing(product);
+                            setShowForm(true);
+                          }}
+                        >
+                          {t('common', 'edit') || 'Modifier'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setReviewsFor(product)}>
+                          <Star className="h-4 w-4 mr-1" />
+                          {t('artisan', 'reviews') || 'Avis'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setVariantsFor(product)}>
+                          <Layers className="h-4 w-4 mr-1" />
+                          {t('artisan', 'variants') || 'Variantes'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleToggleActive(product)}>
+                          {product.status === 'ACTIVE' ? t('artisan', 'deactivate') || 'Désactiver' : t('artisan', 'activate') || 'Activer'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(product)} className="text-destructive hover:text-destructive">
+                          {t('common', 'delete') || 'Supprimer'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

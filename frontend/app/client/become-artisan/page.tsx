@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Hammer } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi } from '@/lib/api/user';
@@ -130,36 +131,38 @@ export default function BecomeArtisanPage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4 -ml-3">
           {t('common', 'back')}
         </Button>
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-2xl"></span>
-              </div>
-              <div>
-                <CardTitle className="text-2xl">{t('common', 'becomeArtisan')}</CardTitle>
-                <CardDescription>
-                  {t('common', 'becomeArtisanDescription')}
-                </CardDescription>
-              </div>
+          {/* Hero header */}
+          <div className="flex items-center gap-4 border-b border-border p-6">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Hammer className="h-6 w-6" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
+                {t('common', 'becomeArtisan')}
+              </h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {t('common', 'becomeArtisanDescription')}
+              </p>
+            </div>
+          </div>
+
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-7">
               {/* Company Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="font-display text-base font-bold text-foreground">
                   {t('common', 'companyInfo')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground">
                       {t('artisan', 'companyName')} *
                     </label>
                     <Input
@@ -173,9 +176,9 @@ export default function BecomeArtisanPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      {t('artisan', 'siret')} * (14)
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground">
+                      {t('artisan', 'siret')} *
                     </label>
                     <Input
                       type="text"
@@ -192,15 +195,16 @@ export default function BecomeArtisanPage() {
                       }
                       required
                     />
+                    <p className="text-xs text-muted-foreground">14 chiffres</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-foreground">
                     {t('common', 'description')}
                   </label>
                   <textarea
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[100px]"
+                    className="min-h-[100px] w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/10"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -211,36 +215,39 @@ export default function BecomeArtisanPage() {
 
               {/* Specialties */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="font-display text-base font-bold text-foreground">
                   {t('artisan', 'specialties')} *
                 </h3>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {specialties.map((specialty) => (
-                    <button
-                      key={specialty.id}
-                      type="button"
-                      onClick={() => handleSpecialtyToggle(specialty.id)}
-                      className={`p-3 border-2 rounded-lg text-sm font-medium transition-colors ${
-                        formData.specialtyIds.includes(specialty.id)
-                          ? 'border-blue-600 bg-primary/10 text-primary'
-                          : 'border-border hover:border-gray-400 text-foreground'
-                      }`}
-                    >
-                      {specialty.name}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                  {specialties.map((specialty) => {
+                    const active = formData.specialtyIds.includes(specialty.id);
+                    return (
+                      <button
+                        key={specialty.id}
+                        type="button"
+                        onClick={() => handleSpecialtyToggle(specialty.id)}
+                        className={`rounded-xl border px-3 py-3 text-center text-sm font-semibold transition-colors ${
+                          active
+                            ? 'border-foreground bg-primary text-primary-foreground'
+                            : 'border-border bg-card text-foreground hover:border-foreground'
+                        }`}
+                      >
+                        {specialty.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Location */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="font-display text-base font-bold text-foreground">
                   {t('common', 'interventionZone')}
                 </h3>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-foreground">
                     {t('common', 'baseAddress')} *
                   </label>
                   <Input
@@ -255,8 +262,8 @@ export default function BecomeArtisanPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground">
                       {t('artisan', 'serviceRadius')}
                     </label>
                     <Input
@@ -271,10 +278,11 @@ export default function BecomeArtisanPage() {
                         })
                       }
                     />
+                    <p className="text-xs text-muted-foreground">5 – 100 km</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-foreground">
                       {t('artisan', 'hourlyRate')} *
                     </label>
                     <Input
@@ -300,7 +308,7 @@ export default function BecomeArtisanPage() {
               <input type="hidden" value={formData.longitude} />
 
               {/* Submit */}
-              <div className="pt-4 border-t">
+              <div className="space-y-3 pt-2">
                 <Button
                   type="submit"
                   className="w-full"
@@ -309,6 +317,9 @@ export default function BecomeArtisanPage() {
                 >
                   {loading ? t('common', 'creating') : t('common', 'createArtisanProfile')}
                 </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  En continuant, vous acceptez les CGU professionnelles de Krafolt. Votre SIRET sera vérifié avant activation.
+                </p>
               </div>
             </form>
           </CardContent>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Star, MapPin, X, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -288,6 +289,22 @@ export default function ProductDetailsPage() {
     ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / (product.reviews.length || 1)
     : 0;
 
+  const renderStars = (rating: number, size = 'h-4 w-4') => {
+    const rounded = Math.round(Number(rating) || 0);
+    return (
+      <span className="inline-flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`${size} ${
+              star <= rounded ? 'fill-warning text-warning' : 'text-muted-foreground/30'
+            }`}
+          />
+        ))}
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -310,42 +327,38 @@ export default function ProductDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background py-7">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mb-5 flex items-center gap-1 text-[13px] text-muted-foreground">
           <button onClick={() => router.push('/client/marketplace')} className="hover:text-foreground">
             {t('marketplace', 'title')}
           </button>
-          <span>›</span>
+          <ChevronRight className="h-3.5 w-3.5" />
           <span>{getCategoryLabel(product.category)}</span>
-          <span>›</span>
-          <span className="text-foreground">{product.name}</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="font-semibold text-foreground">{product.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Images */}
           <div>
-            <Card className="mb-4">
-              <CardContent className="p-0">
-                <img
-                  src={product.images[selectedImage]}
-                  alt={product.name}
-                  className="w-full h-96 object-cover rounded-t-lg cursor-pointer"
-                  onClick={() => setImageModalOpen(true)}
-                />
-              </CardContent>
-            </Card>
-            <div className="grid grid-cols-4 gap-2">
+            <img
+              src={product.images[selectedImage]}
+              alt={product.name}
+              className="h-96 w-full cursor-pointer rounded-2xl border border-border object-cover"
+              onClick={() => setImageModalOpen(true)}
+            />
+            <div className="mt-2.5 grid grid-cols-4 gap-2.5">
               {product.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`border-2 rounded-lg overflow-hidden ${
-                    selectedImage === index ? 'border-blue-600' : 'border-border'
+                  className={`overflow-hidden rounded-xl border-2 ${
+                    selectedImage === index ? 'border-foreground' : 'border-border'
                   }`}
                 >
-                  <img src={image} alt={`Vue ${index + 1}`} className="w-full h-20 object-cover" />
+                  <img src={image} alt={`Vue ${index + 1}`} className="h-20 w-full object-cover" />
                 </button>
               ))}
             </div>
@@ -353,35 +366,34 @@ export default function ProductDetailsPage() {
 
           {/* Product Info */}
           <div>
-            <div className="mb-4">
+            <div className="mb-3">
               <Badge variant="info">{getCategoryLabel(product.category)}</Badge>
             </div>
 
-            <h1 className="text-3xl font-bold text-foreground mb-4">{product.name}</h1>
+            <h1 className="font-display text-[28px] font-extrabold leading-tight tracking-tight text-foreground mb-2">
+              {product.name}
+            </h1>
 
             {/* Rating */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex items-center">
-                <span className="text-foreground text-xl">
-                  {''.repeat(Math.round(averageRating))}
-                  {''.repeat(5 - Math.round(averageRating))}
-                </span>
-                <span className="text-muted-foreground ml-2">
-                  {(Number(averageRating) || 0).toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
-                </span>
-              </div>
+            <div className="mb-5 flex items-center gap-2">
+              {renderStars(averageRating)}
+              <span className="text-sm text-muted-foreground">
+                {(Number(averageRating) || 0).toFixed(1)} ({product.reviews.length} {t('marketplace', 'reviews')})
+              </span>
             </div>
 
             {/* Price */}
-            <div className="mb-6">
-              <span className="text-4xl font-bold text-primary">{(Number(getCurrentPrice()) || 0).toFixed(2)}€</span>
-              <p className="text-sm text-muted-foreground mt-1">{t('marketplace', 'taxIncludedDeliveryAvailable')}</p>
+            <div className="mb-5">
+              <span className="font-display text-4xl font-extrabold tracking-tight text-foreground">
+                {(Number(getCurrentPrice()) || 0).toFixed(2)}€
+              </span>
+              <p className="mt-1 text-[13px] text-muted-foreground">{t('marketplace', 'taxIncludedDeliveryAvailable')}</p>
             </div>
 
             {/* Variants */}
             {product.variants && product.variants.length > 0 && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-foreground mb-2">
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-semibold text-foreground">
                   {t('marketplace', 'sizeDimensions')}
                 </label>
                 <div className="space-y-2">
@@ -389,20 +401,20 @@ export default function ProductDetailsPage() {
                     <button
                       key={variant.id}
                       onClick={() => setSelectedVariant(variant.id)}
-                      className={`w-full p-3 border-2 rounded-lg text-left transition-colors ${
+                      className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${
                         selectedVariant === variant.id
-                          ? 'border-blue-600 bg-primary/10'
-                          : 'border-border hover:border-border'
+                          ? 'border-foreground bg-muted'
+                          : 'border-border bg-card hover:border-foreground'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="font-medium">{variant.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
+                          <span className="font-semibold">{variant.name}</span>
+                          <span className="ml-2 text-sm text-muted-foreground">
                             ({variant.stock} {variant.stock > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')})
                           </span>
                         </div>
-                        <span className="font-semibold">{(Number(variant.price) || 0).toFixed(2)}€</span>
+                        <span className="font-bold">{(Number(variant.price) || 0).toFixed(2)}€</span>
                       </div>
                     </button>
                   ))}
@@ -411,27 +423,31 @@ export default function ProductDetailsPage() {
             )}
 
             {/* Quantity */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-foreground mb-2">{t('cart', 'quantity')}</label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                >
-                  -
-                </Button>
-                <span className="text-xl font-semibold w-12 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuantity(Math.min(getCurrentStock(), quantity + 1))}
-                  disabled={quantity >= getCurrentStock()}
-                >
-                  +
-                </Button>
-                <span className="text-sm text-muted-foreground ml-2">
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-semibold text-foreground">{t('cart', 'quantity')}</label>
+              <div className="flex items-center gap-3.5">
+                <div className="inline-flex items-center overflow-hidden rounded-xl border border-border">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="-"
+                    className="flex h-11 w-10 items-center justify-center bg-card text-lg disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="flex h-11 w-14 items-center justify-center border-x border-border px-3 font-bold">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity(Math.min(getCurrentStock(), quantity + 1))}
+                    disabled={quantity >= getCurrentStock()}
+                    aria-label="+"
+                    className="flex h-11 w-10 items-center justify-center bg-card text-lg disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="text-sm text-muted-foreground">
                   {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}
                 </span>
               </div>
@@ -439,8 +455,8 @@ export default function ProductDetailsPage() {
 
             {/* Stock Warning */}
             {getCurrentStock() < 5 && (
-              <div className="mb-6 p-3 bg-amber-100 border rounded-lg">
-                <p className="text-sm text-amber-800">
+              <div className="mb-5 rounded-xl bg-warning/15 px-4 py-3">
+                <p className="text-sm font-semibold text-warning">
                   {t('marketplace', 'stockLimited')} {getCurrentStock()} {getCurrentStock() > 1 ? t('marketplace', 'exemplarPlural') : t('marketplace', 'exemplar')}{' '}
                   {getCurrentStock() > 1 ? t('marketplace', 'availablePlural') : t('marketplace', 'available')}.
                 </p>
@@ -448,9 +464,9 @@ export default function ProductDetailsPage() {
             )}
 
             {/* Actions */}
-            <div className="space-y-3 mb-6">
+            <div className="mb-5 space-y-2.5">
               <Button className="w-full" size="lg" onClick={handleAddToCart}>
-                {t('marketplace', 'addToCart')} - {(Number(getCurrentPrice() * quantity) || 0).toFixed(2)}€
+                {t('marketplace', 'addToCart')} — {(Number(getCurrentPrice() * quantity) || 0).toFixed(2)}€
               </Button>
               <Button variant="outline" className="w-full" size="lg">
                 {t('marketplace', 'contactForCustomization')}
@@ -458,26 +474,26 @@ export default function ProductDetailsPage() {
             </div>
 
             {/* Artisan Info */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={product.artisan.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                    alt={product.artisan.companyName}
-                    className="w-12 h-12 rounded-full"
-                  />
-                  <div className="flex-1">
-                    <p className="font-semibold">{product.artisan.companyName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {product.artisan.city} • {product.artisan.rating}
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={handleContactArtisan}>
-                    {t('artisans', 'viewProfile')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-3 rounded-2xl border border-border p-4">
+              <img
+                src={product.artisan.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                alt={product.artisan.companyName}
+                className="h-11 w-11 rounded-full object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">{product.artisan.companyName}</p>
+                <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {product.artisan.city}
+                  <span className="mx-0.5">·</span>
+                  <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                  {product.artisan.rating}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleContactArtisan}>
+                {t('artisans', 'viewProfile')}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -486,11 +502,11 @@ export default function ProductDetailsPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
             <Card>
-              <CardHeader>
-                <CardTitle>{t('marketplace', 'description')}</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{t('marketplace', 'description')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-foreground whitespace-pre-line leading-relaxed">
+                <p className="whitespace-pre-line leading-relaxed text-foreground">
                   {product.description}
                 </p>
               </CardContent>
@@ -498,41 +514,34 @@ export default function ProductDetailsPage() {
 
             {/* Reviews */}
             <Card>
-              <CardHeader>
-                <CardTitle>{t('marketplace', 'clientReviews')} ({product.reviews.length})</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{t('marketplace', 'clientReviews')} ({product.reviews.length})</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-1">
                   {product.reviews.map((review) => (
-                    <div key={review.id} className="border-b last:border-b-0 pb-6 last:pb-0">
+                    <div key={review.id} className="border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
                       <div className="flex items-start gap-4">
                         <img
                           src={review.client.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
                           alt={review.client.firstName}
-                          className="w-10 h-10 rounded-full"
+                          className="h-10 w-10 rounded-full object-cover"
                         />
                         <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="font-semibold">
-                                {review.client.firstName} {review.client.lastName}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(review.createdAt).toLocaleDateString('fr-FR', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                })}
-                              </p>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="text-foreground font-semibold">
-                                {''.repeat(review.rating)}
-                                {''.repeat(5 - review.rating)}
-                              </span>
-                            </div>
+                          <div className="mb-1 flex items-center justify-between gap-2">
+                            <p className="font-bold">
+                              {review.client.firstName} {review.client.lastName}
+                            </p>
+                            {renderStars(review.rating, 'h-3.5 w-3.5')}
                           </div>
-                          <p className="text-foreground">{review.comment}</p>
+                          <p className="mb-1.5 text-xs text-muted-foreground">
+                            {new Date(review.createdAt).toLocaleDateString('fr-FR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-sm text-foreground">{review.comment}</p>
                         </div>
                       </div>
                     </div>
@@ -545,16 +554,16 @@ export default function ProductDetailsPage() {
           {/* Specifications */}
           <div>
             <Card>
-              <CardHeader>
-                <CardTitle>{t('marketplace', 'specifications')}</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{t('marketplace', 'specifications')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div>
                   {product.specifications &&
                     Object.entries(product.specifications).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{key}:</span>
-                        <span className="font-medium text-right">{value}</span>
+                      <div key={key} className="flex justify-between gap-4 border-b border-border py-2.5 text-sm last:border-b-0">
+                        <span className="text-muted-foreground">{key}</span>
+                        <span className="text-right font-semibold">{value}</span>
                       </div>
                     ))}
                 </div>
@@ -567,22 +576,23 @@ export default function ProductDetailsPage() {
       {/* Image Modal */}
       {imageModalOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
           onClick={() => setImageModalOpen(false)}
         >
-          <div className="relative max-w-5xl w-full">
+          <div className="relative w-full max-w-5xl">
             <button
-              className="absolute top-4 right-4 text-white text-2xl"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               onClick={() => setImageModalOpen(false)}
+              aria-label={t('common', 'close')}
             >
-              
+              <X className="h-5 w-5" />
             </button>
             <img
               src={product.images[selectedImage]}
               alt={product.name}
-              className="w-full h-auto rounded-lg"
+              className="h-auto w-full rounded-2xl"
             />
-            <div className="flex justify-center gap-2 mt-4">
+            <div className="mt-4 flex justify-center gap-2">
               {product.images.map((_, index) => (
                 <button
                   key={index}
@@ -590,8 +600,8 @@ export default function ProductDetailsPage() {
                     e.stopPropagation();
                     setSelectedImage(index);
                   }}
-                  className={`w-3 h-3 rounded-full ${
-                    selectedImage === index ? 'bg-card' : 'bg-gray-500'
+                  className={`h-3 w-3 rounded-full ${
+                    selectedImage === index ? 'bg-white' : 'bg-white/40'
                   }`}
                 />
               ))}

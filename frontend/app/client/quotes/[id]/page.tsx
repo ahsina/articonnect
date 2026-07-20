@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -232,56 +232,59 @@ export default function ClientQuoteDetailPage() {
     : 'Artisan';
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <Button variant="outline" size="sm" onClick={() => router.push('/client/quotes')} className="mb-4">
+    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="max-w-[820px] mx-auto">
+      <button
+        onClick={() => router.push('/client/quotes')}
+        className="text-[13.5px] font-semibold text-muted-foreground mb-4 hover:text-foreground"
+      >
         ← Retour aux devis
-      </Button>
+      </button>
 
       <Card className="mb-4">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4 flex-wrap">
+        <CardContent className="p-6 pt-6">
+          <div className="flex items-start justify-between gap-5 flex-wrap">
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs text-muted-foreground">{quote.quoteNumber}</span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono text-[11.5px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">{quote.quoteNumber}</span>
                 <Badge className={STATUS_COLORS[quote.status]}>{STATUS_LABELS[quote.status]}</Badge>
                 {isExpired && <Badge className="bg-red-100 text-red-700">Expiré</Badge>}
               </div>
-              <CardTitle className="mt-1">{quote.title}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">De : {artisanName}</p>
+              <h1 className="font-display text-[23px] font-extrabold tracking-tight mt-2 text-foreground">{quote.title}</h1>
+              <p className="text-[13.5px] text-muted-foreground mt-1">De : {artisanName}</p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-primary">{formatCurrency(num(quote.totalAmount))}</div>
+              <div className="font-display text-[26px] font-extrabold text-foreground">{formatCurrency(num(quote.totalAmount))}</div>
               <div className="text-xs text-muted-foreground">Valide jusqu&apos;au {formatDate(quote.validUntil)}</div>
               <a href={quoteApi.pdfUrl(quote.id)} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm" className="mt-3">Télécharger le PDF</Button>
               </a>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {quote.description && <p className="text-sm text-muted-foreground mb-4">{quote.description}</p>}
+
+          {quote.description && <p className="text-sm text-muted-foreground my-4">{quote.description}</p>}
 
           {/* Lignes */}
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border border-border rounded-xl overflow-hidden mt-4">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="text-left font-medium px-3 py-2">Désignation</th>
-                    <th className="text-left font-medium px-3 py-2">Type</th>
-                    <th className="text-right font-medium px-3 py-2">Qté</th>
-                    <th className="text-right font-medium px-3 py-2">P.U.</th>
-                    <th className="text-right font-medium px-3 py-2">Total</th>
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-muted text-muted-foreground">
+                    <th className="text-left font-semibold text-[12.5px] px-3.5 py-2.5">Désignation</th>
+                    <th className="text-left font-semibold text-[12.5px] px-3.5 py-2.5">Type</th>
+                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">Qté</th>
+                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">P.U.</th>
+                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(quote.lineItems || []).map((l, i) => (
-                    <tr key={l.id || i} className="border-t">
-                      <td className="px-3 py-2 text-foreground">{l.description}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{ITEM_TYPE_LABELS[l.itemType] || l.itemType}</td>
-                      <td className="px-3 py-2 text-right">{num(l.quantity)}</td>
-                      <td className="px-3 py-2 text-right">{formatCurrency(num(l.unitPrice))}</td>
-                      <td className="px-3 py-2 text-right font-medium">
+                    <tr key={l.id || i} className="border-t border-border">
+                      <td className="px-3.5 py-3 text-foreground">{l.description}</td>
+                      <td className="px-3.5 py-3 text-muted-foreground">{ITEM_TYPE_LABELS[l.itemType] || l.itemType}</td>
+                      <td className="px-3.5 py-3 text-right">{num(l.quantity)}</td>
+                      <td className="px-3.5 py-3 text-right">{formatCurrency(num(l.unitPrice))}</td>
+                      <td className="px-3.5 py-3 text-right font-semibold">
                         {formatCurrency(num(l.totalPrice ?? num(l.quantity) * num(l.unitPrice)))}
                       </td>
                     </tr>
@@ -292,18 +295,18 @@ export default function ClientQuoteDetailPage() {
           </div>
 
           {/* Totaux */}
-          <div className="mt-4 ml-auto max-w-xs space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Sous-total</span><span>{formatCurrency(num(quote.subtotal))}</span></div>
+          <div className="mt-[18px] ml-auto max-w-[280px] text-sm">
+            <div className="flex justify-between py-1.5"><span className="text-muted-foreground">Sous-total</span><span>{formatCurrency(num(quote.subtotal))}</span></div>
             {num(quote.discountAmount) > 0 && (
-              <div className="flex justify-between"><span className="text-muted-foreground">Remise</span><span className="text-red-600">-{formatCurrency(num(quote.discountAmount))}</span></div>
+              <div className="flex justify-between py-1.5"><span className="text-muted-foreground">Remise</span><span className="text-destructive">−{formatCurrency(num(quote.discountAmount))}</span></div>
             )}
-            <div className="flex justify-between"><span className="text-muted-foreground">TVA ({num(quote.taxRate)}%)</span><span>{formatCurrency(num(quote.taxAmount))}</span></div>
-            <div className="flex justify-between border-t pt-1 mt-1 font-semibold"><span>Total TTC</span><span className="text-primary">{formatCurrency(num(quote.totalAmount))}</span></div>
+            <div className="flex justify-between py-1.5"><span className="text-muted-foreground">TVA ({num(quote.taxRate)}%)</span><span>{formatCurrency(num(quote.taxAmount))}</span></div>
+            <div className="flex justify-between border-t border-border pt-3 mt-1.5 font-display text-[17px] font-extrabold"><span>Total TTC</span><span>{formatCurrency(num(quote.totalAmount))}</span></div>
           </div>
 
           {quote.termsAndConditions && (
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground whitespace-pre-line">
-              <div className="font-medium text-foreground mb-1">Conditions</div>
+            <div className="mt-[18px] p-4 bg-muted rounded-xl text-[13.5px] text-muted-foreground whitespace-pre-line">
+              <div className="font-semibold text-foreground mb-1">Conditions</div>
               {quote.termsAndConditions}
             </div>
           )}
@@ -313,30 +316,30 @@ export default function ClientQuoteDetailPage() {
       {/* Actions */}
       {['ACCEPTED', 'CONVERTED'].includes(quote.status) ? (
         <Card>
-          <CardContent className="p-4 text-center text-green-700 bg-green-50 rounded-lg">
+          <CardContent className="p-5 pt-5 text-center text-green-700 bg-green-50 rounded-2xl">
             Vous avez accepté ce devis{quote.status === 'CONVERTED' ? ' (signé, facture générée)' : ''}.
           </CardContent>
         </Card>
       ) : quote.status === 'REJECTED' ? (
         <Card>
-          <CardContent className="p-4 text-center text-red-700 bg-red-50 rounded-lg">
+          <CardContent className="p-5 pt-5 text-center text-red-700 bg-red-50 rounded-2xl">
             Vous avez refusé ce devis.
           </CardContent>
         </Card>
       ) : isExpired ? (
         <Card>
-          <CardContent className="p-4 text-center text-muted-foreground">
+          <CardContent className="p-5 pt-5 text-center text-muted-foreground">
             Ce devis a expiré. Contactez l&apos;artisan pour en obtenir un nouveau.
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground mb-3">
-              Vous pouvez accepter ce devis en un clic, ou le signer électroniquement (valeur juridique
-              eIDAS) pour générer directement la facture.
-            </p>
-            <div className="flex flex-wrap gap-3">
+          <CardContent className="p-5 pt-5">
+            <div className="rounded-xl bg-blue-50 p-3.5 text-[13px] text-blue-700 mb-4">
+              Vous pouvez accepter ce devis en un clic, ou le <strong>signer électroniquement</strong> (valeur
+              juridique eIDAS) pour générer directement la facture.
+            </div>
+            <div className="flex flex-wrap gap-2.5 items-center">
               {canSign && <Button onClick={() => setShowSignature(true)}>Accepter et signer</Button>}
               {canRespond && (
                 <Button variant={canSign ? 'outline' : 'default'} onClick={handleAccept} disabled={acting}>
@@ -344,7 +347,7 @@ export default function ClientQuoteDetailPage() {
                 </Button>
               )}
               {canRespond && (
-                <Button variant="ghost" className="text-red-600 hover:text-red-700" onClick={() => setShowReject(true)}>
+                <Button variant="ghost" className="text-destructive" onClick={() => setShowReject(true)}>
                   Refuser
                 </Button>
               )}
@@ -416,6 +419,7 @@ export default function ClientQuoteDetailPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

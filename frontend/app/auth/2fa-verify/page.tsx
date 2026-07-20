@@ -100,12 +100,28 @@ function TwoFactorVerifyForm() {
     <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-white"></span>
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-2xl font-extrabold text-primary-foreground font-display">K</span>
+            </div>
+            <span className="font-display text-[22px] font-extrabold tracking-tight text-foreground">Krafolt</span>
+          </div>
+          <div className="flex items-center justify-center mb-2">
+            <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center">
+              <svg
+                className="w-7 h-7 text-foreground"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">{t('auth', 'twoFactorAuth')}</CardTitle>
+          <CardTitle className="font-display text-2xl text-center tracking-tight">{t('auth', 'twoFactorAuth')}</CardTitle>
           <CardDescription className="text-center">
             {t('auth', 'enter6DigitCode')}
           </CardDescription>

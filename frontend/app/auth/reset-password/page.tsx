@@ -91,12 +91,13 @@ function ResetPasswordForm() {
     <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-primary-foreground">K</span>
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-2xl font-extrabold text-primary-foreground font-display">K</span>
             </div>
+            <span className="font-display text-[22px] font-extrabold tracking-tight text-foreground">Krafolt</span>
           </div>
-          <CardTitle className="text-2xl text-center">{t('auth', 'newPassword')}</CardTitle>
+          <CardTitle className="font-display text-2xl text-center tracking-tight">{t('auth', 'newPassword')}</CardTitle>
           <CardDescription className="text-center">
             {t('auth', 'chooseSecurePassword')}
           </CardDescription>
@@ -129,6 +130,52 @@ function ResetPasswordForm() {
                 required
                 autoComplete="new-password"
               />
+            </div>
+
+            {/* Checklist de robustesse — purement visuelle, dérivée des états existants
+                (newPassword / confirmPassword). Ne modifie AUCUNE logique de validation. */}
+            <div className="rounded-xl border border-border bg-muted p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2.5">
+                Votre mot de passe doit contenir
+              </h3>
+              <ul className="space-y-2">
+                {[
+                  { ok: newPassword.length >= 8, label: 'Au moins 8 caractères' },
+                  {
+                    ok: /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword),
+                    label: 'Une lettre majuscule et une minuscule',
+                  },
+                  { ok: /\d/.test(newPassword), label: 'Un chiffre' },
+                  {
+                    ok: newPassword.length > 0 && newPassword === confirmPassword,
+                    label: 'Les deux mots de passe identiques',
+                  },
+                ].map((rule, i) => (
+                  <li
+                    key={i}
+                    className={`flex items-center gap-2.5 text-sm ${rule.ok ? 'text-foreground' : 'text-muted-foreground'}`}
+                  >
+                    <span
+                      className={`flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full ${
+                        rule.ok ? 'bg-success/15 text-success' : 'bg-muted-foreground/15 text-muted-foreground'
+                      }`}
+                    >
+                      <svg
+                        className="h-3 w-3"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    </span>
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <Button

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -170,16 +171,19 @@ export default function ClientDisputesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+    <div className="min-h-screen bg-background py-9">
+      <div className="max-w-[840px] mx-auto px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={() => router.back()}
+          className="text-[13.5px] font-semibold text-muted-foreground mb-4 hover:text-foreground"
+        >
           {t('common', 'back')}
-        </Button>
+        </button>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('disputes', 'title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('disputes', 'subtitle')}</p>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground">{t('disputes', 'title')}</h1>
+            <p className="text-muted-foreground mt-1.5">{t('disputes', 'subtitle')}</p>
           </div>
           <Button onClick={() => setShowNewDispute(true)}>
             {t('disputes', 'newDispute')}
@@ -188,14 +192,14 @@ export default function ClientDisputesPage() {
 
         {/* New Dispute Form */}
         {showNewDispute && (
-          <Card className="mb-6">
+          <Card className="mt-6">
             <CardHeader>
-              <CardTitle>{t('disputes', 'createDispute')}</CardTitle>
+              <CardTitle className="font-display text-lg">{t('disputes', 'createDispute')}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateDispute} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-[13px] font-semibold text-foreground mb-2">
                     {t('disputes', 'selectMission')} *
                   </label>
                   <select
@@ -203,7 +207,7 @@ export default function ClientDisputesPage() {
                     onChange={(e) =>
                       setNewDispute({ ...newDispute, missionId: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-card text-foreground focus:outline focus:outline-2 focus:outline-foreground focus:-outline-offset-1"
                     required
                   >
                     <option value="">{t('common', 'select')}</option>
@@ -216,13 +220,13 @@ export default function ClientDisputesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-[13px] font-semibold text-foreground mb-2">
                     {t('disputes', 'type')} *
                   </label>
                   <select
                     value={newDispute.type}
                     onChange={(e) => setNewDispute({ ...newDispute, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-card text-foreground focus:outline focus:outline-2 focus:outline-foreground focus:-outline-offset-1"
                     required
                   >
                     <option value="">{t('common', 'select')}</option>
@@ -235,7 +239,7 @@ export default function ClientDisputesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-[13px] font-semibold text-foreground mb-2">
                     {t('disputes', 'description')} *
                   </label>
                   <textarea
@@ -243,7 +247,7 @@ export default function ClientDisputesPage() {
                     onChange={(e) =>
                       setNewDispute({ ...newDispute, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
+                    className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-card text-foreground focus:outline focus:outline-2 focus:outline-foreground focus:-outline-offset-1 min-h-[120px] resize-none"
                     placeholder={t('disputes', 'descriptionPlaceholder')}
                     required
                   />
@@ -267,35 +271,35 @@ export default function ClientDisputesPage() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 my-6">
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold">{disputes.length}</div>
-              <div className="text-sm text-muted-foreground">{t('disputes', 'total')}</div>
+            <CardContent className="p-4 pt-4 text-center">
+              <div className="font-display text-[26px] font-extrabold text-foreground">{disputes.length}</div>
+              <div className="text-[13px] text-muted-foreground">{t('disputes', 'total')}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-4 pt-4 text-center">
+              <div className="font-display text-[26px] font-extrabold text-foreground">
                 {disputes.filter((d) => d.status === 'OPEN').length}
               </div>
-              <div className="text-sm text-muted-foreground">{t('status', 'open')}</div>
+              <div className="text-[13px] text-muted-foreground">{t('status', 'open')}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">
+            <CardContent className="p-4 pt-4 text-center">
+              <div className="font-display text-[26px] font-extrabold text-blue-600">
                 {disputes.filter((d) => d.status === 'UNDER_REVIEW').length}
               </div>
-              <div className="text-sm text-muted-foreground">{t('status', 'underReview')}</div>
+              <div className="text-[13px] text-muted-foreground">{t('status', 'underReview')}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-4 pt-4 text-center">
+              <div className="font-display text-[26px] font-extrabold text-foreground">
                 {disputes.filter((d) => d.status === 'RESOLVED').length}
               </div>
-              <div className="text-sm text-muted-foreground">{t('status', 'resolved')}</div>
+              <div className="text-[13px] text-muted-foreground">{t('status', 'resolved')}</div>
             </CardContent>
           </Card>
         </div>
@@ -303,9 +307,9 @@ export default function ClientDisputesPage() {
         {/* Disputes List */}
         {disputes.length === 0 ? (
           <Card>
-            <CardContent className="p-12 text-center">
-              <div className="text-6xl mb-4"></div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+            <CardContent className="p-12 pt-12 text-center">
+              <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-muted-foreground" strokeWidth={1.5} />
+              <h3 className="font-display text-xl font-bold text-foreground mb-2">
                 {t('disputes', 'noDisputes')}
               </h3>
               <p className="text-muted-foreground">{t('disputes', 'noDisputesDesc')}</p>
@@ -315,11 +319,11 @@ export default function ClientDisputesPage() {
           <div className="space-y-4">
             {disputes.map((dispute) => (
               <Card key={dispute.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <CardContent className="p-[22px] pt-[22px]">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-foreground">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-display text-[17px] font-bold text-foreground">
                           {dispute.mission.title}
                         </h3>
                         <Badge className={STATUS_COLORS[dispute.status]}>
@@ -327,37 +331,70 @@ export default function ClientDisputesPage() {
                         </Badge>
                       </div>
                       {dispute.mission.artisan && (
-                        <p className="text-sm text-muted-foreground">
-                          Artisan: {dispute.mission.artisan.firstName}{' '}
+                        <p className="text-[13px] text-muted-foreground mt-1">
+                          Artisan : {dispute.mission.artisan.firstName}{' '}
                           {dispute.mission.artisan.lastName}
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-muted-foreground">
-                        {formatDate(dispute.createdAt)}
-                      </div>
+                    <div className="text-[13px] text-muted-foreground shrink-0">
+                      {formatDate(dispute.createdAt)}
                     </div>
                   </div>
 
-                  <div className="bg-background p-4 rounded-lg mb-4">
-                    <div className="text-sm text-muted-foreground mb-1">
-                      Type:{' '}
-                      <span className="font-medium">
+                  <div className="bg-muted p-4 rounded-xl mt-3">
+                    <div className="text-[12.5px] text-muted-foreground mb-1">
+                      Type :{' '}
+                      <span className="font-semibold text-foreground">
                         {DISPUTE_TYPES.find((t) => t.id === dispute.type)?.label || dispute.type}
                       </span>
                     </div>
-                    <p className="text-foreground break-words">{dispute.description}</p>
+                    <p className="text-sm text-foreground break-words">{dispute.description}</p>
                   </div>
 
+                  {/* Timeline de suivi — dérivée du statut réel (données honnêtes, pas de dates fabriquées) */}
+                  {['OPEN', 'UNDER_REVIEW'].includes(dispute.status) && (
+                    <div className="mt-4 pl-1.5">
+                      <div className="flex gap-3 relative pb-4">
+                        <span className="w-2.5 h-2.5 rounded-full bg-success shrink-0 mt-1 z-10" />
+                        <span className="absolute left-[5px] top-3.5 bottom-0 w-0.5 bg-border" />
+                        <div className="text-[13.5px]">
+                          <div className="font-semibold text-foreground">{t('disputes', 'tlCreated') || 'Litige créé'}</div>
+                          <div className="text-xs text-muted-foreground">{formatDate(dispute.createdAt)}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 relative pb-4">
+                        <span className="w-2.5 h-2.5 rounded-full bg-success shrink-0 mt-1 z-10" />
+                        <span className="absolute left-[5px] top-3.5 bottom-0 w-0.5 bg-border" />
+                        <div className="text-[13.5px]">
+                          <div className="font-semibold text-foreground">
+                            {dispute.status === 'UNDER_REVIEW'
+                              ? (t('disputes', 'tlSupport') || 'Pris en charge par le support')
+                              : (t('disputes', 'tlNotified') || 'Artisan notifié')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 relative">
+                        <span className="w-2.5 h-2.5 rounded-full bg-card border-2 border-border shrink-0 mt-1 z-10" />
+                        <div className="text-[13.5px]">
+                          <div className="font-medium text-muted-foreground">
+                            {dispute.status === 'UNDER_REVIEW'
+                              ? (t('disputes', 'tlDeciding') || 'Décision en cours')
+                              : (t('disputes', 'tlAwaiting') || "En attente de réponse de l'artisan")}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {dispute.resolution && (
-                    <div className="bg-green-100 border p-4 rounded-lg mb-4">
-                      <div className="text-sm font-medium text-green-700 mb-1">
+                    <div className="bg-green-50 rounded-xl p-4 mt-3 text-sm text-green-700">
+                      <div className="font-bold mb-1">
                         {t('disputes', 'resolution')}
                       </div>
-                      <p className="text-green-700 break-words">{dispute.resolution}</p>
+                      <p className="break-words">{dispute.resolution}</p>
                       {dispute.resolvedAt && (
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-xs text-muted-foreground mt-1.5">
                           {t('disputes', 'resolvedOn')} {formatDate(dispute.resolvedAt)}
                         </p>
                       )}
@@ -365,11 +402,11 @@ export default function ClientDisputesPage() {
                   )}
 
                   {dispute.status === 'OPEN' && (
-                    <div className="flex gap-2">
+                    <div className="mt-4 pt-3.5 border-t border-border">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-red-600"
+                        className="text-destructive"
                         onClick={() => handleCancelDispute(dispute.id)}
                       >
                         {t('disputes', 'cancel')}

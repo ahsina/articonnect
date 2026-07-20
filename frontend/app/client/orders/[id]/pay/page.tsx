@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Stripe, StripeElements } from '@stripe/stripe-js';
@@ -116,23 +116,25 @@ export default function OrderPaymentPage() {
 
   return (
     <div className="min-h-screen bg-background py-10">
-      <div className="max-w-lg mx-auto px-4">
-        <button onClick={() => router.back()} className="text-sm text-muted-foreground mb-4">
+      <div className="max-w-[520px] mx-auto px-4">
+        <button onClick={() => router.back()} className="text-[13.5px] font-semibold text-muted-foreground mb-4 hover:text-foreground">
           {t('clientPayment', 'back')}
         </button>
-        <div className="bg-card rounded-2xl border border-border shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.05)] p-6">
-          <h1 className="font-display text-2xl font-extrabold mb-1">Paiement de la commande</h1>
-          <p className="text-muted-foreground mb-4">{t('clientPayment', 'securedByStripe')}</p>
+        <div className="bg-card rounded-2xl border border-border shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.05)] p-[26px]">
+          <h1 className="font-display text-[23px] font-extrabold tracking-tight">Paiement de la commande</h1>
+          <p className="text-sm text-muted-foreground mt-1 mb-[18px]">
+            {t('clientPayment', 'securedByStripe')} · {t('orders', 'order') || 'Commande'} #{String(orderId).slice(0, 8).toUpperCase()}
+          </p>
 
           {amount != null && (
-            <div className="mb-4 flex items-center justify-between rounded-xl bg-muted p-3.5 text-sm">
-              <span className="text-muted-foreground">{t('cart', 'total') || 'Total'}</span>
-              <span className="text-lg font-bold text-foreground">{(Number(amount) || 0).toFixed(2)}€</span>
+            <div className="mb-3.5 flex items-center justify-between rounded-xl bg-muted p-3.5">
+              <span className="text-sm text-muted-foreground">{t('cart', 'total') || 'Total'}</span>
+              <span className="font-display text-[22px] font-extrabold text-foreground">{(Number(amount) || 0).toFixed(2)}€</span>
             </div>
           )}
 
           {/* Réassurance paiement produit (capture immédiate, pas de séquestre comme une mission) */}
-          <div className="mb-6 flex items-start gap-2.5 rounded-xl bg-muted p-3.5 text-sm text-foreground">
+          <div className="mb-[22px] flex items-start gap-2.5 rounded-xl bg-muted p-3.5 text-[13.5px] text-foreground">
             <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0" strokeWidth={2} />
             <span className="font-medium">
               Paiement sécurisé — le vendeur prépare et expédie votre commande après confirmation.
@@ -160,14 +162,20 @@ export default function OrderPaymentPage() {
                 </div>
               )}
               {!loading && !error && (
-                <Button className="w-full mt-6" onClick={handlePay} disabled={submitting}>
+                <Button className="w-full mt-[18px]" onClick={handlePay} disabled={submitting}>
                   {submitting ? t('clientPayment', 'processing') : t('clientPayment', 'payNow')}
                 </Button>
               )}
               {!loading && (
-                <p className="text-xs text-muted-foreground mt-3 text-center">
-                  {t('clientPayment', 'testCard')} : 4242 4242 4242 4242 · {t('clientPayment', 'testCardHint')}
-                </p>
+                <>
+                  <p className="text-xs text-muted-foreground mt-3.5 text-center">
+                    {t('clientPayment', 'testCard')} : 4242 4242 4242 4242 · {t('clientPayment', 'testCardHint')}
+                  </p>
+                  <div className="flex items-center justify-center gap-1.5 mt-3 text-muted-foreground">
+                    <Lock className="h-3 w-3" strokeWidth={2} />
+                    <span className="text-[11.5px]">Chiffré · Aucune donnée bancaire stockée par Krafolt</span>
+                  </div>
+                </>
               )}
             </>
           )}

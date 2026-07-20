@@ -9,7 +9,7 @@ import { marketplaceApi } from '@/lib/api/marketplace';
 import { StarRating } from '@/components/ui/star-rating';
 import apiClient from '@/lib/api/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Package } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -46,7 +46,7 @@ interface Order {
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-amber-100 text-amber-800',
-  PAID: 'bg-primary/10 text-primary',
+  PAID: 'bg-blue-100 text-blue-700',
   PROCESSING: 'bg-blue-100 text-blue-700',
   SHIPPED: 'bg-purple-100 text-purple-700',
   DELIVERED: 'bg-green-100 text-green-700',
@@ -172,44 +172,44 @@ export default function ClientOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background py-9">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t('orders', 'title')}</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-1">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground">{t('orders', 'title')}</h1>
+          <p className="text-muted-foreground mt-1.5">
             {t('orders', 'trackOrders')}
           </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 my-6">
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('orders', 'totalOrders')}</div>
-              <div className="text-2xl font-bold">{orders.length}</div>
+            <CardContent className="p-4 pt-4">
+              <div className="text-[13px] text-muted-foreground">{t('orders', 'totalOrders')}</div>
+              <div className="font-display text-[26px] font-extrabold mt-1 text-foreground">{orders.length}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('common', 'pending')}</div>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-4 pt-4">
+              <div className="text-[13px] text-muted-foreground">{t('common', 'pending')}</div>
+              <div className="font-display text-[26px] font-extrabold mt-1 text-foreground">
                 {orders.filter((o) => o.status === 'PENDING').length}
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('orders', 'inProgress')}</div>
-              <div className="text-2xl font-bold text-primary">
+            <CardContent className="p-4 pt-4">
+              <div className="text-[13px] text-muted-foreground">{t('orders', 'inProgress')}</div>
+              <div className="font-display text-[26px] font-extrabold mt-1 text-blue-600">
                 {orders.filter((o) => ['PAID', 'PROCESSING', 'SHIPPED'].includes(o.status)).length}
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('orders', 'delivered')}</div>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="p-4 pt-4">
+              <div className="text-[13px] text-muted-foreground">{t('orders', 'delivered')}</div>
+              <div className="font-display text-[26px] font-extrabold mt-1 text-foreground">
                 {orders.filter((o) => o.status === 'DELIVERED').length}
               </div>
             </CardContent>
@@ -217,45 +217,34 @@ export default function ClientOrdersPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <Button
-            variant={filter === 'all' ? 'default' : 'outline'}
-            onClick={() => setFilter('all')}
-          >
-            {t('orders', 'all')} ({orders.length})
-          </Button>
-          <Button
-            variant={filter === 'PENDING' ? 'default' : 'outline'}
-            onClick={() => setFilter('PENDING')}
-          >
-            {t('common', 'pending')} ({orders.filter((o) => o.status === 'PENDING').length})
-          </Button>
-          <Button
-            variant={filter === 'PAID' ? 'default' : 'outline'}
-            onClick={() => setFilter('PAID')}
-          >
-            {t('orders', 'confirmed')} ({orders.filter((o) => ['PAID','PROCESSING'].includes(o.status)).length})
-          </Button>
-          <Button
-            variant={filter === 'SHIPPED' ? 'default' : 'outline'}
-            onClick={() => setFilter('SHIPPED')}
-          >
-            {t('orders', 'shipped')} ({orders.filter((o) => o.status === 'SHIPPED').length})
-          </Button>
-          <Button
-            variant={filter === 'DELIVERED' ? 'default' : 'outline'}
-            onClick={() => setFilter('DELIVERED')}
-          >
-            {t('orders', 'delivered')} ({orders.filter((o) => o.status === 'DELIVERED').length})
-          </Button>
+        <div className="mb-5 flex flex-wrap gap-2.5">
+          {([
+            ['all', `${t('orders', 'all')} (${orders.length})`],
+            ['PENDING', `${t('common', 'pending')} (${orders.filter((o) => o.status === 'PENDING').length})`],
+            ['PAID', `${t('orders', 'confirmed')} (${orders.filter((o) => ['PAID', 'PROCESSING'].includes(o.status)).length})`],
+            ['SHIPPED', `${t('orders', 'shipped')} (${orders.filter((o) => o.status === 'SHIPPED').length})`],
+            ['DELIVERED', `${t('orders', 'delivered')} (${orders.filter((o) => o.status === 'DELIVERED').length})`],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key as typeof filter)}
+              className={`rounded-full px-4 py-2 text-[13.5px] font-semibold border transition-colors ${
+                filter === key
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:text-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Orders List */}
         <div className="space-y-4">
           {filteredOrders.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center">
-                <div className="text-4xl mb-4"></div>
+              <CardContent className="p-10 pt-10 text-center">
+                <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" strokeWidth={1.5} />
                 <p className="text-muted-foreground mb-4">{t('orders', 'noOrders')}</p>
                 <Button onClick={() => router.push('/client/marketplace')}>
                   {t('orders', 'discoverMarketplace')}
@@ -264,50 +253,50 @@ export default function ClientOrdersPage() {
             </Card>
           ) : (
             filteredOrders.map((order) => (
-              <Card key={order.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
+              <Card key={order.id}>
+                <CardContent className="p-[22px] pt-[22px]">
                   {/* Order Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between gap-4 mb-3.5">
                     <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-foreground">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-display text-lg font-bold text-foreground">
                           {t('orders', 'order')} #{order.id.slice(0, 8).toUpperCase()}
                         </h3>
                         <Badge className={STATUS_COLORS[order.status]}>
                           {getStatusLabel(order.status)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground mt-1">
                         {t('orders', 'orderedOn')} {formatDate(order.createdAt)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-foreground">
+                      <div className="font-display text-[22px] font-extrabold text-foreground">
                         {Number(order.total).toFixed(2)}€
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         {order.items.reduce((sum, item) => sum + item.quantity, 0)} {order.items.reduce((sum, item) => sum + item.quantity, 0) > 1 ? t('cart', 'items') : t('cart', 'item')}
                       </p>
                     </div>
                   </div>
 
                   {/* Order Items */}
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-2">
                     {(order.items ?? []).map((item) => (
-                      <div key={item.id} className="flex items-center gap-4">
+                      <div key={item.id} className="flex items-center gap-3.5 py-2">
                         {item.product?.images?.[0] ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={item.product.images[0]}
                             alt={item.product?.name || 'Produit'}
-                            className="w-16 h-16 object-cover rounded"
+                            className="w-14 h-14 object-cover rounded-xl"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded bg-muted" />
+                          <div className="w-14 h-14 rounded-xl bg-muted" />
                         )}
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{item.product?.name || '—'}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-semibold text-foreground">{item.product?.name || '—'}</p>
+                          <p className="text-[13px] text-muted-foreground">
                             {t('cart', 'quantity')}: {item.quantity} × {Number(item.unitPrice).toFixed(2)}€
                           </p>
                         </div>
@@ -322,27 +311,25 @@ export default function ClientOrdersPage() {
 
                   {/* Adresse de livraison (chaîne libre) */}
                   {order.shippingAddress && (
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-[13px] text-muted-foreground mt-2.5">
                       {t('orders', 'shippingTo') || 'Livraison'} : {order.shippingAddress}
                     </p>
                   )}
 
                   {/* Shipping Info */}
                   {order.trackingNumber && (
-                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
-                      <p className="text-sm font-medium text-primary">
-                        {t('orders', 'trackingNumber')}: {order.trackingNumber}
-                      </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 my-3 text-[13px] font-semibold text-blue-700">
+                      📦 {t('orders', 'trackingNumber')}: {order.trackingNumber}
                       {order.deliveredAt && (
-                        <p className="text-xs text-primary mt-1">
+                        <span className="block font-normal text-blue-600 mt-1">
                           {t('orders', 'deliveredOn')} {formatDate(order.deliveredAt)}
-                        </p>
+                        </span>
                       )}
                     </div>
                   )}
 
                   {/* Actions */}
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+                  <div className="flex flex-wrap gap-2.5 pt-4 mt-3.5 border-t border-border">
                     <Button
                       variant="outline"
                       size="sm"
@@ -396,7 +383,7 @@ export default function ClientOrdersPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleCancelOrder(order.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive"
                         >
                           {t('orders', 'cancelOrder')}
                         </Button>

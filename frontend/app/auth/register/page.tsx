@@ -93,12 +93,13 @@ export default function RegisterPage() {
       </div>
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold text-primary-foreground">K</span>
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-2xl font-extrabold text-primary-foreground font-display">K</span>
             </div>
+            <span className="font-display text-[22px] font-extrabold tracking-tight text-foreground">Krafolt</span>
           </div>
-          <CardTitle className="text-2xl text-center">{t('auth', 'registerTitle')}</CardTitle>
+          <CardTitle className="font-display text-2xl text-center tracking-tight">{t('auth', 'registerTitle')}</CardTitle>
           <CardDescription className="text-center">
             {t('auth', 'registerSubtitle')}
           </CardDescription>
@@ -114,28 +115,61 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, role: 'CLIENT' })}
-                  className={`p-4 border-2 rounded-lg text-center transition-colors ${
+                  className={`p-4 border-2 rounded-2xl text-center transition-colors ${
                     formData.role === 'CLIENT'
-                      ? 'border-blue-600 bg-primary/10'
-                      : 'border-border hover:border-gray-400'
+                      ? 'border-foreground bg-muted'
+                      : 'border-border hover:border-muted-foreground'
                   }`}
                 >
-                  <div className="text-2xl mb-1"></div>
-                  <div className="font-medium">{t('auth', 'client')}</div>
-                  <div className="text-xs text-muted-foreground">{t('auth', 'clientDescription')}</div>
+                  <div
+                    className={`w-10 h-10 mx-auto mb-2.5 rounded-xl flex items-center justify-center transition-colors ${
+                      formData.role === 'CLIENT' ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  >
+                    <svg
+                      className={`w-5 h-5 ${formData.role === 'CLIENT' ? 'text-primary-foreground' : 'text-foreground'}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div className="font-display font-bold">{t('auth', 'client')}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{t('auth', 'clientDescription')}</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, role: 'ARTISAN' })}
-                  className={`p-4 border-2 rounded-lg text-center transition-colors ${
+                  className={`p-4 border-2 rounded-2xl text-center transition-colors ${
                     formData.role === 'ARTISAN'
-                      ? 'border-blue-600 bg-primary/10'
-                      : 'border-border hover:border-gray-400'
+                      ? 'border-foreground bg-muted'
+                      : 'border-border hover:border-muted-foreground'
                   }`}
                 >
-                  <div className="text-2xl mb-1"></div>
-                  <div className="font-medium">{t('auth', 'artisan')}</div>
-                  <div className="text-xs text-muted-foreground">{t('auth', 'artisanDescription')}</div>
+                  <div
+                    className={`w-10 h-10 mx-auto mb-2.5 rounded-xl flex items-center justify-center transition-colors ${
+                      formData.role === 'ARTISAN' ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  >
+                    <svg
+                      className={`w-5 h-5 ${formData.role === 'ARTISAN' ? 'text-primary-foreground' : 'text-foreground'}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
+                  </div>
+                  <div className="font-display font-bold">{t('auth', 'artisan')}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{t('auth', 'artisanDescription')}</div>
                 </button>
               </div>
             </div>

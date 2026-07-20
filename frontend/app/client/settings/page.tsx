@@ -168,49 +168,56 @@ export default function ClientSettingsPage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           {t('common', 'back')}
-        </Button>
+        </button>
 
-        <h1 className="text-3xl font-bold text-foreground mb-6">{t('settings', 'title')}</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground mb-1.5">
+          {t('settings', 'title')}
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          {t('settings', 'pageSubtitle') || 'Gérez votre profil, votre sécurité, vos notifications et vos données personnelles.'}
+        </p>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Account Type Card */}
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
-              <CardTitle>{t('settings', 'accountType')}</CardTitle>
+              <CardTitle className="font-display">{t('settings', 'accountType')}</CardTitle>
               <CardDescription>
                 {t('settings', 'accountTypeDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => setClientProfile({ ...clientProfile, clientType: 'INDIVIDUAL' })}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
+                  className={`p-4 border-[1.5px] rounded-2xl text-left transition-colors ${
                     clientProfile.clientType === 'INDIVIDUAL'
-                      ? 'border-blue-600 bg-primary/10'
-                      : 'border-border hover:border-border'
+                      ? 'border-foreground bg-muted'
+                      : 'border-border hover:bg-muted/50'
                   }`}
                 >
-                  <div className="text-2xl mb-2"></div>
-                  <div className="font-semibold">{t('settings', 'individual')}</div>
-                  <div className="text-sm text-muted-foreground">{t('settings', 'individualDescription')}</div>
+                  <div className="font-display font-bold">{t('settings', 'individual')}</div>
+                  <div className="text-sm text-muted-foreground mt-0.5">{t('settings', 'individualDescription')}</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setClientProfile({ ...clientProfile, clientType: 'PROFESSIONAL' })}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
+                  className={`p-4 border-[1.5px] rounded-2xl text-left transition-colors ${
                     clientProfile.clientType === 'PROFESSIONAL'
-                      ? 'border-blue-600 bg-primary/10'
-                      : 'border-border hover:border-border'
+                      ? 'border-foreground bg-muted'
+                      : 'border-border hover:bg-muted/50'
                   }`}
                 >
-                  <div className="text-2xl mb-2"></div>
-                  <div className="font-semibold">{t('settings', 'professional')}</div>
-                  <div className="text-sm text-muted-foreground">{t('settings', 'professionalDescription')}</div>
+                  <div className="font-display font-bold">{t('settings', 'professional')}</div>
+                  <div className="text-sm text-muted-foreground mt-0.5">{t('settings', 'professionalDescription')}</div>
                 </button>
               </div>
 
@@ -293,102 +300,43 @@ export default function ClientSettingsPage() {
           </Card>
 
           {/* Notifications Card */}
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
-              <CardTitle>{t('settings', 'notifications')}</CardTitle>
+              <CardTitle className="font-display">{t('settings', 'notifications')}</CardTitle>
               <CardDescription>{t('settings', 'notificationsDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <div className="font-medium">{t('settings', 'emailNotifications')}</div>
-                    <div className="text-sm text-muted-foreground">{t('settings', 'emailNotificationsDesc')}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.emailNotifications}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, emailNotifications: e.target.checked })
-                    }
-                    className="w-5 h-5 text-primary rounded focus:ring-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <div className="font-medium">{t('settings', 'pushNotifications')}</div>
-                    <div className="text-sm text-muted-foreground">{t('settings', 'pushNotificationsDesc')}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.pushNotifications}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, pushNotifications: e.target.checked })
-                    }
-                    className="w-5 h-5 text-primary rounded focus:ring-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <div className="font-medium">{t('settings', 'smsNotifications')}</div>
-                    <div className="text-sm text-muted-foreground">{t('settings', 'smsNotificationsDesc')}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.smsNotifications}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, smsNotifications: e.target.checked })
-                    }
-                    className="w-5 h-5 text-primary rounded focus:ring-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <div className="font-medium">{t('settings', 'missionUpdates')}</div>
-                    <div className="text-sm text-muted-foreground">{t('settings', 'missionUpdatesDesc')}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.missionUpdates}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, missionUpdates: e.target.checked })
-                    }
-                    className="w-5 h-5 text-primary rounded focus:ring-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <div className="font-medium">{t('settings', 'marketplaceAlerts')}</div>
-                    <div className="text-sm text-muted-foreground">{t('settings', 'marketplaceAlertsDesc')}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.marketplaceAlerts}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, marketplaceAlerts: e.target.checked })
-                    }
-                    className="w-5 h-5 text-primary rounded focus:ring-primary"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <div className="font-medium">{t('settings', 'promotions')}</div>
-                    <div className="text-sm text-muted-foreground">{t('settings', 'promotionsDesc')}</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.promotions}
-                    onChange={(e) =>
-                      setNotifications({ ...notifications, promotions: e.target.checked })
-                    }
-                    className="w-5 h-5 text-primary rounded focus:ring-primary"
-                  />
-                </div>
+              <div className="divide-y divide-border">
+                {([
+                  ['emailNotifications', 'emailNotifications', 'emailNotificationsDesc'],
+                  ['pushNotifications', 'pushNotifications', 'pushNotificationsDesc'],
+                  ['smsNotifications', 'smsNotifications', 'smsNotificationsDesc'],
+                  ['missionUpdates', 'missionUpdates', 'missionUpdatesDesc'],
+                  ['marketplaceAlerts', 'marketplaceAlerts', 'marketplaceAlertsDesc'],
+                  ['promotions', 'promotions', 'promotionsDesc'],
+                ] as const).map(([key, titleKey, descKey]) => (
+                  <label
+                    key={key}
+                    className="flex items-center justify-between gap-4 py-4 cursor-pointer"
+                  >
+                    <div>
+                      <div className="font-semibold text-foreground">{t('settings', titleKey)}</div>
+                      <div className="text-sm text-muted-foreground">{t('settings', descKey)}</div>
+                    </div>
+                    <div className="relative shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={notifications[key]}
+                        onChange={(e) =>
+                          setNotifications({ ...notifications, [key]: e.target.checked })
+                        }
+                        className="peer sr-only"
+                      />
+                      <div className="h-6 w-11 rounded-full bg-border transition-colors peer-checked:bg-foreground" />
+                      <div className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+                    </div>
+                  </label>
+                ))}
               </div>
 
               <div className="flex justify-end">
@@ -400,54 +348,63 @@ export default function ClientSettingsPage() {
           </Card>
 
           {/* Security Card */}
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
-              <CardTitle>{t('settings', 'security')}</CardTitle>
+              <CardTitle className="font-display">{t('settings', 'security')}</CardTitle>
               <CardDescription>{t('settings', 'securityDescription')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Link href="/client/settings/2fa">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer">
-                  <div>
-                    <div className="font-medium">{t('settings', 'twoFactorAuth')}</div>
+            <CardContent className="space-y-3">
+              <Link href="/client/settings/2fa" className="block">
+                <div className="flex items-center gap-4 p-4 border border-border rounded-2xl hover:bg-muted cursor-pointer transition-colors">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-foreground">{t('settings', 'twoFactorAuth')}</div>
                     <div className="text-sm text-muted-foreground">{t('settings', 'twoFactorAuthDesc')}</div>
                   </div>
-                  <span className="text-muted-foreground"></span>
+                  <svg className="w-5 h-5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </div>
               </Link>
 
-              <Link href="/client/profile">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer">
-                  <div>
-                    <div className="font-medium">{t('settings', 'changePassword')}</div>
+              <Link href="/client/profile" className="block">
+                <div className="flex items-center gap-4 p-4 border border-border rounded-2xl hover:bg-muted cursor-pointer transition-colors">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M5 5l2 2M17 17l2 2M2 12h3M19 12h3" /></svg>
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-foreground">{t('settings', 'changePassword')}</div>
                     <div className="text-sm text-muted-foreground">{t('settings', 'changePasswordDesc')}</div>
                   </div>
-                  <span className="text-muted-foreground"></span>
+                  <svg className="w-5 h-5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </div>
               </Link>
 
-              <Link href="/client/settings/devices">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer">
-                  <div>
-                    <div className="font-medium">Appareils connectés</div>
+              <Link href="/client/settings/devices" className="block">
+                <div className="flex items-center gap-4 p-4 border border-border rounded-2xl hover:bg-muted cursor-pointer transition-colors">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" /><path d="M11 18h2" /></svg>
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-foreground">{t('settings', 'connectedDevices') || 'Appareils connectés'}</div>
                     <div className="text-sm text-muted-foreground">
-                      Gérez les appareils connectés à votre compte et déconnectez ceux que vous ne reconnaissez pas.
+                      {t('settings', 'connectedDevicesDesc') || 'Gérez et déconnectez les sessions actives.'}
                     </div>
                   </div>
-                  <span className="text-muted-foreground"></span>
+                  <svg className="w-5 h-5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 </div>
               </Link>
             </CardContent>
           </Card>
 
           {/* Language Card */}
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
-              <CardTitle>{t('settings', 'language')}</CardTitle>
+              <CardTitle className="font-display">{t('settings', 'language')}</CardTitle>
             </CardHeader>
             <CardContent>
               <select
-                className="w-full md:w-64 px-3 py-2 border border-border rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full md:w-72 h-11 px-3.5 border border-border rounded-xl bg-card text-foreground focus:outline-none focus:border-foreground"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as typeof language)}
               >
@@ -463,30 +420,39 @@ export default function ClientSettingsPage() {
           </Card>
 
           {/* Confidentialité / RGPD */}
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardHeader>
-              <CardTitle>{t('settings', 'privacyTitle')}</CardTitle>
+              <CardTitle className="font-display">{t('settings', 'privacyTitle')}</CardTitle>
+              <CardDescription>
+                {t('privacy', 'sectionDesc') || 'Vous restez maître de vos données personnelles.'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm text-muted-foreground">
-                  {t('privacy', 'exportDesc') || 'Téléchargez une copie de toutes vos données personnelles.'}
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <Button variant="outline" onClick={handleExportData}>
+                  <div className="font-semibold text-foreground">
                     {t('privacy', 'exportButton') || 'Exporter mes données'}
-                  </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('privacy', 'exportDesc') || 'Téléchargez une copie de toutes vos données personnelles.'}
+                  </p>
                 </div>
+                <Button variant="outline" onClick={handleExportData}>
+                  {t('privacy', 'exportButton') || 'Exporter mes données'}
+                </Button>
               </div>
-              <div className="flex flex-col gap-1 border-t border-border pt-4">
-                <p className="text-sm text-muted-foreground">
-                  {t('privacy', 'deleteDesc') || 'Demandez la suppression de votre compte et l\'effacement de vos données (hors pièces à conservation légale).'}
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
                 <div>
-                  <Button variant="destructive" onClick={handleDeleteAccount}>
+                  <div className="font-semibold text-foreground">
                     {t('privacy', 'deleteButton') || 'Supprimer mon compte'}
-                  </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('privacy', 'deleteDesc') || 'Demandez la suppression de votre compte et l\'effacement de vos données (hors pièces à conservation légale).'}
+                  </p>
                 </div>
+                <Button variant="destructive" onClick={handleDeleteAccount}>
+                  {t('privacy', 'deleteButton') || 'Supprimer mon compte'}
+                </Button>
               </div>
             </CardContent>
           </Card>

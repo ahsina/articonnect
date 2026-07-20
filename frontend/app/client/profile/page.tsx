@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi } from '@/lib/api/user';
@@ -226,30 +226,35 @@ export default function ClientProfilePage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => router.back()}>
+        <div className="mb-4">
+          <Button variant="ghost" onClick={() => router.back()} className="-ml-3">
             {t('common', 'back')}
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          {/* Profile Info Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{t('common', 'profile')}</CardTitle>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground mb-6">
+          {t('common', 'profile')}
+        </h1>
+
+        <div className="grid grid-cols-1 gap-5">
+          {/* Personal info + billing address share the same submit handler */}
+          <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 gap-5">
+            {/* Personal Info Card */}
+            <Card>
+              <div className="flex items-center justify-between gap-4 border-b border-border p-5 sm:p-6">
+                <CardTitle className="text-lg">{t('common', 'profile')}</CardTitle>
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <img
                       src={profile.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
                       alt={t('clientProfile', 'avatarAlt')}
-                      className="w-16 h-16 rounded-full"
+                      className="h-16 w-16 rounded-full object-cover"
                     />
                     {uploadingAvatar && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
-                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                       </div>
                     )}
                   </div>
@@ -264,8 +269,8 @@ export default function ClientProfilePage() {
                     />
                     <label
                       htmlFor="avatar-upload"
-                      className={`inline-flex items-center px-3 py-2 text-sm font-medium text-primary bg-primary/10 border border-blue-600 rounded-md hover:bg-primary/10 cursor-pointer ${
-                        uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''
+                      className={`inline-flex cursor-pointer items-center rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground transition-colors hover:border-foreground ${
+                        uploadingAvatar ? 'cursor-not-allowed opacity-50' : ''
                       }`}
                     >
                       {uploadingAvatar ? t('common', 'loading') : t('common', 'edit')}
@@ -273,12 +278,10 @@ export default function ClientProfilePage() {
                   </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <CardContent className="space-y-4 p-5 sm:p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
                       {t('auth', 'firstName')} *
                     </label>
                     <Input
@@ -292,7 +295,7 @@ export default function ClientProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
                       {t('auth', 'lastName')} *
                     </label>
                     <Input
@@ -307,14 +310,14 @@ export default function ClientProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-sm font-semibold text-foreground mb-1.5">
                     {t('auth', 'email')}
                   </label>
                   <Input type="email" value={profile.email} disabled />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-sm font-semibold text-foreground mb-1.5">
                     {t('auth', 'phone')} *
                   </label>
                   <Input
@@ -328,8 +331,22 @@ export default function ClientProfilePage() {
                   />
                 </div>
 
+                <div className="flex justify-end pt-1">
+                  <Button type="submit" disabled={saving}>
+                    {saving ? t('common', 'loading') : t('common', 'save')}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Billing Address Card */}
+            <Card>
+              <div className="border-b border-border p-5 sm:p-6">
+                <CardTitle className="text-lg">{t('common', 'address')}</CardTitle>
+              </div>
+              <CardContent className="space-y-4 p-5 sm:p-6">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-sm font-semibold text-foreground mb-1.5">
                     {t('common', 'address')}
                   </label>
                   <Input
@@ -344,7 +361,7 @@ export default function ClientProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
                       {t('common', 'postalCode')}
                     </label>
                     <Input
@@ -358,7 +375,7 @@ export default function ClientProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
                       {t('common', 'city')}
                     </label>
                     <Input
@@ -372,7 +389,7 @@ export default function ClientProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
                       {t('common', 'country')}
                     </label>
                     <select
@@ -380,7 +397,7 @@ export default function ClientProfilePage() {
                       onChange={(e) =>
                         setFormData({ ...formData, country: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="h-11 w-full rounded-lg border border-border bg-card px-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/10"
                     >
                       <option value="LU">Luxembourg</option>
                       <option value="FR">France</option>
@@ -389,24 +406,24 @@ export default function ClientProfilePage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-1">
                   <Button type="submit" disabled={saving}>
                     {saving ? t('common', 'loading') : t('common', 'save')}
                   </Button>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </form>
 
           {/* Password Change Card */}
           <Card>
-            <CardHeader>
-              <CardTitle>{t('auth', 'password')}</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <div className="border-b border-border p-5 sm:p-6">
+              <CardTitle className="text-lg">{t('auth', 'password')}</CardTitle>
+            </div>
+            <CardContent className="p-5 sm:p-6">
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
+                  <label className="block text-sm font-semibold text-foreground mb-1.5">
                     {t('auth', 'password')} *
                   </label>
                   <Input
@@ -422,41 +439,43 @@ export default function ClientProfilePage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    {t('auth', 'newPassword')} *
-                  </label>
-                  <Input
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        newPassword: e.target.value,
-                      })
-                    }
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
+                      {t('auth', 'newPassword')} *
+                    </label>
+                    <Input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          newPassword: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1.5">
+                      {t('auth', 'confirmPassword')} *
+                    </label>
+                    <Input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    {t('auth', 'confirmPassword')} *
-                  </label>
-                  <Input
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-1">
                   <Button type="submit" disabled={saving}>
                     {saving ? t('common', 'loading') : t('common', 'save')}
                   </Button>
@@ -467,14 +486,14 @@ export default function ClientProfilePage() {
 
           {/* Messages */}
           {message && (
-            <div className="p-4 bg-green-100 border rounded-lg">
-              <p className="text-sm text-muted-foreground">{message}</p>
+            <div className="rounded-lg border border-success/20 bg-success/10 p-4">
+              <p className="text-sm text-foreground">{message}</p>
             </div>
           )}
 
           {error && (
-            <div className="p-4 bg-red-100 border rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
         </div>

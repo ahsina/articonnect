@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, Lock } from 'lucide-react';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -214,21 +214,23 @@ function MessagesContent() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
-        {/* Conversations List */}
-        <div
-          className={`${
-            selectedConversation ? 'hidden lg:flex' : 'flex'
-          } w-full lg:w-80 bg-card border-r border-border flex-col`}
-        >
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-foreground">{t('common', 'messages')}</h1>
-              <div className="flex items-center gap-2">
+    <div className="h-[calc(100vh-4rem)] bg-background flex flex-col">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 overflow-hidden px-0 sm:px-6 sm:pb-5">
+        <div className="flex w-full overflow-hidden border-border bg-card sm:rounded-2xl sm:border sm:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.05)]">
+          {/* Conversations List */}
+          <div
+            className={`${
+              selectedConversation ? 'hidden lg:flex' : 'flex'
+            } w-full lg:w-80 flex-col border-r border-border`}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h1 className="font-display text-lg font-extrabold tracking-tight text-foreground">
+                {t('common', 'messages')}
+              </h1>
+              <div className="flex items-center gap-1.5">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    connected ? 'bg-green-500' : 'bg-gray-400'
+                  className={`h-2 w-2 rounded-full ${
+                    connected ? 'bg-success' : 'bg-muted-foreground/40'
                   }`}
                   title={connected ? t('common', 'connected') : t('common', 'disconnected')}
                 />
@@ -237,142 +239,150 @@ function MessagesContent() {
                 </span>
               </div>
             </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {conversations.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  {t('common', 'noConversations')}
+                </div>
+              ) : (
+                <div>
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.userId}
+                      onClick={() => setSelectedConversation(conv.userId)}
+                      className={`flex w-full items-start gap-3 border-b border-border p-4 text-left transition-colors hover:bg-muted ${
+                        selectedConversation === conv.userId ? 'bg-muted' : ''
+                      }`}
+                    >
+                      <img
+                        src={conv.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                        alt={conv.user?.firstName}
+                        className="h-11 w-11 flex-shrink-0 rounded-full object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-0.5 flex items-center justify-between gap-2">
+                          <span className="truncate font-semibold text-foreground">
+                            {conv.user?.firstName || ""} {conv.user?.lastName || ""}
+                          </span>
+                          {conv.lastMessage && (
+                            <span className="flex-shrink-0 text-[11px] text-muted-foreground">
+                              {formatDate(conv.lastMessage.createdAt)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          {conv.lastMessage && (
+                            <p className="truncate text-sm text-muted-foreground">
+                              {conv.lastMessage.content}
+                            </p>
+                          )}
+                          {conv.unreadCount > 0 && (
+                            <span className="flex h-[19px] min-w-[19px] flex-shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                {t('common', 'noConversations')}
-              </div>
-            ) : (
-              <div>
-                {conversations.map((conv) => (
+          {/* Chat Area */}
+          <div
+            className={`${
+              selectedConversation ? 'flex' : 'hidden lg:flex'
+            } min-w-0 flex-1 flex-col bg-background`}
+          >
+            {selectedConv ? (
+              <>
+                {/* Chat Header */}
+                <div className="flex items-center gap-3 border-b border-border bg-card p-3.5">
                   <button
-                    key={conv.userId}
-                    onClick={() => setSelectedConversation(conv.userId)}
-                    className={`w-full p-4 flex items-start gap-3 hover:bg-accent border-b border-border transition-colors ${
-                      selectedConversation === conv.userId ? 'bg-primary/10' : ''
-                    }`}
+                    onClick={() => setSelectedConversation(null)}
+                    aria-label={t('common', 'back')}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full hover:bg-muted lg:hidden"
                   >
-                    <img
-                      src={conv.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                      alt={conv.user?.firstName}
-                      className="w-12 h-12 rounded-full flex-shrink-0"
-                    />
-                    <div className="flex-1 text-left min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-foreground truncate">
-                          {conv.user?.firstName || ""} {conv.user?.lastName || ""}
-                        </span>
-                        {conv.unreadCount > 0 && (
-                          <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5 flex-shrink-0">
-                            {conv.unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      {conv.lastMessage && (
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground truncate">
-                            {conv.lastMessage.content}
-                          </p>
-                          <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                            {formatDate(conv.lastMessage.createdAt)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    <ArrowLeft className="h-5 w-5" />
                   </button>
-                ))}
+                  <img
+                    src={selectedConv.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
+                    alt={selectedConv.user?.firstName}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <h2 className="font-display font-bold text-foreground">
+                      {selectedConv.user?.firstName || ""} {selectedConv.user?.lastName || ""}
+                    </h2>
+                    <p className="text-[13px] text-muted-foreground">
+                      {selectedConv.user?.role === 'ARTISAN' ? t('auth', 'artisan') : t('auth', 'client')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Messages (bulles façon WhatsApp/Uber) */}
+                <div className="flex flex-1 flex-col gap-2 overflow-y-auto bg-muted/40 p-4">
+                  {/* Bandeau protection anti-désintermédiation (informatif) */}
+                  <div className="mx-auto flex max-w-[90%] items-center gap-1.5 self-center rounded-full bg-warning/15 px-3 py-1.5 text-center text-[11.5px] font-semibold text-warning">
+                    <Lock className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Les coordonnées personnelles (téléphone, e-mail) sont masquées avant le paiement pour votre protection.</span>
+                  </div>
+
+                  {messages.map((message) => {
+                    const isOwn = message.senderId === user?.id;
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[75%] px-3.5 py-2 text-[14.5px] leading-snug shadow-sm ${
+                            isOwn
+                              ? 'rounded-2xl rounded-br-md bg-foreground text-background'
+                              : 'rounded-2xl rounded-bl-md bg-card text-foreground'
+                          }`}
+                        >
+                          <p className="break-words">{message.content}</p>
+                          <p className={`mt-1 text-[10.5px] ${isOwn ? 'text-background/55' : 'text-muted-foreground'}`}>
+                            {formatTime(message.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Composer (pilule + bouton rond, façon messagerie) */}
+                <div className="border-t border-border bg-card p-3">
+                  <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder={t('common', 'typeMessage')}
+                      className="flex-1 rounded-full bg-muted px-4 py-3 text-[14.5px] outline-none focus:ring-2 focus:ring-foreground/10"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newMessage.trim()}
+                      aria-label={t('common', 'send')}
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity disabled:opacity-30"
+                    >
+                      <Send className="h-5 w-5" />
+                    </button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-muted-foreground">
+                {t('common', 'selectConversation')}
               </div>
             )}
           </div>
-        </div>
-
-        {/* Chat Area */}
-        <div
-          className={`${
-            selectedConversation ? 'flex' : 'hidden lg:flex'
-          } flex-1 flex-col bg-background`}
-        >
-          {selectedConv ? (
-            <>
-              {/* Chat Header */}
-              <div className="bg-card border-b border-border p-4 flex items-center gap-3">
-                <button
-                  onClick={() => setSelectedConversation(null)}
-                  aria-label={t('common', 'back')}
-                  className="lg:hidden flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full hover:bg-accent"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-                <img
-                  src={selectedConv.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                  alt={selectedConv.user?.firstName}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div>
-                  <h2 className="font-semibold text-foreground">
-                    {selectedConv.user?.firstName || ""} {selectedConv.user?.lastName || ""}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedConv.user?.role === 'ARTISAN' ? t('auth', 'artisan') : t('auth', 'client')}
-                  </p>
-                </div>
-              </div>
-
-              {/* Messages (bulles façon WhatsApp/Uber) */}
-              <div className="flex-1 overflow-y-auto bg-muted/30 p-4 space-y-2">
-                {messages.map((message) => {
-                  const isOwn = message.senderId === user?.id;
-                  return (
-                    <div
-                      key={message.id}
-                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[75%] px-3.5 py-2 text-[14.5px] leading-snug shadow-sm ${
-                          isOwn
-                            ? 'rounded-2xl rounded-br-md bg-foreground text-background'
-                            : 'rounded-2xl rounded-bl-md bg-card text-foreground'
-                        }`}
-                      >
-                        <p className="break-words">{message.content}</p>
-                        <p className={`mt-1 text-[10.5px] ${isOwn ? 'text-background/55' : 'text-muted-foreground'}`}>
-                          {formatTime(message.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Composer (pilule + bouton rond, façon messagerie) */}
-              <div className="border-t border-border bg-card p-3">
-                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={t('common', 'typeMessage')}
-                    className="flex-1 rounded-full bg-muted px-4 py-3 text-[14.5px] outline-none focus:ring-2 focus:ring-foreground/10"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newMessage.trim()}
-                    aria-label={t('common', 'send')}
-                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity disabled:opacity-30"
-                  >
-                    <Send className="h-5 w-5" />
-                  </button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              {t('common', 'selectConversation')}
-            </div>
-          )}
         </div>
       </div>
     </div>

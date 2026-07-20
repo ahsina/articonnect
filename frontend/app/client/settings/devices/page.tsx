@@ -153,15 +153,21 @@ export default function ClientDevicesPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          Retour
-        </Button>
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          Retour aux réglages
+        </button>
 
-        <h1 className="text-3xl font-bold text-foreground mb-6">Appareils connectés</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground mb-6">
+          Appareils connectés
+        </h1>
 
-        <Card>
+        <Card className="rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>Vos sessions actives</CardTitle>
+            <CardTitle className="font-display">Vos sessions actives</CardTitle>
             <CardDescription>
               Voici les appareils actuellement connectés à votre compte. Si vous ne reconnaissez
               pas un appareil, déconnectez-le et changez votre mot de passe.
@@ -182,33 +188,44 @@ export default function ClientDevicesPage() {
                     return (
                       <div
                         key={s.id}
-                        className="flex items-start justify-between gap-4 p-4 border border-border rounded-lg"
+                        className={`flex items-start gap-4 p-4 rounded-2xl border ${
+                          isCurrent ? 'border-foreground bg-muted' : 'border-border'
+                        }`}
                       >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <span className="text-2xl leading-none" aria-hidden>
-                            {DEVICE_ICON[s.deviceInfo.type]}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-foreground">
-                                {deviceDescription(s)}
+                        <span
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted text-2xl leading-none"
+                          aria-hidden
+                        >
+                          {DEVICE_ICON[s.deviceInfo.type]}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="font-bold text-foreground">
+                              {deviceDescription(s)}
+                            </span>
+                            {isCurrent && (
+                              <span className="inline-flex items-center rounded-full bg-foreground text-background text-[11px] font-bold px-2.5 py-0.5">
+                                Cet appareil
                               </span>
-                              {isCurrent && (
-                                <span className="inline-flex items-center rounded-full bg-primary/10 text-primary text-xs font-medium px-2 py-0.5">
-                                  Cet appareil
-                                </span>
-                              )}
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground leading-relaxed">
+                            <div>
+                              IP : <span className="font-medium text-foreground">{s.deviceInfo.ipAddress || '—'}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
-                              <div>IP : {s.deviceInfo.ipAddress || '—'}</div>
-                              <div>Connecté le : {formatDate(s.createdAt)}</div>
-                              <div>Dernière activité : {formatDate(s.lastAccessedAt)}</div>
+                            <div>
+                              Connecté le <span className="font-medium text-foreground">{formatDate(s.createdAt)}</span>
+                              {' · '}Dernière activité{' '}
+                              <span className="font-medium text-foreground">{formatDate(s.lastAccessedAt)}</span>
                             </div>
                           </div>
                         </div>
-                        <div className="shrink-0">
+                        <div className="ml-auto shrink-0 flex items-center">
                           {isCurrent ? (
-                            <span className="text-sm text-muted-foreground">Actif</span>
+                            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <span className="h-2 w-2 rounded-full bg-success" />
+                              Actif
+                            </span>
                           ) : (
                             <Button
                               variant="outline"
@@ -225,7 +242,7 @@ export default function ClientDevicesPage() {
                 </div>
 
                 {otherCount > 0 && (
-                  <div className="flex justify-end pt-2 border-t border-border">
+                  <div className="flex justify-end pt-4 border-t border-border">
                     <Button
                       variant="destructive"
                       onClick={handleRevokeOthers}
