@@ -317,8 +317,11 @@ export class MissionController {
   async markCompleted(
     @Request() req,
     @Param('id') missionId: string,
+    @Body() body: { notes?: string; completionCode?: string },
   ): Promise<CompletedResponseDto> {
-    return this.missionService.markCompleted(missionId, req.user.userId);
+    return this.missionService.markCompleted(missionId, req.user.userId, {
+      completionCode: body?.completionCode,
+    });
   }
 
   /**

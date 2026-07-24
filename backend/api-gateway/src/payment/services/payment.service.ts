@@ -691,7 +691,7 @@ export class PaymentService {
     if (!transaction.missionId) return;
     const mission = await this.prisma.mission.findUnique({
       where: { id: transaction.missionId },
-      select: { status: true, depositPaidAt: true },
+      select: { status: true, depositPaidAt: true, completionCode: true },
     });
     if (!mission) return;
 
@@ -699,12 +699,17 @@ export class PaymentService {
     const reflectable = ['PENDING_DEPOSIT', 'ACCEPTED', 'NEGOTIATING'];
     const isDeposit = transaction.type === 'DEPOSIT';
 
-    const data: { status?: any; depositPaidAt?: Date } = {};
+    const data: { status?: any; depositPaidAt?: Date; completionCode?: string } = {};
     if (!mission.depositPaidAt) {
       data.depositPaidAt = new Date();
     }
     if (reflectable.includes(mission.status as string)) {
       data.status = isDeposit ? 'DEPOSIT_PAID' : 'PAID';
+    }
+    // Escrow sécurisé → on génère (une seule fois) le code de validation « fin de mission »
+    // que le client communiquera à l'artisan pour libérer le paiement immédiatement.
+    if (!mission.completionCode) {
+      data.completionCode = Math.floor(1000 + Math.random() * 9000).toString();
     }
     if (Object.keys(data).length === 0) return;
 

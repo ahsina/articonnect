@@ -237,6 +237,14 @@ export class MissionService {
 
     // Ne pas divulguer l'objet transaction (montants/commission) via cet endpoint.
     delete sanitized.transaction;
+
+    // Code de validation « fin de mission » : visible UNIQUEMENT par le client propriétaire
+    // (qui le communique à l'artisan sur place). Le masquer à l'artisan/admin empêche l'artisan
+    // de s'auto-valider sans l'accord du client.
+    if (!isClientViewer) {
+      delete sanitized.completionCode;
+    }
+
     return sanitized;
   }
 
@@ -1152,7 +1160,11 @@ export class MissionService {
    * Mark mission as completed by artisan
    * Start 48h retraction period
    */
-  async markCompleted(missionId: string, artisanId: string) {
+  async markCompleted(
+    missionId: string,
+    artisanId: string,
+    opts?: { completionCode?: string },
+  ) {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: { transaction: { select: { status: true } } },
@@ -1164,6 +1176,15 @@ export class MissionService {
 
     if (mission.artisanId !== artisanId) {
       throw new ForbiddenException('Vous n\'êtes pas assigné à cette mission');
+    }
+
+    // Code de validation client fourni : doit correspondre s'il est saisi (sinon on refuse, pour
+    // éviter les tentatives de clôture forcée). Un code correct déclenchera la libération immédiate.
+    const submittedCode = opts?.completionCode?.trim();
+    const codeMatches =
+      !!submittedCode && !!mission.completionCode && submittedCode === mission.completionCode;
+    if (submittedCode && !codeMatches) {
+      throw new BadRequestException('Code de validation client incorrect.');
     }
 
     // GARDE PAIEMENT : une mission ne peut PAS être terminée (COMPLETED) sans que la plateforme ait
@@ -1195,6 +1216,39 @@ export class MissionService {
       'ARTISAN',
       'Travail terminé - Délai de rétractation 48h',
     );
+
+    // Code de validation client correct → on VALIDE immédiatement (comme si le client avait validé
+    // dans l'app) : on horodate validatedAt, on trace l'historique et on déclenche le payout artisan.
+    // Le payout ne doit jamais faire échouer la clôture (Connect pas onboardé, etc.).
+    if (codeMatches) {
+      await this.prisma.mission.update({
+        where: { id: missionId },
+        data: { validatedAt: now },
+      });
+      await this.createHistoryEntry(
+        missionId,
+        MissionStatus.COMPLETED,
+        mission.clientId,
+        'CLIENT',
+        'Travail validé via le code de validation client (paiement libéré immédiatement)',
+      );
+      let payoutStatus: 'done' | 'deferred' = 'done';
+      try {
+        await this.paymentService.triggerArtisanPayment(missionId);
+      } catch (payoutError) {
+        payoutStatus = 'deferred';
+        console.warn(
+          `[markCompleted] Payout artisan différé pour ${missionId} : ${(payoutError as any)?.message}`,
+        );
+      }
+      return {
+        mission: { ...updated, validatedAt: now },
+        retractionExpiresAt,
+        validatedByCode: true,
+        payoutStatus,
+        message: 'Mission terminée et validée par code client — paiement libéré.',
+      };
+    }
 
     // Notify client to validate work
     await this.notificationService.notifyMissionCompleted(

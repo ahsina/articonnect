@@ -47,6 +47,8 @@ interface Mission {
   autoValidatedAt?: string;
   cancelledAt?: string;
   retractionExpiresAt?: string;
+  // Code de validation à communiquer à l'artisan (généré au paiement du séquestre).
+  completionCode?: string;
   // Photos
   beforePhotos?: string[];
   afterPhotos?: string[];
@@ -873,6 +875,30 @@ export default function MissionDetailsPage() {
             </div>
           );
         })()}
+
+        {/* CODE DE VALIDATION — à communiquer à l'artisan une fois le travail terminé (libère le paiement). */}
+        {mission.completionCode &&
+          ['ACCEPTED', 'PAID', 'DEPOSIT_PAID', 'IN_TRANSIT', 'IN_PROGRESS', 'ARRIVED'].includes(mission.status) && (
+          <div className="mb-6 rounded-2xl border border-border bg-card p-6">
+            <div className="flex items-start gap-4">
+              <span className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-muted">
+                <Lock className="h-5 w-5 text-foreground" strokeWidth={2} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="font-display text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t('tracking', 'completionCodeTitle') || 'Code de validation'}
+                </div>
+                <div className="mt-1 font-display text-3xl font-extrabold tracking-widest tabular-nums text-foreground">
+                  {mission.completionCode}
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t('tracking', 'completionCodeClientHelp') ||
+                    'Communiquez ce code à l’artisan une fois le travail terminé — cela libère le paiement immédiatement. Ne le donnez pas avant que le travail soit fait.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mini-carte de localisation (façon Uber) */}
         {(mission as any).latitude != null && (mission as any).longitude != null && (

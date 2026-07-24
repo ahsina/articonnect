@@ -108,6 +108,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Envoyer le signalement"
     },
     "offers": {
+      "offerExpiredHint": "Cette offre a expiré. Faites une contre-offre pour relancer l'artisan.",
       "newArtisan": "Nouveau",
       "artisanNote": "Message de l'artisan",
       "offerValidUntil": "Offre valable jusqu'au",
@@ -1601,6 +1602,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Distance moyenne de déplacement"
     },
     "artisan": {
+      "completionCodeLabel": "Code de validation client (optionnel)",
+      "completionCodeHelper": "Si le client vous communique son code à 4 chiffres, saisissez-le : votre paiement est libéré immédiatement (sinon validation par le client, ou automatique sous 48 h).",
+      "paymentReleasedTitle": "Paiement libéré",
+      "paymentReleasedByCode": "Le client a confirmé via son code — votre paiement est en cours de versement.",
       "activeProducts": "Produits actifs",
       "add": "Ajouter",
       "addUrl": "Ajouter",
@@ -3030,6 +3035,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "Voir"
     },
     "tracking": {
+      "completionCodeTitle": "Code de validation",
+      "completionCodeClientHelp": "Communiquez ce code à l'artisan une fois le travail terminé — cela libère le paiement immédiatement. Ne le donnez pas avant que le travail soit fait.",
       "completedTitle": "Travaux terminés — à valider",
       "completedSub": "Vérifiez le résultat, puis validez pour libérer le paiement à l'artisan.",
       "completedTitleArtisan": "En attente de validation du client",
@@ -3264,6 +3271,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Send the report"
     },
     "offers": {
+      "offerExpiredHint": "This offer has expired. Make a counter-offer to re-engage the artisan.",
       "newArtisan": "New",
       "artisanNote": "Message from the artisan",
       "offerValidUntil": "Offer valid until",
@@ -4757,6 +4765,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Avg Travel Distance"
     },
     "artisan": {
+      "completionCodeLabel": "Client validation code (optional)",
+      "completionCodeHelper": "If the client gives you their 4-digit code, enter it: your payment is released immediately (otherwise it's validated by the client, or automatically within 48 h).",
+      "paymentReleasedTitle": "Payment released",
+      "paymentReleasedByCode": "The client confirmed with their code — your payment is being transferred.",
       "activeProducts": "Active products",
       "add": "Add",
       "addUrl": "Add",
@@ -6186,6 +6198,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "View"
     },
     "tracking": {
+      "completionCodeTitle": "Validation code",
+      "completionCodeClientHelp": "Give this code to the artisan once the work is finished — it releases the payment immediately. Don't share it before the work is done.",
       "completedTitle": "Work completed — to approve",
       "completedSub": "Review the result, then approve to release the payment to the tradesperson.",
       "completedTitleArtisan": "Awaiting client approval",
@@ -6420,6 +6434,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Meldung senden"
     },
     "offers": {
+      "offerExpiredHint": "Dieses Angebot ist abgelaufen. Machen Sie ein Gegenangebot, um den Handwerker erneut zu kontaktieren.",
       "newArtisan": "Neu",
       "artisanNote": "Nachricht des Handwerkers",
       "offerValidUntil": "Angebot gültig bis",
@@ -7913,6 +7928,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Durchschnittliche Fahrtstrecke"
     },
     "artisan": {
+      "completionCodeLabel": "Bestätigungscode des Kunden (optional)",
+      "completionCodeHelper": "Wenn Ihnen der Kunde seinen 4-stelligen Code mitteilt, geben Sie ihn ein: Ihre Zahlung wird sofort freigegeben (andernfalls Bestätigung durch den Kunden oder automatisch innerhalb von 48 h).",
+      "paymentReleasedTitle": "Zahlung freigegeben",
+      "paymentReleasedByCode": "Der Kunde hat per Code bestätigt — Ihre Zahlung wird ausgezahlt.",
       "activeProducts": "Aktive Produkte",
       "add": "Hinzufügen",
       "addUrl": "Hinzufügen",
@@ -9342,6 +9361,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "Ansehen"
     },
     "tracking": {
+      "completionCodeTitle": "Bestätigungscode",
+      "completionCodeClientHelp": "Geben Sie diesen Code dem Handwerker, sobald die Arbeit abgeschlossen ist — dadurch wird die Zahlung sofort freigegeben. Geben Sie ihn nicht heraus, bevor die Arbeit erledigt ist.",
       "completedTitle": "Arbeit abgeschlossen — zu bestätigen",
       "completedSub": "Prüfen Sie das Ergebnis und geben Sie es frei, um die Zahlung an den Handwerker auszulösen.",
       "completedTitleArtisan": "Warten auf Bestätigung des Kunden",
@@ -9576,6 +9597,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Melding verzenden"
     },
     "offers": {
+      "offerExpiredHint": "Dit aanbod is verlopen. Doe een tegenbod om de vakman opnieuw te benaderen.",
       "newArtisan": "Nieuw",
       "artisanNote": "Bericht van de vakman",
       "offerValidUntil": "Aanbod geldig tot",
@@ -11069,6 +11091,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Gem. reisafstand"
     },
     "artisan": {
+      "completionCodeLabel": "Validatiecode van de klant (optioneel)",
+      "completionCodeHelper": "Als de klant u zijn 4-cijferige code doorgeeft, voer die dan in: uw betaling wordt onmiddellijk vrijgegeven (anders bevestiging door de klant, of automatisch binnen 48 u).",
+      "paymentReleasedTitle": "Betaling vrijgegeven",
+      "paymentReleasedByCode": "De klant heeft bevestigd via zijn code — uw betaling wordt uitbetaald.",
       "activeProducts": "Actieve producten",
       "add": "Toevoegen",
       "addUrl": "Toevoegen",
@@ -12498,6 +12524,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "Bekijken"
     },
     "tracking": {
+      "completionCodeTitle": "Validatiecode",
+      "completionCodeClientHelp": "Geef deze code aan de vakman zodra het werk klaar is — daarmee wordt de betaling onmiddellijk vrijgegeven. Geef hem niet af voordat het werk gedaan is.",
       "completedTitle": "Werk voltooid — te bevestigen",
       "completedSub": "Controleer het resultaat en keur goed om de betaling aan de vakman vrij te geven.",
       "completedTitleArtisan": "Wachten op goedkeuring van de klant",
@@ -12732,6 +12760,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Enviar el informe"
     },
     "offers": {
+      "offerExpiredHint": "Esta oferta ha caducado. Haz una contraoferta para volver a contactar con el profesional.",
       "newArtisan": "Nuevo",
       "artisanNote": "Mensaje del profesional",
       "offerValidUntil": "Oferta válida hasta",
@@ -14225,6 +14254,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Distancia media de desplazamiento"
     },
     "artisan": {
+      "completionCodeLabel": "Código de validación del cliente (opcional)",
+      "completionCodeHelper": "Si el cliente te comunica su código de 4 cifras, introdúcelo: tu pago se libera de inmediato (si no, lo valida el cliente, o automáticamente en un plazo de 48 h).",
+      "paymentReleasedTitle": "Pago liberado",
+      "paymentReleasedByCode": "El cliente ha confirmado con su código — tu pago se está transfiriendo.",
       "activeProducts": "Productos activos",
       "add": "Añadir",
       "addUrl": "Añadir",
@@ -15654,6 +15687,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "Ver"
     },
     "tracking": {
+      "completionCodeTitle": "Código de validación",
+      "completionCodeClientHelp": "Comunica este código al profesional una vez terminado el trabajo — así se libera el pago de inmediato. No lo facilites antes de que el trabajo esté hecho.",
       "completedTitle": "Trabajo terminado — por validar",
       "completedSub": "Revisa el resultado y valida para liberar el pago al profesional.",
       "completedTitleArtisan": "Esperando la validación del cliente",
@@ -15888,6 +15923,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Invia la segnalazione"
     },
     "offers": {
+      "offerExpiredHint": "Questa offerta è scaduta. Fai una controproposta per ricontattare l'artigiano.",
       "newArtisan": "Nuovo",
       "artisanNote": "Messaggio dell'artigiano",
       "offerValidUntil": "Offerta valida fino al",
@@ -17381,6 +17417,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Distanza media di viaggio"
     },
     "artisan": {
+      "completionCodeLabel": "Codice di conferma del cliente (facoltativo)",
+      "completionCodeHelper": "Se il cliente ti comunica il suo codice a 4 cifre, inseriscilo: il tuo pagamento viene sbloccato immediatamente (altrimenti convalida da parte del cliente, o automatica entro 48 h).",
+      "paymentReleasedTitle": "Pagamento sbloccato",
+      "paymentReleasedByCode": "Il cliente ha confermato tramite il suo codice — il tuo pagamento è in corso di versamento.",
       "activeProducts": "Prodotti attivi",
       "add": "Aggiungi",
       "addUrl": "Aggiungi",
@@ -18810,6 +18850,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "Vedi"
     },
     "tracking": {
+      "completionCodeTitle": "Codice di conferma",
+      "completionCodeClientHelp": "Comunica questo codice all'artigiano una volta terminato il lavoro — così il pagamento viene sbloccato immediatamente. Non comunicarlo prima che il lavoro sia stato completato.",
       "completedTitle": "Lavoro completato — da convalidare",
       "completedSub": "Controlla il risultato, poi convalida per sbloccare il pagamento all'artigiano.",
       "completedTitleArtisan": "In attesa della convalida del cliente",
@@ -19044,6 +19086,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Enviar a denúncia"
     },
     "offers": {
+      "offerExpiredHint": "Esta oferta expirou. Faça uma contraproposta para voltar a contactar o profissional.",
       "newArtisan": "Novo",
       "artisanNote": "Mensagem do profissional",
       "offerValidUntil": "Oferta válida até",
@@ -20537,6 +20580,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "avgTravelDistance": "Distância média de deslocação"
     },
     "artisan": {
+      "completionCodeLabel": "Código de validação do cliente (opcional)",
+      "completionCodeHelper": "Se o cliente lhe comunicar o seu código de 4 dígitos, introduza-o: o seu pagamento é libertado imediatamente (caso contrário, validação pelo cliente ou automática no prazo de 48 h).",
+      "paymentReleasedTitle": "Pagamento libertado",
+      "paymentReleasedByCode": "O cliente confirmou através do seu código — o seu pagamento está a ser transferido.",
       "activeProducts": "Produtos ativos",
       "add": "Adicionar",
       "addUrl": "Adicionar",
@@ -21966,6 +22013,8 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "view": "Ver"
     },
     "tracking": {
+      "completionCodeTitle": "Código de validação",
+      "completionCodeClientHelp": "Comunique este código ao profissional assim que o trabalho estiver concluído — isso liberta o pagamento imediatamente. Não o forneça antes de o trabalho estar feito.",
       "completedTitle": "Trabalho concluído — a validar",
       "completedSub": "Verifique o resultado e valide para libertar o pagamento ao profissional.",
       "completedTitleArtisan": "A aguardar a validação do cliente",

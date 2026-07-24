@@ -298,6 +298,10 @@ model ArtisanProfile {
   companyName String
   siret       String  @unique
   vatNumber   String? // Encrypted
+  // TVA appliquée aux factures de l'artisan. vatExempt = franchise en base (auto-entrepreneur) :
+  // aucune TVA facturée + mention légale. vatRate = taux appliqué (null → taux standard du pays mission).
+  vatExempt   Boolean  @default(false)
+  vatRate     Decimal? @db.Decimal(5, 2)
   description String?
   website     String?
 
@@ -955,6 +959,11 @@ model Mission {
   photos       String[] // Legacy field for backward compatibility
   beforePhotos String[] // Photos taken before the work (by client)
   afterPhotos  String[] // Photos taken after the work (by artisan)
+
+  // Code de validation « fin de mission » : généré quand l'escrow est sécurisé, montré au CLIENT.
+  // S'il le communique à l'artisan sur place et que l'artisan le saisit à la clôture, le paiement
+  // est libéré immédiatement (on saute l'attente de validation/48h). Optionnel — jamais bloquant.
+  completionCode String?
 
   // B2B Billing (for professional clients)
   purchaseOrderNumber String? // Numéro de bon de commande

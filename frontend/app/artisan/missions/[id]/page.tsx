@@ -119,6 +119,8 @@ export default function MissionDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'quotation'>('details');
   const [completionNotes, setCompletionNotes] = useState('');
+  // Code de validation client (optionnel) : saisi à la clôture pour libérer le paiement immédiatement.
+  const [completionCode, setCompletionCode] = useState('');
   const [afterPhotos, setAfterPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [negotiations, setNegotiations] = useState<Negotiation[]>([]);
@@ -302,16 +304,31 @@ export default function MissionDetailPage() {
     }
     setActionLoading(true);
     try {
-      // First upload after photos if any
+      // First attach after-work photos if any. Le backend attend { photos, type } —
+      // envoyer { afterPhotos } faisait silencieusement perdre les photos (body.photos vide).
       if (afterPhotos.length > 0) {
-        await apiClient.post(`/missions/${missionId}/photos`, { afterPhotos });
+        await apiClient.post(`/missions/${missionId}/photos`, { photos: afterPhotos, type: 'after' });
       }
-      await apiClient.post(`/missions/${missionId}/complete`, { notes: completionNotes });
-      toast({
-        title: t('common', 'success') || 'Success',
-        description: t('artisan', 'missionCompleted') || 'Mission marked as completed',
-        variant: 'success',
+      const res = await apiClient.post(`/missions/${missionId}/complete`, {
+        notes: completionNotes,
+        completionCode: completionCode || undefined,
       });
+      if (res.data?.validatedByCode) {
+        // Le client a confirmé via son code à 4 chiffres : paiement libéré sans attendre la validation.
+        toast({
+          title: t('artisan', 'paymentReleasedTitle') || 'Paiement libéré',
+          description:
+            t('artisan', 'paymentReleasedByCode') ||
+            'Le client a confirmé via son code — votre paiement est en cours de versement.',
+          variant: 'success',
+        });
+      } else {
+        toast({
+          title: t('common', 'success') || 'Success',
+          description: t('artisan', 'missionCompleted') || 'Mission marked as completed',
+          variant: 'success',
+        });
+      }
       loadMission();
     } catch (error) {
       console.error('Error completing mission:', error);
@@ -1620,6 +1637,25 @@ export default function MissionDetailPage() {
                       'Décrivez le travail effectué, les problèmes rencontrés, etc.'
                     }
                   />
+                </div>
+
+                {/* Code de validation client (optionnel) — libère le paiement immédiatement s'il est correct */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {t('artisan', 'completionCodeLabel') || 'Code de validation client (optionnel)'}
+                  </label>
+                  <Input
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={completionCode}
+                    onChange={(e) => setCompletionCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="••••"
+                    className="w-32 text-center text-2xl font-display tracking-widest tabular-nums"
+                  />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t('artisan', 'completionCodeHelper') ||
+                      'Si le client vous communique son code à 4 chiffres, saisissez-le : votre paiement est libéré immédiatement (sinon validation par le client, ou automatique sous 48 h).'}
+                  </p>
                 </div>
 
                 {/* Completion Button */}
