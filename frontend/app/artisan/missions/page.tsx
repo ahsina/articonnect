@@ -1,12 +1,13 @@
 'use client';
 
 import { CategoryLabel } from '@/components/shared/CategoryLabel';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { missionsApi } from '@/lib/api/missions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useNotificationSocket } from '@/lib/hooks/useNotificationSocket';
 
 interface Mission {
   id: string;
@@ -51,6 +52,10 @@ export default function ArtisanMissionsPage() {
     CANCELLED: t('missions', 'cancelled'),
   };
 
+  // Garde anti-chevauchement pour les rafraîchissements silencieux (poll + socket).
+  const refreshingRef = useRef(false);
+  const { onNotification } = useNotificationSocket();
+
   useEffect(() => {
     loadMissions();
   }, []);
@@ -65,6 +70,40 @@ export default function ArtisanMissionsPage() {
       setLoading(false);
     }
   };
+
+  // Rafraîchissement silencieux (sans spinner plein écran), ignore les appels concurrents.
+  const silentRefresh = async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+      const data = await missionsApi.getAll();
+      setMissions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error refreshing missions:', error);
+    } finally {
+      refreshingRef.current = false;
+    }
+  };
+
+  // Temps réel : une nouvelle mission (NEW_MISSION) déclenche un refetch silencieux.
+  useEffect(() => {
+    const unsubscribe = onNotification((n) => {
+      if (n && n.type === 'NEW_MISSION') {
+        silentRefresh();
+      }
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onNotification]);
+
+  // Repli poll : refetch silencieux toutes les 25 s (même sans socket).
+  useEffect(() => {
+    const interval = setInterval(() => {
+      silentRefresh();
+    }, 25000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredMissions = missions.filter(
     (mission) => filter === 'all' || mission.status === filter

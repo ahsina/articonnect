@@ -15,6 +15,7 @@ import { MissionStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { PhoneVerifiedGuard } from '../../auth/guards/phone-verified.guard';
+import { AccountVerifiedGuard } from '../../auth/guards/account-verified.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { MissionService } from '../services/mission.service';
 import { NegotiationService } from '../services/negotiation.service';
@@ -44,9 +45,9 @@ export class MissionController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccountVerifiedGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new mission' })
+  @ApiOperation({ summary: 'Create a new mission - Requires verified account' })
   async create(@Request() req, @Body() createDto: CreateMissionDto) {
     return this.missionService.create(req.user.userId, createDto);
   }
@@ -124,7 +125,7 @@ export class MissionController {
   }
 
   @Post(':id/accept')
-  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
+  @UseGuards(JwtAuthGuard, AccountVerifiedGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Accept mission (artisan) - Requires verified phone' })
   @ApiResponse({
@@ -136,7 +137,7 @@ export class MissionController {
   }
 
   @Post(':id/negotiations')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccountVerifiedGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create negotiation offer' })
   async createNegotiation(
@@ -157,7 +158,7 @@ export class MissionController {
   }
 
   @Put('negotiations/:negotiationId/accept')
-  @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
+  @UseGuards(JwtAuthGuard, AccountVerifiedGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Accept/reject negotiation - Requires verified phone' })
   @ApiResponse({

@@ -5,9 +5,11 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { FullPageSkeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { companyApi } from '@/lib/api/company';
+import { authApi } from '@/lib/api/auth';
 import {
   LayoutDashboard, ClipboardList, Wallet, TrendingUp, CalendarDays, CalendarRange,
   Clock, Plane, User, FileText, Award, Star, FileSignature, Store, Building2,
@@ -51,6 +53,9 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hasCompany, setHasCompany] = useState<boolean | null>(null);
+  // Mur de vérification bloquant (email + téléphone). Redirige vers /onboarding/verify
+  // (page hors du layout artisan, donc sans re-gating : aucune boucle).
+  const [verified, setVerified] = useState(false);
 
   // Close the mobile drawer whenever the route changes
   useEffect(() => {
@@ -60,6 +65,26 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkCompanyStatus();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    authApi
+      .getMe()
+      .then((u) => {
+        if (cancelled) return;
+        if (!u.emailVerified || !u.phoneVerified) {
+          router.replace('/onboarding/verify');
+        } else {
+          setVerified(true);
+        }
+      })
+      .catch(() => {
+        // 401 : l'intercepteur/ProtectedRoute gère la redirection vers le login.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const checkCompanyStatus = async () => {
     try {
@@ -153,6 +178,12 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   const linkBase = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium';
+
+  // Tant que la vérification (email + téléphone) n'est pas confirmée, on ne rend rien
+  // du tableau de bord (redirection en cours vers /onboarding/verify).
+  if (!verified) {
+    return <FullPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-background lg:flex">

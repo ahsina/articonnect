@@ -60,6 +60,7 @@ export default function NewMissionPage() {
   const [budget, setBudget] = useState('');
   const [beforePhotos, setBeforePhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [triedSubmit, setTriedSubmit] = useState(false);
 
   const [addr, setAddr] = useState({ address: '', city: '', postalCode: '', country: 'LU' });
   const [editAddr, setEditAddr] = useState(false);
@@ -105,13 +106,21 @@ export default function NewMissionPage() {
     return { lat: 49.6116, lng: 6.1319 }; // Luxembourg
   };
 
-  // Le métier (grille) est requis ; la description devient facultative.
-  const canSubmit = hasAddress && !!category && !loading &&
+  // La description est requise (min. 20 caractères) pour tous les types SAUF l'urgence.
+  const isEmergency = interventionType === 'EMERGENCY';
+  const descLen = description.trim().length;
+  const descRequired = !isEmergency;
+  const descTooShort = descRequired && descLen < 20;
+  const showDescError = triedSubmit && descTooShort;
+
+  const canSubmit = hasAddress && !!category && !loading && !descTooShort &&
     (interventionType !== 'SCHEDULED' || !!scheduledFor);
 
   const handleSubmit = async () => {
+    setTriedSubmit(true);
     if (!canSubmit) {
       if (!hasAddress) { setEditAddr(true); toast({ title: t('missions', 'addressRequired') || 'Ajoutez votre adresse', variant: 'destructive' }); }
+      else if (descTooShort) { toast({ title: t('missions', 'descriptionRequired') || 'Décrivez votre besoin (min. 20 caractères)', variant: 'destructive' }); }
       return;
     }
     setLoading(true);
@@ -234,9 +243,34 @@ export default function NewMissionPage() {
 
           {/* Détails du besoin (après choix du métier) */}
           {category && (
-            <input value={description} onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('missions', 'addDetails') || 'Ajoutez des détails (facultatif)…'}
-              className="font-display mt-4 w-full rounded-2xl border border-border bg-muted px-4 py-3.5 text-[15px] font-semibold outline-none" />
+            <div className="mt-4">
+              <label className="font-display mb-1.5 block px-1 text-sm font-bold text-foreground">
+                {isEmergency
+                  ? (t('missions', 'addDetailsOptionalLabel') || 'Ajoutez des détails (facultatif)')
+                  : (t('missions', 'describeNeedLabel') || 'Décrivez votre besoin *')}
+              </label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4}
+                placeholder={isEmergency
+                  ? (t('missions', 'addDetails') || 'Ajoutez des détails (facultatif)…')
+                  : (t('missions', 'describeNeedPlaceholder') || 'Ex. : Fuite sous l’évier de la cuisine depuis ce matin, l’eau goutte en continu. Le siphon semble fissuré…')}
+                className={`font-display w-full resize-y rounded-2xl border bg-muted px-4 py-3.5 text-[15px] font-semibold outline-none ${showDescError ? 'border-destructive' : 'border-border'}`} />
+              <div className="mt-1.5 flex items-center justify-between px-1">
+                <span className={`text-xs ${showDescError ? 'text-destructive' : descRequired && descLen >= 20 ? 'text-success' : 'text-muted-foreground'}`}>
+                  {isEmergency
+                    ? (t('missions', 'moreDetailsBetterOffers') || 'Plus c’est précis, meilleures sont les offres.')
+                    : showDescError
+                      ? (t('missions', 'descriptionRequired') || 'Décrivez votre besoin (min. 20 caractères)')
+                      : descLen >= 20
+                        ? (t('missions', 'descriptionGood') || 'Parfait, votre demande est bien décrite ✓')
+                        : (t('missions', 'descriptionHelper') || 'Min. 20 caractères — plus c’est précis, meilleures sont les offres.')}
+                </span>
+                {descRequired && (
+                  <span className={`ml-2 flex-shrink-0 text-xs tabular-nums ${descLen >= 20 ? 'text-success' : showDescError ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {descLen}/20
+                  </span>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Type d'intervention (cartes horizontales façon Uber) */}
@@ -280,6 +314,37 @@ export default function NewMissionPage() {
               <input type="file" accept="image/*" multiple hidden onChange={handlePhotoUpload} />
             </label>
           </div>
+
+          {/* Nudge photo (facultatif mais encouragé) */}
+          {category && beforePhotos.length === 0 && (
+            <div className="mt-3 flex items-start gap-2.5 rounded-2xl border border-border bg-muted px-3.5 py-3 text-[13px] leading-snug text-muted-foreground">
+              <span className="text-base leading-none">📷</span>
+              <span>
+                <span className="font-display font-bold text-foreground">
+                  {t('missions', 'addPhotoNudgeTitle') || 'Ajoutez une photo'}
+                </span>{' '}
+                {t('missions', 'addPhotoNudgeBody') || '— les demandes avec photo reçoivent des offres plus précises et plus rapides.'}
+              </span>
+            </div>
+          )}
+
+          {/* Miniatures des photos déjà ajoutées */}
+          {beforePhotos.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2.5">
+              {beforePhotos.map((url, i) => (
+                <div key={`${url}-${i}`} className="relative h-20 w-20 overflow-hidden rounded-xl border border-border bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={t('missions', 'photoThumbAlt') || 'Photo ajoutée'} className="h-full w-full object-cover" />
+                  <button type="button"
+                    onClick={() => setBeforePhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                    aria-label={t('common', 'remove') || 'Retirer'}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-[13px] font-bold leading-none text-background">
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -289,9 +354,15 @@ export default function NewMissionPage() {
           <Button className="w-full" size="lg" onClick={handleSubmit} disabled={!canSubmit}>
             {loading ? (t('common', 'loading') || 'Envoi…') : ctaLabel}
           </Button>
-          <p className="mt-2 text-center text-xs text-muted-foreground">
-            {t('missions', 'freeNoCommitment') || 'Gratuit · sans engagement · réponses en ~15 min'}
-          </p>
+          {descTooShort && descLen > 0 ? (
+            <p className="mt-2 text-center text-xs text-destructive">
+              {t('missions', 'descriptionRequired') || 'Décrivez votre besoin (min. 20 caractères)'}
+            </p>
+          ) : (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              {t('missions', 'freeNoCommitment') || 'Gratuit · sans engagement · réponses en ~15 min'}
+            </p>
+          )}
         </div>
       </div>
     </div>

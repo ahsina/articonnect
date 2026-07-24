@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateMissionDto, UpdateMissionStatusDto } from '../dto/mission.dto';
-import { MissionStatus } from '@prisma/client';
+import { MissionStatus, NotificationType } from '@prisma/client';
 import { ReputationService } from '../../payment/services/reputation.service';
 import { PaymentService } from '../../payment/services/payment.service';
 import { NotificationService } from '../../notification/services/notification.service';
@@ -637,19 +637,19 @@ export class MissionService {
     // Send notifications to matched artisans (max 10)
     const artisansToNotify = nearbyArtisans.slice(0, 10);
 
-    // Batch create notifications for performance (N+1 fix)
+    // Notifie chaque artisan via le NotificationService (et non un createMany brut) afin de
+    // déclencher le push temps réel WebSocket (namespace `notifications`) en plus de l'insert DB.
+    // sendBatchNotification boucle sur createNotification -> sendToChannels -> WS. Max 10 artisans,
+    // donc le N+1 est négligeable et l'écran « Trouver des missions » se met à jour en direct.
     if (artisansToNotify.length > 0) {
-      await this.prisma.notification.createMany({
-        data: artisansToNotify.map((artisan) => ({
-          userId: artisan.id,
-          type: 'NEW_MISSION',
-          title: 'Nouvelle mission disponible',
-          message: `Une nouvelle mission "${mission.title}" correspond à vos compétences`,
-          link: `/artisan/missions/${mission.id}`,
-          metadata: { missionId: mission.id },
-        })),
-        skipDuplicates: true,
-      });
+      await this.notificationService.sendBatchNotification(
+        artisansToNotify.map((artisan) => artisan.id),
+        NotificationType.NEW_MISSION,
+        'Nouvelle mission disponible',
+        `Une nouvelle mission "${mission.title}" correspond à vos compétences`,
+        `/artisan/missions/${mission.id}`,
+        { missionId: mission.id },
+      );
     }
 
     return { notifiedCount: artisansToNotify.length };

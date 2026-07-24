@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { FullPageSkeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { userApi } from '@/lib/api/user';
+import { authApi } from '@/lib/api/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -203,6 +205,42 @@ function ClientHeader() {
   );
 }
 
+/**
+ * Mur de vérification bloquant : tant que l'email ET le téléphone ne sont pas vérifiés,
+ * on redirige vers /onboarding/verify (page hors du layout client, donc sans re-gating :
+ * aucune boucle possible). Rien n'est rendu avant confirmation.
+ */
+function VerificationGate({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [verified, setVerified] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    authApi
+      .getMe()
+      .then((u) => {
+        if (cancelled) return;
+        if (!u.emailVerified || !u.phoneVerified) {
+          router.replace('/onboarding/verify');
+        } else {
+          setVerified(true);
+        }
+      })
+      .catch(() => {
+        // 401 : l'intercepteur/ProtectedRoute gère la redirection vers le login.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (!verified) {
+    return <FullPageSkeleton />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function ClientLayout({
   children,
 }: {
@@ -210,10 +248,12 @@ export default function ClientLayout({
 }) {
   return (
     <ProtectedRoute requiredRole="CLIENT">
-      <div className="min-h-screen bg-background">
-        <ClientHeader />
-        {children}
-      </div>
+      <VerificationGate>
+        <div className="min-h-screen bg-background">
+          <ClientHeader />
+          {children}
+        </div>
+      </VerificationGate>
     </ProtectedRoute>
   );
 }

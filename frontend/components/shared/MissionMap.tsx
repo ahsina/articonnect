@@ -26,7 +26,10 @@ export function MissionMap({
 }) {
   if (lat == null || lng == null || (lat === 0 && lng === 0)) return null;
   return (
-    <div className={className}>
+    // `relative z-0 [isolation:isolate]` : confine les panes internes de Leaflet (z-index 200–1000)
+    // dans le propre contexte d'empilement de la carte, pour qu'ils ne passent jamais au-dessus des
+    // modales de la page (qui sont en z-[1000]). Sans ça, la carte « mange » les clics des popups.
+    <div className={`relative z-0 [isolation:isolate] ${className}`}>
       <MapContainer
         center={[lat, lng]}
         zoom={15}

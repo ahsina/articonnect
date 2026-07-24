@@ -18,6 +18,7 @@ import { OAuthController } from './controllers/oauth.controller';
 import { CaptchaModule } from '../captcha/captcha.module';
 import { FraudModule } from '../fraud/fraud.module';
 import { PhoneVerifiedGuard } from './guards/phone-verified.guard';
+import { AccountVerifiedGuard } from './guards/account-verified.guard';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PhoneVerifiedGuard } from './guards/phone-verified.guard';
     TwoFactorService,
     PhoneVerificationService,
     PhoneVerifiedGuard,
+    AccountVerifiedGuard,
   ],
   exports: [
     AuthService,
@@ -55,6 +57,7 @@ import { PhoneVerifiedGuard } from './guards/phone-verified.guard';
     LoginSecurityService,
     PhoneVerificationService,
     PhoneVerifiedGuard,
+    AccountVerifiedGuard,
   ],
 })
 export class AuthModule {}

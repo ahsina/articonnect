@@ -1457,6 +1457,15 @@ export default function MissionDetailsPage() {
                     </Button>
                   )}
 
+                  {/* Contre-offre indisponible : on l'explique en une ligne plutôt que de laisser un vide.
+                      (Le cas « limite de 5 atteinte » a déjà son propre message dédié ci-dessous.) */}
+                  {!canNegotiate && !showNegotiationForm && actionableOffers.length > 0 && negotiations.length < 5 && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      {t('offers', 'counterUnavailableHint') ||
+                        'Vous pouvez choisir ou refuser une offre ci-dessus. La contre-offre n’est plus disponible à ce stade.'}
+                    </p>
+                  )}
+
                   {showNegotiationForm && (
                     <div className="p-4 bg-background rounded-lg space-y-4">
                       <div>
@@ -1701,7 +1710,7 @@ export default function MissionDetailsPage() {
 
       {/* Cancellation Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
           <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
@@ -1803,9 +1812,12 @@ export default function MissionDetailsPage() {
         const artisanName = profile?.companyName ||
           `${neg.sender?.firstName ?? ''} ${neg.sender?.lastName ?? ''}`.trim() ||
           (t('negotiations', 'artisanOffer') || "l'artisan");
+        const initial = (profile?.companyName || neg.sender?.firstName || 'A').charAt(0).toUpperCase();
+        const ratingVal = profile?.rating != null ? toNum(profile.rating) : 0;
         const hasBreakdown = neg.laborCost != null || neg.materialCost != null || neg.travelCost != null;
+        const expiresValid = !!neg.expiresAt && !isNegotiationExpired(neg.expiresAt || undefined);
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
             <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto">
               <CardHeader>
                 <CardTitle className="font-display">
@@ -1820,19 +1832,33 @@ export default function MissionDetailsPage() {
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t('offers', 'chosenArtisan') || 'Artisan choisi'}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 font-display font-bold">
-                    {artisanName}
-                    {profile?.businessVerified && (
-                      <ShieldCheck className="h-4 w-4 text-green-600" strokeWidth={2.5} />
-                    )}
-                  </div>
-                  {profile?.rating != null && toNum(profile.rating) > 0 && (
-                    <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      {toNum(profile.rating).toFixed(1)}
-                      {profile?.reviewCount ? ` (${profile.reviewCount})` : ''}
+                  <div className="mt-1.5 flex items-center gap-2.5">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-base font-extrabold text-primary-foreground">
+                      {initial}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 font-display font-bold leading-tight">
+                        <span className="truncate">{artisanName}</span>
+                        {profile?.businessVerified && (
+                          <span className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
+                            <ShieldCheck className="h-3 w-3" strokeWidth={2.5} />
+                            {t('offers', 'verified') || 'Vérifié'}
+                          </span>
+                        )}
+                      </div>
+                      {ratingVal > 0 ? (
+                        <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          {ratingVal.toFixed(1)}
+                          {profile?.reviewCount ? ` (${profile.reviewCount} ${t('offers', 'reviews') || 'avis'})` : ''}
+                        </div>
+                      ) : (
+                        <div className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                          {t('offers', 'newArtisan') || 'Nouveau'}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="rounded-xl bg-muted p-3">
@@ -1854,12 +1880,42 @@ export default function MissionDetailsPage() {
                     </div>
                   )}
                   {(neg.availability || neg.estimatedDuration) && (
-                    <div className="mt-2 flex items-center gap-1.5 border-t border-border pt-2 text-xs text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      {[neg.availability, neg.estimatedDuration].filter(Boolean).join(' · ')}
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2 text-xs text-muted-foreground">
+                      {neg.availability && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {t('offers', 'availabilityShort') || 'Dispo'} : {neg.availability}
+                        </span>
+                      )}
+                      {neg.estimatedDuration && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Truck className="h-3.5 w-3.5" />
+                          {t('offers', 'duration') || 'Durée'} : {neg.estimatedDuration}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
+
+                {/* Message / note de l'artisan (rassure avant l'engagement) */}
+                {neg.message && (
+                  <div className="rounded-xl border border-border bg-card p-3">
+                    <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      {t('offers', 'artisanNote') || 'Message de l’artisan'}
+                    </div>
+                    <p className="text-sm italic text-foreground">« {neg.message} »</p>
+                  </div>
+                )}
+
+                {/* Validité de l'offre, si connue */}
+                {expiresValid && (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                    {t('offers', 'offerValidUntil') || 'Offre valable jusqu’au'}{' '}
+                    {new Date(neg.expiresAt!).toLocaleString('fr-FR')}
+                  </p>
+                )}
 
                 {/* Réassurance séquestre */}
                 <div className="flex items-start gap-2 rounded-xl bg-green-100/60 p-3 text-sm text-foreground">
@@ -1897,7 +1953,7 @@ export default function MissionDetailsPage() {
 
       {/* Modale de refus d'offre (remplace le prompt natif) */}
       {offerToReject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle className="font-display">
@@ -1940,7 +1996,7 @@ export default function MissionDetailsPage() {
 
       {/* Modale « VALIDER LE TRAVAIL » — remplace le confirm() : récap + note/avis + réassurance séquestre. */}
       {showValidateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
           <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display">
@@ -2053,7 +2109,7 @@ export default function MissionDetailsPage() {
 
       {/* Modale « SIGNALER UN PROBLÈME » — remplace le prompt() : motif + description + photos-preuve. */}
       {showDisputeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
           <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-display text-red-600">

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput, isPlausiblePhone } from '@/components/ui/PhoneInput';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,10 +42,23 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 8) {
+    // Le backend exige un minimum de 12 caractères : on aligne le contrôle client.
+    if (formData.password.length < 12) {
       toast({
         title: t('common', 'error'),
-        description: t('auth', 'passwordTooShort'),
+        description: 'Le mot de passe doit contenir au moins 12 caractères.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Le téléphone est obligatoire et doit être plausible (E.164, 6 à 14 chiffres).
+    if (!formData.phone || !isPlausiblePhone(formData.phone)) {
+      setPhoneError('Veuillez saisir un numéro de téléphone valide.');
+      toast({
+        title: t('common', 'error'),
+        description: 'Veuillez saisir un numéro de téléphone valide.',
         variant: 'destructive',
       });
       setLoading(false);
@@ -219,19 +234,26 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                {t('auth', 'phone')}
+                {t('auth', 'phone')} *
               </label>
-              <Input
-                type="tel"
-                placeholder="+352 123 456 789"
+              <PhoneInput
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                error={!!phoneError}
+                onChange={(e164, valid) => {
+                  setFormData({ ...formData, phone: e164 });
+                  if (phoneError && valid) setPhoneError('');
+                }}
               />
+              {phoneError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {phoneError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                {t('auth', 'passwordMinLength')}
+                Mot de passe * (min. 12 caractères)
               </label>
               <Input
                 type="password"

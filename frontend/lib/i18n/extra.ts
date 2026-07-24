@@ -108,6 +108,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Envoyer le signalement"
     },
     "offers": {
+      "newArtisan": "Nouveau",
+      "artisanNote": "Message de l'artisan",
+      "offerValidUntil": "Offre valable jusqu'au",
+      "counterUnavailableHint": "Vous pouvez choisir ou refuser une offre ci-dessus. La contre-offre n'est plus disponible à ce stade.",
       "confirmNotified": "Vous serez alerté dès qu'il l'aura vue ou acceptée.",
       "editOffer": "Modifier mon offre",
       "justNow": "À l'instant",
@@ -2053,6 +2057,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Autre"
     },
     "common": {
+      "remove": "Retirer",
       "client": "Client",
       "close": "Fermer",
       "ok": "OK",
@@ -2550,6 +2555,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Sélectionnez une conversation pour commencer à discuter"
     },
     "missions": {
+      "describeNeedLabel": "Décrivez votre besoin *",
+      "addDetailsOptionalLabel": "Ajoutez des détails (facultatif)",
+      "describeNeedPlaceholder": "Ex. : Fuite sous l'évier de la cuisine depuis ce matin, l'eau goutte en continu. Le siphon semble fissuré…",
+      "descriptionHelper": "Min. 20 caractères — plus c'est précis, meilleures sont les offres.",
+      "descriptionGood": "Parfait, votre demande est bien décrite ✓",
+      "moreDetailsBetterOffers": "Plus c'est précis, meilleures sont les offres.",
+      "descriptionRequired": "Décrivez votre besoin (min. 20 caractères)",
+      "addPhotoNudgeTitle": "Ajoutez une photo",
+      "addPhotoNudgeBody": "— les demandes avec photo reçoivent des offres plus précises et plus rapides.",
+      "photoThumbAlt": "Photo ajoutée",
       "aStReceived": "Reçue",
       "aStAccepted": "Acceptée",
       "aStWorking": "En cours",
@@ -3249,6 +3264,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Send the report"
     },
     "offers": {
+      "newArtisan": "New",
+      "artisanNote": "Message from the artisan",
+      "offerValidUntil": "Offer valid until",
+      "counterUnavailableHint": "You can choose or decline an offer above. Making a counter-offer is no longer available at this stage.",
       "confirmNotified": "You'll be notified as soon as they've viewed or accepted it.",
       "editOffer": "Edit my offer",
       "justNow": "Just now",
@@ -5194,6 +5213,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Other"
     },
     "common": {
+      "remove": "Remove",
       "client": "Client",
       "close": "Close",
       "ok": "OK",
@@ -5691,6 +5711,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Select a conversation to start messaging"
     },
     "missions": {
+      "describeNeedLabel": "Describe your need *",
+      "addDetailsOptionalLabel": "Add details (optional)",
+      "describeNeedPlaceholder": "E.g. Leak under the kitchen sink since this morning, water dripping non-stop. The trap looks cracked…",
+      "descriptionHelper": "Min. 20 characters — the more precise, the better the offers.",
+      "descriptionGood": "Perfect, your request is well described ✓",
+      "moreDetailsBetterOffers": "The more precise, the better the offers.",
+      "descriptionRequired": "Describe your need (min. 20 characters)",
+      "addPhotoNudgeTitle": "Add a photo",
+      "addPhotoNudgeBody": "— requests with a photo get more accurate and faster offers.",
+      "photoThumbAlt": "Photo added",
       "aStReceived": "Received",
       "aStAccepted": "Accepted",
       "aStWorking": "In progress",
@@ -6390,6 +6420,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Meldung senden"
     },
     "offers": {
+      "newArtisan": "Neu",
+      "artisanNote": "Nachricht des Handwerkers",
+      "offerValidUntil": "Angebot gültig bis",
+      "counterUnavailableHint": "Sie können oben ein Angebot auswählen oder ablehnen. Ein Gegenangebot ist in diesem Stadium nicht mehr möglich.",
       "confirmNotified": "Sie werden benachrichtigt, sobald der Kunde es gesehen oder angenommen hat.",
       "editOffer": "Mein Angebot bearbeiten",
       "justNow": "Gerade eben",
@@ -8335,6 +8369,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Sonstiges"
     },
     "common": {
+      "remove": "Entfernen",
       "client": "Kunde",
       "close": "Schließen",
       "ok": "OK",
@@ -8832,6 +8867,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Wählen Sie eine Unterhaltung aus, um mit dem Schreiben zu beginnen"
     },
     "missions": {
+      "describeNeedLabel": "Beschreiben Sie Ihr Anliegen *",
+      "addDetailsOptionalLabel": "Details hinzufügen (optional)",
+      "describeNeedPlaceholder": "Z. B.: Undichtigkeit unter der Küchenspüle seit heute Morgen, das Wasser tropft ununterbrochen. Der Siphon scheint gerissen…",
+      "descriptionHelper": "Mind. 20 Zeichen — je genauer, desto besser die Angebote.",
+      "descriptionGood": "Perfekt, Ihre Anfrage ist gut beschrieben ✓",
+      "moreDetailsBetterOffers": "Je genauer, desto besser die Angebote.",
+      "descriptionRequired": "Beschreiben Sie Ihr Anliegen (mind. 20 Zeichen)",
+      "addPhotoNudgeTitle": "Foto hinzufügen",
+      "addPhotoNudgeBody": "— Anfragen mit Foto erhalten genauere und schnellere Angebote.",
+      "photoThumbAlt": "Foto hinzugefügt",
       "aStReceived": "Erhalten",
       "aStAccepted": "Angenommen",
       "aStWorking": "Läuft",
@@ -9531,6 +9576,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Melding verzenden"
     },
     "offers": {
+      "newArtisan": "Nieuw",
+      "artisanNote": "Bericht van de vakman",
+      "offerValidUntil": "Aanbod geldig tot",
+      "counterUnavailableHint": "U kunt hierboven een aanbod kiezen of weigeren. Een tegenbod is in dit stadium niet meer beschikbaar.",
       "confirmNotified": "U wordt op de hoogte gebracht zodra de klant het heeft bekeken of geaccepteerd.",
       "editOffer": "Mijn aanbieding bewerken",
       "justNow": "Zojuist",
@@ -11476,6 +11525,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Overig"
     },
     "common": {
+      "remove": "Verwijderen",
       "client": "Klant",
       "close": "Sluiten",
       "ok": "OK",
@@ -11973,6 +12023,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Selecteer een gesprek om te beginnen met berichten"
     },
     "missions": {
+      "describeNeedLabel": "Beschrijf uw behoefte *",
+      "addDetailsOptionalLabel": "Voeg details toe (optioneel)",
+      "describeNeedPlaceholder": "Bijv.: Lekkage onder de keukengootsteen sinds vanochtend, het water druppelt continu. De sifon lijkt gebarsten…",
+      "descriptionHelper": "Min. 20 tekens — hoe nauwkeuriger, hoe beter de offertes.",
+      "descriptionGood": "Perfect, uw aanvraag is goed beschreven ✓",
+      "moreDetailsBetterOffers": "Hoe nauwkeuriger, hoe beter de offertes.",
+      "descriptionRequired": "Beschrijf uw behoefte (min. 20 tekens)",
+      "addPhotoNudgeTitle": "Voeg een foto toe",
+      "addPhotoNudgeBody": "— aanvragen met een foto ontvangen nauwkeurigere en snellere offertes.",
+      "photoThumbAlt": "Foto toegevoegd",
       "aStReceived": "Ontvangen",
       "aStAccepted": "Geaccepteerd",
       "aStWorking": "Bezig",
@@ -12672,6 +12732,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Enviar el informe"
     },
     "offers": {
+      "newArtisan": "Nuevo",
+      "artisanNote": "Mensaje del profesional",
+      "offerValidUntil": "Oferta válida hasta",
+      "counterUnavailableHint": "Puedes elegir o rechazar una oferta arriba. La contraoferta ya no está disponible en esta fase.",
       "confirmNotified": "Se le avisará en cuanto la haya visto o aceptado.",
       "editOffer": "Editar mi oferta",
       "justNow": "Ahora mismo",
@@ -14617,6 +14681,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Otro"
     },
     "common": {
+      "remove": "Quitar",
       "client": "Cliente",
       "close": "Cerrar",
       "ok": "OK",
@@ -15114,6 +15179,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Seleccione una conversación para empezar a chatear"
     },
     "missions": {
+      "describeNeedLabel": "Describe tu necesidad *",
+      "addDetailsOptionalLabel": "Añade detalles (opcional)",
+      "describeNeedPlaceholder": "Ej.: Fuga bajo el fregadero de la cocina desde esta mañana, el agua gotea sin parar. El sifón parece estar agrietado…",
+      "descriptionHelper": "Mín. 20 caracteres — cuanto más preciso, mejores serán las ofertas.",
+      "descriptionGood": "Perfecto, tu solicitud está bien descrita ✓",
+      "moreDetailsBetterOffers": "Cuanto más preciso, mejores serán las ofertas.",
+      "descriptionRequired": "Describe tu necesidad (mín. 20 caracteres)",
+      "addPhotoNudgeTitle": "Añade una foto",
+      "addPhotoNudgeBody": "— las solicitudes con foto reciben ofertas más precisas y más rápidas.",
+      "photoThumbAlt": "Foto añadida",
       "aStReceived": "Recibida",
       "aStAccepted": "Aceptada",
       "aStWorking": "En curso",
@@ -15813,6 +15888,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Invia la segnalazione"
     },
     "offers": {
+      "newArtisan": "Nuovo",
+      "artisanNote": "Messaggio dell'artigiano",
+      "offerValidUntil": "Offerta valida fino al",
+      "counterUnavailableHint": "Puoi scegliere o rifiutare un'offerta qui sopra. La controproposta non è più disponibile a questo punto.",
       "confirmNotified": "Riceverai una notifica non appena l'avrà vista o accettata.",
       "editOffer": "Modifica la mia offerta",
       "justNow": "Adesso",
@@ -17758,6 +17837,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Altro"
     },
     "common": {
+      "remove": "Rimuovi",
       "client": "Cliente",
       "close": "Chiudi",
       "ok": "OK",
@@ -18255,6 +18335,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Seleziona una conversazione per iniziare a messaggiare"
     },
     "missions": {
+      "describeNeedLabel": "Descrivi la tua esigenza *",
+      "addDetailsOptionalLabel": "Aggiungi dettagli (facoltativo)",
+      "describeNeedPlaceholder": "Es.: Perdita sotto il lavello della cucina da stamattina, l'acqua gocciola di continuo. Il sifone sembra incrinato…",
+      "descriptionHelper": "Min. 20 caratteri — più sei preciso, migliori saranno le offerte.",
+      "descriptionGood": "Perfetto, la tua richiesta è ben descritta ✓",
+      "moreDetailsBetterOffers": "Più sei preciso, migliori saranno le offerte.",
+      "descriptionRequired": "Descrivi la tua esigenza (min. 20 caratteri)",
+      "addPhotoNudgeTitle": "Aggiungi una foto",
+      "addPhotoNudgeBody": "— le richieste con foto ricevono offerte più precise e più rapide.",
+      "photoThumbAlt": "Foto aggiunta",
       "aStReceived": "Ricevuta",
       "aStAccepted": "Accettata",
       "aStWorking": "In corso",
@@ -18954,6 +19044,10 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "sendDispute": "Enviar a denúncia"
     },
     "offers": {
+      "newArtisan": "Novo",
+      "artisanNote": "Mensagem do profissional",
+      "offerValidUntil": "Oferta válida até",
+      "counterUnavailableHint": "Pode escolher ou recusar uma oferta acima. A contraproposta já não está disponível nesta fase.",
       "confirmNotified": "Será avisado assim que a tiver visto ou aceite.",
       "editOffer": "Editar a minha oferta",
       "justNow": "Agora mesmo",
@@ -20899,6 +20993,7 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "industryOther": "Outro"
     },
     "common": {
+      "remove": "Remover",
       "client": "Cliente",
       "close": "Fechar",
       "ok": "OK",
@@ -21396,6 +21491,16 @@ export const extra: Record<string, Record<string, Record<string, string>>> = {
       "selectConversation": "Selecione uma conversa para começar a enviar mensagens"
     },
     "missions": {
+      "describeNeedLabel": "Descreva a sua necessidade *",
+      "addDetailsOptionalLabel": "Adicione detalhes (opcional)",
+      "describeNeedPlaceholder": "Ex.: Fuga debaixo do lava-loiça da cozinha desde esta manhã, a água pinga sem parar. O sifão parece estar rachado…",
+      "descriptionHelper": "Mín. 20 caracteres — quanto mais preciso, melhores serão as ofertas.",
+      "descriptionGood": "Perfeito, o seu pedido está bem descrito ✓",
+      "moreDetailsBetterOffers": "Quanto mais preciso, melhores serão as ofertas.",
+      "descriptionRequired": "Descreva a sua necessidade (mín. 20 caracteres)",
+      "addPhotoNudgeTitle": "Adicione uma foto",
+      "addPhotoNudgeBody": "— os pedidos com foto recebem ofertas mais precisas e mais rápidas.",
+      "photoThumbAlt": "Foto adicionada",
       "aStReceived": "Recebida",
       "aStAccepted": "Aceite",
       "aStWorking": "Em curso",

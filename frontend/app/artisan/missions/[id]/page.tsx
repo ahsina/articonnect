@@ -503,7 +503,7 @@ export default function MissionDetailPage() {
   };
 
   const canNegotiate = mission &&
-    (mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING') &&
+    (mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || mission.status === 'NEGOTIATING') &&
     negotiations.length < 5;
 
   const getStatusBadge = (status: string) => {
@@ -621,6 +621,21 @@ export default function MissionDetailPage() {
         };
         const goOffer = () => {
           setActiveTab('details');
+          // Si l'artisan a déjà une offre en attente (modifiable), on ouvre son édition
+          // plutôt qu'un formulaire vierge — cohérent avec le bouton « Modifier mon offre ».
+          const myPendingOffer = negotiations.find(
+            (n) =>
+              (n.senderId ? n.senderId === currentUserId : true) &&
+              (n.accepted === null || n.accepted === undefined) &&
+              !isNegotiationExpired(n.expiresAt),
+          );
+          if (myPendingOffer) {
+            handleEditOffer(myPendingOffer);
+            return;
+          }
+          // Offre fraîche : on ouvre le formulaire vierge, puis on scrolle une fois rendu.
+          setSentOffer(null);
+          setShowNegotiationForm(true);
           setTimeout(() => document.getElementById('offre-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
         };
 
@@ -1001,7 +1016,7 @@ export default function MissionDetailPage() {
           </Card>
 
           {/* Negotiation Section */}
-          {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || negotiations.length > 0) && (
+          {(mission.status === 'OPEN' || mission.status === 'ASSIGNED' || mission.status === 'PENDING' || mission.status === 'NEGOTIATING' || negotiations.length > 0) && (
             <Card id="offre-section" className="md:col-span-2 scroll-mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

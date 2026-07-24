@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { missionsApi } from '@/lib/api/missions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useNotificationSocket } from '@/lib/hooks/useNotificationSocket';
 import { categoryLabel } from '@/components/shared/CategoryLabel';
 // CSS-only import (aucun JS window) — sûr en SSR. Le JS Leaflet est importé dynamiquement plus bas.
 import 'leaflet/dist/leaflet.css';
@@ -84,6 +85,15 @@ export default function ArtisanDiscoverPage() {
   const [sort, setSort] = useState<SortKey>('distance');
   const [view, setView] = useState<'list' | 'map'>('list');
 
+  // Indicateur discret « mis à jour » après un rafraîchissement temps réel / poll.
+  const [justUpdated, setJustUpdated] = useState(false);
+  // Garde anti-chevauchement des requêtes silencieuses (poll + socket).
+  const refreshingRef = useRef(false);
+  // Refs pour lire la position / le rayon courants dans les callbacks (interval, socket).
+  const userPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const radiusRef = useRef<RadiusOption>(20);
+  const { onNotification } = useNotificationSocket();
+
   // Charge les missions ouvertes autour de la position (ou du centre par défaut).
   const load = async (pos: { lat: number; lng: number } | null, r: RadiusOption) => {
     setLoading(true);
@@ -100,6 +110,55 @@ export default function ArtisanDiscoverPage() {
       setLoading(false);
     }
   };
+
+  // Rafraîchissement SILENCIEUX (pas de spinner plein écran) : temps réel + repli poll.
+  // Conserve la géoloc / le rayon courants et ignore les appels qui se chevauchent.
+  const silentRefresh = async () => {
+    if (refreshingRef.current) return; // une requête est déjà en vol
+    refreshingRef.current = true;
+    const center = userPosRef.current ?? DEFAULT_CENTER;
+    try {
+      const data = await missionsApi.getNearby(center.lat, center.lng, radiusRef.current);
+      if (Array.isArray(data)) {
+        setMissions(data);
+        setJustUpdated(true);
+        setTimeout(() => setJustUpdated(false), 2500);
+      }
+    } catch (e) {
+      // Silencieux : on ne casse pas l'écran, le prochain cycle réessaiera.
+      console.error('Rafraîchissement missions échoué:', e);
+    } finally {
+      refreshingRef.current = false;
+    }
+  };
+
+  // Garde les refs à jour pour les callbacks (interval / socket) qui capturent le montage.
+  useEffect(() => {
+    userPosRef.current = userPos;
+  }, [userPos]);
+  useEffect(() => {
+    radiusRef.current = radius;
+  }, [radius]);
+
+  // Temps réel : une nouvelle mission (NEW_MISSION) déclenche un refetch silencieux.
+  useEffect(() => {
+    const unsubscribe = onNotification((n) => {
+      if (n && n.type === 'NEW_MISSION') {
+        silentRefresh();
+      }
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onNotification]);
+
+  // Repli poll : refetch silencieux toutes les 25 s (même sans socket), sans chevauchement.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      silentRefresh();
+    }, 25000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Géoloc au montage : si refusée/indispo → on charge quand même (centre par défaut) et on masque la distance.
   useEffect(() => {
@@ -250,6 +309,12 @@ export default function ArtisanDiscoverPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Indicateur discret de mise à jour temps réel / poll */}
+          {justUpdated && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-success animate-pulse">
+              <CheckCircle2 className="h-3.5 w-3.5" /> {td('updated', 'Mis à jour')}
+            </span>
+          )}
           {/* Bascule Liste / Carte */}
           <div className="inline-flex rounded-lg border border-border overflow-hidden">
             <button

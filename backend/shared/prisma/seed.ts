@@ -100,6 +100,7 @@ async function main() {
       lastName: 'Krafolt',
       role: UserRole.ADMIN,
       emailVerified: true,
+      phoneVerified: true,
       consents: {
         create: {
           marketing: true,
@@ -123,6 +124,7 @@ async function main() {
         phone: '+352621123456',
         role: UserRole.CLIENT,
         emailVerified: true,
+        phoneVerified: true,
         clientProfile: {
           create: {
             addresses: {
@@ -160,6 +162,7 @@ async function main() {
         phone: '+33612345678',
         role: UserRole.CLIENT,
         emailVerified: true,
+        phoneVerified: true,
         clientProfile: {
           create: {
             addresses: {
@@ -202,6 +205,7 @@ async function main() {
         phone: '+352621234567',
         role: UserRole.ARTISAN,
         emailVerified: true,
+        phoneVerified: true,
         artisanProfile: {
           create: {
             companyName: 'Plomberie Lebon',
@@ -241,6 +245,7 @@ async function main() {
         phone: '+33612987654',
         role: UserRole.ARTISAN,
         emailVerified: true,
+        phoneVerified: true,
         artisanProfile: {
           create: {
             companyName: 'Élec Durand',
@@ -280,6 +285,7 @@ async function main() {
         phone: '+32487654321',
         role: UserRole.ARTISAN,
         emailVerified: true,
+        phoneVerified: true,
         artisanProfile: {
           create: {
             companyName: 'Menuiserie Carpentier',

@@ -5,8 +5,11 @@ import {
   IsEnum,
   IsArray,
   IsDateString,
+  IsNotEmpty,
+  MinLength,
   Min,
   Max,
+  ValidateIf,
   registerDecorator,
   ValidationOptions,
   ValidationArguments,
@@ -63,8 +66,18 @@ export class CreateMissionDto {
   @IsString()
   title: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      "Description de la demande. Obligatoire (min. 20 caractères) pour les types QUOTE et " +
+      "SCHEDULED afin que les artisans puissent chiffrer correctement ; facultative pour EMERGENCY " +
+      "(le métier + l'adresse suffisent à déclencher une intervention urgente).",
+  })
+  // Détails requis (≥20 car.) sauf urgence : @ValidateIf court-circuite toute validation
+  // du champ quand type === EMERGENCY, autorisant alors une description vide/absente.
+  @ValidateIf((o) => o.type !== MissionType.EMERGENCY)
   @IsString()
+  @IsNotEmpty({ message: 'La description est obligatoire.' })
+  @MinLength(20, { message: 'La description doit contenir au moins 20 caractères.' })
   description: string;
 
   @ApiProperty()

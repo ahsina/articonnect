@@ -49,6 +49,16 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     private readonly prisma: PrismaService,
   ) {}
 
+  /** Extrait le JWT du cookie `accessToken` de l'entête Cookie du handshake (peut être null). */
+  private extractTokenFromCookie(cookieHeader?: string): string | null {
+    if (!cookieHeader) return null;
+    for (const part of cookieHeader.split(';')) {
+      const [name, ...rest] = part.trim().split('=');
+      if (name === 'accessToken') return decodeURIComponent(rest.join('='));
+    }
+    return null;
+  }
+
   afterInit() {
     this.logger.log('Notification WebSocket Gateway initialized');
 
@@ -88,7 +98,13 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
+      // Auth par cookie httpOnly `accessToken` en priorité (le front se connecte avec
+      // withCredentials et ne peut pas lire le token en JS), avec repli sur auth.token /
+      // header Authorization pour les clients qui les fournissent.
+      const token =
+        this.extractTokenFromCookie(client.handshake.headers.cookie) ||
+        client.handshake.auth.token ||
+        client.handshake.headers.authorization?.split(' ')[1];
 
       if (!token) {
         this.logger.warn('Connection attempt without token');

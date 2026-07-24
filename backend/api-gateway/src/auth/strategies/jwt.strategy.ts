@@ -35,6 +35,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         lastName: true,
         role: true,
         status: true,
+        phone: true,
+        emailVerified: true,
+        phoneVerified: true,
       },
     });
 
@@ -53,6 +56,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
+      phone: user.phone,
+      // État de vérification exposé sur req.user : lu par /auth/me (mur d'onboarding
+      // bloquant côté front) et par AccountVerifiedGuard (défense en profondeur côté API).
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
       // Identifiant de la session (appareil) courante, issu du token : permet de marquer
       // « cet appareil » dans la liste des sessions et de révoquer les autres appareils.
       sessionId: payload.sessionId,
