@@ -58,10 +58,13 @@ export class ArtisanService {
   async updateProfile(userId: string, dto: any) {
     const p = await this.profile(userId);
     const data: any = {};
-    for (const k of ['companyName', 'description', 'website', 'serviceRadius', 'baseAddress', 'latitude', 'longitude', 'emergencyRate']) {
+    for (const k of ['companyName', 'description', 'website', 'serviceRadius', 'baseAddress', 'latitude', 'longitude', 'emergencyRate', 'quoteTerms', 'vatNumber']) {
       if (dto[k] !== undefined) data[k] = dto[k];
     }
     if (dto.hourlyRate !== undefined) data.hourlyRate = dto.hourlyRate;
+    // TVA facturation : statut (assujetti/franchise) + taux appliqué aux devis/factures.
+    if (dto.vatExempt !== undefined) data.vatExempt = !!dto.vatExempt;
+    if (dto.vatRate !== undefined) data.vatRate = dto.vatRate === null || dto.vatRate === '' ? null : Number(dto.vatRate);
 
     // Métiers (relation many-to-many `specialties`). Le formulaire peut envoyer soit des IDs
     // (uuid) soit des noms de métiers. On RÉSOUT chaque valeur vers un enregistrement Specialty

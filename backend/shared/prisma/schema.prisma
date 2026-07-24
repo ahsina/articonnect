@@ -302,6 +302,9 @@ model ArtisanProfile {
   // aucune TVA facturée + mention légale. vatRate = taux appliqué (null → taux standard du pays mission).
   vatExempt   Boolean  @default(false)
   vatRate     Decimal? @db.Decimal(5, 2)
+  // Conditions générales de vente de l'artisan, configurées une fois et rapatriées dans chaque
+  // nouveau devis (éditables ponctuellement). Vide → modèle Krafolt par défaut côté front.
+  quoteTerms  String?
   description String?
   website     String?
 

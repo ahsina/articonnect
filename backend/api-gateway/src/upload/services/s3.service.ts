@@ -26,7 +26,7 @@ export class S3Service {
   };
 
   private readonly maxFileSizes = {
-    image: 5 * 1024 * 1024, // 5MB
+    image: 15 * 1024 * 1024, // 15MB (photos de téléphone)
     document: 10 * 1024 * 1024, // 10MB
   };
 

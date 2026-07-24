@@ -16,6 +16,7 @@ interface Mission {
   category: string;
   status: 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   price: number;
+  clientId: string;
   client: {
     firstName: string;
     lastName: string;
@@ -298,7 +299,7 @@ export default function ArtisanMissionsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => router.push(`/client/messages?userId=${mission.client}`)}
+                      onClick={() => router.push(`/artisan/messages?userId=${mission.clientId}`)}
                     >
                       {t('artisan', 'contact')}
                     </Button>

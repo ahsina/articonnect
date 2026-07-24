@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api/client';
+import { normalizeImageForUpload } from '@/lib/utils/imageUpload';
 import { translateMissionStatus, translatePriority, translateQuotationStatus, translateEventType, translateOfferStatus } from '@/lib/utils/enum-translations';
 import type { OfferStatus } from '@/types/mission';
 
@@ -350,8 +351,10 @@ export default function MissionDetailPage() {
     setUploadingPhoto(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
+        // Normalise (HEIC→JPEG + redimensionnement) pour passer les limites backend.
+        const normalized = await normalizeImageForUpload(file);
         const fd = new FormData();
-        fd.append('file', file);
+        fd.append('file', normalized);
         fd.append('fileType', 'mission-photo');
         const response = await apiClient.post('/upload/file', fd);
         return response.data.url;

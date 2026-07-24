@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { missionsApi } from '@/lib/api/missions';
+import { artisanApi } from '@/lib/api/artisan';
 import {
   quoteApi,
   num,
@@ -47,12 +48,28 @@ const ITEM_TYPE_LABELS: Record<LineItemType, string> = {
   OTHER: 'Autre',
 };
 
+// Modèle de CGV Krafolt par défaut, utilisé si l'artisan n'a pas configuré les siennes.
+const DEFAULT_QUOTE_TERMS =
+  "Devis valable 30 jours à compter de sa date d'émission. Acompte de 30 % à la commande, solde à la fin des travaux. Paiement sécurisé via Krafolt. TVA selon le régime de l'artisan. Tout travail supplémentaire fera l'objet d'un devis complémentaire.";
+
+// Référence courte d'une mission : #  + 8 premiers caractères de l'id, en majuscules.
+const missionRef = (id: string) => `#${id.slice(0, 8).toUpperCase()}`;
+
 interface DraftLine extends CreateQuoteLineItemInput {}
 
 interface ClientOption {
   clientId: string;
   name: string;
-  missions: { id: string; title: string; category?: string; address?: string; city?: string; postalCode?: string }[];
+  missions: {
+    id: string;
+    title: string;
+    category?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    createdAt?: string;
+    scheduledFor?: string;
+  }[];
 }
 
 const emptyLine = (): DraftLine => ({
@@ -145,12 +162,34 @@ export default function QuotationsPage() {
           address: m.address,
           city: m.city,
           postalCode: m.postalCode,
+          createdAt: m.createdAt,
+          scheduledFor: m.scheduledFor,
         });
       }
       setClientOptions(Array.from(byClient.values()));
     } catch (error) {
       console.error('Erreur chargement clients:', error);
       toast({ title: 'Erreur', description: 'Impossible de charger vos clients.', variant: 'destructive' });
+    }
+
+    // Pré-remplissage des CGV et de la TVA depuis le profil de l'artisan
+    // (l'artisan configure ses conditions une fois, elles sont rapatriées dans chaque devis).
+    try {
+      const profile = await artisanApi.getMyProfile();
+      const terms = (profile.quoteTerms || '').trim() || DEFAULT_QUOTE_TERMS;
+      setForm((f) => ({
+        ...f,
+        // Ne pas écraser ce que l'artisan a déjà saisi/modifié dans ce devis.
+        termsAndConditions: f.termsAndConditions?.trim() ? f.termsAndConditions : terms,
+        taxRate: profile.vatExempt ? 0 : profile.vatRate != null ? num(profile.vatRate) : f.taxRate,
+      }));
+    } catch (error) {
+      console.error('Erreur chargement profil artisan:', error);
+      // À défaut de profil, on applique au moins le modèle Krafolt par défaut.
+      setForm((f) => ({
+        ...f,
+        termsAndConditions: f.termsAndConditions?.trim() ? f.termsAndConditions : DEFAULT_QUOTE_TERMS,
+      }));
     }
   };
 
@@ -519,6 +558,43 @@ export default function QuotationsPage() {
                   </div>
                 </div>
 
+                {/* Rappel de la mission liée (référence + date) */}
+                {(() => {
+                  const linkedMission = selectedClient?.missions.find((m) => m.id === form.missionId);
+                  if (!linkedMission) return null;
+                  return (
+                    <div className="rounded-xl border border-border bg-muted/40 p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                        Mission liée
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Référence</span>
+                          <div className="font-mono font-semibold text-foreground">
+                            {missionRef(linkedMission.id)}
+                          </div>
+                          {linkedMission.title && (
+                            <div className="text-foreground">{linkedMission.title}</div>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Date</span>
+                          {linkedMission.createdAt && (
+                            <div className="text-foreground">
+                              {new Date(linkedMission.createdAt).toLocaleDateString('fr-FR')}
+                            </div>
+                          )}
+                          {linkedMission.scheduledFor && (
+                            <div className="text-muted-foreground">
+                              Planifiée le {new Date(linkedMission.scheduledFor).toLocaleDateString('fr-FR')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Titre + catégorie */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -554,53 +630,72 @@ export default function QuotationsPage() {
                     <label className="text-sm font-medium text-foreground">Lignes du devis *</label>
                     <Button type="button" variant="outline" size="sm" onClick={addLine}>+ Ligne</Button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {lines.map((l, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-                        <select
-                          className="col-span-3 h-9 rounded-md border border-input bg-background px-2 text-xs"
-                          value={l.itemType}
-                          onChange={(e) => updateLine(idx, { itemType: e.target.value as LineItemType })}
-                        >
-                          {(Object.keys(ITEM_TYPE_LABELS) as LineItemType[]).map((t) => (
-                            <option key={t} value={t}>{ITEM_TYPE_LABELS[t]}</option>
-                          ))}
-                        </select>
-                        <Input
-                          className="col-span-4 h-9"
-                          placeholder="Description"
-                          value={l.description}
-                          onChange={(e) => updateLine(idx, { description: e.target.value })}
-                        />
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          className="col-span-2 h-9"
-                          placeholder="Qté"
-                          value={l.quantity}
-                          onChange={(e) => updateLine(idx, { quantity: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                        />
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          className="col-span-2 h-9"
-                          placeholder="PU €"
-                          value={l.unitPrice}
-                          onChange={(e) => updateLine(idx, { unitPrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeLine(idx)}
-                          className="col-span-1 h-9 text-muted-foreground hover:text-red-600 disabled:opacity-30"
-                          disabled={lines.length <= 1}
-                          aria-label="Supprimer la ligne"
-                        >
-                          ×
-                        </button>
-                        <div className="col-span-12 text-right text-xs text-muted-foreground -mt-1">
-                          Sous-total ligne : {formatCurrency(num(l.quantity) * num(l.unitPrice))}
+                      <div key={idx} className="rounded-xl border border-border bg-muted/30 p-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                          {/* Type + désignation */}
+                          <div className="sm:col-span-6">
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Désignation</label>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <select
+                                className="h-10 w-full sm:w-32 rounded-md border border-input bg-background px-2 text-xs shrink-0"
+                                value={l.itemType}
+                                onChange={(e) => updateLine(idx, { itemType: e.target.value as LineItemType })}
+                              >
+                                {(Object.keys(ITEM_TYPE_LABELS) as LineItemType[]).map((t) => (
+                                  <option key={t} value={t}>{ITEM_TYPE_LABELS[t]}</option>
+                                ))}
+                              </select>
+                              <Input
+                                className="h-10 w-full"
+                                placeholder="Désignation de la prestation"
+                                value={l.description}
+                                onChange={(e) => updateLine(idx, { description: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          {/* Quantité */}
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Qté</label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              className="h-10 w-full"
+                              placeholder="Qté"
+                              value={l.quantity}
+                              onChange={(e) => updateLine(idx, { quantity: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                            />
+                          </div>
+                          {/* Prix unitaire */}
+                          <div className="sm:col-span-3">
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Prix unitaire HT €</label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              className="h-10 w-full"
+                              placeholder="Prix unitaire HT €"
+                              value={l.unitPrice}
+                              onChange={(e) => updateLine(idx, { unitPrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                            />
+                          </div>
+                          {/* Suppression */}
+                          <div className="sm:col-span-1 flex sm:justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeLine(idx)}
+                              className="h-10 w-full sm:w-10 grid place-items-center rounded-md text-muted-foreground hover:text-red-600 hover:bg-muted disabled:opacity-30"
+                              disabled={lines.length <= 1}
+                              aria-label="Supprimer la ligne"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-2 text-right text-xs text-muted-foreground">
+                          Total ligne : <span className="font-semibold text-foreground">{formatCurrency(num(l.quantity) * num(l.unitPrice))}</span>
                         </div>
                       </div>
                     ))}

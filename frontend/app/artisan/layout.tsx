@@ -14,7 +14,7 @@ import {
   LayoutDashboard, ClipboardList, Wallet, TrendingUp, CalendarDays, CalendarRange,
   Clock, Plane, User, FileText, Award, Star, FileSignature, Store, Building2,
   Users, ClipboardCheck, BarChart3, Settings, CreditCard, LogOut,
-  Network, Send, Compass,
+  Network, Send, Compass, MessageSquare,
   ChevronLeft, ChevronRight, ChevronDown, Menu, X, type LucideIcon,
 } from 'lucide-react';
 
@@ -100,6 +100,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
     { href: '/artisan/discover', label: t('discover', 'findMissions') !== 'Find Missions' ? t('discover', 'findMissions') : 'Trouver des missions', icon: Compass, highlight: true },
     { href: '/artisan/missions', label: t('navigation', 'missions') || 'Missions', icon: ClipboardList },
     { href: '/artisan/offers', label: t('navigation', 'myOffers') || 'Mes offres', icon: Send },
+    { href: '/artisan/messages', label: t('navigation', 'messages') || 'Messagerie', icon: MessageSquare },
     { href: '/artisan/earnings', label: t('navigation', 'earnings') || 'Earnings', icon: Wallet },
     { href: '/artisan/analytics', label: t('navigation', 'analytics') || 'Analytics', icon: TrendingUp },
     {
@@ -200,7 +201,7 @@ function ArtisanLayoutContent({ children }: { children: React.ReactNode }) {
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border text-foreground flex flex-col transition-transform duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:static lg:z-auto lg:translate-x-0 lg:flex-shrink-0 lg:transition-all ${
+        } lg:relative lg:z-40 lg:translate-x-0 lg:flex-shrink-0 lg:transition-all ${
           sidebarOpen ? 'lg:w-64' : 'lg:w-16'
         }`}
       >

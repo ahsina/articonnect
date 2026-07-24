@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { normalizeImageForUpload } from '../utils/imageUpload';
 
 export const missionsApi = {
   getAll: async () => {
@@ -110,8 +111,10 @@ export const missionsApi = {
 
   // Photo Upload — upload direct (multipart) vers le backend qui stocke dans S3/MinIO
   uploadPhoto: async (file: File): Promise<{ url: string }> => {
+    // Normalise (HEIC→JPEG + redimensionnement) pour passer les limites backend (jpeg/png/webp/gif ≤ 5 Mo).
+    const normalized = await normalizeImageForUpload(file);
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('file', normalized);
     fd.append('fileType', 'mission-photo');
     const response = await apiClient.post('/upload/file', fd);
     return response.data;

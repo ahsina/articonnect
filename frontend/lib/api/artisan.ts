@@ -18,6 +18,10 @@ export interface ArtisanProfile {
   hourlyRate?: number;
   emergencyRate?: number;
   insurance?: string;
+  // CGV & TVA du devis (configurées par l'artisan, rapatriées dans chaque devis)
+  quoteTerms?: string;
+  vatExempt?: boolean;
+  vatRate?: number;
   certifications: Certification[];
   stripeAccountId?: string;
   stripeOnboarded: boolean;
@@ -165,6 +169,10 @@ export interface UpdateArtisanProfileDto {
   emergencyRate?: number;
   specialtyIds?: string[];
   available?: boolean;
+  // CGV & TVA du devis
+  quoteTerms?: string;
+  vatExempt?: boolean;
+  vatRate?: number;
 }
 
 export interface CreateCertificationDto {

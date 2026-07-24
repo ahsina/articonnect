@@ -154,6 +154,9 @@ function ArtisanProfileContent() {
         emergencyRate: data.emergencyRate,
         available: data.available,
         specialtyIds: data.specialties?.map((s) => s.id) || [],
+        quoteTerms: data.quoteTerms || '',
+        vatExempt: data.vatExempt ?? false,
+        vatRate: data.vatRate ?? 17,
       });
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -1025,6 +1028,58 @@ function ArtisanProfileContent() {
                   })}
                 </div>
               )}
+            </div>
+
+            {/* Conditions générales (devis) — configurées une fois, rapatriées dans chaque devis */}
+            <div className="pt-4 border-t space-y-4">
+              <div>
+                <h3 className="font-display text-base font-bold text-foreground">Conditions générales (devis)</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Ces conditions sont pré-remplies dans chaque nouveau devis. Vous pourrez les ajuster au cas par cas.
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Conditions générales de vente (CGV)</label>
+                <textarea
+                  value={editForm.quoteTerms || ''}
+                  onChange={(e) => setEditForm({ ...editForm, quoteTerms: e.target.value })}
+                  rows={5}
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Ex. Devis valable 30 jours. Acompte de 30 % à la commande, solde à la fin des travaux…"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Laissez vide pour utiliser le modèle Krafolt par défaut.
+                </p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editForm.vatExempt ?? false}
+                    onChange={(e) => setEditForm({ ...editForm, vatExempt: e.target.checked })}
+                    className="mt-0.5 h-4 w-4"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-foreground">Franchise en base de TVA (pas de TVA facturée)</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">Cochez si vous ne facturez pas la TVA.</span>
+                  </span>
+                </label>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Taux de TVA (%)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={editForm.vatRate ?? ''}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, vatRate: e.target.value === '' ? undefined : parseFloat(e.target.value) })
+                    }
+                    disabled={editForm.vatExempt ?? false}
+                    placeholder="17"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Taux appliqué par défaut sur vos devis.</p>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t">
