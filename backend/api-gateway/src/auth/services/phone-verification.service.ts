@@ -48,10 +48,10 @@ export class PhoneVerificationService {
     // sans avoir créé de token. Ainsi une tentative ratée :
     //   - ne consomme pas le quota de rate-limit (pas de token orphelin) ;
     //   - n'invalide pas le dernier code valide déjà envoyé.
-    await this.sendSMS(normalizedPhone, code);
+    const delivered = await this.sendSMS(normalizedPhone, code);
 
-    // La livraison a réussi : on invalide les anciens tokens non utilisés puis
-    // on persiste le nouveau (ordre garanti après un envoi effectif).
+    // La livraison a réussi (ou le fallback démo l'a contournée) : on invalide les anciens
+    // tokens non utilisés puis on persiste le nouveau (ordre garanti après l'envoi).
     await this.prisma.phoneVerificationToken.updateMany({
       where: {
         phone: normalizedPhone,
@@ -72,10 +72,24 @@ export class PhoneVerificationService {
       },
     });
 
-    return {
-      message: 'Code de vérification envoyé par SMS',
+    const response: {
+      message: string;
+      expiresIn: number;
+      delivered: boolean;
+      devCode?: string;
+    } = {
+      message: delivered
+        ? 'Code de vérification envoyé par SMS'
+        : 'Code de vérification généré (SMS indisponible)',
       expiresIn: 600, // 10 minutes in seconds
+      delivered,
     };
+    // Mode démo uniquement : expose le code pour permettre la vérif quand le SMS ne part pas
+    // (ex. permissions géo Twilio non activées). À DÉSACTIVER en prod (ne jamais exposer l'OTP).
+    if (!delivered && process.env.DEMO_SMS_FALLBACK === 'true') {
+      response.devCode = code;
+    }
+    return response;
   }
 
   /**
@@ -296,16 +310,41 @@ export class PhoneVerificationService {
    * Send SMS using SMS provider (Twilio, etc.)
    * This is a placeholder that can be integrated with actual SMS service
    */
-  private async sendSMS(phone: string, code: string): Promise<void> {
+  /** Message clair selon le code d'erreur Twilio (sinon message générique). */
+  private mapTwilioError(twilioCode?: number): string {
+    switch (twilioCode) {
+      case 21408: // Permission to send an SMS has not been enabled for the region of the 'To' number
+        return "L'envoi de SMS vers ce pays n'est pas activé sur le compte SMS. " +
+          'Activez la zone géographique dans la console Twilio (Messaging → Geo Permissions).';
+      case 21211:
+        return 'Numéro de téléphone invalide.';
+      case 21614:
+        return "Ce numéro n'est pas un mobile capable de recevoir des SMS.";
+      case 21610:
+        return 'Ce numéro s\'est désinscrit des SMS (STOP).';
+      case 21612:
+        return "Impossible d'acheminer un SMS vers ce numéro depuis l'expéditeur configuré.";
+      default:
+        return "Échec de l'envoi du SMS. Réessayez plus tard.";
+    }
+  }
+
+  /**
+   * Envoie le SMS. Renvoie `true` si effectivement livré via Twilio, `false` sinon
+   * (Twilio non configuré, ou échec récupérable en mode démo). Ne lève une exception
+   * que sur un échec non contourné (DEMO_SMS_FALLBACK != 'true').
+   */
+  private async sendSMS(phone: string, code: string): Promise<boolean> {
     const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
     const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
     const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+    const demoFallback = process.env.DEMO_SMS_FALLBACK === 'true';
 
     if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-      // In development/test mode, just log the code
+      // Pas de SMS configuré : on log le code (dev/démo) et on ne bloque pas.
       this.logger.warn(`SMS not configured. Verification code for ${phone}: ${code}`);
       this.logger.warn('Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to enable SMS');
-      return;
+      return false;
     }
 
     try {
@@ -322,9 +361,19 @@ export class PhoneVerificationService {
 
       // Do NOT log the verification code here (auth secret).
       this.logger.log(`Verification SMS sent to ${phone} (sid: ${result.sid})`);
+      return true;
     } catch (error) {
-      this.logger.error(`Failed to send SMS to ${phone}:`, error);
-      throw new BadRequestException('Échec de l\'envoi du SMS');
+      const twilioCode = (error as { code?: number })?.code;
+      this.logger.error(
+        `Failed to send SMS to ${phone} (Twilio ${twilioCode ?? '?'}): ${(error as Error)?.message}`,
+      );
+      // Fallback démo : ne bloque pas l'onboarding quand Twilio refuse (ex. géo non activée).
+      // Le code reste valide ; il est loggé et exposé dans la réponse (voir sendVerificationCode).
+      if (demoFallback) {
+        this.logger.warn(`[DEMO_SMS_FALLBACK] Code de vérification pour ${phone}: ${code}`);
+        return false;
+      }
+      throw new BadRequestException(this.mapTwilioError(twilioCode));
     }
   }
 

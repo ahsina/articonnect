@@ -43,6 +43,7 @@ export default function OnboardingVerifyPage() {
   const [codeSent, setCodeSent] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [code, setCode] = useState('');
+  const [demoCode, setDemoCode] = useState('');
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [phoneError, setPhoneError] = useState('');
 
@@ -133,11 +134,21 @@ export default function OnboardingVerifyPage() {
     setPhoneError('');
     setSendingCode(true);
     try {
-      await authApi.sendPhoneCode(phoneValue);
+      const res = await authApi.sendPhoneCode(phoneValue);
       setCodeSent(true);
+      // Mode démo (SMS indisponible, ex. géo Twilio) : le backend renvoie le code pour
+      // ne pas bloquer l'onboarding. On préremplit et on l'affiche discrètement.
+      if (res?.devCode) {
+        setCode(res.devCode);
+        setDemoCode(res.devCode);
+      } else {
+        setDemoCode('');
+      }
       toast({
-        title: 'Code envoyé',
-        description: 'Un code à 6 chiffres vous a été envoyé par SMS.',
+        title: res?.devCode ? 'Code généré (démo)' : 'Code envoyé',
+        description: res?.devCode
+          ? 'SMS indisponible pour ce pays — code affiché ci-dessous (mode démo).'
+          : 'Un code à 6 chiffres vous a été envoyé par SMS.',
         variant: 'success',
       });
     } catch (error: any) {
@@ -308,6 +319,12 @@ export default function OnboardingVerifyPage() {
                         onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         className="tracking-[0.3em] text-center text-lg"
                       />
+                      {demoCode && (
+                        <p className="rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+                          Mode démo : SMS indisponible pour ce pays. Code prérempli&nbsp;:{' '}
+                          <span className="font-semibold tabular-nums">{demoCode}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button

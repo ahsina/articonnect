@@ -278,11 +278,13 @@ export class NegotiationService {
     const now = new Date();
 
     if (missionType === 'EMERGENCY') {
-      // 15 minutes for emergency missions
-      return new Date(now.getTime() + 15 * 60 * 1000);
+      // Urgence : 6 h. (15 min était irréaliste — le client n'a pas le temps de se connecter
+      // et d'accepter, l'offre expirait avant qu'il puisse la choisir.)
+      return new Date(now.getTime() + 6 * 60 * 60 * 1000);
     } else {
-      // 24 hours for standard missions
-      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      // Devis / planifié : 7 jours. (24 h était trop court : le client compare plusieurs offres
+      // sur plusieurs jours ; l'offre expirait et le bouton « Choisir » disparaissait.)
+      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     }
   }
 

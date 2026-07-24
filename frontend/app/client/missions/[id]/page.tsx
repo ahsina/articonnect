@@ -1421,6 +1421,16 @@ export default function MissionDetailsPage() {
                                   </Button>
                                 </div>
                               )}
+
+                              {/* Offre expirée sur une mission encore ouverte : on l'explique (plus de
+                                  bouton « Choisir » silencieusement absent) et on oriente vers la relance. */}
+                              {!actionable && neg.status === 'EXPIRED' &&
+                                (mission.status === 'PENDING' || mission.status === 'NEGOTIATING') && (
+                                <div className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+                                  {t('offers', 'offerExpiredHint') ||
+                                    "Cette offre a expiré. Faites une contre-offre pour relancer l'artisan."}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
