@@ -70,10 +70,28 @@ export class EmailService {
     }
   }
 
+  /**
+   * Adresse d'expédition effective. Gmail (SMTP) REJETTE / met en spam tout `From` dont le
+   * domaine ne correspond pas au compte authentifié (perçu comme usurpation) — c'est pourquoi
+   * les emails de vérif « noreply@krafolt.com » n'arrivaient pas alors que le SMS (Twilio) marchait.
+   * On expédie donc depuis l'adresse authentifiée et on met l'adresse de marque en Reply-To.
+   */
+  private resolveFrom(): { from: string; replyTo?: string } {
+    const name = this.config.from.name;
+    const branded = this.config.from.email;
+    const user = this.config.auth.user;
+    const isGmail = /gmail\.com/i.test(this.config.host) || /@gmail\.com$/i.test(user || '');
+    const domainOf = (e: string) => (e || '').split('@')[1];
+    if (isGmail && user && branded && domainOf(branded) !== domainOf(user)) {
+      return { from: `"${name}" <${user}>`, replyTo: branded };
+    }
+    return { from: `"${name}" <${branded}>` };
+  }
+
   async sendEmail(to: string, subject: string, html: string) {
     try {
       const info = await this.transporter.sendMail({
-        from: `"${this.config.from.name}" <${this.config.from.email}>`,
+        ...this.resolveFrom(),
         to,
         subject,
         html,

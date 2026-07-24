@@ -2,92 +2,128 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Search } from 'lucide-react';
+import {
+  AsYouType,
+  getCountries,
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  isValidPhoneNumber,
+  type CountryCode,
+} from 'libphonenumber-js';
 
 /**
- * Liste des pays (indicatifs). Ordre imposé : LU, FR, BE, DE, NL, CH, ES, IT, PT, GB
- * puis le reste par ordre alphabétique. Chaque option affiche « drapeau Nom +indicatif ».
+ * Champ téléphone international basé sur libphonenumber-js :
+ * - liste COMPLÈTE des pays (getCountries) avec indicatif réel (getCountryCallingCode) ;
+ * - noms de pays localisés via Intl.DisplayNames (fr) ;
+ * - formatage « au fil de la frappe » propre à chaque pays (AsYouType) ;
+ * - validation réelle par pays (isValidPhoneNumber) ;
+ * - sortie normalisée E.164 via parsePhoneNumberFromString (gère le 0 de tête national, etc.).
  */
 export interface CountryOption {
-  code: string; // ISO alpha-2 (pour la clé/le drapeau)
+  code: CountryCode; // ISO alpha-2
   name: string;
   dial: string; // indicatif, ex "+352"
   flag: string; // emoji drapeau
 }
 
-const PRIORITY: CountryOption[] = [
-  { code: 'LU', name: 'Luxembourg', dial: '+352', flag: '🇱🇺' },
-  { code: 'FR', name: 'France', dial: '+33', flag: '🇫🇷' },
-  { code: 'BE', name: 'Belgique', dial: '+32', flag: '🇧🇪' },
-  { code: 'DE', name: 'Allemagne', dial: '+49', flag: '🇩🇪' },
-  { code: 'NL', name: 'Pays-Bas', dial: '+31', flag: '🇳🇱' },
-  { code: 'CH', name: 'Suisse', dial: '+41', flag: '🇨🇭' },
-  { code: 'ES', name: 'Espagne', dial: '+34', flag: '🇪🇸' },
-  { code: 'IT', name: 'Italie', dial: '+39', flag: '🇮🇹' },
-  { code: 'PT', name: 'Portugal', dial: '+351', flag: '🇵🇹' },
-  { code: 'GB', name: 'Royaume-Uni', dial: '+44', flag: '🇬🇧' },
-];
+// Pays mis en avant en tête de liste (marché principal), le reste alphabétique.
+const PRIORITY_CODES: CountryCode[] = ['LU', 'FR', 'BE', 'DE', 'NL', 'CH', 'ES', 'IT', 'PT', 'GB'];
 
-const OTHERS: CountryOption[] = [
-  { code: 'AT', name: 'Autriche', dial: '+43', flag: '🇦🇹' },
-  { code: 'CA', name: 'Canada', dial: '+1', flag: '🇨🇦' },
-  { code: 'DK', name: 'Danemark', dial: '+45', flag: '🇩🇰' },
-  { code: 'FI', name: 'Finlande', dial: '+358', flag: '🇫🇮' },
-  { code: 'GR', name: 'Grèce', dial: '+30', flag: '🇬🇷' },
-  { code: 'IE', name: 'Irlande', dial: '+353', flag: '🇮🇪' },
-  { code: 'MA', name: 'Maroc', dial: '+212', flag: '🇲🇦' },
-  { code: 'NO', name: 'Norvège', dial: '+47', flag: '🇳🇴' },
-  { code: 'PL', name: 'Pologne', dial: '+48', flag: '🇵🇱' },
-  { code: 'SE', name: 'Suède', dial: '+46', flag: '🇸🇪' },
-  { code: 'US', name: 'États-Unis', dial: '+1', flag: '🇺🇸' },
-];
+/** Drapeau emoji dérivé du code ISO alpha-2 (indicateurs régionaux). */
+function flagOf(code: string): string {
+  return code
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
 
-export const COUNTRIES: CountryOption[] = [...PRIORITY, ...OTHERS];
+/** Noms de pays localisés (français) ; repli sur le code si indisponible. */
+const regionNames: Intl.DisplayNames | null = (() => {
+  try {
+    return new Intl.DisplayNames(['fr'], { type: 'region' });
+  } catch {
+    return null;
+  }
+})();
 
-// Indicatifs triés du plus long au plus court : on matche le préfixe le plus long en premier.
-const DIALS_BY_LENGTH = [...COUNTRIES]
-  .map((c) => c.dial)
-  .sort((a, b) => b.length - a.length);
+function nameOf(code: string): string {
+  try {
+    return regionNames?.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
 
-const DEFAULT_COUNTRY =
+/** Construit la liste complète des pays une seule fois. */
+function buildCountries(): CountryOption[] {
+  const all: CountryOption[] = getCountries()
+    .map((code) => {
+      let dial = '';
+      try {
+        dial = `+${getCountryCallingCode(code)}`;
+      } catch {
+        dial = '';
+      }
+      return { code, name: nameOf(code), dial, flag: flagOf(code) };
+    })
+    .filter((c) => c.dial);
+
+  const priority = PRIORITY_CODES.map((pc) => all.find((c) => c.code === pc)).filter(
+    Boolean,
+  ) as CountryOption[];
+  const rest = all
+    .filter((c) => !PRIORITY_CODES.includes(c.code))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+
+  return [...priority, ...rest];
+}
+
+export const COUNTRIES: CountryOption[] = buildCountries();
+
+const DEFAULT_COUNTRY: CountryOption =
   COUNTRIES.find((c) => c.code === 'LU') ?? COUNTRIES[0];
 
-/** Ne conserve que les chiffres. */
 function onlyDigits(s: string): string {
   return (s || '').replace(/\D/g, '');
 }
 
-/**
- * Découpe une chaîne E.164 (ou approchante) en { country, national }.
- * Trouve le pays dont l'indicatif est le préfixe le plus long.
- */
-function parseE164(value: string): { country: CountryOption; national: string } {
+/** Découpe une valeur E.164 en { country, national } via libphonenumber. */
+function parseValue(value: string): { country: CountryOption; national: string } {
   if (!value) return { country: DEFAULT_COUNTRY, national: '' };
-  const normalized = value.startsWith('+') ? value : `+${onlyDigits(value)}`;
-  for (const dial of DIALS_BY_LENGTH) {
-    if (normalized.startsWith(dial)) {
-      const country =
-        COUNTRIES.find((c) => c.dial === dial) ?? DEFAULT_COUNTRY;
-      return { country, national: onlyDigits(normalized.slice(dial.length)) };
+  try {
+    const pn = parsePhoneNumberFromString(value.startsWith('+') ? value : `+${onlyDigits(value)}`);
+    if (pn && pn.country) {
+      const country = COUNTRIES.find((c) => c.code === pn.country) ?? DEFAULT_COUNTRY;
+      return { country, national: pn.nationalNumber as string };
     }
+  } catch {
+    /* ignore */
   }
-  return { country: DEFAULT_COUNTRY, national: onlyDigits(normalized) };
+  return { country: DEFAULT_COUNTRY, national: onlyDigits(value.replace(/^\+?\d{1,4}/, '')) };
 }
 
-/** Regroupement léger : 3 chiffres puis groupes de 2 (ex "123 45 67 89"). */
-function formatNational(digits: string): string {
-  const d = onlyDigits(digits);
-  if (!d) return '';
-  const head = d.slice(0, 3);
-  const rest = d.slice(3);
-  const groups = rest.match(/.{1,2}/g) || [];
-  return [head, ...groups].join(' ');
+/** Numéro E.164 normalisé pour un pays + saisie nationale (repli concaténation si incomplet). */
+function toE164(country: CountryOption, raw: string): { e164: string; valid: boolean } {
+  const digits = onlyDigits(raw);
+  try {
+    const pn = parsePhoneNumberFromString(digits, country.code);
+    if (pn) return { e164: pn.number, valid: pn.isValid() };
+  } catch {
+    /* ignore */
+  }
+  return { e164: `${country.dial}${digits}`, valid: false };
 }
 
-/** Le numéro national est plausible si sa longueur est comprise entre 6 et 14 chiffres. */
+/** Validation réelle d'un numéro E.164 (utilisée par les formulaires). */
 export function isPlausiblePhone(e164: string): boolean {
-  const { national } = parseE164(e164);
-  return national.length >= 6 && national.length <= 14;
+  try {
+    if (isValidPhoneNumber(e164)) return true;
+  } catch {
+    /* ignore */
+  }
+  // Repli permissif : longueur nationale plausible (numéros incomplets tolérés côté saisie).
+  const d = onlyDigits(e164);
+  return d.length >= 8 && d.length <= 15;
 }
 
 export interface PhoneInputProps {
@@ -105,57 +141,85 @@ export function PhoneInput({
   value,
   onChange,
   id,
-  placeholder = '123 45 67 89',
+  placeholder,
   disabled,
   required,
   className,
   error,
 }: PhoneInputProps) {
-  const parsed = parseE164(value);
+  const parsed = parseValue(value);
   const [country, setCountry] = React.useState<CountryOption>(parsed.country);
   const [national, setNational] = React.useState<string>(parsed.national);
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
   const rootRef = React.useRef<HTMLDivElement>(null);
 
-  // Resynchronise l'état interne si la valeur externe change (reset de formulaire, etc.)
+  // Resynchronise si la valeur externe change (reset de formulaire, préremplissage…).
   React.useEffect(() => {
-    const p = parseE164(value);
-    const currentE164 = `${country.dial}${national}`;
-    if (value !== currentE164) {
+    const cur = toE164(country, national).e164;
+    if (value && value !== cur) {
+      const p = parseValue(value);
       setCountry(p.country);
       setNational(p.national);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  // Ferme le menu au clic extérieur.
   React.useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
   const emit = (c: CountryOption, digits: string) => {
-    const e164 = `${c.dial}${digits}`;
-    onChange(e164, digits.length >= 6 && digits.length <= 14);
+    const { e164, valid } = toE164(c, digits);
+    onChange(e164, valid);
   };
 
   const handleCountry = (c: CountryOption) => {
     setCountry(c);
     setOpen(false);
+    setQuery('');
     emit(c, national);
   };
 
   const handleNational = (raw: string) => {
-    const digits = onlyDigits(raw).slice(0, 14);
+    const digits = onlyDigits(raw).slice(0, 15);
     setNational(digits);
     emit(country, digits);
   };
+
+  // Affichage formaté « au fil de la frappe », style Uber : on formate le numéro complet en
+  // international (AsYouType gère chaque pays) puis on retire l'indicatif (déjà dans le sélecteur).
+  // Cela formate correctement le national saisi SANS le 0 de tête (ex FR +33 « 6 12 34 56 78 »).
+  const displayValue = React.useMemo(() => {
+    const digits = onlyDigits(national);
+    if (!digits) return '';
+    try {
+      const full = new AsYouType().input(`${country.dial}${digits}`);
+      return full.startsWith(country.dial)
+        ? full.slice(country.dial.length).trimStart()
+        : full;
+    } catch {
+      return digits;
+    }
+  }, [country.dial, national]);
+
+  const nationalExample = placeholder ?? (country.code === 'FR' ? '6 12 34 56 78' : '621 123 456');
+
+  const filtered = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return COUNTRIES;
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.dial.includes(q) ||
+        c.code.toLowerCase().includes(q),
+    );
+  }, [query]);
 
   return (
     <div ref={rootRef} className={cn('relative', className)}>
@@ -167,7 +231,6 @@ export function PhoneInput({
           disabled && 'opacity-50 cursor-not-allowed',
         )}
       >
-        {/* Sélecteur de pays */}
         <button
           type="button"
           disabled={disabled}
@@ -186,52 +249,64 @@ export function PhoneInput({
 
         <div className="w-px my-2 bg-border" aria-hidden="true" />
 
-        {/* Numéro national */}
         <input
           id={id}
           type="tel"
-          inputMode="numeric"
+          inputMode="tel"
           autoComplete="tel-national"
           disabled={disabled}
           required={required}
-          placeholder={placeholder}
-          value={formatNational(national)}
+          placeholder={nationalExample}
+          value={displayValue}
           onChange={(e) => handleNational(e.target.value)}
           className="flex-1 min-w-0 bg-transparent px-3 py-2 placeholder:text-muted-foreground focus:outline-none"
         />
       </div>
 
-      {/* Menu déroulant des pays */}
       {open && (
-        <ul
-          role="listbox"
-          className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-card py-1 shadow-lg"
-        >
-          {COUNTRIES.map((c) => {
-            const selected = c.code === country.code;
-            return (
-              <li key={c.code}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onClick={() => handleCountry(c)}
-                  className={cn(
-                    'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-muted',
-                    selected && 'bg-muted',
-                  )}
-                >
-                  <span className="text-base leading-none" aria-hidden="true">
-                    {c.flag}
-                  </span>
-                  <span className="flex-1 text-foreground">{c.name}</span>
-                  <span className="tabular-nums text-muted-foreground">{c.dial}</span>
-                  {selected && <Check className="h-4 w-4 text-foreground" />}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg">
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+            <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <input
+              autoFocus
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Rechercher un pays…"
+              aria-label="Rechercher un pays"
+              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+          </div>
+          <ul role="listbox" className="max-h-60 overflow-y-auto py-1">
+            {filtered.map((c) => {
+              const selected = c.code === country.code;
+              return (
+                <li key={c.code}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => handleCountry(c)}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-muted',
+                      selected && 'bg-muted',
+                    )}
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">
+                      {c.flag}
+                    </span>
+                    <span className="flex-1 text-foreground">{c.name}</span>
+                    <span className="tabular-nums text-muted-foreground">{c.dial}</span>
+                    {selected && <Check className="h-4 w-4 text-foreground" />}
+                  </button>
+                </li>
+              );
+            })}
+            {filtered.length === 0 && (
+              <li className="px-3 py-3 text-sm text-muted-foreground">Aucun pays trouvé</li>
+            )}
+          </ul>
+        </div>
       )}
     </div>
   );
