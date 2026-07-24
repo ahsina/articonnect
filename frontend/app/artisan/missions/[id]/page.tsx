@@ -888,12 +888,8 @@ export default function MissionDetailPage() {
         >
           {t('artisan', 'details') || 'Details'}
         </button>
-        <button
-          onClick={() => setActiveTab('timeline')}
-          className={`px-4 py-2 font-medium ${activeTab === 'timeline' ? 'border-b-2 border-blue-600 text-primary' : 'text-muted-foreground'}`}
-        >
-          {t('artisan', 'timeline') || 'Timeline'}
-        </button>
+        {/* Onglet « Chronologie » retiré : le déroulé de la mission est déjà affiché dans le cockpit
+            du 1er onglet (« Déroulé de la mission ») — un onglet séparé faisait doublon. */}
         {mission.quotation && (
           <button
             onClick={() => setActiveTab('quotation')}
@@ -1662,17 +1658,29 @@ export default function MissionDetailPage() {
                 </div>
 
                 {/* Completion Button */}
-                <div className="flex justify-end pt-4 border-t">
-                  <Button
-                    onClick={handleCompleteMission}
-                    disabled={actionLoading}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {actionLoading
-                      ? t('common', 'loading') || 'Chargement...'
-                      : t('artisan', 'completeMission') || 'Terminer la mission'}
-                  </Button>
-                </div>
+                {(() => {
+                  const hasAfter =
+                    afterPhotos.length > 0 || (mission.afterPhotos?.length ?? 0) > 0;
+                  return (
+                    <div className="flex flex-col items-end gap-2 pt-4 border-t">
+                      {!hasAfter && (
+                        <p className="text-sm text-warning">
+                          {t('artisan', 'completeNeedsPhoto') ||
+                            'Ajoutez une photo « après travaux » pour pouvoir terminer.'}
+                        </p>
+                      )}
+                      <Button
+                        onClick={handleCompleteMission}
+                        disabled={actionLoading || !hasAfter}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {actionLoading
+                          ? t('common', 'loading') || 'Chargement...'
+                          : t('artisan', 'completeMission') || 'Terminer la mission'}
+                      </Button>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           )}

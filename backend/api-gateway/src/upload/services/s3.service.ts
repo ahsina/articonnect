@@ -64,6 +64,12 @@ export class S3Service {
     fileType: FileType,
     userId: string,
   ): Promise<string> {
+    // Photos iPhone HEIC/HEIF : les navigateurs non-Safari ne peuvent pas les convertir côté client
+    // (la normalisation front échoue → fichier original) → on convertit ici en JPEG, sinon la
+    // validation par magic bytes les rejette (400). Conversion best-effort : si elle échoue, on
+    // laisse la validation trancher.
+    await this.convertHeicToJpeg(file);
+
     // Validate file (size + mime + magic bytes). Renvoie le vrai type détecté.
     const detectedMime = this.validateFile(file, fileType);
 
@@ -241,6 +247,38 @@ export class S3Service {
    * Un binaire (ex MZ/PE .exe) déclaré 'image/png' est ainsi rejeté.
    * Retourne le vrai type MIME détecté (utilisé pour ContentType S3 + extension).
    */
+  /** Vrai si le buffer est un HEIC/HEIF (ISOBMFF : boîte `ftyp` + marque heic/heif/mif1…). */
+  private isHeicBuffer(file: Express.Multer.File): boolean {
+    const b = file.buffer;
+    if (b && b.length >= 12 && b.toString('ascii', 4, 8) === 'ftyp') {
+      const brand = b.toString('ascii', 8, 12).toLowerCase();
+      if (['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs', 'mif1', 'msf1'].includes(brand)) {
+        return true;
+      }
+    }
+    return (
+      /image\/(heic|heif)/i.test(file.mimetype || '') ||
+      /\.(heic|heif)$/i.test(file.originalname || '')
+    );
+  }
+
+  /** Convertit sur place un HEIC/HEIF en JPEG (mute file.buffer/mimetype/size/originalname). */
+  private async convertHeicToJpeg(file: Express.Multer.File): Promise<void> {
+    if (!this.isHeicBuffer(file)) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const heicConvert = require('heic-convert');
+      const output: Buffer = await heicConvert({ buffer: file.buffer, format: 'JPEG', quality: 0.85 });
+      file.buffer = output;
+      file.size = output.length;
+      file.mimetype = 'image/jpeg';
+      file.originalname = (file.originalname || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+      this.logger.log('HEIC/HEIF converti en JPEG avant upload');
+    } catch (error) {
+      this.logger.warn(`Conversion HEIC échouée (on laisse la validation trancher): ${(error as Error)?.message}`);
+    }
+  }
+
   private validateFile(file: Express.Multer.File, _fileType: FileType): string {
     // 1) Détection réelle par magic bytes
     const detectedMime = this.detectMimeFromMagicBytes(file.buffer);
