@@ -68,8 +68,10 @@ export class PdfService {
     const artisanProfile = quote.artisan.artisanProfile;
     const companyInfo: CompanyInfo = {
       name: artisanProfile?.companyName || `${quote.artisan.firstName} ${quote.artisan.lastName}`,
-      phone: quote.artisan.phone || undefined,
-      email: quote.artisan.email,
+      // Anti-désintermédiation : on NE met PAS le téléphone/email de l'artisan sur le PDF
+      // (non requis légalement — seuls nom, adresse, SIRET/TVA le sont ; le contact passe par Krafolt).
+      phone: undefined,
+      email: undefined,
       siret: artisanProfile?.siret || undefined,
       vatNumber: artisanProfile?.vatNumber || undefined,
     };

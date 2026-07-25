@@ -1,6 +1,7 @@
 'use client';
 
 import { TradeIcon } from '@/components/shared/TradeIcon';
+import { Hammer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -302,7 +303,8 @@ export default function ArtisansListPage() {
                       className="flex-1"
                       onClick={() => handleContactArtisan(artisan.id)}
                     >
-                      {t('common', 'contact')}
+                      <Hammer className="mr-1.5 h-4 w-4" />
+                      Faire appel à cet artisan
                     </Button>
                   </div>
                 </div>

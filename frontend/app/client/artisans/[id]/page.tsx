@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Hammer, Heart, ShieldCheck } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -400,37 +401,24 @@ export default function ArtisanDetailsPage() {
             {/* Contact Card */}
             <Card>
               <CardContent className="p-6">
-                <Button className="w-full mb-4" size="lg" onClick={handleContactArtisan}>
-                  {t('artisans', 'createMission')}
+                <Button className="w-full mb-3" size="lg" onClick={handleContactArtisan}>
+                  <Hammer className="mr-1.5 h-4 w-4" />
+                  Faire appel à cet artisan
                 </Button>
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <Button variant="outline">
-                    {t('artisans', 'sendMessage')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleToggleFavorite}
-                    disabled={favoriteLoading}
-                    className={isFavorite ? 'text-red-500 border-red-500 hover:bg-red-100' : ''}
-                  >
-                    {favoriteLoading ? '...' : isFavorite ? '' : ''} {t('favorites', isFavorite ? 'saved' : 'save')}
-                  </Button>
-                </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span></span>
-                    <span>
-                      {artisanProfile.address}, {artisanProfile.postalCode} {artisanProfile.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span></span>
-                    <span>{artisan.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span></span>
-                    <span>{artisan.email}</span>
-                  </div>
+                <Button
+                  variant="outline"
+                  className={`w-full mb-4 ${isFavorite ? 'text-red-500 border-red-500 hover:bg-red-50' : ''}`}
+                  onClick={handleToggleFavorite}
+                  disabled={favoriteLoading}
+                >
+                  <Heart className={`mr-1.5 h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  {favoriteLoading ? '...' : isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                </Button>
+                <div className="flex items-start gap-2 rounded-xl bg-muted p-3 text-sm text-muted-foreground">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
+                  <span>
+                    Krafolt met en relation via une demande — le contact direct est partagé après acceptation et paiement sécurisé.
+                  </span>
                 </div>
               </CardContent>
             </Card>
