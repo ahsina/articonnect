@@ -168,6 +168,102 @@ export class InvoiceService {
   }
 
   /**
+   * Génère (idempotent) la facture d'une mission : émetteur = ARTISAN (raison sociale, SIRET, TVA),
+   * lignes reprises du détail de l'offre acceptée (main d'œuvre / matériel / déplacement), TVA selon
+   * le profil de l'artisan (franchise → 0 + mention légale). Le prix convenu (agreedPrice) est le TTC
+   * réellement payé par le client : on en dérive le HT. Retourne la facture existante s'il y en a déjà
+   * une (une seule facture MISSION par mission). Ne lève pas : renvoie null en cas de données absentes.
+   */
+  async generateForMission(missionId: string) {
+    const existing = await this.prisma.invoice.findFirst({
+      where: { missionId, type: InvoiceType.MISSION },
+    });
+    if (existing) return existing;
+
+    const mission = await this.prisma.mission.findUnique({
+      where: { id: missionId },
+      include: {
+        client: { select: { firstName: true, lastName: true } },
+        artisan: {
+          select: {
+            firstName: true,
+            lastName: true,
+            artisanProfile: {
+              select: { companyName: true, siret: true, vatNumber: true, vatExempt: true, vatRate: true, baseAddress: true },
+            },
+          },
+        },
+      },
+    });
+    if (!mission || !mission.artisanId) return null;
+
+    const ap = mission.artisan?.artisanProfile;
+    const ttc = Number(mission.agreedPrice ?? mission.finalPrice ?? 0);
+    if (!(ttc > 0)) return null;
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const vatExempt = ap?.vatExempt === true;
+    const taxRate = vatExempt ? 0 : Number(ap?.vatRate ?? mission.vatRate ?? 0) || 0;
+    const subtotalHT = round2(ttc / (1 + taxRate / 100));
+
+    // Détail de l'offre acceptée (converti en HT) sinon une ligne unique « Prestation ».
+    const neg = await this.prisma.negotiation.findFirst({
+      where: { missionId, accepted: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    const parts: { label: string; ttc: number }[] = [];
+    if (neg) {
+      if (neg.laborCost != null) parts.push({ label: "Main d'œuvre", ttc: Number(neg.laborCost) });
+      if (neg.materialCost != null) parts.push({ label: 'Matériel', ttc: Number(neg.materialCost) });
+      if (neg.travelCost != null) parts.push({ label: 'Déplacement', ttc: Number(neg.travelCost) });
+    }
+    const sumParts = parts.reduce((s, p) => s + p.ttc, 0);
+    let lineItems: { description: string; quantity: number; unitPrice: number; total: number }[];
+    if (parts.length && sumParts > 0) {
+      let acc = 0;
+      lineItems = parts.map((p, i) => {
+        const ht = i === parts.length - 1 ? round2(subtotalHT - acc) : round2((p.ttc / sumParts) * subtotalHT);
+        acc += ht;
+        return { description: p.label, quantity: 1, unitPrice: ht, total: ht };
+      });
+    } else {
+      lineItems = [{ description: mission.title || 'Prestation', quantity: 1, unitPrice: subtotalHT, total: subtotalHT }];
+    }
+
+    const issuerName =
+      ap?.companyName || `${mission.artisan?.firstName ?? ''} ${mission.artisan?.lastName ?? ''}`.trim() || 'Artisan';
+
+    const dto: CreateInvoiceDto = {
+      type: InvoiceType.MISSION,
+      missionId,
+      issuerId: mission.artisanId,
+      clientId: mission.clientId,
+      subtotal: subtotalHT,
+      taxRate,
+      lineItems,
+      issuerAddress: {
+        name: issuerName,
+        address: ap?.baseAddress || '-',
+        city: '',
+        postalCode: '',
+        country: mission.country || 'LU',
+        siret: ap?.siret || undefined,
+        vat: ap?.vatNumber || undefined,
+      },
+      clientAddress: {
+        name: `${mission.client?.firstName ?? ''} ${mission.client?.lastName ?? ''}`.trim() || 'Client',
+        address: mission.address || '-',
+        city: mission.city || '',
+        postalCode: mission.postalCode || '',
+        country: mission.country || 'LU',
+      },
+      notes: vatExempt ? 'TVA non applicable — franchise en base (art. 293 B du CGI).' : undefined,
+    };
+
+    return this.create(dto);
+  }
+
+  /**
    * Generate PDF for an invoice
    */
   async generatePDF(invoiceId: string, requester?: { userId: string; isAdmin: boolean }): Promise<string> {

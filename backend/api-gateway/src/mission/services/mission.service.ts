@@ -11,6 +11,7 @@ import { ReputationService } from '../../payment/services/reputation.service';
 import { PaymentService } from '../../payment/services/payment.service';
 import { NotificationService } from '../../notification/services/notification.service';
 import { ContactRevealService } from './contact-reveal.service';
+import { InvoiceService } from '../../invoice/services/invoice.service';
 
 @Injectable()
 export class MissionService {
@@ -31,8 +32,18 @@ export class MissionService {
     private reputationService: ReputationService,
     private paymentService: PaymentService,
     private notificationService: NotificationService,
+    private invoiceService: InvoiceService,
   ) {
     this.contactReveal = new ContactRevealService(this.prisma);
+  }
+
+  /** Génère la facture de la mission (émetteur = artisan). Ne doit JAMAIS faire échouer la validation. */
+  private async generateInvoiceSafe(missionId: string): Promise<void> {
+    try {
+      await this.invoiceService.generateForMission(missionId);
+    } catch (err) {
+      console.warn(`[invoice] Génération différée/échouée pour ${missionId}: ${(err as any)?.message}`);
+    }
   }
 
   async create(userId: string, createDto: CreateMissionDto) {
@@ -1046,6 +1057,9 @@ export class MissionService {
       );
     }
 
+    // Facture (émetteur = artisan) générée à la validation — jamais bloquant.
+    await this.generateInvoiceSafe(missionId);
+
     return { mission: updated, retractionExpired, payoutStatus };
   }
 
@@ -1241,6 +1255,8 @@ export class MissionService {
           `[markCompleted] Payout artisan différé pour ${missionId} : ${(payoutError as any)?.message}`,
         );
       }
+      await this.generateInvoiceSafe(missionId);
+
       return {
         mission: { ...updated, validatedAt: now },
         retractionExpiresAt,

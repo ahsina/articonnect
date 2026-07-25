@@ -20,9 +20,10 @@ import { AuthModule } from '../auth/auth.module';
 // appliquer le MÊME filtre au canal négociation/offre (anti-désintermédiation).
 // Pas de dépendance circulaire : ChatModule n'importe pas MissionModule.
 import { ChatModule } from '../chat/chat.module';
+import { InvoiceModule } from '../invoice/invoice.module';
 
 @Module({
-  imports: [PaymentModule, NotificationModule, FraudModule, AuthModule, ChatModule],
+  imports: [PaymentModule, NotificationModule, FraudModule, AuthModule, ChatModule, InvoiceModule],
   controllers: [
     MissionController,
     MissionSearchController,
