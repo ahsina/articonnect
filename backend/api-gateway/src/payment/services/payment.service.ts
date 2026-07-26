@@ -195,9 +195,13 @@ export class PaymentService {
 
     // Get commission rates from platform config
     const feeSettings = await this.platformConfig.getFeeSettings();
-    const artisanRate = feeSettings.artisanPayoutPercentage / 100;
-    // Commission avec plancher/plafond appliqués (jamais nulle / contournable).
-    const commission = this.computeCommission(Number(mission.agreedPrice), feeSettings);
+    // SOURCE DE VÉRITÉ UNIQUE de la commission : commission (taux plateforme, avec plancher/plafond),
+    // et net artisan = montant − commission. On N'utilise PLUS `artisanPayoutPercentage` en parallèle :
+    // deux taux indépendants (13 % vs 88 %) ne se réconciliaient pas → fuite/incohérence (la plateforme
+    // versait plus que « montant − commission »). Ainsi commission + artisanAmount == montant, toujours.
+    const grossAmount = Number(mission.agreedPrice);
+    const commission = this.computeCommission(grossAmount, feeSettings);
+    const artisanNet = Math.round((grossAmount - commission) * 100) / 100;
 
     // Upsert : si une Transaction existait déjà (PI mort régénéré), on la met à jour au lieu de
     // violer la contrainte unique sur missionId.
@@ -205,7 +209,7 @@ export class PaymentService {
       type: 'MISSION' as const,
       amount: mission.agreedPrice,
       commission,
-      artisanAmount: Number(mission.agreedPrice) * artisanRate,
+      artisanAmount: artisanNet,
       stripePaymentIntentId: paymentIntent.id,
       status: 'PENDING' as const,
     };

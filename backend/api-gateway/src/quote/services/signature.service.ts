@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { InvoiceService } from '../../invoice/services/invoice.service';
+import { MissionStatus } from '@prisma/client';
 import { createHash, randomBytes } from 'crypto';
 
 /**
@@ -146,6 +147,51 @@ export class SignatureService {
       });
 
       this.logger.log(`Quote ${quoteId} accepted and signed by ${signerRole}`);
+
+      // La signature client vaut acceptation → le devis doit devenir SA PROPRE mission (source de vérité
+      // du prix). Devis autonome (sans mission liée) : on CRÉE la mission à partir du devis. Devis déjà
+      // lié à une demande : on synchronise le prix convenu (pour que facture = escrow = mission).
+      try {
+        const q = await this.prisma.quote.findUnique({ where: { id: quoteId } });
+        if (q) {
+          if (!q.missionId) {
+            const stdVat: Record<string, number> = { LU: 17, FR: 20, BE: 21 };
+            const country = (q.country || 'LU').toUpperCase();
+            const mission = await this.prisma.mission.create({
+              data: {
+                clientId: q.clientId,
+                artisanId: q.artisanId,
+                type: 'QUOTE',
+                title: q.title,
+                description: q.description || q.title,
+                category: q.category,
+                address: q.address || '',
+                city: q.city || '',
+                postalCode: q.postalCode || '',
+                country,
+                latitude: 0,
+                longitude: 0,
+                vatRate: stdVat[country] ?? 21,
+                agreedPrice: q.totalAmount,
+                status: MissionStatus.PENDING_DEPOSIT,
+              },
+            });
+            await this.prisma.quote.update({ where: { id: quoteId }, data: { missionId: mission.id } });
+            this.logger.log(`Devis signé ${quoteId} → mission créée ${mission.id}`);
+          } else {
+            await this.prisma.mission
+              .update({
+                where: { id: q.missionId },
+                data: { agreedPrice: q.totalAmount, artisanId: q.artisanId },
+              })
+              .catch(() => undefined);
+          }
+        }
+      } catch (err) {
+        this.logger.error(
+          `Conversion devis→mission (signature) échouée pour ${quoteId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
 
       // La signature client vaut acceptation : on génère automatiquement la facture
       // rattachée au devis (createFromQuote bascule le devis en CONVERTED).
