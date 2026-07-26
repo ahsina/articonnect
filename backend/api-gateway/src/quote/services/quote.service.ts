@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, MissionStatus } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { NotificationService } from '../../notification/services/notification.service';
 import {
@@ -680,15 +680,46 @@ export class QuoteService {
       },
     });
 
-    // Devis accepté et lié à une mission : fixer le prix convenu (sinon /payments/create-intent
-    // échoue « Prix non défini » — le client ne peut pas payer après avoir accepté un devis).
-    if (dto.accepted && quote.missionId) {
-      await this.prisma.mission
-        .update({
-          where: { id: quote.missionId },
-          data: { agreedPrice: quote.totalAmount, artisanId: quote.artisanId },
-        })
-        .catch(() => undefined);
+    // Devis accepté → il doit exister une MISSION (le client paie ensuite l'escrow puis l'artisan exécute).
+    if (dto.accepted) {
+      if (quote.missionId) {
+        // Devis lié à une demande existante : on fixe le prix convenu + l'artisan retenu.
+        await this.prisma.mission
+          .update({
+            where: { id: quote.missionId },
+            data: { agreedPrice: quote.totalAmount, artisanId: quote.artisanId },
+          })
+          .catch(() => undefined);
+      } else {
+        // Devis AUTONOME (créé par l'artisan sans demande préalable) → on CONVERTIT le devis en mission
+        // et on la lie au devis. Statut PENDING_DEPOSIT : le client doit sécuriser le paiement (escrow).
+        const stdVat: Record<string, number> = { LU: 17, FR: 20, BE: 21 };
+        const country = (quote.country || 'LU').toUpperCase();
+        try {
+          const mission = await this.prisma.mission.create({
+            data: {
+              clientId: quote.clientId,
+              artisanId: quote.artisanId,
+              type: 'QUOTE',
+              title: quote.title,
+              description: quote.description || quote.title,
+              category: quote.category,
+              address: quote.address || '',
+              city: quote.city || '',
+              postalCode: quote.postalCode || '',
+              country,
+              latitude: 0, // devis sans géoloc : mission assignée directement (pas de recherche de proximité)
+              longitude: 0,
+              vatRate: stdVat[country] ?? 21,
+              agreedPrice: quote.totalAmount,
+              status: MissionStatus.PENDING_DEPOSIT,
+            },
+          });
+          await this.prisma.quote.update({ where: { id }, data: { missionId: mission.id } });
+        } catch (e) {
+          this.logger?.error?.(`Conversion devis→mission échouée (${id}): ${(e as Error)?.message}`);
+        }
+      }
     }
 
     await this.notifyQuoteEvent(
