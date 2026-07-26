@@ -63,6 +63,19 @@ L'abonnement **baisse la commission** et débloque visibilité + outils. L'artis
 5. **Trust** : vérifié, avis, médiation, anti-désintermédiation.
 6. **Tout-en-un** : devis/facture/agenda/paiement — plus besoin de 5 outils.
 
+## 4bis. Paramétrage ADMIN (exigence clé)
+
+**TOUT le pricing est paramétrable depuis le panneau admin — aucun redéploiement pour changer un prix/taux.**
+Stocké dans **`PlatformConfig`** (déjà éditable en base + DTO `platform-config.dto.ts` + module config), exposé
+dans l'écran admin config. Paramètres éditables :
+- Taux de commission **par tier** (Free/Pro/Premium), **plancher** et **plafond** de commission.
+- **Prix mensuel** de chaque tier + liste des **features** débloquées par tier.
+- **Prix des boosts** (par type : liste top / spotlight), durée par défaut.
+- (Phase 3) **frais de service client** (%), premium/urgence.
+Un changement de paramètre s'applique **immédiatement** (les nouvelles missions/abonnements utilisent la nouvelle
+valeur ; les commissions/factures déjà émises restent figées à leur valeur d'origine — jamais rétroactif).
+Historisation recommandée (qui a changé quoi, quand) pour l'audit + le préavis P2B.
+
 ## 5. Modèle de données (ajouts)
 - **`SubscriptionPlan`** (config, ou étendre `PlatformConfig.fees`) : `code (FREE|PRO|PREMIUM)`, `monthlyPrice`,
   `commissionRate`, `features[]`.
