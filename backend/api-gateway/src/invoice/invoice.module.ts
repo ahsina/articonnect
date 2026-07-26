@@ -4,9 +4,10 @@ import { PdfGeneratorService } from './services/pdf-generator.service';
 import { InvoiceController } from './controllers/invoice.controller';
 import { PrismaModule } from '../common/prisma/prisma.module';
 import { UploadModule } from '../upload/upload.module';
+import { VatModule } from '../vat/vat.module';
 
 @Module({
-  imports: [PrismaModule, UploadModule],
+  imports: [PrismaModule, UploadModule, VatModule],
   controllers: [InvoiceController],
   providers: [InvoiceService, PdfGeneratorService],
   exports: [InvoiceService],

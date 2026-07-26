@@ -66,6 +66,11 @@ export class MissionService {
         scheduledFor: createDto.scheduledFor,
         clientBudget: createDto.clientBudget,
         vatRate,
+        // TVA — caractéristiques du bien (déterminent le taux calculé par VatService à la facturation).
+        workType: createDto.workType,
+        buildingAgeYears: createDto.buildingAgeYears,
+        primaryResidence: createDto.primaryResidence,
+        residentialProperty: createDto.residentialProperty,
         photos: createDto.photos || [],
       },
       include: {

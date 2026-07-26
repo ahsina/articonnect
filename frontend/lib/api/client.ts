@@ -11,6 +11,19 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+// Requêtes multipart (FormData) : on RETIRE le Content-Type application/json par défaut pour que le
+// navigateur/axios pose `multipart/form-data; boundary=…`. Sans ça, le boundary manque et le backend
+// ne reçoit aucun fichier (« Aucun fichier fourni ») → tous les uploads photo échouaient en 400.
+apiClient.interceptors.request.use((config) => {
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (config.headers) {
+      delete (config.headers as Record<string, unknown>)['Content-Type'];
+      delete (config.headers as Record<string, unknown>)['content-type'];
+    }
+  }
+  return config;
+});
+
 // Response interceptor for token refresh
 apiClient.interceptors.response.use(
   (response) => response,

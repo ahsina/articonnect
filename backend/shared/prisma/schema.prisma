@@ -301,7 +301,9 @@ model ArtisanProfile {
   // TVA appliquée aux factures de l'artisan. vatExempt = franchise en base (auto-entrepreneur) :
   // aucune TVA facturée + mention légale. vatRate = taux appliqué (null → taux standard du pays mission).
   vatExempt   Boolean  @default(false)
-  vatRate     Decimal? @db.Decimal(5, 2)
+  vatRate     Decimal? @db.Decimal(5, 2) // (déprécié pour le calcul — le taux est calculé par VatService)
+  // Pays où l'artisan est immatriculé à la TVA : sert à déterminer l'autoliquidation B2B transfrontalière.
+  vatRegisteredCountries String[] @default([])
   // Conditions générales de vente de l'artisan, configurées une fois et rapatriées dans chaque
   // nouveau devis (éditables ponctuellement). Vide → modèle Krafolt par défaut côté front.
   quoteTerms  String?
@@ -967,6 +969,14 @@ model Mission {
   // S'il le communique à l'artisan sur place et que l'artisan le saisit à la clôture, le paiement
   // est libéré immédiatement (on saute l'attente de validation/48h). Optionnel — jamais bloquant.
   completionCode String?
+
+  // TVA — caractéristiques du bien (collectées à la demande client) qui déterminent le TAUX applicable.
+  // Le pays du chantier (= `country` ci-dessus) fait foi (art. 47 directive TVA) ; VatService calcule
+  // le taux (l'artisan ne le choisit pas). Voir vat.rules.ts.
+  workType            String?  // RENOVATION | ENERGY_RENOVATION | NEW_BUILD | MAINTENANCE | OTHER
+  buildingAgeYears    Int?     // ancienneté du bâtiment (années) — conditionne les taux réduits
+  primaryResidence    Boolean? // logement = résidence principale du client
+  residentialProperty Boolean? // logement (true) vs local professionnel (false)
 
   // B2B Billing (for professional clients)
   purchaseOrderNumber String? // Numéro de bon de commande

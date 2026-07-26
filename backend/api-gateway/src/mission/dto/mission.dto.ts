@@ -6,6 +6,7 @@ import {
   IsArray,
   IsDateString,
   IsNotEmpty,
+  IsBoolean,
   MinLength,
   Min,
   Max,
@@ -127,6 +128,27 @@ export class CreateMissionDto {
   @IsOptional()
   @IsNumber()
   clientBudget?: number;
+
+  // ── TVA : caractéristiques du bien (déterminent le taux applicable, calculé par VatService).
+  @ApiProperty({ required: false, description: 'RENOVATION | ENERGY_RENOVATION | NEW_BUILD | MAINTENANCE | OTHER' })
+  @IsOptional()
+  @IsString()
+  workType?: string;
+
+  @ApiProperty({ required: false, description: 'Ancienneté du bâtiment (années)' })
+  @IsOptional()
+  @IsNumber()
+  buildingAgeYears?: number;
+
+  @ApiProperty({ required: false, description: 'Logement = résidence principale du client' })
+  @IsOptional()
+  @IsBoolean()
+  primaryResidence?: boolean;
+
+  @ApiProperty({ required: false, description: 'Logement (true) vs local professionnel (false)' })
+  @IsOptional()
+  @IsBoolean()
+  residentialProperty?: boolean;
 
   @ApiProperty({ required: false, description: 'Legacy photos field' })
   @IsOptional()

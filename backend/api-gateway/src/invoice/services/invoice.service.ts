@@ -6,6 +6,7 @@ import { PdfGeneratorService } from './pdf-generator.service';
 import { S3Service } from '../../upload/services/s3.service';
 import { Prisma, InvoiceType } from '@prisma/client';
 import { PlatformConfigService } from '../../config/services/platform-config.service';
+import { VatService } from '../../vat/vat.service';
 
 @Injectable()
 export class InvoiceService {
@@ -14,6 +15,7 @@ export class InvoiceService {
     private pdfGenerator: PdfGeneratorService,
     private s3Service: S3Service,
     private platformConfig: PlatformConfigService,
+    private vatService: VatService,
   ) {}
 
   /**
@@ -183,13 +185,26 @@ export class InvoiceService {
     const mission = await this.prisma.mission.findUnique({
       where: { id: missionId },
       include: {
-        client: { select: { firstName: true, lastName: true } },
+        client: {
+          select: {
+            firstName: true,
+            lastName: true,
+            clientProfile: { select: { clientType: true } },
+          },
+        },
         artisan: {
           select: {
             firstName: true,
             lastName: true,
             artisanProfile: {
-              select: { companyName: true, siret: true, vatNumber: true, vatExempt: true, vatRate: true, baseAddress: true },
+              select: {
+                companyName: true,
+                siret: true,
+                vatNumber: true,
+                vatExempt: true,
+                baseAddress: true,
+                vatRegisteredCountries: true,
+              },
             },
           },
         },
@@ -202,8 +217,25 @@ export class InvoiceService {
     if (!(ttc > 0)) return null;
 
     const round2 = (n: number) => Math.round(n * 100) / 100;
-    const vatExempt = ap?.vatExempt === true;
-    const taxRate = vatExempt ? 0 : Number(ap?.vatRate ?? mission.vatRate ?? 0) || 0;
+
+    // TAUX DE TVA CALCULÉ PAR LE MOTEUR (pas de saisie artisan) : pays du chantier (art. 47), type de
+    // client (B2C/B2B + n° TVA validé VIES → autoliquidation), nature/âge du bien (taux réduits).
+    const clientIsBusiness = (mission.client?.clientProfile?.clientType || '') === 'PROFESSIONAL';
+    const clientVatValid = clientIsBusiness
+      ? await this.vatService.validateVatNumber((mission as any).billingVatNumber)
+      : false;
+    const vat = this.vatService.resolve({
+      propertyCountry: mission.country,
+      artisanVatCountries: ap?.vatRegisteredCountries || [],
+      artisanFranchise: ap?.vatExempt === true,
+      clientIsBusiness,
+      clientVatValid,
+      workType: (mission as any).workType,
+      buildingAgeYears: (mission as any).buildingAgeYears,
+      residential: (mission as any).residentialProperty,
+      primaryResidence: (mission as any).primaryResidence,
+    });
+    const taxRate = vat.rate;
     const subtotalHT = round2(ttc / (1 + taxRate / 100));
 
     // Détail de l'offre acceptée (converti en HT) sinon une ligne unique « Prestation ».
@@ -257,7 +289,7 @@ export class InvoiceService {
         postalCode: mission.postalCode || '',
         country: mission.country || 'LU',
       },
-      notes: vatExempt ? 'TVA non applicable — franchise en base (art. 293 B du CGI).' : undefined,
+      notes: vat.legalMention,
     };
 
     return this.create(dto);
