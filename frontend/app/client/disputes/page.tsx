@@ -39,12 +39,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const DISPUTE_TYPES = [
-  { id: 'QUALITY', label: 'Qualité du travail' },
-  { id: 'DELAY', label: 'Retard' },
-  { id: 'PRICE', label: 'Prix/Facturation' },
-  { id: 'COMMUNICATION', label: 'Communication' },
-  { id: 'NO_SHOW', label: 'Absence' },
-  { id: 'OTHER', label: 'Autre' },
+  { id: 'QUALITY', labelKey: 'typeQuality' },
+  { id: 'DELAY', labelKey: 'typeDelay' },
+  { id: 'PRICE', labelKey: 'typePrice' },
+  { id: 'COMMUNICATION', labelKey: 'typeCommunication' },
+  { id: 'NO_SHOW', labelKey: 'typeNoShow' },
+  { id: 'OTHER', labelKey: 'typeOther' },
 ];
 
 export default function ClientDisputesPage() {
@@ -232,7 +232,7 @@ export default function ClientDisputesPage() {
                     <option value="">{t('common', 'select')}</option>
                     {DISPUTE_TYPES.map((type) => (
                       <option key={type.id} value={type.id}>
-                        {type.label}
+                        {t('disputes', type.labelKey)}
                       </option>
                     ))}
                   </select>
@@ -332,7 +332,7 @@ export default function ClientDisputesPage() {
                       </div>
                       {dispute.mission.artisan && (
                         <p className="text-[13px] text-muted-foreground mt-1">
-                          Artisan : {dispute.mission.artisan.firstName}{' '}
+                          {t('disputes', 'artisanLabel') || 'Artisan'} : {dispute.mission.artisan.firstName}{' '}
                           {dispute.mission.artisan.lastName}
                         </p>
                       )}
@@ -344,9 +344,12 @@ export default function ClientDisputesPage() {
 
                   <div className="bg-muted p-4 rounded-xl mt-3">
                     <div className="text-[12.5px] text-muted-foreground mb-1">
-                      Type :{' '}
+                      {t('disputes', 'type')} :{' '}
                       <span className="font-semibold text-foreground">
-                        {DISPUTE_TYPES.find((t) => t.id === dispute.type)?.label || dispute.type}
+                        {(() => {
+                          const dt = DISPUTE_TYPES.find((x) => x.id === dispute.type);
+                          return dt ? t('disputes', dt.labelKey) : dispute.type;
+                        })()}
                       </span>
                     </div>
                     <p className="text-sm text-foreground break-words">{dispute.description}</p>

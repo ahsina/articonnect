@@ -1146,9 +1146,9 @@ export default function MissionDetailPage() {
                                 {/* Cost breakdown */}
                                 {(neg.laborCost || neg.materialCost || neg.travelCost) && (
                                   <div className="text-xs text-muted-foreground mt-1">
-                                    {neg.laborCost && <span>Main d'œuvre: {neg.laborCost}€</span>}
-                                    {neg.materialCost && <span className="ml-2">Matériel: {neg.materialCost}€</span>}
-                                    {neg.travelCost && <span className="ml-2">Déplacement: {neg.travelCost}€</span>}
+                                    {neg.laborCost && <span>{t('negotiations', 'laborCost') || 'Main d\'œuvre'}: {neg.laborCost}€</span>}
+                                    {neg.materialCost && <span className="ml-2">{t('negotiations', 'materialCost') || 'Matériel'}: {neg.materialCost}€</span>}
+                                    {neg.travelCost && <span className="ml-2">{t('negotiations', 'travelCost') || 'Déplacement'}: {neg.travelCost}€</span>}
                                   </div>
                                 )}
                                 {/* Dispo + durée */}
@@ -1595,7 +1595,7 @@ export default function MissionDetailPage() {
                     </label>
                     {afterPhotos.length > 0 && (
                       <span className="text-sm text-muted-foreground">
-                        {afterPhotos.length} photo{afterPhotos.length > 1 ? 's' : ''} sélectionnée{afterPhotos.length > 1 ? 's' : ''}
+                        {afterPhotos.length} {t('missions', 'photo') || 'photo'}{afterPhotos.length > 1 ? 's' : ''} {t('missions', 'selected') || 'sélectionnée'}{afterPhotos.length > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>

@@ -43,7 +43,7 @@ export default function ArtisanMissionsPage() {
   const router = useRouter();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS'>('all');
+  const [filter, setFilter] = useState<'all' | 'PENDING' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED'>('all');
 
   const STATUS_LABELS: Record<string, string> = {
     PENDING: t('missions', 'pending'),
@@ -175,6 +175,7 @@ export default function ArtisanMissionsPage() {
             { key: 'PENDING', label: `${t('missions', 'pending')} (${missions.filter((m) => m.status === 'PENDING').length})` },
             { key: 'ACCEPTED', label: `${t('artisan', 'accepted')} (${missions.filter((m) => m.status === 'ACCEPTED').length})` },
             { key: 'IN_PROGRESS', label: `${t('missions', 'inProgress')} (${missions.filter((m) => m.status === 'IN_PROGRESS').length})` },
+            { key: 'COMPLETED', label: `${t('missions', 'completed') || 'Terminé'} (${missions.filter((m) => m.status === 'COMPLETED').length})` },
           ] as const).map((f) => (
             <button
               key={f.key}

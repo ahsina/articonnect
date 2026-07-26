@@ -8,19 +8,26 @@ import { Input } from '@/components/ui/input';
 import { PhoneInput, isPlausiblePhone } from '@/components/ui/PhoneInput';
 import { authApi, type MeResponse } from '@/lib/api/auth';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/lib/hooks/useToast';
 import { CheckCircle2, Mail, Phone, Loader2, RefreshCw } from 'lucide-react';
 
 const RESEND_COOLDOWN = 60; // secondes
 
-function StatusPill({ verified }: { verified: boolean }) {
+function StatusPill({
+  verified,
+  t,
+}: {
+  verified: boolean;
+  t: (ns: string, key: string) => string;
+}) {
   return verified ? (
     <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-      <CheckCircle2 className="h-3.5 w-3.5" /> Vérifié
+      <CheckCircle2 className="h-3.5 w-3.5" /> {t('onboarding', 'statusVerified') || 'Vérifié'}
     </span>
   ) : (
     <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-      En attente
+      {t('onboarding', 'statusPending') || 'En attente'}
     </span>
   );
 }
@@ -28,6 +35,7 @@ function StatusPill({ verified }: { verified: boolean }) {
 export default function OnboardingVerifyPage() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
 
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,14 +114,17 @@ export default function OnboardingVerifyPage() {
       await authApi.resendVerification();
       startCooldown();
       toast({
-        title: 'Email envoyé',
-        description: 'Un nouveau lien de vérification vient de vous être envoyé.',
+        title: t('onboarding', 'emailSentTitle') || 'Email envoyé',
+        description:
+          t('onboarding', 'emailSentDesc') ||
+          'Un nouveau lien de vérification vient de vous être envoyé.',
         variant: 'success',
       });
     } catch {
       toast({
-        title: 'Erreur',
-        description: "Impossible d'envoyer l'email pour le moment.",
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('onboarding', 'emailResendError') || "Impossible d'envoyer l'email pour le moment.",
         variant: 'destructive',
       });
     } finally {
@@ -128,7 +139,7 @@ export default function OnboardingVerifyPage() {
 
   const handleSendCode = async () => {
     if (!isPlausiblePhone(phoneValue)) {
-      setPhoneError('Veuillez saisir un numéro de téléphone valide.');
+      setPhoneError(t('onboarding', 'invalidPhone') || 'Veuillez saisir un numéro de téléphone valide.');
       return;
     }
     setPhoneError('');
@@ -145,16 +156,22 @@ export default function OnboardingVerifyPage() {
         setDemoCode('');
       }
       toast({
-        title: res?.devCode ? 'Code généré (démo)' : 'Code envoyé',
+        title: res?.devCode
+          ? t('onboarding', 'codeGeneratedDemo') || 'Code généré (démo)'
+          : t('onboarding', 'codeSentTitle') || 'Code envoyé',
         description: res?.devCode
-          ? 'SMS indisponible pour ce pays — code affiché ci-dessous (mode démo).'
-          : 'Un code à 6 chiffres vous a été envoyé par SMS.',
+          ? t('onboarding', 'codeSentDemoDesc') ||
+            'SMS indisponible pour ce pays — code affiché ci-dessous (mode démo).'
+          : t('onboarding', 'codeSentDesc') || 'Un code à 6 chiffres vous a été envoyé par SMS.',
         variant: 'success',
       });
     } catch (error: any) {
       toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message || "Impossible d'envoyer le code SMS.",
+        title: t('common', 'error') || 'Erreur',
+        description:
+          error?.response?.data?.message ||
+          t('onboarding', 'codeSendError') ||
+          "Impossible d'envoyer le code SMS.",
         variant: 'destructive',
       });
     } finally {
@@ -164,7 +181,7 @@ export default function OnboardingVerifyPage() {
 
   const handleVerifyCode = async () => {
     if (code.length !== 6) {
-      setPhoneError('Le code doit contenir 6 chiffres.');
+      setPhoneError(t('onboarding', 'codeSixDigits') || 'Le code doit contenir 6 chiffres.');
       return;
     }
     setPhoneError('');
@@ -172,16 +189,19 @@ export default function OnboardingVerifyPage() {
     try {
       await authApi.verifyPhoneCode(code, phoneValue);
       toast({
-        title: 'Téléphone vérifié',
-        description: 'Votre numéro a bien été confirmé.',
+        title: t('onboarding', 'phoneVerifiedTitle') || 'Téléphone vérifié',
+        description: t('onboarding', 'phoneVerifiedDesc') || 'Votre numéro a bien été confirmé.',
         variant: 'success',
       });
       setCode('');
       await loadMe();
     } catch (error: any) {
       toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message || 'Code incorrect ou expiré.',
+        title: t('common', 'error') || 'Erreur',
+        description:
+          error?.response?.data?.message ||
+          t('onboarding', 'codeInvalid') ||
+          'Code incorrect ou expiré.',
         variant: 'destructive',
       });
     } finally {
@@ -208,10 +228,11 @@ export default function OnboardingVerifyPage() {
             <span className="font-display text-[22px] font-extrabold tracking-tight text-foreground">Krafolt</span>
           </div>
           <CardTitle className="font-display text-2xl text-center tracking-tight">
-            Confirmez votre compte
+            {t('onboarding', 'confirmAccountTitle') || 'Confirmez votre compte'}
           </CardTitle>
           <CardDescription className="text-center">
-            Vérifiez votre email et votre téléphone pour accéder à Krafolt.
+            {t('onboarding', 'confirmAccountDesc') ||
+              'Vérifiez votre email et votre téléphone pour accéder à Krafolt.'}
           </CardDescription>
         </CardHeader>
 
@@ -224,35 +245,39 @@ export default function OnboardingVerifyPage() {
                   <Mail className="h-5 w-5 text-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-display font-bold text-foreground">Email</p>
+                  <p className="font-display font-bold text-foreground">{t('onboarding', 'emailLabel') || 'Email'}</p>
                   <p className="text-sm text-muted-foreground truncate">{me.email}</p>
                 </div>
               </div>
-              <StatusPill verified={me.emailVerified} />
+              <StatusPill verified={me.emailVerified} t={t} />
             </div>
 
             {!me.emailVerified && (
               <div className="mt-3 space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Un lien de vérification a été envoyé à <span className="font-medium text-foreground">{me.email}</span>. Cliquez dessus pour continuer.
+                  {t('onboarding', 'emailLinkSentPrefix') || 'Un lien de vérification a été envoyé à'}{' '}
+                  <span className="font-medium text-foreground">{me.email}</span>
+                  {t('onboarding', 'emailLinkSentSuffix') || '. Cliquez dessus pour continuer.'}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant="outline"
                     className="flex-1"
                     isLoading={resendingEmail}
-                    loadingText="Envoi…"
+                    loadingText={t('onboarding', 'sending') || 'Envoi…'}
                     disabled={emailCooldown > 0}
                     onClick={handleResendEmail}
                   >
-                    {emailCooldown > 0 ? `Renvoyer (${emailCooldown}s)` : "Renvoyer l'email"}
+                    {emailCooldown > 0
+                      ? `${t('onboarding', 'resend') || 'Renvoyer'} (${emailCooldown}s)`
+                      : t('onboarding', 'resendEmail') || "Renvoyer l'email"}
                   </Button>
                   <Button
                     className="flex-1"
                     leftIcon={<RefreshCw className="h-4 w-4" />}
                     onClick={handleRefresh}
                   >
-                    J'ai vérifié, rafraîchir
+                    {t('onboarding', 'verifiedRefresh') || "J'ai vérifié, rafraîchir"}
                   </Button>
                 </div>
               </div>
@@ -267,20 +292,22 @@ export default function OnboardingVerifyPage() {
                   <Phone className="h-5 w-5 text-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-display font-bold text-foreground">Téléphone</p>
+                  <p className="font-display font-bold text-foreground">{t('onboarding', 'phoneLabel') || 'Téléphone'}</p>
                   <p className="text-sm text-muted-foreground truncate">
-                    {me.phoneVerified ? me.phone : 'Non vérifié'}
+                    {me.phoneVerified ? me.phone : t('onboarding', 'notVerified') || 'Non vérifié'}
                   </p>
                 </div>
               </div>
-              <StatusPill verified={me.phoneVerified} />
+              <StatusPill verified={me.phoneVerified} t={t} />
             </div>
 
             {!me.phoneVerified && (
               <div className="mt-3 space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">
-                    {me.phone ? 'Votre numéro' : 'Ajoutez votre numéro'}
+                    {me.phone
+                      ? t('onboarding', 'yourNumber') || 'Votre numéro'
+                      : t('onboarding', 'addNumber') || 'Ajoutez votre numéro'}
                   </label>
                   <PhoneInput
                     value={phoneValue}
@@ -298,17 +325,17 @@ export default function OnboardingVerifyPage() {
                   <Button
                     className="w-full"
                     isLoading={sendingCode}
-                    loadingText="Envoi…"
+                    loadingText={t('onboarding', 'sending') || 'Envoi…'}
                     disabled={!phoneValid}
                     onClick={handleSendCode}
                   >
-                    Envoyer le code
+                    {t('onboarding', 'sendCode') || 'Envoyer le code'}
                   </Button>
                 ) : (
                   <div className="space-y-3">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-foreground">
-                        Code reçu par SMS
+                        {t('onboarding', 'smsCodeLabel') || 'Code reçu par SMS'}
                       </label>
                       <Input
                         type="text"
@@ -321,7 +348,9 @@ export default function OnboardingVerifyPage() {
                       />
                       {demoCode && (
                         <p className="rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
-                          Mode démo : SMS indisponible pour ce pays. Code prérempli&nbsp;:{' '}
+                          {t('onboarding', 'demoCodeNotice') ||
+                            'Mode démo : SMS indisponible pour ce pays. Code prérempli'}
+                          &nbsp;:{' '}
                           <span className="font-semibold tabular-nums">{demoCode}</span>
                         </p>
                       )}
@@ -331,19 +360,19 @@ export default function OnboardingVerifyPage() {
                         variant="outline"
                         className="flex-1"
                         isLoading={sendingCode}
-                        loadingText="Envoi…"
+                        loadingText={t('onboarding', 'sending') || 'Envoi…'}
                         onClick={handleSendCode}
                       >
-                        Renvoyer le code
+                        {t('onboarding', 'resendCode') || 'Renvoyer le code'}
                       </Button>
                       <Button
                         className="flex-1"
                         isLoading={verifyingCode}
-                        loadingText="Vérification…"
+                        loadingText={t('onboarding', 'verifying') || 'Vérification…'}
                         disabled={code.length !== 6}
                         onClick={handleVerifyCode}
                       >
-                        Vérifier
+                        {t('onboarding', 'verify') || 'Vérifier'}
                       </Button>
                     </div>
                   </div>
@@ -364,7 +393,7 @@ export default function OnboardingVerifyPage() {
               onClick={() => logout()}
               className="text-sm text-muted-foreground hover:text-foreground hover:underline"
             >
-              Se déconnecter
+              {t('onboarding', 'logout') || 'Se déconnecter'}
             </button>
           </div>
         </CardContent>

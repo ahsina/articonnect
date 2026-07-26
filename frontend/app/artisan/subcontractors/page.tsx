@@ -103,7 +103,7 @@ export default function SubcontractorsPage() {
       setAssignments(Array.isArray(assigns) ? assigns : []);
     } catch (err) {
       console.error('Error loading subcontractors:', err);
-      setError('Impossible de charger vos sous-traitants');
+      setError(t('subcontractor', 'manageLoadError') || 'Impossible de charger vos sous-traitants');
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,14 @@ export default function SubcontractorsPage() {
     const first = s.firstName || s.subcontractorUser?.firstName || '';
     const last = s.lastName || s.subcontractorUser?.lastName || '';
     const full = `${first} ${last}`.trim();
-    return full || s.externalName || s.subcontractorUser?.email || s.externalEmail || 'Sous-traitant';
+    return (
+      full ||
+      s.externalName ||
+      s.subcontractorUser?.email ||
+      s.externalEmail ||
+      t('subcontractor', 'subcontractorFallback') ||
+      'Sous-traitant'
+    );
   };
 
   const initials = (s?: Subcontractor | null): string =>
@@ -141,7 +148,11 @@ export default function SubcontractorsPage() {
   // ---------------------------------------------------------------- Invite
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
-      toast({ title: 'Erreur', description: "L'email est requis", variant: 'destructive' });
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description: t('subcontractor', 'emailRequired') || "L'email est requis",
+        variant: 'destructive',
+      });
       return;
     }
     const commission = Number(inviteCommission);
@@ -155,7 +166,11 @@ export default function SubcontractorsPage() {
           Number.isFinite(commission) && commission >= 0 ? commission : undefined,
         notes: inviteMessage.trim() || undefined,
       });
-      toast({ title: 'Succès', description: 'Invitation envoyée', variant: 'success' });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'invitationSent') || 'Invitation envoyée',
+        variant: 'success',
+      });
       setInviteOpen(false);
       setInviteEmail('');
       setInviteName('');
@@ -165,8 +180,11 @@ export default function SubcontractorsPage() {
       loadData();
     } catch (err: any) {
       toast({
-        title: 'Erreur',
-        description: err?.response?.data?.message || "Échec de l'envoi de l'invitation",
+        title: t('common', 'error') || 'Erreur',
+        description:
+          err?.response?.data?.message ||
+          t('subcontractor', 'inviteError') ||
+          "Échec de l'envoi de l'invitation",
         variant: 'destructive',
       });
     } finally {
@@ -187,8 +205,10 @@ export default function SubcontractorsPage() {
     const commission = Number(editCommission);
     if (!Number.isFinite(commission) || commission < 0 || commission > 100) {
       toast({
-        title: 'Erreur',
-        description: 'La commission doit être comprise entre 0 et 100 %',
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('subcontractor', 'commissionRange0to100') ||
+          'La commission doit être comprise entre 0 et 100 %',
         variant: 'destructive',
       });
       return;
@@ -199,13 +219,20 @@ export default function SubcontractorsPage() {
         subcontractorType: editType,
         defaultCommissionRate: commission,
       });
-      toast({ title: 'Succès', description: 'Sous-traitant mis à jour', variant: 'success' });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'subUpdated') || 'Sous-traitant mis à jour',
+        variant: 'success',
+      });
       setEditTarget(null);
       loadData();
     } catch (err: any) {
       toast({
-        title: 'Erreur',
-        description: err?.response?.data?.message || 'Échec de la mise à jour',
+        title: t('common', 'error') || 'Erreur',
+        description:
+          err?.response?.data?.message ||
+          t('subcontractor', 'updateError') ||
+          'Échec de la mise à jour',
         variant: 'destructive',
       });
     } finally {
@@ -238,19 +265,27 @@ export default function SubcontractorsPage() {
   const handleCreateAssignment = async () => {
     if (!assignTarget) return;
     if (!assignMissionId) {
-      toast({ title: 'Erreur', description: 'Choisissez une mission', variant: 'destructive' });
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description: t('subcontractor', 'chooseMission') || 'Choisissez une mission',
+        variant: 'destructive',
+      });
       return;
     }
     const amount = Number(assignAmount);
     if (!assignAmount.trim() || !Number.isFinite(amount) || amount < 0) {
-      toast({ title: 'Erreur', description: 'Montant invalide', variant: 'destructive' });
+      toast({
+        title: t('common', 'error') || 'Erreur',
+        description: t('subcontractor', 'invalidAmount') || 'Montant invalide',
+        variant: 'destructive',
+      });
       return;
     }
     const commission = Number(assignCommission);
     if (!Number.isFinite(commission) || commission < COMMISSION_FLOOR_RATE || commission > 100) {
       toast({
-        title: 'Erreur',
-        description: `La commission doit être comprise entre ${COMMISSION_FLOOR_RATE} et 100 %`,
+        title: t('common', 'error') || 'Erreur',
+        description: `${t('subcontractor', 'commissionMustBeBetween') || 'La commission doit être comprise entre'} ${COMMISSION_FLOOR_RATE} ${t('subcontractor', 'and100') || 'et 100 %'}`,
         variant: 'destructive',
       });
       return;
@@ -264,13 +299,20 @@ export default function SubcontractorsPage() {
         commissionRate: commission,
         description: assignNotes.trim() || undefined,
       });
-      toast({ title: 'Succès', description: 'Mission confiée', variant: 'success' });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'missionAssigned') || 'Mission confiée',
+        variant: 'success',
+      });
       setAssignTarget(null);
       loadData();
     } catch (err: any) {
       toast({
-        title: 'Erreur',
-        description: err?.response?.data?.message || 'Échec de la confiance de mission',
+        title: t('common', 'error') || 'Erreur',
+        description:
+          err?.response?.data?.message ||
+          t('subcontractor', 'assignError') ||
+          'Échec de la confiance de mission',
         variant: 'destructive',
       });
     } finally {
@@ -282,12 +324,19 @@ export default function SubcontractorsPage() {
   const handleCancelInvite = async (sub: Subcontractor) => {
     try {
       await subcontractorApi.manage.terminate(sub.id);
-      toast({ title: 'Succès', description: 'Invitation annulée', variant: 'success' });
+      toast({
+        title: t('common', 'success') || 'Succès',
+        description: t('subcontractor', 'invitationCancelled') || 'Invitation annulée',
+        variant: 'success',
+      });
       loadData();
     } catch (err: any) {
       toast({
-        title: 'Erreur',
-        description: err?.response?.data?.message || "Échec de l'annulation",
+        title: t('common', 'error') || 'Erreur',
+        description:
+          err?.response?.data?.message ||
+          t('subcontractor', 'cancelError') ||
+          "Échec de l'annulation",
         variant: 'destructive',
       });
     }
@@ -299,8 +348,10 @@ export default function SubcontractorsPage() {
     const userId = contactUserId(contactTarget);
     if (!userId) {
       toast({
-        title: 'Indisponible',
-        description: "Ce sous-traitant n'a pas encore de compte plateforme",
+        title: t('subcontractor', 'unavailableTitle') || 'Indisponible',
+        description:
+          t('subcontractor', 'noPlatformAccount') ||
+          "Ce sous-traitant n'a pas encore de compte plateforme",
         variant: 'destructive',
       });
       return;
@@ -312,13 +363,18 @@ export default function SubcontractorsPage() {
         userId,
         content: contactMessage.trim(),
       });
-      toast({ title: 'Envoyé', description: 'Message envoyé', variant: 'success' });
+      toast({
+        title: t('subcontractor', 'sentTitle') || 'Envoyé',
+        description: t('subcontractor', 'messageSent') || 'Message envoyé',
+        variant: 'success',
+      });
       setContactTarget(null);
       setContactMessage('');
     } catch (err: any) {
       toast({
-        title: 'Erreur',
-        description: err?.response?.data?.message || "Échec de l'envoi",
+        title: t('common', 'error') || 'Erreur',
+        description:
+          err?.response?.data?.message || t('subcontractor', 'sendError') || "Échec de l'envoi",
         variant: 'destructive',
       });
     } finally {
@@ -327,8 +383,8 @@ export default function SubcontractorsPage() {
   };
 
   const typeLabel = (type?: SubcontractorType | null): string | null => {
-    if (type === 'COMPANY') return 'Société';
-    if (type === 'INDIVIDUAL') return 'Indépendant';
+    if (type === 'COMPANY') return t('subcontractor', 'typeCompany') || 'Société';
+    if (type === 'INDIVIDUAL') return t('subcontractor', 'typeIndividual') || 'Indépendant';
     return null;
   };
 
@@ -337,7 +393,7 @@ export default function SubcontractorsPage() {
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Chargement...
+          {t('common', 'loading') || 'Chargement...'}
         </div>
       </div>
     );
@@ -356,15 +412,16 @@ export default function SubcontractorsPage() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
-            Mes sous-traitants
+            {t('subcontractor', 'manageTitle') || 'Mes sous-traitants'}
           </h1>
           <p className="text-muted-foreground">
-            Confiez des missions, suivez l'avancement, gérez la commission de chacun.
+            {t('subcontractor', 'manageSubtitle') ||
+              "Confiez des missions, suivez l'avancement, gérez la commission de chacun."}
           </p>
         </div>
         <Button className="w-full sm:w-auto shrink-0" onClick={() => setInviteOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Inviter un sous-traitant
+          {t('subcontractor', 'inviteButton') || 'Inviter un sous-traitant'}
         </Button>
       </div>
 
@@ -380,38 +437,49 @@ export default function SubcontractorsPage() {
           <div className="font-display text-2xl font-extrabold">
             {kpis?.activeSubcontractors ?? 0}
           </div>
-          <div className="text-xs font-medium opacity-80">Sous-traitants actifs</div>
+          <div className="text-xs font-medium opacity-80">
+            {t('subcontractor', 'kpiActiveSubs') || 'Sous-traitants actifs'}
+          </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4">
           <div className="font-display text-2xl font-extrabold text-foreground">
             {kpis?.missionsInProgress ?? 0}
           </div>
-          <div className="text-xs font-medium text-muted-foreground">Missions confiées en cours</div>
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('subcontractor', 'kpiMissionsInProgress') || 'Missions confiées en cours'}
+          </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4">
           <div className="font-display text-2xl font-extrabold text-warning">
             {eur(kpis?.totalOwedNet ?? 0)}
           </div>
-          <div className="text-xs font-medium text-muted-foreground">À leur payer (net)</div>
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('subcontractor', 'kpiToPayNet') || 'À leur payer (net)'}
+          </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4">
           <div className="font-display text-2xl font-extrabold text-foreground">
             {kpis?.teamAverageRating ? `★ ${kpis.teamAverageRating.toFixed(1)}` : '—'}
           </div>
-          <div className="text-xs font-medium text-muted-foreground">Note moyenne équipe</div>
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('subcontractor', 'kpiTeamRating') || 'Note moyenne équipe'}
+          </div>
         </div>
       </div>
 
       {/* Team */}
       <div className="mb-4 flex items-center gap-2">
         <Users className="h-5 w-5 text-muted-foreground" />
-        <h2 className="font-display text-lg font-bold text-foreground">Équipe</h2>
+        <h2 className="font-display text-lg font-bold text-foreground">
+          {t('subcontractor', 'team') || 'Équipe'}
+        </h2>
       </div>
 
       {subs.length === 0 ? (
         <Card className="rounded-2xl border-border">
           <CardContent className="py-12 text-center text-muted-foreground">
-            Aucun sous-traitant pour le moment. Invitez votre premier partenaire.
+            {t('subcontractor', 'emptyTeam') ||
+              'Aucun sous-traitant pour le moment. Invitez votre premier partenaire.'}
           </CardContent>
         </Card>
       ) : (
@@ -451,7 +519,11 @@ export default function SubcontractorsPage() {
                         <span className="flex items-center gap-1">
                           <Star className="h-3.5 w-3.5 text-warning" />
                           {rating > 0 ? rating.toFixed(1) : '—'}
-                          {reviews > 0 && <span className="text-xs">· {reviews} avis</span>}
+                          {reviews > 0 && (
+                            <span className="text-xs">
+                              · {reviews} {t('subcontractor', 'reviews') || 'avis'}
+                            </span>
+                          )}
                         </span>
                         {(sub.specialties?.length ?? 0) > 0 && (
                           <span>· {sub.specialties!.join(', ')}</span>
@@ -463,7 +535,9 @@ export default function SubcontractorsPage() {
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
-                          ● {available ? 'Disponible' : 'En pause'}
+                          ● {available
+                            ? t('subcontractor', 'available') || 'Disponible'
+                            : t('subcontractor', 'paused') || 'En pause'}
                         </span>
                       </div>
                     </div>
@@ -475,7 +549,7 @@ export default function SubcontractorsPage() {
                         onClick={() => openEdit(sub)}
                         className="text-xs font-medium text-muted-foreground underline hover:text-foreground"
                       >
-                        commission · modifier
+                        {t('subcontractor', 'commissionEdit') || 'commission · modifier'}
                       </button>
                     </div>
                   </div>
@@ -483,25 +557,25 @@ export default function SubcontractorsPage() {
                   {/* Stats */}
                   <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
                     <div className="text-xs font-medium text-muted-foreground">
-                      En cours
+                      {t('subcontractor', 'statInProgress') || 'En cours'}
                       <div className="font-display text-base font-extrabold text-foreground">
                         {st?.inProgress ?? 0}
                       </div>
                     </div>
                     <div className="text-xs font-medium text-muted-foreground">
-                      Terminées
+                      {t('subcontractor', 'kpiCompleted') || 'Terminées'}
                       <div className="font-display text-base font-extrabold text-foreground">
                         {st?.completed ?? 0}
                       </div>
                     </div>
                     <div className="text-xs font-medium text-muted-foreground">
-                      À payer
+                      {t('subcontractor', 'toPay') || 'À payer'}
                       <div className="font-display text-base font-extrabold text-warning">
-                        {eur(st?.owedNet ?? 0)} net
+                        {eur(st?.owedNet ?? 0)} {t('subcontractor', 'net') || 'net'}
                       </div>
                     </div>
                     <div className="text-xs font-medium text-muted-foreground">
-                      Fiabilité
+                      {t('subcontractor', 'statReliability') || 'Fiabilité'}
                       <div className="font-display text-base font-extrabold text-foreground">
                         {st?.reliability != null ? `${st.reliability} %` : '—'}
                       </div>
@@ -512,11 +586,11 @@ export default function SubcontractorsPage() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button size="sm" disabled={!available} onClick={() => openAssign(sub)}>
                       <Plus className="mr-1 h-4 w-4" />
-                      Confier une mission
+                      {t('subcontractor', 'assignMission') || 'Confier une mission'}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setDetailTarget(sub)}>
                       <Eye className="mr-1 h-4 w-4" />
-                      Voir le détail
+                      {t('subcontractor', 'viewDetail') || 'Voir le détail'}
                     </Button>
                     <Button
                       size="sm"
@@ -528,7 +602,7 @@ export default function SubcontractorsPage() {
                       }}
                     >
                       <MessageSquare className="mr-1 h-4 w-4" />
-                      Contacter
+                      {t('subcontractor', 'contact') || 'Contacter'}
                     </Button>
                   </div>
                 </CardContent>
@@ -562,13 +636,15 @@ export default function SubcontractorsPage() {
                             {typeLabel(sub.subcontractorType)}
                           </Badge>
                         )}
-                        <Badge className="bg-warning/10 text-warning">Invitation envoyée</Badge>
+                        <Badge className="bg-warning/10 text-warning">
+                          {t('subcontractor', 'invitationSentBadge') || 'Invitation envoyée'}
+                        </Badge>
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
                         {(sub.specialties?.length ?? 0) > 0 && (
                           <span>{sub.specialties!.join(', ')} · </span>
                         )}
-                        en attente d'acceptation
+                        {t('subcontractor', 'awaitingAcceptance') || "en attente d'acceptation"}
                       </div>
                     </div>
                     <div className="ml-auto text-right">
@@ -576,14 +652,14 @@ export default function SubcontractorsPage() {
                         {Number.isFinite(commission) && commission > 0 ? `${commission} %` : '—'}
                       </div>
                       <div className="text-xs font-medium text-muted-foreground">
-                        commission proposée
+                        {t('subcontractor', 'proposedCommissionLabel') || 'commission proposée'}
                       </div>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => openEdit(sub)}>
                       <Pencil className="mr-1 h-4 w-4" />
-                      Modifier la commission
+                      {t('subcontractor', 'editCommission') || 'Modifier la commission'}
                     </Button>
                     <Button
                       size="sm"
@@ -591,7 +667,7 @@ export default function SubcontractorsPage() {
                       className="text-destructive hover:text-destructive"
                       onClick={() => handleCancelInvite(sub)}
                     >
-                      Annuler
+                      {t('common', 'cancel') || 'Annuler'}
                     </Button>
                   </div>
                 </CardContent>
@@ -606,14 +682,17 @@ export default function SubcontractorsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-lg rounded-2xl border-border">
             <CardHeader>
-              <CardTitle>Inviter un sous-traitant</CardTitle>
+              <CardTitle>{t('subcontractor', 'inviteButton') || 'Inviter un sous-traitant'}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Il recevra une invitation par email pour rejoindre votre réseau.
+                {t('subcontractor', 'inviteModalDesc') ||
+                  'Il recevra une invitation par email pour rejoindre votre réseau.'}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Email *</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {t('subcontractor', 'emailLabel') || 'Email'} *
+                </label>
                 <Input
                   type="email"
                   value={inviteEmail}
@@ -623,29 +702,31 @@ export default function SubcontractorsPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">
-                  Nom / raison sociale
+                  {t('subcontractor', 'nameOrCompany') || 'Nom / raison sociale'}
                 </label>
                 <Input
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
-                  placeholder="Optionnel"
+                  placeholder={t('subcontractor', 'optional') || 'Optionnel'}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Type</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">
+                    {t('subcontractor', 'type') || 'Type'}
+                  </label>
                   <select
                     value={inviteType}
                     onChange={(e) => setInviteType(e.target.value as SubcontractorType)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <option value="COMPANY">Société</option>
-                    <option value="INDIVIDUAL">Indépendant</option>
+                    <option value="COMPANY">{t('subcontractor', 'typeCompany') || 'Société'}</option>
+                    <option value="INDIVIDUAL">{t('subcontractor', 'typeIndividual') || 'Indépendant'}</option>
                   </select>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">
-                    Commission par défaut (%)
+                    {t('subcontractor', 'defaultCommission') || 'Commission par défaut (%)'}
                   </label>
                   <Input
                     type="number"
@@ -658,20 +739,22 @@ export default function SubcontractorsPage() {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Message</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {t('subcontractor', 'messageLabel') || 'Message'}
+                </label>
                 <Input
                   value={inviteMessage}
                   onChange={(e) => setInviteMessage(e.target.value)}
-                  placeholder="Optionnel"
+                  placeholder={t('subcontractor', 'optional') || 'Optionnel'}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setInviteOpen(false)} disabled={inviting}>
-                  Annuler
+                  {t('common', 'cancel') || 'Annuler'}
                 </Button>
                 <Button onClick={handleInvite} disabled={inviting}>
                   {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Envoyer l'invitation
+                  {t('subcontractor', 'sendInvitation') || "Envoyer l'invitation"}
                 </Button>
               </div>
             </CardContent>
@@ -684,26 +767,31 @@ export default function SubcontractorsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-md rounded-2xl border-border">
             <CardHeader>
-              <CardTitle>Modifier {displayName(editTarget)}</CardTitle>
+              <CardTitle>
+                {t('subcontractor', 'edit') || 'Modifier'} {displayName(editTarget)}
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Type et commission par défaut appliqués aux prochaines missions.
+                {t('subcontractor', 'editModalDesc') ||
+                  'Type et commission par défaut appliqués aux prochaines missions.'}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Type</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {t('subcontractor', 'type') || 'Type'}
+                </label>
                 <select
                   value={editType}
                   onChange={(e) => setEditType(e.target.value as SubcontractorType)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="COMPANY">Société</option>
-                  <option value="INDIVIDUAL">Indépendant</option>
+                  <option value="COMPANY">{t('subcontractor', 'typeCompany') || 'Société'}</option>
+                  <option value="INDIVIDUAL">{t('subcontractor', 'typeIndividual') || 'Indépendant'}</option>
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">
-                  Commission par défaut (%)
+                  {t('subcontractor', 'defaultCommission') || 'Commission par défaut (%)'}
                 </label>
                 <Input
                   type="number"
@@ -714,16 +802,17 @@ export default function SubcontractorsPage() {
                   onChange={(e) => setEditCommission(e.target.value)}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Minimum {COMMISSION_FLOOR_RATE} % (plancher plateforme) à l'attribution.
+                  {t('subcontractor', 'minCommissionPrefix') || 'Minimum'} {COMMISSION_FLOOR_RATE}{' '}
+                  {t('subcontractor', 'minCommissionSuffix') || "% (plancher plateforme) à l'attribution."}
                 </p>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setEditTarget(null)} disabled={savingEdit}>
-                  Annuler
+                  {t('common', 'cancel') || 'Annuler'}
                 </Button>
                 <Button onClick={handleSaveEdit} disabled={savingEdit}>
                   {savingEdit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Enregistrer
+                  {t('common', 'save') || 'Enregistrer'}
                 </Button>
               </div>
             </CardContent>
@@ -736,36 +825,40 @@ export default function SubcontractorsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-lg rounded-2xl border-border">
             <CardHeader>
-              <CardTitle>Confier une mission</CardTitle>
-              <p className="text-sm text-muted-foreground">à {displayName(assignTarget)}</p>
+              <CardTitle>{t('subcontractor', 'assignMission') || 'Confier une mission'}</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {t('subcontractor', 'toRecipient') || 'à'} {displayName(assignTarget)}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">
-                  Mission à confier *
+                  {t('subcontractor', 'missionToAssign') || 'Mission à confier'} *
                 </label>
                 <select
                   value={assignMissionId}
                   onChange={(e) => onSelectMission(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="">Choisir une mission...</option>
+                  <option value="">{t('subcontractor', 'chooseMissionOption') || 'Choisir une mission...'}</option>
                   {missions.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {(m?.title || 'Mission') +
+                      {(m?.title || t('subcontractor', 'untitledMission') || 'Mission') +
                         (m?.city ? ` — ${m.city}` : '') +
                         (m?.status ? ` (${m.status})` : '')}
                     </option>
                   ))}
                 </select>
                 {missions.length === 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground">Aucune mission disponible</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t('subcontractor', 'noMissionAvailable') || 'Aucune mission disponible'}
+                  </p>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">
-                    Montant convenu (brut) *
+                    {t('subcontractor', 'agreedAmountGross') || 'Montant convenu (brut)'} *
                   </label>
                   <Input
                     type="number"
@@ -777,7 +870,7 @@ export default function SubcontractorsPage() {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-foreground">
-                    Commission plateforme (%) *
+                    {t('subcontractor', 'platformCommission') || 'Commission plateforme (%)'} *
                   </label>
                   <Input
                     type="number"
@@ -793,27 +886,32 @@ export default function SubcontractorsPage() {
               {Number(assignAmount) > 0 && (
                 <div className="rounded-xl bg-success/10 px-3 py-3 text-sm font-medium text-success">
                   <Wallet className="mr-1 inline h-4 w-4" />
-                  Le sous-traitant percevra{' '}
-                  <b>{eur(netOf(Number(assignAmount), Number(assignCommission)))} net</b> (
-                  {eur(Number(assignAmount))} − {Number(assignCommission) || COMMISSION_FLOOR_RATE} %).
-                  Versé à la clôture de la mission.
+                  {t('subcontractor', 'subWillReceive') || 'Le sous-traitant percevra'}{' '}
+                  <b>
+                    {eur(netOf(Number(assignAmount), Number(assignCommission)))}{' '}
+                    {t('subcontractor', 'net') || 'net'}
+                  </b>{' '}
+                  ({eur(Number(assignAmount))} − {Number(assignCommission) || COMMISSION_FLOOR_RATE} %).{' '}
+                  {t('subcontractor', 'paidAtClosure') || 'Versé à la clôture de la mission.'}
                 </div>
               )}
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Note (rôle)</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">
+                  {t('subcontractor', 'noteRole') || 'Note (rôle)'}
+                </label>
                 <Input
                   value={assignNotes}
                   onChange={(e) => setAssignNotes(e.target.value)}
-                  placeholder="Optionnel"
+                  placeholder={t('subcontractor', 'optional') || 'Optionnel'}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setAssignTarget(null)} disabled={assigning}>
-                  Annuler
+                  {t('common', 'cancel') || 'Annuler'}
                 </Button>
                 <Button onClick={handleCreateAssignment} disabled={assigning}>
                   {assigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Confier la mission
+                  {t('subcontractor', 'assignMissionCta') || 'Confier la mission'}
                 </Button>
               </div>
             </CardContent>
@@ -831,13 +929,14 @@ export default function SubcontractorsPage() {
                 {displayName(detailTarget)}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                {detailAssignments.length} mission(s) confiée(s)
+                {detailAssignments.length}{' '}
+                {t('subcontractor', 'missionsAssignedCount') || 'mission(s) confiée(s)'}
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
               {detailAssignments.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
-                  Aucune mission confiée pour le moment.
+                  {t('subcontractor', 'noMissionsAssigned') || 'Aucune mission confiée pour le moment.'}
                 </div>
               ) : (
                 detailAssignments.map((a) => {
@@ -849,10 +948,12 @@ export default function SubcontractorsPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate font-semibold text-foreground">
-                            {a.mission?.title || 'Mission'}
+                            {a.mission?.title || t('subcontractor', 'untitledMission') || 'Mission'}
                           </div>
                           <div className="mt-1 text-sm text-muted-foreground">
-                            {eur(amount)} brut · {net > 0 ? `${eur(net)} net` : '—'} · {rate || COMMISSION_FLOOR_RATE} %
+                            {eur(amount)} {t('subcontractor', 'gross') || 'brut'} ·{' '}
+                            {net > 0 ? `${eur(net)} ${t('subcontractor', 'net') || 'net'}` : '—'} ·{' '}
+                            {rate || COMMISSION_FLOOR_RATE} %
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
@@ -864,7 +965,9 @@ export default function SubcontractorsPage() {
                                 : 'bg-warning/10 text-warning'
                             }
                           >
-                            {a.paymentStatus === 'PAID' ? 'Payé' : 'À payer'}
+                            {a.paymentStatus === 'PAID'
+                              ? t('subcontractor', 'paid') || 'Payé'
+                              : t('subcontractor', 'toPay') || 'À payer'}
                           </Badge>
                         </div>
                       </div>
@@ -874,7 +977,7 @@ export default function SubcontractorsPage() {
               )}
               <div className="flex justify-end pt-2">
                 <Button variant="outline" onClick={() => setDetailTarget(null)}>
-                  Fermer
+                  {t('common', 'close') || 'Fermer'}
                 </Button>
               </div>
             </CardContent>
@@ -887,9 +990,12 @@ export default function SubcontractorsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-md rounded-2xl border-border">
             <CardHeader>
-              <CardTitle>Contacter {displayName(contactTarget)}</CardTitle>
+              <CardTitle>
+                {t('subcontractor', 'contact') || 'Contacter'} {displayName(contactTarget)}
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Message envoyé via la messagerie de la plateforme.
+                {t('subcontractor', 'contactModalDesc') ||
+                  'Message envoyé via la messagerie de la plateforme.'}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -897,7 +1003,7 @@ export default function SubcontractorsPage() {
                 value={contactMessage}
                 onChange={(e) => setContactMessage(e.target.value)}
                 rows={4}
-                placeholder="Votre message..."
+                placeholder={t('subcontractor', 'yourMessagePlaceholder') || 'Votre message...'}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <div className="flex justify-end gap-2">
@@ -906,14 +1012,14 @@ export default function SubcontractorsPage() {
                   onClick={() => setContactTarget(null)}
                   disabled={sendingContact}
                 >
-                  Annuler
+                  {t('common', 'cancel') || 'Annuler'}
                 </Button>
                 <Button
                   onClick={handleSendContact}
                   disabled={sendingContact || !contactMessage.trim()}
                 >
                   {sendingContact && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Envoyer
+                  {t('common', 'send') || 'Envoyer'}
                 </Button>
               </div>
             </CardContent>

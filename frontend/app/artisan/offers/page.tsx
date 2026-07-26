@@ -193,7 +193,7 @@ export default function ArtisanOffersPage() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <Link href={`/artisan/missions/${o.missionId}`}>
-                            {o.status === 'ACCEPTED' ? (
+                            {o.status === 'ACCEPTED' && !['COMPLETED', 'AUTO_VALIDATED', 'CANCELLED', 'CANCELLED_NO_SHOW', 'DISPUTED'].includes((o.mission as { status?: string } | undefined)?.status ?? '') ? (
                               <Button size="sm">
                                 {t('offers', 'actionRealise') || 'Réaliser'} <ArrowRight className="ml-1 h-3.5 w-3.5" />
                               </Button>
@@ -228,7 +228,7 @@ export default function ArtisanOffersPage() {
                       <span className="font-semibold text-foreground">{formatCurrency(o.proposedPrice)}</span>
                     </div>
                     <Link href={`/artisan/missions/${o.missionId}`} className="block mt-3">
-                      {o.status === 'ACCEPTED' ? (
+                      {o.status === 'ACCEPTED' && !['COMPLETED', 'AUTO_VALIDATED', 'CANCELLED', 'CANCELLED_NO_SHOW', 'DISPUTED'].includes((o.mission as { status?: string } | undefined)?.status ?? '') ? (
                         <Button size="sm" className="w-full">
                           {t('offers', 'actionRealise') || 'Réaliser'} <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Button>

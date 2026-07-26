@@ -7,17 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { quoteApi, num, type Quote, type QuoteStatus, type LineItemType } from '@/lib/api/quote';
-
-const STATUS_LABELS: Record<QuoteStatus, string> = {
-  DRAFT: 'Brouillon',
-  SENT: 'À traiter',
-  VIEWED: 'Vu',
-  ACCEPTED: 'Accepté',
-  REJECTED: 'Refusé',
-  EXPIRED: 'Expiré',
-  CONVERTED: 'Signé',
-};
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
   DRAFT: 'bg-muted text-foreground',
@@ -27,13 +18,6 @@ const STATUS_COLORS: Record<QuoteStatus, string> = {
   REJECTED: 'bg-red-100 text-red-700',
   EXPIRED: 'bg-muted text-muted-foreground',
   CONVERTED: 'bg-primary/10 text-primary',
-};
-
-const ITEM_TYPE_LABELS: Record<LineItemType, string> = {
-  LABOR: "Main d'œuvre",
-  MATERIAL: 'Matériel',
-  TRAVEL: 'Déplacement',
-  OTHER: 'Autre',
 };
 
 const formatCurrency = (amount: number) =>
@@ -46,7 +30,25 @@ export default function ClientQuoteDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const id = String(params?.id || '');
+
+  // Libellés de statut et de type de ligne, traduits (t() humanise la clé si absente du dictionnaire).
+  const STATUS_LABELS: Record<QuoteStatus, string> = {
+    DRAFT: t('quotes', 'statusDraft'),
+    SENT: t('quotes', 'statusSent'),
+    VIEWED: t('quotes', 'statusViewed'),
+    ACCEPTED: t('quotes', 'statusAccepted'),
+    REJECTED: t('quotes', 'statusRejected'),
+    EXPIRED: t('quotes', 'statusExpired'),
+    CONVERTED: t('quotes', 'statusConverted'),
+  };
+  const ITEM_TYPE_LABELS: Record<LineItemType, string> = {
+    LABOR: t('quotes', 'itemTypeLabor'),
+    MATERIAL: t('quotes', 'itemTypeMaterial'),
+    TRAVEL: t('quotes', 'itemTypeTravel'),
+    OTHER: t('quotes', 'itemTypeOther'),
+  };
 
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,11 +78,11 @@ export default function ClientQuoteDetailPage() {
     } catch (error: any) {
       console.error('Erreur chargement devis:', error);
       toast({
-        title: 'Erreur',
+        title: t('common', 'error'),
         description:
           error?.response?.status === 403 || error?.response?.status === 404
-            ? "Ce devis est introuvable ou ne vous est pas destiné."
-            : 'Impossible de charger le devis.',
+            ? t('quotes', 'notFoundOrForbidden')
+            : t('quotes', 'loadError'),
         variant: 'destructive',
       });
     } finally {
@@ -102,12 +104,12 @@ export default function ClientQuoteDetailPage() {
     setActing(true);
     try {
       await quoteApi.respond(quote.id, { accepted: true });
-      toast({ title: 'Devis accepté', description: "L'artisan a été notifié.", variant: 'success' });
+      toast({ title: t('quotes', 'accepted'), description: t('quotes', 'artisanNotified'), variant: 'success' });
       await load();
     } catch (error: any) {
       toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message?.toString() || "Impossible d'accepter le devis.",
+        title: t('common', 'error'),
+        description: error?.response?.data?.message?.toString() || t('quotes', 'acceptError'),
         variant: 'destructive',
       });
     } finally {
@@ -120,14 +122,14 @@ export default function ClientQuoteDetailPage() {
     setActing(true);
     try {
       await quoteApi.respond(quote.id, { accepted: false, rejectionReason: rejectReason.trim() || undefined });
-      toast({ title: 'Devis refusé', description: "L'artisan a été notifié.", variant: 'success' });
+      toast({ title: t('quotes', 'rejected'), description: t('quotes', 'artisanNotified'), variant: 'success' });
       setShowReject(false);
       setRejectReason('');
       await load();
     } catch (error: any) {
       toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message?.toString() || 'Impossible de refuser le devis.',
+        title: t('common', 'error'),
+        description: error?.response?.data?.message?.toString() || t('quotes', 'rejectError'),
         variant: 'destructive',
       });
     } finally {
@@ -184,7 +186,7 @@ export default function ClientQuoteDetailPage() {
   const handleSign = async () => {
     if (!quote) return;
     if (!hasDrawn) {
-      toast({ title: 'Signature requise', description: 'Veuillez dessiner votre signature.', variant: 'destructive' });
+      toast({ title: t('quotes', 'signatureRequired'), description: t('quotes', 'drawSignature'), variant: 'destructive' });
       return;
     }
     setSigning(true);
@@ -197,8 +199,8 @@ export default function ClientQuoteDetailPage() {
         signerRole: 'CLIENT',
       });
       toast({
-        title: 'Devis signé',
-        description: 'Votre acceptation a été enregistrée. Une facture a été générée.',
+        title: t('quotes', 'signed'),
+        description: t('quotes', 'signedDesc'),
         variant: 'success',
       });
       setShowSignature(false);
@@ -206,8 +208,8 @@ export default function ClientQuoteDetailPage() {
     } catch (error: any) {
       console.error('Erreur signature:', error);
       toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message?.toString() || 'Échec de la signature.',
+        title: t('common', 'error'),
+        description: error?.response?.data?.message?.toString() || t('quotes', 'signError'),
         variant: 'destructive',
       });
     } finally {
@@ -216,20 +218,20 @@ export default function ClientQuoteDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-muted-foreground">Chargement…</div>;
+    return <div className="p-6 text-center text-muted-foreground">{t('quotes', 'loading')}</div>;
   }
   if (!quote) {
     return (
       <div className="p-6">
-        <Button variant="outline" onClick={() => router.push('/client/quotes')}>← Retour aux devis</Button>
-        <div className="text-center py-12 text-muted-foreground">Devis introuvable.</div>
+        <Button variant="outline" onClick={() => router.push('/client/quotes')}>← {t('quotes', 'backToQuotes')}</Button>
+        <div className="text-center py-12 text-muted-foreground">{t('quotes', 'notFound')}</div>
       </div>
     );
   }
 
   const artisanName = quote.artisan
     ? [quote.artisan.firstName, quote.artisan.lastName].filter(Boolean).join(' ')
-    : 'Artisan';
+    : t('quotes', 'artisanDefault');
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
@@ -238,7 +240,7 @@ export default function ClientQuoteDetailPage() {
         onClick={() => router.push('/client/quotes')}
         className="text-[13.5px] font-semibold text-muted-foreground mb-4 hover:text-foreground"
       >
-        ← Retour aux devis
+        ← {t('quotes', 'backToQuotes')}
       </button>
 
       <Card className="mb-4">
@@ -248,16 +250,16 @@ export default function ClientQuoteDetailPage() {
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="font-mono text-[11.5px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">{quote.quoteNumber}</span>
                 <Badge className={STATUS_COLORS[quote.status]}>{STATUS_LABELS[quote.status]}</Badge>
-                {isExpired && <Badge className="bg-red-100 text-red-700">Expiré</Badge>}
+                {isExpired && <Badge className="bg-red-100 text-red-700">{t('quotes', 'expired')}</Badge>}
               </div>
               <h1 className="font-display text-[23px] font-extrabold tracking-tight mt-2 text-foreground">{quote.title}</h1>
-              <p className="text-[13.5px] text-muted-foreground mt-1">De : {artisanName}</p>
+              <p className="text-[13.5px] text-muted-foreground mt-1">{t('quotes', 'fromLabel')} {artisanName}</p>
             </div>
             <div className="text-right">
               <div className="font-display text-[26px] font-extrabold text-foreground">{formatCurrency(num(quote.totalAmount))}</div>
-              <div className="text-xs text-muted-foreground">Valide jusqu&apos;au {formatDate(quote.validUntil)}</div>
+              <div className="text-xs text-muted-foreground">{t('quotes', 'validUntil')} {formatDate(quote.validUntil)}</div>
               <a href={quoteApi.pdfUrl(quote.id)} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm" className="mt-3">Télécharger le PDF</Button>
+                <Button variant="outline" size="sm" className="mt-3">{t('quotes', 'downloadPdf')}</Button>
               </a>
             </div>
           </div>
@@ -270,11 +272,11 @@ export default function ClientQuoteDetailPage() {
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="bg-muted text-muted-foreground">
-                    <th className="text-left font-semibold text-[12.5px] px-3.5 py-2.5">Désignation</th>
-                    <th className="text-left font-semibold text-[12.5px] px-3.5 py-2.5">Type</th>
-                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">Qté</th>
-                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">P.U.</th>
-                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">Total</th>
+                    <th className="text-left font-semibold text-[12.5px] px-3.5 py-2.5">{t('quotes', 'colDescription')}</th>
+                    <th className="text-left font-semibold text-[12.5px] px-3.5 py-2.5">{t('quotes', 'colType')}</th>
+                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">{t('quotes', 'colQty')}</th>
+                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">{t('quotes', 'colUnitPrice')}</th>
+                    <th className="text-right font-semibold text-[12.5px] px-3.5 py-2.5">{t('quotes', 'colTotal')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -296,17 +298,17 @@ export default function ClientQuoteDetailPage() {
 
           {/* Totaux */}
           <div className="mt-[18px] ml-auto max-w-[280px] text-sm">
-            <div className="flex justify-between py-1.5"><span className="text-muted-foreground">Sous-total</span><span>{formatCurrency(num(quote.subtotal))}</span></div>
+            <div className="flex justify-between py-1.5"><span className="text-muted-foreground">{t('quotes', 'subtotal')}</span><span>{formatCurrency(num(quote.subtotal))}</span></div>
             {num(quote.discountAmount) > 0 && (
-              <div className="flex justify-between py-1.5"><span className="text-muted-foreground">Remise</span><span className="text-destructive">−{formatCurrency(num(quote.discountAmount))}</span></div>
+              <div className="flex justify-between py-1.5"><span className="text-muted-foreground">{t('quotes', 'discount')}</span><span className="text-destructive">−{formatCurrency(num(quote.discountAmount))}</span></div>
             )}
-            <div className="flex justify-between py-1.5"><span className="text-muted-foreground">TVA ({num(quote.taxRate)}%)</span><span>{formatCurrency(num(quote.taxAmount))}</span></div>
-            <div className="flex justify-between border-t border-border pt-3 mt-1.5 font-display text-[17px] font-extrabold"><span>Total TTC</span><span>{formatCurrency(num(quote.totalAmount))}</span></div>
+            <div className="flex justify-between py-1.5"><span className="text-muted-foreground">{t('quotes', 'vat')} ({num(quote.taxRate)}%)</span><span>{formatCurrency(num(quote.taxAmount))}</span></div>
+            <div className="flex justify-between border-t border-border pt-3 mt-1.5 font-display text-[17px] font-extrabold"><span>{t('quotes', 'totalTtc')}</span><span>{formatCurrency(num(quote.totalAmount))}</span></div>
           </div>
 
           {quote.termsAndConditions && (
             <div className="mt-[18px] p-4 bg-muted rounded-xl text-[13.5px] text-muted-foreground whitespace-pre-line">
-              <div className="font-semibold text-foreground mb-1">Conditions</div>
+              <div className="font-semibold text-foreground mb-1">{t('quotes', 'conditions')}</div>
               {quote.termsAndConditions}
             </div>
           )}
@@ -317,38 +319,37 @@ export default function ClientQuoteDetailPage() {
       {['ACCEPTED', 'CONVERTED'].includes(quote.status) ? (
         <Card>
           <CardContent className="p-5 pt-5 text-center text-green-700 bg-green-50 rounded-2xl">
-            Vous avez accepté ce devis{quote.status === 'CONVERTED' ? ' (signé, facture générée)' : ''}.
+            {t('quotes', 'acceptedMessage')}{quote.status === 'CONVERTED' ? t('quotes', 'acceptedSignedSuffix') : ''}.
           </CardContent>
         </Card>
       ) : quote.status === 'REJECTED' ? (
         <Card>
           <CardContent className="p-5 pt-5 text-center text-red-700 bg-red-50 rounded-2xl">
-            Vous avez refusé ce devis.
+            {t('quotes', 'rejectedMessage')}
           </CardContent>
         </Card>
       ) : isExpired ? (
         <Card>
           <CardContent className="p-5 pt-5 text-center text-muted-foreground">
-            Ce devis a expiré. Contactez l&apos;artisan pour en obtenir un nouveau.
+            {t('quotes', 'expiredMessage')}
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardContent className="p-5 pt-5">
             <div className="rounded-xl bg-blue-50 p-3.5 text-[13px] text-blue-700 mb-4">
-              Vous pouvez accepter ce devis en un clic, ou le <strong>signer électroniquement</strong> (valeur
-              juridique eIDAS) pour générer directement la facture.
+              {t('quotes', 'helpTextPrefix')} <strong>{t('quotes', 'helpTextBold')}</strong> {t('quotes', 'helpTextSuffix')}
             </div>
             <div className="flex flex-wrap gap-2.5 items-center">
-              {canSign && <Button onClick={() => setShowSignature(true)}>Accepter et signer</Button>}
+              {canSign && <Button onClick={() => setShowSignature(true)}>{t('quotes', 'acceptAndSign')}</Button>}
               {canRespond && (
                 <Button variant={canSign ? 'outline' : 'default'} onClick={handleAccept} disabled={acting}>
-                  {acting ? 'Traitement…' : 'Accepter'}
+                  {acting ? t('quotes', 'processing') : t('quotes', 'accept')}
                 </Button>
               )}
               {canRespond && (
                 <Button variant="ghost" className="text-destructive" onClick={() => setShowReject(true)}>
-                  Refuser
+                  {t('quotes', 'reject')}
                 </Button>
               )}
             </div>
@@ -360,17 +361,17 @@ export default function ClientQuoteDetailPage() {
       {showReject && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-foreground mb-3">Refuser le devis</h3>
+            <h3 className="text-lg font-bold text-foreground mb-3">{t('quotes', 'rejectQuoteTitle')}</h3>
             <Textarea
-              placeholder="Motif (optionnel)"
+              placeholder={t('quotes', 'reasonOptional')}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
             />
             <div className="flex justify-end gap-3 mt-4">
-              <Button variant="outline" onClick={() => setShowReject(false)}>Annuler</Button>
+              <Button variant="outline" onClick={() => setShowReject(false)}>{t('quotes', 'cancel')}</Button>
               <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleReject} disabled={acting}>
-                {acting ? '…' : 'Confirmer le refus'}
+                {acting ? '…' : t('quotes', 'confirmReject')}
               </Button>
             </div>
           </div>
@@ -382,7 +383,7 @@ export default function ClientQuoteDetailPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg max-w-lg w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-foreground">Signer le devis</h3>
+              <h3 className="text-lg font-bold text-foreground">{t('quotes', 'signQuoteTitle')}</h3>
               <button onClick={() => setShowSignature(false)} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
             </div>
             <div className="mb-4 p-3 bg-muted/50 rounded-lg">
@@ -390,7 +391,7 @@ export default function ClientQuoteDetailPage() {
               <div className="font-medium text-foreground">{quote.title}</div>
               <div className="text-lg font-bold text-primary mt-1">{formatCurrency(num(quote.totalAmount))}</div>
             </div>
-            <label className="block text-sm font-medium text-foreground mb-2">Dessinez votre signature :</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('quotes', 'drawSignatureLabel')}</label>
             <div className="border-2 border-dashed border-border rounded-lg overflow-hidden">
               <canvas
                 ref={canvasRef}
@@ -406,15 +407,13 @@ export default function ClientQuoteDetailPage() {
                 onTouchEnd={stopDrawing}
               />
             </div>
-            <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-2">Effacer</Button>
+            <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-2">{t('quotes', 'clear')}</Button>
             <div className="p-3 bg-primary/10 rounded-lg my-4 text-xs text-primary">
-              En signant, je reconnais avoir pris connaissance des conditions et accepte les termes du
-              devis. Cette signature électronique a valeur juridique (règlement eIDAS, art. 1366-1367 du
-              Code civil).
+              {t('quotes', 'eidasNotice')}
             </div>
             <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setShowSignature(false)}>Annuler</Button>
-              <Button onClick={handleSign} disabled={signing}>{signing ? 'Signature…' : 'Confirmer et signer'}</Button>
+              <Button variant="outline" onClick={() => setShowSignature(false)}>{t('quotes', 'cancel')}</Button>
+              <Button onClick={handleSign} disabled={signing}>{signing ? t('quotes', 'signing') : t('quotes', 'confirmAndSign')}</Button>
             </div>
           </div>
         </div>

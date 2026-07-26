@@ -630,7 +630,7 @@ export default function MissionDetailsPage() {
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Non définie';
+    if (!dateString) return t('common', 'notDefined') || 'Non définie';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -771,7 +771,7 @@ export default function MissionDetailsPage() {
             {t('common', 'back')}
           </Button>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mission.title} · Réf {mission.id.slice(0, 8).toUpperCase()}
+            {mission.title} · {t('missions', 'refLabel') || 'Réf'} {mission.id.slice(0, 8).toUpperCase()}
           </p>
         </div>
 
@@ -851,7 +851,7 @@ export default function MissionDetailsPage() {
             ['ACCEPTED', 'PAID', 'IN_PROGRESS', 'IN_TRANSIT', 'ARRIVED'].includes(s) ? 4 :
             ['COMPLETED', 'AUTO_VALIDATED', 'VALIDATED'].includes(s) ? 5 :
             s === 'CANCELLED' ? 0 : 1;
-          const stepLabels = ['', 'Recherche', 'Offres', 'Paiement', 'Réalisation', 'Validation'];
+          const stepLabels = ['', t('missions', 'stepLabelSearch') || 'Recherche', t('missions', 'stepLabelOffers') || 'Offres', t('missions', 'stepLabelPayment') || 'Paiement', t('missions', 'stepLabelExecution') || 'Réalisation', t('missions', 'stepLabelValidation') || 'Validation'];
           let headline = '', sub = '';
           if (s === 'CANCELLED') { headline = t('missions', 'stCancelled') || 'Demande annulée'; sub = t('missions', 'stCancelledSub') || 'Cette demande a été annulée.'; }
           else if (['PENDING', 'NEGOTIATING'].includes(s) && offers === 0) { headline = t('missions', 'stSearching') || 'Recherche d’artisans…'; sub = t('missions', 'stSearchingSub') || 'Votre demande est diffusée aux artisans vérifiés à proximité.'; }
@@ -939,7 +939,7 @@ export default function MissionDetailsPage() {
                           <img
                             key={index}
                             src={url}
-                            alt={`Après ${index + 1}`}
+                            alt={`${t('missions', 'afterPhotoAlt') || 'Après'} ${index + 1}`}
                             className="h-24 w-full cursor-pointer rounded-lg border border-border object-cover transition-opacity hover:opacity-90"
                             onClick={() => window.open(url, '_blank')}
                           />
@@ -1026,7 +1026,7 @@ export default function MissionDetailsPage() {
                           <img
                             key={index}
                             src={url}
-                            alt={`Avant ${index + 1}`}
+                            alt={`${t('missions', 'beforePhotoAlt') || 'Avant'} ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => window.open(url, '_blank')}
                           />
@@ -1047,7 +1047,7 @@ export default function MissionDetailsPage() {
                           <img
                             key={index}
                             src={url}
-                            alt={`Après ${index + 1}`}
+                            alt={`${t('missions', 'afterPhotoAlt') || 'Après'} ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => window.open(url, '_blank')}
                           />
@@ -1106,7 +1106,7 @@ export default function MissionDetailsPage() {
                         <p className="text-sm text-muted-foreground">{mission.billingAddress}</p>
                       )}
                       {mission.billingVatNumber && (
-                        <p className="text-sm text-muted-foreground">TVA: {mission.billingVatNumber}</p>
+                        <p className="text-sm text-muted-foreground">{t('missions', 'vatShortLabel') || 'TVA'}: {mission.billingVatNumber}</p>
                       )}
                     </div>
                   )}
@@ -1255,9 +1255,9 @@ export default function MissionDetailsPage() {
                         {t('negotiations', 'waitingDesc') || 'Première réponse en ~15 min en moyenne. Vous serez notifié à chaque offre reçue — vous pourrez alors comparer et choisir.'}
                       </p>
                       <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-muted-foreground">
-                        <span className="flex items-center gap-1"><span className="text-green-600">●</span> Artisans vérifiés</span>
+                        <span className="flex items-center gap-1"><span className="text-green-600">●</span> {t('missions', 'verifiedArtisansShort') || 'Artisans vérifiés'}</span>
                         <span>·</span>
-                        <span className="flex items-center gap-1"><span className="text-green-600">●</span> Paiement sécurisé</span>
+                        <span className="flex items-center gap-1"><span className="text-green-600">●</span> {t('missions', 'securePaymentShort') || 'Paiement sécurisé'}</span>
                       </div>
                     </div>
                   )}
@@ -2201,7 +2201,7 @@ export default function MissionDetailsPage() {
                       <div key={index} className="relative">
                         <img
                           src={url}
-                          alt={`Preuve ${index + 1}`}
+                          alt={`${td('evidenceAlt', 'Preuve')} ${index + 1}`}
                           className="h-20 w-full rounded-lg border border-border object-cover"
                         />
                         <button

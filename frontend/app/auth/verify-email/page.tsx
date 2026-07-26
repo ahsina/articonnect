@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { authApi } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 function VerifyEmailInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const token = searchParams.get('token');
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -44,14 +46,16 @@ function VerifyEmailInner() {
     try {
       await authApi.resendVerification();
       toast({
-        title: 'Email envoyé',
-        description: 'Un nouveau lien de vérification vous a été envoyé.',
+        title: t('auth', 'emailSentTitle') || 'Email envoyé',
+        description:
+          t('auth', 'emailResentDesc') || 'Un nouveau lien de vérification vous a été envoyé.',
         variant: 'success',
       });
     } catch {
       toast({
-        title: 'Erreur',
-        description: "Impossible d'envoyer l'email. Réessayez plus tard.",
+        title: t('common', 'error') || 'Erreur',
+        description:
+          t('auth', 'emailResendError') || "Impossible d'envoyer l'email. Réessayez plus tard.",
         variant: 'destructive',
       });
     } finally {
@@ -76,10 +80,10 @@ function VerifyEmailInner() {
                 <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
               </div>
               <CardTitle className="font-display text-2xl text-center tracking-tight">
-                Vérification en cours…
+                {t('auth', 'verifyingTitle') || 'Vérification en cours…'}
               </CardTitle>
               <CardDescription className="text-center">
-                Merci de patienter un instant.
+                {t('auth', 'verifyingDesc') || 'Merci de patienter un instant.'}
               </CardDescription>
             </>
           )}
@@ -90,10 +94,10 @@ function VerifyEmailInner() {
                 <CheckCircle2 className="h-12 w-12 text-success" />
               </div>
               <CardTitle className="font-display text-2xl text-center tracking-tight">
-                Email vérifié ✓
+                {t('auth', 'emailVerifiedTitle') || 'Email vérifié ✓'}
               </CardTitle>
               <CardDescription className="text-center">
-                Votre adresse email a bien été confirmée.
+                {t('auth', 'emailVerifiedDesc') || 'Votre adresse email a bien été confirmée.'}
               </CardDescription>
             </>
           )}
@@ -104,10 +108,11 @@ function VerifyEmailInner() {
                 <XCircle className="h-12 w-12 text-destructive" />
               </div>
               <CardTitle className="font-display text-2xl text-center tracking-tight">
-                Lien invalide ou expiré
+                {t('auth', 'linkInvalidTitle') || 'Lien invalide ou expiré'}
               </CardTitle>
               <CardDescription className="text-center">
-                Ce lien de vérification n'est plus valide. Demandez-en un nouveau ci-dessous.
+                {t('auth', 'linkInvalidDesc') ||
+                  "Ce lien de vérification n'est plus valide. Demandez-en un nouveau ci-dessous."}
               </CardDescription>
             </>
           )}
@@ -116,7 +121,7 @@ function VerifyEmailInner() {
         <CardContent className="space-y-3">
           {status === 'success' && (
             <Button className="w-full" onClick={() => router.push('/onboarding/verify')}>
-              Continuer
+              {t('common', 'continue') || 'Continuer'}
             </Button>
           )}
 
@@ -126,15 +131,15 @@ function VerifyEmailInner() {
                 <Button
                   className="w-full"
                   isLoading={resending}
-                  loadingText="Envoi en cours…"
+                  loadingText={t('auth', 'sendingInProgress') || 'Envoi en cours…'}
                   onClick={handleResend}
                 >
-                  Renvoyer l'email de vérification
+                  {t('auth', 'resendVerificationEmail') || "Renvoyer l'email de vérification"}
                 </Button>
               )}
               <Link href="/auth/login">
                 <Button variant="outline" className="w-full">
-                  Retour à la connexion
+                  {t('auth', 'backToLogin') || 'Retour à la connexion'}
                 </Button>
               </Link>
             </>

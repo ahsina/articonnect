@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { missionsApi } from '@/lib/api/missions';
 import { artisanApi } from '@/lib/api/artisan';
@@ -87,7 +88,12 @@ const formatDate = (d?: string | null) =>
 
 export default function QuotationsPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
+
+  // Libellés de statut / type traduits, avec repli sur les constantes FR ci-dessus.
+  const statusLabel = (s: QuoteStatus): string => t('quotations', `status${s}`) || STATUS_LABELS[s];
+  const itemTypeLabel = (it: LineItemType): string => t('quotations', `itemType${it}`) || ITEM_TYPE_LABELS[it];
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [stats, setStats] = useState<QuoteStats | null>(null);
@@ -135,7 +141,7 @@ export default function QuotationsPage() {
       if (s) setStats(s);
     } catch (error) {
       console.error('Erreur chargement devis:', error);
-      toast({ title: 'Erreur', description: 'Impossible de charger les devis.', variant: 'destructive' });
+      toast({ title: t('common', 'error') || 'Erreur', description: t('quotations', 'loadError') || 'Impossible de charger les devis.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -169,7 +175,7 @@ export default function QuotationsPage() {
       setClientOptions(Array.from(byClient.values()));
     } catch (error) {
       console.error('Erreur chargement clients:', error);
-      toast({ title: 'Erreur', description: 'Impossible de charger vos clients.', variant: 'destructive' });
+      toast({ title: t('common', 'error') || 'Erreur', description: t('quotations', 'loadClientsError') || 'Impossible de charger vos clients.', variant: 'destructive' });
     }
 
     // Pré-remplissage des CGV et de la TVA depuis le profil de l'artisan
@@ -259,8 +265,8 @@ export default function QuotationsPage() {
   const handleCreateAndSend = async () => {
     if (!canSubmit) {
       toast({
-        title: 'Formulaire incomplet',
-        description: 'Vérifiez le client, le titre, la catégorie et les lignes du devis.',
+        title: t('quotations', 'incompleteFormTitle') || 'Formulaire incomplet',
+        description: t('quotations', 'incompleteFormDesc') || 'Vérifiez le client, le titre, la catégorie et les lignes du devis.',
         variant: 'destructive',
       });
       return;
@@ -294,8 +300,8 @@ export default function QuotationsPage() {
       await quoteApi.send(created.id);
 
       toast({
-        title: 'Devis envoyé',
-        description: `Le devis ${created.quoteNumber} a été envoyé au client.`,
+        title: t('quotations', 'sentTitle') || 'Devis envoyé',
+        description: (t('quotations', 'sentDesc') || 'Le devis {n} a été envoyé au client.').replace('{n}', created.quoteNumber),
         variant: 'success',
       });
       setShowCreate(false);
@@ -304,9 +310,9 @@ export default function QuotationsPage() {
     } catch (error: any) {
       console.error('Erreur création devis:', error);
       toast({
-        title: 'Erreur',
+        title: t('common', 'error') || 'Erreur',
         description:
-          error?.response?.data?.message?.toString() || "Impossible de créer le devis.",
+          error?.response?.data?.message?.toString() || t('quotations', 'createError') || 'Impossible de créer le devis.',
         variant: 'destructive',
       });
     } finally {
@@ -373,7 +379,7 @@ export default function QuotationsPage() {
   const handleSign = async () => {
     if (!signingQuote) return;
     if (!hasDrawn) {
-      toast({ title: 'Signature requise', description: 'Veuillez dessiner votre signature.', variant: 'destructive' });
+      toast({ title: t('quotations', 'signatureRequiredTitle') || 'Signature requise', description: t('quotations', 'signatureRequiredDesc') || 'Veuillez dessiner votre signature.', variant: 'destructive' });
       return;
     }
     setSigning(true);
@@ -385,14 +391,14 @@ export default function QuotationsPage() {
         signatureType: 'DRAWN',
         signerRole: 'ARTISAN',
       });
-      toast({ title: 'Devis signé', description: 'Votre signature a été enregistrée.', variant: 'success' });
+      toast({ title: t('quotations', 'signedTitle') || 'Devis signé', description: t('quotations', 'signedDesc') || 'Votre signature a été enregistrée.', variant: 'success' });
       closeSignature();
       loadQuotes();
     } catch (error: any) {
       console.error('Erreur signature:', error);
       toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message?.toString() || 'Échec de la signature.',
+        title: t('common', 'error') || 'Erreur',
+        description: error?.response?.data?.message?.toString() || t('quotations', 'signError') || 'Échec de la signature.',
         variant: 'destructive',
       });
     } finally {
@@ -407,28 +413,28 @@ export default function QuotationsPage() {
       {/* En-tête */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">Devis</h1>
-          <p className="text-muted-foreground">Créez, envoyez et suivez vos devis formels signés.</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">{t('quotations', 'pageTitle') || 'Devis'}</h1>
+          <p className="text-muted-foreground">{t('quotations', 'pageSubtitle') || 'Créez, envoyez et suivez vos devis formels signés.'}</p>
         </div>
-        <Button onClick={openCreate}>+ Créer un devis</Button>
+        <Button onClick={openCreate}>{t('quotations', 'createQuote') || '+ Créer un devis'}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
-          <div className="text-sm text-muted-foreground">Total devis</div>
+          <div className="text-sm text-muted-foreground">{t('quotations', 'statTotal') || 'Total devis'}</div>
           <div className="font-display text-2xl font-extrabold text-foreground mt-1">{stats?.total ?? '—'}</div>
         </div>
         <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
-          <div className="text-sm text-muted-foreground">Envoyés</div>
+          <div className="text-sm text-muted-foreground">{t('quotations', 'statSent') || 'Envoyés'}</div>
           <div className="font-display text-2xl font-extrabold text-foreground mt-1">{stats?.sent ?? '—'}</div>
         </div>
         <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
-          <div className="text-sm text-muted-foreground">Acceptés</div>
+          <div className="text-sm text-muted-foreground">{t('quotations', 'statAccepted') || 'Acceptés'}</div>
           <div className="font-display text-2xl font-extrabold text-foreground mt-1">{stats?.accepted ?? '—'}</div>
         </div>
         <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
-          <div className="text-sm text-muted-foreground">Chiffre accepté</div>
+          <div className="text-sm text-muted-foreground">{t('quotations', 'statAcceptedValue') || 'Chiffre accepté'}</div>
           <div className="font-display text-2xl font-extrabold text-success mt-1">
             {stats ? formatCurrency(num(stats.totalAcceptedValue)) : '—'}
           </div>
@@ -447,7 +453,7 @@ export default function QuotationsPage() {
                 : 'bg-card text-muted-foreground border-border hover:bg-muted'
             }`}
           >
-            {f === 'all' ? 'Tous' : STATUS_LABELS[f]}
+            {f === 'all' ? (t('quotations', 'filterAll') || 'Tous') : statusLabel(f)}
           </button>
         ))}
       </div>
@@ -455,15 +461,15 @@ export default function QuotationsPage() {
       {/* Liste */}
       <div className="bg-card border border-border rounded-2xl shadow-sm">
         <div className="px-6 pt-5 pb-1">
-          <h3 className="font-display text-lg font-bold text-foreground">Mes devis</h3>
+          <h3 className="font-display text-lg font-bold text-foreground">{t('quotations', 'listTitle') || 'Mes devis'}</h3>
         </div>
         <div className="px-4 pb-5">
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Chargement…</div>
+            <div className="text-center py-8 text-muted-foreground">{t('common', 'loading') || 'Chargement…'}</div>
           ) : quotes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Aucun devis pour le moment.</p>
-              <p className="text-sm mt-2">Cliquez sur « Créer un devis » pour en envoyer un.</p>
+              <p>{t('quotations', 'emptyTitle') || 'Aucun devis pour le moment.'}</p>
+              <p className="text-sm mt-2">{t('quotations', 'emptyHint') || 'Cliquez sur « Créer un devis » pour en envoyer un.'}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -477,28 +483,28 @@ export default function QuotationsPage() {
                       <div className="flex items-center flex-wrap gap-2.5 mb-1">
                         <span className="font-mono text-xs text-muted-foreground">{q.quoteNumber}</span>
                         <h4 className="font-semibold text-foreground truncate">{q.title}</h4>
-                        <Badge className={STATUS_COLORS[q.status]}>{STATUS_LABELS[q.status]}</Badge>
+                        <Badge className={STATUS_COLORS[q.status]}>{statusLabel(q.status)}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">Client : {clientName}</p>
+                      <p className="text-sm text-muted-foreground">{t('quotations', 'clientLabel') || 'Client'} : {clientName}</p>
                       <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        <span>Créé le {formatDate(q.createdAt)}</span>
-                        <span>Valide jusqu&apos;au {formatDate(q.validUntil)}</span>
-                        <span>{q.lineItems?.length ?? 0} ligne(s)</span>
+                        <span>{t('quotations', 'createdOn') || 'Créé le'} {formatDate(q.createdAt)}</span>
+                        <span>{t('quotations', 'validUntilShort') || 'Valide jusqu\'au'} {formatDate(q.validUntil)}</span>
+                        <span>{(t('quotations', 'lineCount') || '{n} ligne(s)').replace('{n}', String(q.lineItems?.length ?? 0))}</span>
                       </div>
                     </div>
                     <div className="text-right shrink-0 min-w-[150px]">
                       <div className="font-display text-xl font-extrabold text-foreground">{formatCurrency(num(q.totalAmount))}</div>
-                      <div className="text-xs text-muted-foreground">TVA {num(q.taxRate)}%</div>
+                      <div className="text-xs text-muted-foreground">{t('quotations', 'tva') || 'TVA'} {num(q.taxRate)}%</div>
                       <div className="flex flex-col gap-2 mt-3">
                         {q.status === 'SENT' && (
-                          <Button size="sm" onClick={() => openSignature(q)}>Signer (pro)</Button>
+                          <Button size="sm" onClick={() => openSignature(q)}>{t('quotations', 'signPro') || 'Signer (pro)'}</Button>
                         )}
                         <a href={quoteApi.pdfUrl(q.id)} target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="sm" className="w-full">Télécharger le PDF</Button>
+                          <Button variant="outline" size="sm" className="w-full">{t('quotations', 'downloadPdf') || 'Télécharger le PDF'}</Button>
                         </a>
                         {q.missionId && (
                           <Link href={`/artisan/missions/${q.missionId}`}>
-                            <Button variant="outline" size="sm" className="w-full">Voir mission</Button>
+                            <Button variant="outline" size="sm" className="w-full">{t('quotations', 'viewMission') || 'Voir mission'}</Button>
                           </Link>
                         )}
                       </div>
@@ -516,41 +522,40 @@ export default function QuotationsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-card rounded-lg max-w-2xl w-full my-8 p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-foreground">Nouveau devis</h3>
+              <h3 className="text-lg font-bold text-foreground">{t('quotations', 'newQuoteTitle') || 'Nouveau devis'}</h3>
               <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
             </div>
 
             {clientOptions.length === 0 ? (
               <div className="text-sm text-muted-foreground py-6 text-center">
-                Aucun client éligible. Un devis ne peut être adressé qu&apos;à un client avec lequel vous
-                avez déjà une mission ou une négociation.
+                {t('quotations', 'noEligibleClients') || 'Aucun client éligible. Un devis ne peut être adressé qu\'à un client avec lequel vous avez déjà une mission ou une négociation.'}
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Client + mission */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Client *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'clientRequired') || 'Client *'}</label>
                     <select
                       className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
                       value={form.clientId}
                       onChange={(e) => handleClientChange(e.target.value)}
                     >
-                      <option value="">— Sélectionner —</option>
+                      <option value="">{t('quotations', 'selectPlaceholder') || '— Sélectionner —'}</option>
                       {clientOptions.map((c) => (
                         <option key={c.clientId} value={c.clientId}>{c.name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Mission liée (optionnel)</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'linkedMissionOptional') || 'Mission liée (optionnel)'}</label>
                     <select
                       className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
                       value={form.missionId}
                       onChange={(e) => handleMissionChange(e.target.value)}
                       disabled={!selectedClient}
                     >
-                      <option value="">Aucune (devis libre)</option>
+                      <option value="">{t('quotations', 'noMissionFree') || 'Aucune (devis libre)'}</option>
                       {selectedClient?.missions.map((m) => (
                         <option key={m.id} value={m.id}>{m.title}</option>
                       ))}
@@ -565,11 +570,11 @@ export default function QuotationsPage() {
                   return (
                     <div className="rounded-xl border border-border bg-muted/40 p-4">
                       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                        Mission liée
+                        {t('quotations', 'linkedMission') || 'Mission liée'}
                       </div>
                       <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Référence</span>
+                          <span className="text-muted-foreground">{t('quotations', 'reference') || 'Référence'}</span>
                           <div className="font-mono font-semibold text-foreground">
                             {missionRef(linkedMission.id)}
                           </div>
@@ -578,7 +583,7 @@ export default function QuotationsPage() {
                           )}
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Date</span>
+                          <span className="text-muted-foreground">{t('quotations', 'dateLabel') || 'Date'}</span>
                           {linkedMission.createdAt && (
                             <div className="text-foreground">
                               {new Date(linkedMission.createdAt).toLocaleDateString('fr-FR')}
@@ -586,7 +591,7 @@ export default function QuotationsPage() {
                           )}
                           {linkedMission.scheduledFor && (
                             <div className="text-muted-foreground">
-                              Planifiée le {new Date(linkedMission.scheduledFor).toLocaleDateString('fr-FR')}
+                              {t('quotations', 'scheduledOn') || 'Planifiée le'} {new Date(linkedMission.scheduledFor).toLocaleDateString('fr-FR')}
                             </div>
                           )}
                         </div>
@@ -598,25 +603,25 @@ export default function QuotationsPage() {
                 {/* Titre + catégorie */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Titre *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'titleRequired') || 'Titre *'}</label>
                     <Input
                       value={form.title}
                       onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                      placeholder="Ex. Rénovation salle de bain"
+                      placeholder={t('quotations', 'titlePlaceholder') || 'Ex. Rénovation salle de bain'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Catégorie *</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'categoryRequired') || 'Catégorie *'}</label>
                     <Input
                       value={form.category}
                       onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                      placeholder="Ex. PLUMBING"
+                      placeholder={t('quotations', 'categoryPlaceholder') || 'Ex. PLUMBING'}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Description (optionnel)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'descriptionOptional') || 'Description (optionnel)'}</label>
                   <Textarea
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -627,8 +632,8 @@ export default function QuotationsPage() {
                 {/* Lignes */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-foreground">Lignes du devis *</label>
-                    <Button type="button" variant="outline" size="sm" onClick={addLine}>+ Ligne</Button>
+                    <label className="text-sm font-medium text-foreground">{t('quotations', 'quoteLinesRequired') || 'Lignes du devis *'}</label>
+                    <Button type="button" variant="outline" size="sm" onClick={addLine}>{t('quotations', 'addLine') || '+ Ligne'}</Button>
                   </div>
                   <div className="space-y-3">
                     {lines.map((l, idx) => (
@@ -636,20 +641,20 @@ export default function QuotationsPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                           {/* Type + désignation */}
                           <div className="sm:col-span-6">
-                            <label className="block text-xs font-medium text-muted-foreground mb-1">Désignation</label>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('quotations', 'designation') || 'Désignation'}</label>
                             <div className="flex flex-col sm:flex-row gap-2">
                               <select
                                 className="h-10 w-full sm:w-32 rounded-md border border-input bg-background px-2 text-xs shrink-0"
                                 value={l.itemType}
                                 onChange={(e) => updateLine(idx, { itemType: e.target.value as LineItemType })}
                               >
-                                {(Object.keys(ITEM_TYPE_LABELS) as LineItemType[]).map((t) => (
-                                  <option key={t} value={t}>{ITEM_TYPE_LABELS[t]}</option>
+                                {(Object.keys(ITEM_TYPE_LABELS) as LineItemType[]).map((it) => (
+                                  <option key={it} value={it}>{itemTypeLabel(it)}</option>
                                 ))}
                               </select>
                               <Input
                                 className="h-10 w-full"
-                                placeholder="Désignation de la prestation"
+                                placeholder={t('quotations', 'designationPlaceholder') || 'Désignation de la prestation'}
                                 value={l.description}
                                 onChange={(e) => updateLine(idx, { description: e.target.value })}
                               />
@@ -657,26 +662,26 @@ export default function QuotationsPage() {
                           </div>
                           {/* Quantité */}
                           <div className="sm:col-span-2">
-                            <label className="block text-xs font-medium text-muted-foreground mb-1">Qté</label>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('quotations', 'qty') || 'Qté'}</label>
                             <Input
                               type="number"
                               min={0}
                               step="0.01"
                               className="h-10 w-full"
-                              placeholder="Qté"
+                              placeholder={t('quotations', 'qty') || 'Qté'}
                               value={l.quantity}
                               onChange={(e) => updateLine(idx, { quantity: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                             />
                           </div>
                           {/* Prix unitaire */}
                           <div className="sm:col-span-3">
-                            <label className="block text-xs font-medium text-muted-foreground mb-1">Prix unitaire HT €</label>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">{t('quotations', 'unitPriceExclTax') || 'Prix unitaire HT €'}</label>
                             <Input
                               type="number"
                               min={0}
                               step="0.01"
                               className="h-10 w-full"
-                              placeholder="Prix unitaire HT €"
+                              placeholder={t('quotations', 'unitPriceExclTax') || 'Prix unitaire HT €'}
                               value={l.unitPrice}
                               onChange={(e) => updateLine(idx, { unitPrice: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                             />
@@ -688,14 +693,14 @@ export default function QuotationsPage() {
                               onClick={() => removeLine(idx)}
                               className="h-10 w-full sm:w-10 grid place-items-center rounded-md text-muted-foreground hover:text-red-600 hover:bg-muted disabled:opacity-30"
                               disabled={lines.length <= 1}
-                              aria-label="Supprimer la ligne"
+                              aria-label={t('quotations', 'removeLine') || 'Supprimer la ligne'}
                             >
                               ×
                             </button>
                           </div>
                         </div>
                         <div className="mt-2 text-right text-xs text-muted-foreground">
-                          Total ligne : <span className="font-semibold text-foreground">{formatCurrency(num(l.quantity) * num(l.unitPrice))}</span>
+                          {t('quotations', 'lineTotal') || 'Total ligne'} : <span className="font-semibold text-foreground">{formatCurrency(num(l.quantity) * num(l.unitPrice))}</span>
                         </div>
                       </div>
                     ))}
@@ -705,7 +710,7 @@ export default function QuotationsPage() {
                 {/* TVA / remise / validité */}
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">TVA (%)</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'tvaPercent') || 'TVA (%)'}</label>
                     <Input
                       type="number"
                       min={0}
@@ -715,7 +720,7 @@ export default function QuotationsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Remise (%)</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'discountPercent') || 'Remise (%)'}</label>
                     <Input
                       type="number"
                       min={0}
@@ -725,7 +730,7 @@ export default function QuotationsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Valide jusqu&apos;au</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'validUntilLabel') || 'Valide jusqu\'au'}</label>
                     <Input
                       type="date"
                       value={form.validUntil}
@@ -736,28 +741,28 @@ export default function QuotationsPage() {
 
                 {/* Totaux calculés */}
                 <div className="rounded-lg bg-muted/50 p-4 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Sous-total</span><span className="font-medium">{formatCurrency(totals.subtotal)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('quotations', 'subtotal') || 'Sous-total'}</span><span className="font-medium">{formatCurrency(totals.subtotal)}</span></div>
                   {totals.discountAmount > 0 && (
-                    <div className="flex justify-between"><span className="text-muted-foreground">Remise</span><span className="font-medium text-red-600">-{formatCurrency(totals.discountAmount)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('quotations', 'discount') || 'Remise'}</span><span className="font-medium text-red-600">-{formatCurrency(totals.discountAmount)}</span></div>
                   )}
-                  <div className="flex justify-between"><span className="text-muted-foreground">TVA ({num(form.taxRate)}%)</span><span className="font-medium">{formatCurrency(totals.taxAmount)}</span></div>
-                  <div className="flex justify-between border-t pt-1 mt-1"><span className="font-semibold">Total TTC</span><span className="font-bold text-primary text-base">{formatCurrency(totals.total)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('quotations', 'tva') || 'TVA'} ({num(form.taxRate)}%)</span><span className="font-medium">{formatCurrency(totals.taxAmount)}</span></div>
+                  <div className="flex justify-between border-t pt-1 mt-1"><span className="font-semibold">{t('quotations', 'totalInclTax') || 'Total TTC'}</span><span className="font-bold text-primary text-base">{formatCurrency(totals.total)}</span></div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Conditions (optionnel)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">{t('quotations', 'termsOptional') || 'Conditions (optionnel)'}</label>
                   <Textarea
                     value={form.termsAndConditions}
                     onChange={(e) => setForm((f) => ({ ...f, termsAndConditions: e.target.value }))}
                     rows={2}
-                    placeholder="Acompte, délais, garanties…"
+                    placeholder={t('quotations', 'termsPlaceholder') || 'Acompte, délais, garanties…'}
                   />
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button variant="outline" onClick={() => setShowCreate(false)}>Annuler</Button>
+                  <Button variant="outline" onClick={() => setShowCreate(false)}>{t('common', 'cancel') || 'Annuler'}</Button>
                   <Button onClick={handleCreateAndSend} disabled={submitting || !canSubmit}>
-                    {submitting ? 'Envoi…' : 'Créer et envoyer'}
+                    {submitting ? (t('quotations', 'sending') || 'Envoi…') : (t('quotations', 'createAndSend') || 'Créer et envoyer')}
                   </Button>
                 </div>
               </div>
@@ -771,7 +776,7 @@ export default function QuotationsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg max-w-lg w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-foreground">Signer le devis</h3>
+              <h3 className="text-lg font-bold text-foreground">{t('quotations', 'signQuoteTitle') || 'Signer le devis'}</h3>
               <button onClick={closeSignature} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
             </div>
             <div className="mb-4 p-3 bg-muted/50 rounded-lg">
@@ -779,7 +784,7 @@ export default function QuotationsPage() {
               <div className="font-medium text-foreground">{signingQuote.title}</div>
               <div className="text-lg font-bold text-primary mt-1">{formatCurrency(num(signingQuote.totalAmount))}</div>
             </div>
-            <label className="block text-sm font-medium text-foreground mb-2">Dessinez votre signature :</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('quotations', 'drawSignature') || 'Dessinez votre signature :'}</label>
             <div className="border-2 border-dashed border-border rounded-lg overflow-hidden">
               <canvas
                 ref={canvasRef}
@@ -795,10 +800,10 @@ export default function QuotationsPage() {
                 onTouchEnd={stopDrawing}
               />
             </div>
-            <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-2">Effacer</Button>
+            <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-2">{t('quotations', 'clear') || 'Effacer'}</Button>
             <div className="flex gap-3 justify-end mt-4">
-              <Button variant="outline" onClick={closeSignature}>Annuler</Button>
-              <Button onClick={handleSign} disabled={signing}>{signing ? 'Signature…' : 'Confirmer'}</Button>
+              <Button variant="outline" onClick={closeSignature}>{t('common', 'cancel') || 'Annuler'}</Button>
+              <Button onClick={handleSign} disabled={signing}>{signing ? (t('quotations', 'signing2') || 'Signature…') : (t('quotations', 'confirm') || 'Confirmer')}</Button>
             </div>
           </div>
         </div>

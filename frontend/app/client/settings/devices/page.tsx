@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api/client';
 
@@ -31,11 +32,19 @@ const DEVICE_ICON: Record<SessionDevice['deviceInfo']['type'], string> = {
   WEB: '🖥️',
 };
 
+// Libellés FR par défaut des types d'appareil (fallback si i18n absent).
 const DEVICE_LABEL: Record<SessionDevice['deviceInfo']['type'], string> = {
   MOBILE: 'Mobile',
   TABLET: 'Tablette',
   DESKTOP: 'Ordinateur',
   WEB: 'Navigateur web',
+};
+
+const DEVICE_LABEL_KEY: Record<SessionDevice['deviceInfo']['type'], string> = {
+  MOBILE: 'deviceMobile',
+  TABLET: 'deviceTablet',
+  DESKTOP: 'deviceDesktop',
+  WEB: 'deviceWeb',
 };
 
 function formatDate(value: string): string {
@@ -50,18 +59,18 @@ function formatDate(value: string): string {
   });
 }
 
-function deviceDescription(s: SessionDevice): string {
+function deviceDescription(s: SessionDevice, t: (ns: string, key: string) => string): string {
   const parts: string[] = [];
   if (s.deviceInfo.browser) parts.push(s.deviceInfo.browser);
   if (s.deviceInfo.os) parts.push(s.deviceInfo.os);
   const detail = parts.join(' · ');
-  return detail
-    ? `${DEVICE_LABEL[s.deviceInfo.type]} — ${detail}`
-    : DEVICE_LABEL[s.deviceInfo.type];
+  const label = t('settings', DEVICE_LABEL_KEY[s.deviceInfo.type]) || DEVICE_LABEL[s.deviceInfo.type];
+  return detail ? `${label} — ${detail}` : label;
 }
 
 export default function ClientDevicesPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -93,14 +102,14 @@ export default function ClientDevicesPage() {
     } catch (error) {
       console.error('Error loading sessions:', error);
       toast({
-        title: 'Erreur',
-        description: 'Impossible de charger vos appareils connectés.',
+        title: t('common', 'error') || 'Erreur',
+        description: t('settings', 'devicesLoadError') || 'Impossible de charger vos appareils connectés.',
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     loadSessions();
@@ -112,12 +121,15 @@ export default function ClientDevicesPage() {
     try {
       await apiClient.delete(`/sessions/${id}`);
       setSessions((prev) => prev.filter((s) => s.id !== id));
-      toast({ title: 'Appareil déconnecté', description: 'La session a été révoquée.' });
+      toast({
+        title: t('settings', 'deviceRevokedTitle') || 'Appareil déconnecté',
+        description: t('settings', 'deviceRevokedDesc') || 'La session a été révoquée.',
+      });
     } catch (error) {
       console.error('Error revoking session:', error);
       toast({
-        title: 'Erreur',
-        description: 'La révocation a échoué. Réessayez.',
+        title: t('common', 'error') || 'Erreur',
+        description: t('settings', 'deviceRevokeError') || 'La révocation a échoué. Réessayez.',
         variant: 'destructive',
       });
     } finally {
@@ -126,21 +138,27 @@ export default function ClientDevicesPage() {
   };
 
   const handleRevokeOthers = async () => {
-    if (!confirm('Déconnecter tous les autres appareils ? Vous resterez connecté sur celui-ci.'))
+    if (
+      !confirm(
+        t('settings', 'revokeOthersConfirm') ||
+          'Déconnecter tous les autres appareils ? Vous resterez connecté sur celui-ci.',
+      )
+    )
       return;
     setRevokingOthers(true);
     try {
       await apiClient.delete('/sessions/all/except-current');
       await loadSessions();
       toast({
-        title: 'Terminé',
-        description: 'Tous les autres appareils ont été déconnectés.',
+        title: t('settings', 'doneTitle') || 'Terminé',
+        description:
+          t('settings', 'revokeOthersDone') || 'Tous les autres appareils ont été déconnectés.',
       });
     } catch (error) {
       console.error('Error revoking other sessions:', error);
       toast({
-        title: 'Erreur',
-        description: 'L\'opération a échoué. Réessayez.',
+        title: t('common', 'error') || 'Erreur',
+        description: t('settings', 'revokeOthersError') || "L'opération a échoué. Réessayez.",
         variant: 'destructive',
       });
     } finally {
@@ -158,27 +176,27 @@ export default function ClientDevicesPage() {
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-          Retour aux réglages
+          {t('settings', 'backToSettings') || 'Retour aux réglages'}
         </button>
 
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-foreground mb-6">
-          Appareils connectés
+          {t('settings', 'connectedDevices') || 'Appareils connectés'}
         </h1>
 
         <Card className="rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display">Vos sessions actives</CardTitle>
+            <CardTitle className="font-display">{t('settings', 'activeSessions') || 'Vos sessions actives'}</CardTitle>
             <CardDescription>
-              Voici les appareils actuellement connectés à votre compte. Si vous ne reconnaissez
-              pas un appareil, déconnectez-le et changez votre mot de passe.
+              {t('settings', 'activeSessionsDesc') ||
+                'Voici les appareils actuellement connectés à votre compte. Si vous ne reconnaissez pas un appareil, déconnectez-le et changez votre mot de passe.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
-              <div className="text-muted-foreground py-6 text-center">Chargement…</div>
+              <div className="text-muted-foreground py-6 text-center">{t('common', 'loading') || 'Chargement…'}</div>
             ) : sessions.length === 0 ? (
               <div className="text-muted-foreground py-6 text-center">
-                Aucun appareil connecté.
+                {t('settings', 'noDevices') || 'Aucun appareil connecté.'}
               </div>
             ) : (
               <>
@@ -201,21 +219,21 @@ export default function ClientDevicesPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <span className="font-bold text-foreground">
-                              {deviceDescription(s)}
+                              {deviceDescription(s, t)}
                             </span>
                             {isCurrent && (
                               <span className="inline-flex items-center rounded-full bg-foreground text-background text-[11px] font-bold px-2.5 py-0.5">
-                                Cet appareil
+                                {t('settings', 'thisDevice') || 'Cet appareil'}
                               </span>
                             )}
                           </div>
                           <div className="text-sm text-muted-foreground leading-relaxed">
                             <div>
-                              IP : <span className="font-medium text-foreground">{s.deviceInfo.ipAddress || '—'}</span>
+                              {t('settings', 'ipLabel') || 'IP'} : <span className="font-medium text-foreground">{s.deviceInfo.ipAddress || '—'}</span>
                             </div>
                             <div>
-                              Connecté le <span className="font-medium text-foreground">{formatDate(s.createdAt)}</span>
-                              {' · '}Dernière activité{' '}
+                              {t('settings', 'connectedOn') || 'Connecté le'} <span className="font-medium text-foreground">{formatDate(s.createdAt)}</span>
+                              {' · '}{t('settings', 'lastActivity') || 'Dernière activité'}{' '}
                               <span className="font-medium text-foreground">{formatDate(s.lastAccessedAt)}</span>
                             </div>
                           </div>
@@ -224,7 +242,7 @@ export default function ClientDevicesPage() {
                           {isCurrent ? (
                             <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                               <span className="h-2 w-2 rounded-full bg-success" />
-                              Actif
+                              {t('settings', 'deviceActive') || 'Actif'}
                             </span>
                           ) : (
                             <Button
@@ -232,7 +250,9 @@ export default function ClientDevicesPage() {
                               onClick={() => handleRevoke(s.id)}
                               disabled={revoking === s.id}
                             >
-                              {revoking === s.id ? 'Révocation…' : 'Déconnecter'}
+                              {revoking === s.id
+                                ? t('settings', 'revoking') || 'Révocation…'
+                                : t('settings', 'disconnect') || 'Déconnecter'}
                             </Button>
                           )}
                         </div>
@@ -249,8 +269,8 @@ export default function ClientDevicesPage() {
                       disabled={revokingOthers}
                     >
                       {revokingOthers
-                        ? 'Déconnexion…'
-                        : 'Déconnecter tous les autres appareils'}
+                        ? t('settings', 'disconnecting') || 'Déconnexion…'
+                        : t('settings', 'disconnectAllOthers') || 'Déconnecter tous les autres appareils'}
                     </Button>
                   </div>
                 )}

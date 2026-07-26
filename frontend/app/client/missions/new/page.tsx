@@ -39,18 +39,18 @@ const INTERVENTIONS = [
 
 // Nature des travaux — mappée sur l'enum backend workType (facultatif, sert au calcul TVA).
 const WORK_TYPES = [
-  { value: 'RENOVATION', label: 'Rénovation' },
-  { value: 'ENERGY_RENOVATION', label: 'Rénovation énergétique' },
-  { value: 'NEW_BUILD', label: 'Construction neuve' },
-  { value: 'MAINTENANCE', label: 'Entretien-réparation' },
-  { value: 'OTHER', label: 'Autre' },
+  { value: 'RENOVATION', labelKey: 'workTypeRenovation' },
+  { value: 'ENERGY_RENOVATION', labelKey: 'workTypeEnergyRenovation' },
+  { value: 'NEW_BUILD', labelKey: 'workTypeNewBuild' },
+  { value: 'MAINTENANCE', labelKey: 'workTypeMaintenance' },
+  { value: 'OTHER', labelKey: 'workTypeOther' },
 ];
 
 // Ancienneté du logement — chaque tranche mappe une valeur numérique (buildingAgeYears).
 const BUILDING_AGES = [
-  { value: 1, label: 'Moins de 2 ans' },
-  { value: 5, label: '2 à 10 ans' },
-  { value: 15, label: 'Plus de 10 ans' },
+  { value: 1, labelKey: 'buildingAgeUnder2' },
+  { value: 5, labelKey: 'buildingAge2to10' },
+  { value: 15, labelKey: 'buildingAgeOver10' },
 ];
 
 interface ClientProfile {
@@ -229,7 +229,7 @@ export default function NewMissionPage() {
                   <input value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })}
                     placeholder={t('missions', 'cityPlaceholder') || 'Ville'} className="w-1/2 rounded-lg bg-muted px-3 py-2 text-sm outline-none" />
                   <input value={addr.postalCode} onChange={(e) => setAddr({ ...addr, postalCode: e.target.value })}
-                    placeholder="Code postal" className="w-1/4 rounded-lg bg-muted px-3 py-2 text-sm outline-none" />
+                    placeholder={t('missions', 'postalCodePlaceholder') || 'Code postal'} className="w-1/4 rounded-lg bg-muted px-3 py-2 text-sm outline-none" />
                   <select value={addr.country} onChange={(e) => setAddr({ ...addr, country: e.target.value })}
                     className="w-1/4 rounded-lg bg-muted px-2 py-2 text-sm outline-none">
                     <option value="LU">LU</option><option value="FR">FR</option><option value="BE">BE</option>
@@ -354,26 +354,26 @@ export default function NewMissionPage() {
             >
               <span>
                 <span className="font-display block text-sm font-bold text-foreground">
-                  Informations pour la TVA <span className="font-normal text-muted-foreground">(facultatif)</span>
+                  {t('missions', 'vatInfoTitle') || 'Informations pour la TVA'} <span className="font-normal text-muted-foreground">({t('missions', 'optional') || 'facultatif'})</span>
                 </span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Aidez-nous à appliquer le bon taux de TVA
+                  {t('missions', 'vatInfoSubtitle') || 'Aidez-nous à appliquer le bon taux de TVA'}
                 </span>
               </span>
               <span className="font-display text-xs font-bold text-foreground underline">
-                {showVatInfo ? 'Masquer' : 'Renseigner'}
+                {showVatInfo ? (t('missions', 'hide') || 'Masquer') : (t('missions', 'fillIn') || 'Renseigner')}
               </span>
             </button>
 
             {showVatInfo && (
               <div className="space-y-4 border-t border-border px-4 py-4">
                 <p className="text-xs leading-snug text-muted-foreground">
-                  Ces informations permettent d’appliquer le bon taux de TVA (taux réduit possible selon le pays et l’ancienneté du logement).
+                  {t('missions', 'vatInfoHelp') || 'Ces informations permettent d’appliquer le bon taux de TVA (taux réduit possible selon le pays et l’ancienneté du logement).'}
                 </p>
 
                 {/* Nature des travaux */}
                 <div>
-                  <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Nature des travaux</label>
+                  <label className="font-display mb-1.5 block text-sm font-bold text-foreground">{t('missions', 'workNatureLabel') || 'Nature des travaux'}</label>
                   <div className="flex flex-wrap gap-2">
                     {WORK_TYPES.map((w) => {
                       const on = workType === w.value;
@@ -384,7 +384,7 @@ export default function NewMissionPage() {
                           onClick={() => setWorkType(on ? '' : w.value)}
                           className={`rounded-full border px-3 py-1.5 font-display text-xs font-bold transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}
                         >
-                          {w.label}
+                          {t('missions', w.labelKey)}
                         </button>
                       );
                     })}
@@ -393,9 +393,9 @@ export default function NewMissionPage() {
 
                 {/* Type de bien */}
                 <div>
-                  <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Type de bien</label>
+                  <label className="font-display mb-1.5 block text-sm font-bold text-foreground">{t('missions', 'propertyTypeLabel') || 'Type de bien'}</label>
                   <div className="flex gap-2">
-                    {[{ v: true, l: 'Logement' }, { v: false, l: 'Local professionnel' }].map((opt) => {
+                    {[{ v: true, l: t('missions', 'propertyResidential') || 'Logement' }, { v: false, l: t('missions', 'propertyCommercial') || 'Local professionnel' }].map((opt) => {
                       const on = residentialProperty === opt.v;
                       return (
                         <button
@@ -415,7 +415,7 @@ export default function NewMissionPage() {
                 {residentialProperty && (
                   <>
                     <div>
-                      <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Ancienneté du logement</label>
+                      <label className="font-display mb-1.5 block text-sm font-bold text-foreground">{t('missions', 'buildingAgeLabel') || 'Ancienneté du logement'}</label>
                       <div className="flex flex-wrap gap-2">
                         {BUILDING_AGES.map((a) => {
                           const on = buildingAgeYears === a.value;
@@ -426,7 +426,7 @@ export default function NewMissionPage() {
                               onClick={() => setBuildingAgeYears(on ? null : a.value)}
                               className={`rounded-full border px-3 py-1.5 font-display text-xs font-bold transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}
                             >
-                              {a.label}
+                              {t('missions', a.labelKey)}
                             </button>
                           );
                         })}
@@ -434,9 +434,9 @@ export default function NewMissionPage() {
                     </div>
 
                     <div>
-                      <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Résidence principale ?</label>
+                      <label className="font-display mb-1.5 block text-sm font-bold text-foreground">{t('missions', 'primaryResidenceLabel') || 'Résidence principale ?'}</label>
                       <div className="flex gap-2">
-                        {[{ v: true, l: 'Oui' }, { v: false, l: 'Non' }].map((opt) => {
+                        {[{ v: true, l: t('common', 'yes') || 'Oui' }, { v: false, l: t('common', 'no') || 'Non' }].map((opt) => {
                           const on = primaryResidence === opt.v;
                           return (
                             <button

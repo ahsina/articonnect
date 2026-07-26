@@ -1511,7 +1511,7 @@ function ContractorRatingBlock({
           ? t('subcontractor', 'contractorRatingGiven') || "Votre évaluation du donneur d'ordre"
           : t('subcontractor', 'rateContractor') || "Noter le donneur d'ordre"}
       </div>
-      <div className="flex items-center gap-1" role="radiogroup" aria-label="Note">
+      <div className="flex items-center gap-1" role="radiogroup" aria-label={t('subcontractor', 'ratingAriaLabel') || 'Note'}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
