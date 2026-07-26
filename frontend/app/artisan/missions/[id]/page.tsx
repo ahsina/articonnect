@@ -686,14 +686,16 @@ export default function MissionDetailPage() {
           title = t('tracking', 'completeTitle') || 'Intervention en cours';
           subtitle = t('tracking', 'completeSub') || 'Une fois le travail fini : ajoutez les photos « après » (obligatoires) et terminez.';
           primary = { label: t('tracking', 'btnComplete') || 'Terminer l’intervention', onClick: goCompletion };
-        } else if (s === 'COMPLETED') {
+        } else if (s === 'COMPLETED' && !(mission as any).validatedAt) {
           title = t('tracking', 'completedTitleArtisan') || 'En attente de validation du client';
           const auto = fmt(mission.retractionExpiresAt);
           subtitle = auto
             ? `${t('tracking', 'completedSubAuto') || 'Sans action de sa part, la mission se valide automatiquement le'} ${auto}${t('tracking', 'completedSubTail') || ' — votre paiement est alors libéré.'}`
             : (t('tracking', 'completedSubArtisan') || 'Le client valide le travail, puis votre paiement est libéré. Validation automatique sous 48h.');
           waiting = true;
-        } else if (s === 'VALIDATED' || s === 'AUTO_VALIDATED') {
+          // Mission validée : le statut reste COMPLETED en base mais validatedAt est posé (validation
+          // client OU code de validation). On affiche donc « validée — paiement libéré », pas « en attente ».
+        } else if (s === 'VALIDATED' || s === 'AUTO_VALIDATED' || (s === 'COMPLETED' && (mission as any).validatedAt)) {
           title = t('tracking', 'validatedTitle') || 'Mission validée — paiement libéré';
           subtitle = t('tracking', 'validatedSub') || 'Bravo ! Le montant net vous est versé selon votre calendrier de virements.';
           waiting = true;
