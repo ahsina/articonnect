@@ -156,7 +156,7 @@ function ArtisanProfileContent() {
         specialtyIds: data.specialties?.map((s) => s.id) || [],
         quoteTerms: data.quoteTerms || '',
         vatExempt: data.vatExempt ?? false,
-        vatRate: data.vatRate ?? 17,
+        vatRegisteredCountries: data.vatRegisteredCountries ?? [],
       });
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -1051,33 +1051,56 @@ function ArtisanProfileContent() {
                   Laissez vide pour utiliser le modèle Krafolt par défaut.
                 </p>
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editForm.vatExempt ?? false}
-                    onChange={(e) => setEditForm({ ...editForm, vatExempt: e.target.checked })}
-                    className="mt-0.5 h-4 w-4"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium text-foreground">Franchise en base de TVA (pas de TVA facturée)</span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">Cochez si vous ne facturez pas la TVA.</span>
-                  </span>
-                </label>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Taux de TVA (%)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={editForm.vatRate ?? ''}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, vatRate: e.target.value === '' ? undefined : parseFloat(e.target.value) })
-                    }
-                    disabled={editForm.vatExempt ?? false}
-                    placeholder="17"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Taux appliqué par défaut sur vos devis.</p>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-border cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editForm.vatExempt ?? false}
+                  onChange={(e) => setEditForm({ ...editForm, vatExempt: e.target.checked })}
+                  className="mt-0.5 h-4 w-4"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-foreground">Franchise en base de TVA (pas de TVA facturée)</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">Cochez si vous ne facturez pas la TVA.</span>
+                </span>
+              </label>
+
+              {/* Pays d'immatriculation TVA — le taux est calculé par la plateforme (plus saisi ici) */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Pays d’immatriculation TVA</label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Sélectionnez les pays où vous êtes immatriculé à la TVA (utilisé pour l’autoliquidation sur les chantiers à l’étranger).
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(['LU', 'FR', 'BE'] as const).map((cc) => {
+                    const selected = (editForm.vatRegisteredCountries || []).includes(cc);
+                    const label = cc === 'LU' ? 'Luxembourg' : cc === 'FR' ? 'France' : 'Belgique';
+                    return (
+                      <label
+                        key={cc}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                          selected ? 'border-foreground bg-muted' : 'border-border hover:border-foreground'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() =>
+                            setEditForm((prev) => {
+                              const cur = prev.vatRegisteredCountries || [];
+                              return {
+                                ...prev,
+                                vatRegisteredCountries: cur.includes(cc)
+                                  ? cur.filter((c) => c !== cc)
+                                  : [...cur, cc],
+                              };
+                            })
+                          }
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm font-medium text-foreground">{cc} · {label}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </div>

@@ -37,6 +37,22 @@ const INTERVENTIONS = [
   { key: 'SCHEDULED', type: 'SCHEDULED', nameKey: 'intPlanifieName', descKey: 'intPlanifieDesc', tagKey: 'intPlanifieTag', Icon: Calendar },
 ];
 
+// Nature des travaux — mappée sur l'enum backend workType (facultatif, sert au calcul TVA).
+const WORK_TYPES = [
+  { value: 'RENOVATION', label: 'Rénovation' },
+  { value: 'ENERGY_RENOVATION', label: 'Rénovation énergétique' },
+  { value: 'NEW_BUILD', label: 'Construction neuve' },
+  { value: 'MAINTENANCE', label: 'Entretien-réparation' },
+  { value: 'OTHER', label: 'Autre' },
+];
+
+// Ancienneté du logement — chaque tranche mappe une valeur numérique (buildingAgeYears).
+const BUILDING_AGES = [
+  { value: 1, label: 'Moins de 2 ans' },
+  { value: 5, label: '2 à 10 ans' },
+  { value: 15, label: 'Plus de 10 ans' },
+];
+
 interface ClientProfile {
   clientType: 'INDIVIDUAL' | 'PROFESSIONAL';
   companyName?: string;
@@ -64,6 +80,13 @@ export default function NewMissionPage() {
 
   const [addr, setAddr] = useState({ address: '', city: '', postalCode: '', country: 'LU' });
   const [editAddr, setEditAddr] = useState(false);
+
+  // Informations facultatives pour le calcul automatique de la TVA (plateforme).
+  const [showVatInfo, setShowVatInfo] = useState(false);
+  const [workType, setWorkType] = useState('');
+  const [residentialProperty, setResidentialProperty] = useState(true);
+  const [buildingAgeYears, setBuildingAgeYears] = useState<number | null>(null);
+  const [primaryResidence, setPrimaryResidence] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Adresse par défaut : localStorage (dernière utilisée) — pré-remplie, changeable.
@@ -144,6 +167,13 @@ export default function NewMissionPage() {
         scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
         beforePhotos: beforePhotos.length > 0 ? beforePhotos : undefined,
       };
+      // Informations TVA facultatives — on n'envoie que les valeurs définies.
+      if (workType) missionData.workType = workType;
+      missionData.residentialProperty = residentialProperty;
+      if (residentialProperty) {
+        if (buildingAgeYears !== null) missionData.buildingAgeYears = buildingAgeYears;
+        if (primaryResidence !== null) missionData.primaryResidence = primaryResidence;
+      }
       if (isProfessional && clientProfile?.companyName) {
         missionData.billingCompanyName = clientProfile.companyName;
         if (clientProfile.vatNumber) missionData.billingVatNumber = clientProfile.vatNumber;
@@ -313,6 +343,118 @@ export default function NewMissionPage() {
               {uploadingPhoto ? '…' : (beforePhotos.length ? `${beforePhotos.length} photo(s)` : (t('missions', 'addPhoto') || 'Ajouter une photo'))}
               <input type="file" accept="image/*" multiple hidden onChange={handlePhotoUpload} />
             </label>
+          </div>
+
+          {/* Informations pour la TVA (facultatif) — sert au calcul automatique du taux */}
+          <div className="mt-4 rounded-2xl border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setShowVatInfo((v) => !v)}
+              className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+            >
+              <span>
+                <span className="font-display block text-sm font-bold text-foreground">
+                  Informations pour la TVA <span className="font-normal text-muted-foreground">(facultatif)</span>
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  Aidez-nous à appliquer le bon taux de TVA
+                </span>
+              </span>
+              <span className="font-display text-xs font-bold text-foreground underline">
+                {showVatInfo ? 'Masquer' : 'Renseigner'}
+              </span>
+            </button>
+
+            {showVatInfo && (
+              <div className="space-y-4 border-t border-border px-4 py-4">
+                <p className="text-xs leading-snug text-muted-foreground">
+                  Ces informations permettent d’appliquer le bon taux de TVA (taux réduit possible selon le pays et l’ancienneté du logement).
+                </p>
+
+                {/* Nature des travaux */}
+                <div>
+                  <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Nature des travaux</label>
+                  <div className="flex flex-wrap gap-2">
+                    {WORK_TYPES.map((w) => {
+                      const on = workType === w.value;
+                      return (
+                        <button
+                          key={w.value}
+                          type="button"
+                          onClick={() => setWorkType(on ? '' : w.value)}
+                          className={`rounded-full border px-3 py-1.5 font-display text-xs font-bold transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}
+                        >
+                          {w.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Type de bien */}
+                <div>
+                  <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Type de bien</label>
+                  <div className="flex gap-2">
+                    {[{ v: true, l: 'Logement' }, { v: false, l: 'Local professionnel' }].map((opt) => {
+                      const on = residentialProperty === opt.v;
+                      return (
+                        <button
+                          key={opt.l}
+                          type="button"
+                          onClick={() => setResidentialProperty(opt.v)}
+                          className={`flex-1 rounded-xl border px-3 py-2.5 font-display text-sm font-bold transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}
+                        >
+                          {opt.l}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Champs spécifiques au logement */}
+                {residentialProperty && (
+                  <>
+                    <div>
+                      <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Ancienneté du logement</label>
+                      <div className="flex flex-wrap gap-2">
+                        {BUILDING_AGES.map((a) => {
+                          const on = buildingAgeYears === a.value;
+                          return (
+                            <button
+                              key={a.value}
+                              type="button"
+                              onClick={() => setBuildingAgeYears(on ? null : a.value)}
+                              className={`rounded-full border px-3 py-1.5 font-display text-xs font-bold transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}
+                            >
+                              {a.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-display mb-1.5 block text-sm font-bold text-foreground">Résidence principale ?</label>
+                      <div className="flex gap-2">
+                        {[{ v: true, l: 'Oui' }, { v: false, l: 'Non' }].map((opt) => {
+                          const on = primaryResidence === opt.v;
+                          return (
+                            <button
+                              key={opt.l}
+                              type="button"
+                              onClick={() => setPrimaryResidence(on ? null : opt.v)}
+                              className={`flex-1 rounded-xl border px-3 py-2.5 font-display text-sm font-bold transition-colors ${on ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground hover:border-foreground'}`}
+                            >
+                              {opt.l}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Nudge photo (facultatif mais encouragé) */}

@@ -21,7 +21,10 @@ export interface ArtisanProfile {
   // CGV & TVA du devis (configurées par l'artisan, rapatriées dans chaque devis)
   quoteTerms?: string;
   vatExempt?: boolean;
+  // Taux de TVA désormais calculé par la plateforme (l'artisan ne le choisit plus).
   vatRate?: number;
+  // Pays où l'artisan est immatriculé à la TVA (autoliquidation sur chantiers à l'étranger).
+  vatRegisteredCountries?: string[];
   certifications: Certification[];
   stripeAccountId?: string;
   stripeOnboarded: boolean;
@@ -172,7 +175,10 @@ export interface UpdateArtisanProfileDto {
   // CGV & TVA du devis
   quoteTerms?: string;
   vatExempt?: boolean;
+  // Taux de TVA calculé par la plateforme — conservé pour compat mais plus édité côté UI.
   vatRate?: number;
+  // Pays d'immatriculation TVA de l'artisan ('LU' | 'FR' | 'BE').
+  vatRegisteredCountries?: string[];
 }
 
 export interface CreateCertificationDto {
